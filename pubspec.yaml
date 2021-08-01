@@ -1,0 +1,59 @@
+name: stretching
+description: Stretching remake from scratch.
+version: 0.0.0
+
+# The following line prevents the package from being accidentally published to
+# pub.dev using `pub publish`. This is preferred for private packages.
+publish_to: none # Remove this line if you wish to publish to pub.dev
+
+environment:
+  sdk: '>=2.14.0-350.0.dev <3.0.0'
+  flutter: '>=2.0.0'
+
+# DEPENDENCIES UPDATE: 2021-08-01
+dependencies:
+  dio: ^4.0.0
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^1.0.0-dev.6
+  google_fonts: ^2.1.0
+  hooks_riverpod: ^1.0.0-dev.6
+  intl: ^0.17.0
+  path: ^1.8.0
+  riverpod: ^1.0.0-dev.6
+  smooth_page_indicator: ^0.3.0-nullsafety.0
+  stacked: ^2.2.3
+  stacked_services: ^0.8.13
+
+dev_dependencies:
+  args: ^2.2.0
+  build_runner: ^2.0.6
+  flutter_launcher_icons: ^0.9.1
+  flutter_native_splash: ^1.2.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  assets:
+    - assets/translations/en-US.json
+
+  fonts:
+    - family: IconsCG
+      fonts:
+        - asset: assets/fonts/IconsCG.ttf
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: icon.png
+  remove_alpha_ios: true
+  # image_path_ios: 'assets/icon/icon_ios.png'
+
+flutter_native_splash:
+  color: '#ffffff'
+  image: icon.png
+  color_dark: '#222222'
+  image_dark: icon.png
+  fullscreen: true
+  # android_gravity: center
+  # ios_content_mode: center

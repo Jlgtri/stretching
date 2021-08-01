@@ -1,0 +1,40 @@
+{
+  "name": "IconsCG",
+  "css_prefix_text": "",
+  "css_use_suffix": false,
+  "hinting": false,
+  "units_per_em": 1000,
+  "ascent": 850,
+  "glyphs": [
+    {
+      "uid": "2799c57f6de779678d46786054fb2dc3",
+      "css": "back",
+      "code": 59397,
+      "src": "material"
+    },
+    {
+      "uid": "5eb07554925705653f5a05894271d8d3",
+      "css": "close",
+      "code": 59394,
+      "src": "material"
+    },
+    {
+      "uid": "af76421f7827c9b8dbf4330d596be014",
+      "css": "arrowLeft",
+      "code": 59392,
+      "src": "material"
+    },
+    {
+      "uid": "5a2e0f80f343a57e27915d85fefa82c6",
+      "css": "arrowRight",
+      "code": 59393,
+      "src": "material"
+    },
+    {
+      "uid": "4dffe5e59760395857c5e7cbf7e2d20a",
+      "css": "search",
+      "code": 59396,
+      "src": "material"
+    }
+  ]
+}
