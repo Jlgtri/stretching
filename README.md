@@ -4,8 +4,8 @@
 
 ## Requirements
 
-- Flutter: `2.5.0-1.0.pre`
-- Dart SDK: `2.14.0-350.0.dev`
+- Flutter: `2.5.0-5.0.pre`
+- Dart SDK: `2.14.0-377.0.dev`
 
 ## Versions
 

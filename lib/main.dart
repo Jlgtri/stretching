@@ -1,115 +1,88 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:stretching/const.dart';
+import 'package:stretching/generated/assets.g.dart';
+import 'package:stretching/yclients_api.dart';
+
+/// The premade initialisation of a Flutter's [WidgetsBinding].
+/// Also is used for accessing the non null [WidgetsBinding] class.
+final Provider<WidgetsBinding> widgetsBindingProvider =
+    Provider<WidgetsBinding>((final ref) {
+  return WidgetsFlutterBinding.ensureInitialized();
+});
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    EasyLocalization(
+      supportedLocales: supportedLocales,
+      path: AssetsCG.translations,
+      startLocale: defaultLocale,
+      fallbackLocale: defaultLocale,
+      child: Builder(
+        builder: (final context) {
+          final ez = EasyLocalization.of(context)!;
+          return FutureBuilder(
+            future: ez.delegate.load(ez.currentLocale!),
+            builder: (final context, final snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const SizedBox.shrink();
+              }
+              return ProviderScope(child: DumpJson(trainersProvider));
+            },
+          );
+        },
+      ),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+/// The widget that dumps data from a provider a user.
+class DumpJson<T extends Object> extends ConsumerWidget {
+  /// The widget to authorize a user.
+  const DumpJson(final this.provider, {final Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
+  /// The provider which value to dump.
+  final FutureProvider<T> provider;
+
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    return FutureBuilder<T>(
+      future: ref.watch(provider.future),
+      builder: (final context, final snapshot) {
+        if (snapshot.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator.adaptive());
+        }
+        Permission.storage.request().then((final _) async {
+          final snapshotData = snapshot.data;
+          final data = snapshotData is Iterable
+              ? snapshotData.map((final data) => data.toMap()).toList()
+              : snapshotData.toString();
+          final dirs = await getExternalStorageDirectories(
+            type: StorageDirectory.downloads,
+          );
+          final file = File(
+            join(dirs!.first.path, '${DateTime.now().toIso8601String()}.json'),
+          )..writeAsStringSync(json.encode(data), flush: true);
+          print('Dumped json at: ${file.path}');
+        });
+        return const Placeholder();
+      },
     );
   }
-}
-
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+  void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(
+      properties
+        ..add(DiagnosticsProperty<FutureProvider>('provider', provider)),
     );
   }
 }

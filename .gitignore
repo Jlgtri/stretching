@@ -2,6 +2,7 @@
 .VSCodeCounter/
 .metadata
 build.yaml
+**secrets*
 
 # Miscellaneous
 *.class
