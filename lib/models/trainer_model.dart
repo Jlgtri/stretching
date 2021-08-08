@@ -162,7 +162,7 @@ class TrainerModel {
       'name': name,
       'specialization': specialization,
       'rating': rating,
-      'show_rating': showRating,
+      'show_rating': boolToIntConverter.toJson(showRating),
       'avatar': avatar,
       'avatar_big': avatarBig,
       'comments_count': commentsCount,
@@ -175,9 +175,9 @@ class TrainerModel {
           "${scheduleTill.month.toString().padLeft(2, '0')}-"
           "${scheduleTill.day.toString().padLeft(2, '0')}",
       'weight': weight,
-      'fired': fired,
-      'status': status,
-      'hidden': hidden,
+      'fired': boolToIntConverter.toJson(fired),
+      'status': boolToIntConverter.toJson(status),
+      'hidden': boolToIntConverter.toJson(hidden),
       'user': user,
       'prepaid': prepaidConverter.toJson(prepaid),
       'position': position?.toMap(),
@@ -210,7 +210,7 @@ class TrainerModel {
       hidden: boolToIntConverter.fromJson(map['hidden']! as int),
       user: map['user'],
       prepaid: prepaidConverter.fromJson(map['prepaid']! as String),
-      position: map['position'] is! Iterable
+      position: map['position'] != null && map['position'] is! Iterable
           ? TrainerModelPosition.fromMap(
               map['position']! as Map<String, Object?>,
             )

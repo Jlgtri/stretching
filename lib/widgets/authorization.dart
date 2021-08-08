@@ -36,7 +36,7 @@ class Authorization extends ConsumerWidget {
           return const Center(child: CircularProgressIndicator.adaptive());
         }
         return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Padding(
               padding: const EdgeInsets.all(24),
@@ -70,7 +70,7 @@ class Authorization extends ConsumerWidget {
                     child: Text(
                       viewModel.currentStep == AuthorizationStep.code
                           ? 'Back'
-                          : 'Finish',
+                          : 'Logout',
                     ),
                   ),
                 if (viewModel.currentStep != AuthorizationStep.done)
@@ -152,7 +152,7 @@ class AuthorizationViewModel extends ReactiveViewModel {
             throwException: true,
           );
           final user = ref.read(userProvider);
-          user.state = response!.data!.data.single as UserModel;
+          user.state = response!.data!.data as UserModel;
           final hive = ref.read(hiveProvider);
           await hive.put('user', json.encode(user.state!.toMap()));
           break;
@@ -197,7 +197,7 @@ class AuthorizationViewModel extends ReactiveViewModel {
     final dio = ref.read(yclientsClientProvider);
     return dio.post<YClientsResponse>(
       '$yClientsUrl/book_code/$smstretchingGroupId',
-      queryParameters: <String, Object?>{'phone': phone},
+      data: <String, Object?>{'phone': phone},
     );
   }
 
@@ -209,10 +209,11 @@ class AuthorizationViewModel extends ReactiveViewModel {
     final dio = ref.read(yclientsClientProvider);
     return dio.post<YClientsResponse>(
       '$yClientsUrl/user/auth',
-      queryParameters: <String, Object?>{'phone': phone, 'code': code},
+      data: <String, Object?>{'phone': phone, 'code': code},
       options: Options(
         extra: YClientsRequestExtra<UserModel>(
-          onData: (final map) => UserModel.fromMap(map),
+          onData: (final map) =>
+              UserModel.fromMap(map! as Map<String, Object?>),
         ).toMap(),
       ),
     );

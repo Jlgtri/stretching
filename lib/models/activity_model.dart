@@ -651,7 +651,7 @@ class StaffModel {
       'company_id': companyId,
       'specialization': specialization,
       'rating': rating,
-      'show_rating': showRating,
+      'show_rating': boolToIntConverter.toJson(showRating),
       'avatar': avatar,
       'avatar_big': avatarBig,
       'comments_count': commentsCount,

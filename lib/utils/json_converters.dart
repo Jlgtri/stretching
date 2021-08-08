@@ -3,10 +3,10 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:stretching/utils/enum_to_string.dart';
 
 /// Convert a json object to the object of type [T].
-typedef FromJson<T extends Object> = T Function(Map<String, Object?> map);
+typedef FromJson<T extends Object> = T Function(Object? map);
 
 /// Convert an object of type [T] to the json object.
-typedef ToJson<T extends Object> = Map<String, Object?> Function(T);
+typedef ToJson<T extends Object> = Object? Function(T);
 
 /// The class to convert an object of type [T] to the object of type [S].
 mixin JsonConverter<T extends Object?, S extends Object?> on Object {

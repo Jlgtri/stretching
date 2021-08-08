@@ -4,8 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/assets.g.dart';
-import 'package:stretching/widgets/authorization.dart';
 import 'package:stretching/providers.dart';
+import 'package:stretching/widgets/authorization.dart';
+import 'package:stretching/widgets/load_data.dart';
 
 /// The premade initialisation of a Flutter's [WidgetsBinding].
 /// Also is used for accessing the non null [WidgetsBinding] class.
@@ -17,6 +18,7 @@ final Provider<WidgetsBinding> widgetsBindingProvider =
 Future<void> main() async {
   await Hive.initFlutter();
   final storage = await Hive.openBox<String>('storage');
+  // await storage.clear();
   runApp(
     EasyLocalization(
       supportedLocales: supportedLocales,
@@ -34,7 +36,19 @@ Future<void> main() async {
               }
               return ProviderScope(
                 overrides: <Override>[hiveProvider.overrideWithValue(storage)],
-                child: const MaterialApp(home: Scaffold(body: Authorization())),
+                child: MaterialApp(
+                  home: Scaffold(
+                    appBar: AppBar(title: Text('Stretching Demo')),
+                    body: SingleChildScrollView(
+                      child: Column(
+                        children: const <Widget>[
+                          SaveData(),
+                          Authorization(),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               );
             },
           );

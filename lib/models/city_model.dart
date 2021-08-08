@@ -44,7 +44,7 @@ class CityModel {
   Map<String, Object?> toMap() {
     return <String, Object?>{
       'id': id,
-      'countryId': countryId,
+      'country_id': countryId,
       'title': title,
     };
   }

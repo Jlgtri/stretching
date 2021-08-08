@@ -13,6 +13,7 @@ import 'package:stretching/models/trainer_model.dart';
 import 'package:stretching/models/user_model.dart';
 import 'package:stretching/models/yclients_response.dart';
 import 'package:stretching/secrets.dart';
+import 'package:stretching/utils/json_converters.dart';
 
 /// The main hive String box provider.
 final Provider<Box<String>> hiveProvider = Provider<Box<String>>((final ref) {
@@ -47,26 +48,32 @@ final Provider<Dio> yclientsClientProvider = Provider<Dio>((final ref) {
 /// The url of the yclients platfrom API.
 const String yClientsUrl = 'https://api.yclients.com/api/v1';
 
+/// The progress of initialising a [citiesProvider].
+final StateProvider<num?> citiesProgressProvider =
+    StateProvider<num?>((final ref) => null);
+
 /// The cities provider for YClients API.
 ///
 /// See: https://yclientsru.docs.apiary.io/#reference/40/0/0
 final FutureProvider<Iterable<CityModel>> citiesProvider =
     FutureProvider<Iterable<CityModel>>((final ref) async {
-  final dio = ref.read(yclientsClientProvider);
-  final response = await dio.get<YClientsResponse>(
-    '$yClientsUrl/cities',
-    queryParameters: <String, Object?>{'country_id': 1},
-    options: Options(
-      extra: YClientsRequestExtra<CityModel>(
-        onData: (final map) => CityModel.fromMap(map),
-      ).toMap(),
-    ),
+  return getIterableDataFromYClients(
+    ref: ref,
+    progressProvider: citiesProgressProvider,
+    saveName: 'cities',
+    url: (final _) => '$yClientsUrl/cities',
+    queryParameters: (final _) => <String, Object?>{'country_id': 1},
+    fromMap: (final map) => CityModel.fromMap(map! as Map<String, Object?>),
+    toMap: (final data) => data.toMap(),
   );
-  return response.data!.data.cast<CityModel>();
 });
 
 /// The model of the smstretching studio.
 typedef StudioModel = CompanyModel;
+
+/// The progress of initialising a [studiosProvider].
+final StateProvider<num?> studiosProgressProvider =
+    StateProvider<num?>((final ref) => null);
 
 /// The studios provider for YClients API.
 ///
@@ -84,67 +91,128 @@ final FutureProvider<Iterable<StudioModel>> studiosProvider =
   if (cityId == null) {
     throw Exception('City id is not found in the fetched cities.');
   }
-
-  final dio = ref.read(yclientsClientProvider);
-  final response = await dio.get<YClientsResponse>(
-    '$yClientsUrl/companies',
-    queryParameters: <String, Object?>{
+  return getIterableDataFromYClients(
+    ref: ref,
+    progressProvider: studiosProgressProvider,
+    saveName: 'studios',
+    url: (final _) => '$yClientsUrl/companies',
+    queryParameters: (final _) => <String, Object?>{
       'city_id': cityId,
       'group_id': smstretchingGroupId.toString()
     },
-    options: Options(
-      extra: YClientsRequestExtra<StudioModel>(
-        onData: (final map) => StudioModel.fromMap(map),
-      ).toMap(),
-    ),
+    toMap: (final data) => data.toMap(),
+    fromMap: (final data) => StudioModel.fromMap(data! as Map<String, Object?>),
   );
-  return response.data!.data.cast<StudioModel>();
 });
+
+/// The progress of initialising a [trainersProvider].
+final StateProvider<num?> trainersProgressProvider =
+    StateProvider<num?>((final ref) => null);
 
 /// The trainers provider for YClients API.
 ///
 /// See: https://yclientsru.docs.apiary.io/#reference/6/0//
 final FutureProvider<Iterable<TrainerModel>> trainersProvider =
     FutureProvider<Iterable<TrainerModel>>((final ref) async {
-  final dio = ref.read(yclientsClientProvider);
   final studios = await ref.read(studiosProvider.future);
-  final trainers = List<TrainerModel>.empty(growable: true);
-  for (final studio in studios) {
-    final response = await dio.get<YClientsResponse>(
-      '$yClientsUrl/book_staff/${studio.id}',
-      options: Options(
-        extra: YClientsRequestExtra<TrainerModel>(
-          onData: (final map) => TrainerModel.fromMap(map),
-        ).toMap(),
-      ),
-    );
-    trainers.addAll(response.data!.data.cast<TrainerModel>());
-  }
-  return trainers;
+  return getIterableDataFromYClients<TrainerModel, StudioModel>(
+    ref: ref,
+    progressProvider: trainersProgressProvider,
+    mapData: studios,
+    saveName: 'trainers',
+    url: (final studio) => '$yClientsUrl/book_staff/${studio.id}',
+    toMap: (final data) => data.toMap(),
+    fromMap: (final data) =>
+        TrainerModel.fromMap(data! as Map<String, Object?>),
+  );
 });
+
+/// The progress of initialising a [scheduleProvider].
+final StateProvider<num?> scheduleProgressProvider =
+    StateProvider<num?>((final ref) => null);
 
 /// The schedule provider for YClients API.
 ///
 /// See: https://yclientsru.docs.apiary.io/#reference/12/0/4
 final FutureProvider<Iterable<ActivityModel>> scheduleProvider =
     FutureProvider<Iterable<ActivityModel>>((final ref) async {
-  final dio = ref.read(yclientsClientProvider);
   final studios = await ref.read(studiosProvider.future);
-  final activities = List<ActivityModel>.empty(growable: true);
-  for (final studio in studios) {
-    final response = await dio.get<YClientsResponse>(
-      '$yClientsUrl/activity/${studio.id}/search',
-      queryParameters: <String, Object?>{'count': 300},
-      options: Options(
-        extra: YClientsRequestExtra<ActivityModel>(
-          onData: (final map) => ActivityModel.fromMap(map),
-        ).toMap(),
-      ),
-    );
-    activities.addAll(response.data!.data.cast<ActivityModel>());
-  }
-  return activities;
+  return getIterableDataFromYClients<ActivityModel, StudioModel>(
+    ref: ref,
+    progressProvider: trainersProgressProvider,
+    mapData: studios,
+    saveName: 'activities',
+    url: (final studio) => '$yClientsUrl/activity/${studio.id}/search',
+    queryParameters: (final studio) => <String, Object?>{'count': 300},
+    toMap: (final data) => data.toMap(),
+    fromMap: (final data) =>
+        ActivityModel.fromMap(data! as Map<String, Object?>),
+  );
 });
+
+/// Returns the iterable data from YClients API.
+///
+/// Maps the data from [mapData] and aggregates results in the single result.
+/// If the [mapData] is not specified, returns the data from the single call.
+///
+/// - [ref] the reference to the Riverpod.
+/// - [progressProvider] shows the progress of getting the data.
+/// - [saveName] stands for how local cache data will be called.
+/// - [toMap] / [fromMap] are the json serialization closures.
+/// - [url] to get the data from.
+/// - [queryParameters] to pass with the url.
+/// - [options] to pass with the url.
+Future<Iterable<T>>
+    getIterableDataFromYClients<T extends Object, S extends Object>({
+  required final ProviderRef ref,
+  required final StateProvider<num?> progressProvider,
+  required final String saveName,
+  required final ToJson<T> toMap,
+  required final FromJson<T> fromMap,
+  required final String Function(S) url,
+  final Map<String, Object?>? Function(S)? queryParameters,
+  final Options? Function(S)? options,
+  Iterable<S>? mapData,
+}) async {
+  mapData ??= Iterable.generate(1);
+  final hive = ref.read(hiveProvider);
+  final savedDataString = hive.get(saveName);
+  final savedData = <T>[
+    if (savedDataString != null)
+      for (final map in json.decode(savedDataString) as Iterable<Object?>)
+        fromMap(map)
+  ];
+  if (savedData.isEmpty) {
+    final dio = ref.read(yclientsClientProvider);
+    final progress = ref.read(progressProvider);
+    num previousProgress = 0;
+    for (final data in mapData) {
+      final response = await dio.get<YClientsResponse>(
+        url(data),
+        queryParameters: queryParameters?.call(data),
+        onReceiveProgress: (final count, final total) {
+          if (total != -1) {
+            progress.state =
+                previousProgress + (count / total) / mapData!.length;
+          }
+        },
+        options: (options?.call(data) ?? Options()).copyWith(
+          extra: YClientsRequestExtra<Iterable<T>>(
+            onData: (final data) =>
+                <T>[for (final map in data! as Iterable<Object?>) fromMap(map)],
+          ).toMap(),
+        ),
+      );
+      savedData.addAll((response.data!.data as Iterable<Object?>).cast<T>());
+      previousProgress += 1 / mapData.length;
+    }
+    await hive.put(
+      saveName,
+      json.encode([for (final data in savedData) toMap(data)]),
+    );
+  }
+  return savedData;
+}
 
 /// The class to handle the exception in the YClients API.
 @immutable
