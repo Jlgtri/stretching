@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:meta/meta.dart';
 import 'package:stretching/models/trainer_model.dart';
 import 'package:stretching/utils/json_converters.dart';
@@ -123,7 +125,7 @@ class ActivityModel {
 
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() {
-    return {
+    return <String, Object?>{
       'id': id,
       'service_id': serviceId,
       'company_id': companyId,
@@ -173,6 +175,13 @@ class ActivityModel {
       labels: (map['labels']! as Iterable).cast<String>(),
     );
   }
+
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory ActivityModel.fromJson(final String source) =>
+      ActivityModel.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
@@ -268,7 +277,7 @@ class ResourceInstance {
 
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() {
-    return {
+    return <String, Object?>{
       'id': id,
       'title': title,
       'resource_id': resourceId,
@@ -283,6 +292,13 @@ class ResourceInstance {
       resourceId: map['resource_id']! as int,
     );
   }
+
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory ResourceInstance.fromJson(final String source) =>
+      ResourceInstance.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
@@ -377,7 +393,7 @@ class ActivityService {
 
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() {
-    return {
+    return <String, Object?>{
       'id': id,
       'category_id': categoryId,
       'title': title,
@@ -408,6 +424,13 @@ class ActivityService {
       ),
     );
   }
+
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory ActivityService.fromJson(final String source) =>
+      ActivityService.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
@@ -482,7 +505,11 @@ class ActivityServiceCategory {
 
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() {
-    return {'id': id, 'category_id': categoryId, 'title': title};
+    return <String, Object?>{
+      'id': id,
+      'category_id': categoryId,
+      'title': title
+    };
   }
 
   /// Convert the map with string keys to this model.
@@ -493,6 +520,13 @@ class ActivityServiceCategory {
       title: json['title']! as String,
     );
   }
+
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory ActivityServiceCategory.fromJson(final String source) =>
+      ActivityServiceCategory.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
@@ -648,6 +682,13 @@ class StaffModel {
     );
   }
 
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory StaffModel.fromJson(final String source) =>
+      StaffModel.fromMap(json.decode(source));
+
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
@@ -716,13 +757,20 @@ class StaffPosition {
 
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() {
-    return {'id': id, 'title': title};
+    return <String, Object?>{'id': id, 'title': title};
   }
 
   /// Convert the map with string keys to this model.
   factory StaffPosition.fromMap(final Map<String, Object?> map) {
     return StaffPosition(id: map['id']! as int, title: map['title']! as String);
   }
+
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory StaffPosition.fromJson(final String source) =>
+      StaffPosition.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {

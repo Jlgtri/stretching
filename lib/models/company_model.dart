@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:meta/meta.dart';
 import 'package:stretching/utils/json_converters.dart';
 
@@ -369,7 +371,7 @@ class CompanyModel {
 
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() {
-    return {
+    return <String, Object?>{
       'id': id,
       'title': title,
       'public_title': publicTitle,
@@ -509,6 +511,13 @@ class CompanyModel {
       bookingEmailRequired: map['booking_email_required']! as bool,
     );
   }
+
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory CompanyModel.fromJson(final String source) =>
+      CompanyModel.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
@@ -713,13 +722,20 @@ class MainGroup {
 
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() {
-    return {'id': id, 'title': title};
+    return <String, Object?>{'id': id, 'title': title};
   }
 
   /// Convert the map with string keys to this model.
   factory MainGroup.fromMap(final Map<String, Object?> map) {
     return MainGroup(id: map['id']! as int, title: map['title']! as String);
   }
+
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory MainGroup.fromJson(final String source) =>
+      MainGroup.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
@@ -786,7 +802,7 @@ class Social {
 
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() {
-    return {
+    return <String, Object?>{
       'facebook': facebook,
       'vk': vk,
       'instagram': instagram,
@@ -807,6 +823,13 @@ class Social {
       viber: map['viber']! as String,
     );
   }
+
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory Social.fromJson(final String source) =>
+      Social.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {

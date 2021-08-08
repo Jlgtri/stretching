@@ -42,7 +42,7 @@ class CityModel {
 
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() {
-    return {
+    return <String, Object?>{
       'id': id,
       'countryId': countryId,
       'title': title,
@@ -58,10 +58,10 @@ class CityModel {
     );
   }
 
-  /// Convert this model to an encoded object.
+  /// Convert this model to a json string.
   String toJson() => json.encode(toMap());
 
-  /// Convert the encoded object to this model.
+  /// Convert the json string to this model.
   factory CityModel.fromJson(final String source) =>
       CityModel.fromMap(json.decode(source));
 

@@ -1,47 +1,31 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:meta/meta.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/models/activity_model.dart';
 import 'package:stretching/models/city_model.dart';
 import 'package:stretching/models/company_model.dart';
 import 'package:stretching/models/trainer_model.dart';
+import 'package:stretching/models/user_model.dart';
 import 'package:stretching/models/yclients_response.dart';
 import 'package:stretching/secrets.dart';
 
-/// The class to handle the exception in the YClients API.
-@immutable
-class YClientsException implements Exception {
-  /// The class to handle the exception in the YClients API.
-  const YClientsException(final this.response, [final this.customMessage]);
+/// The main hive String box provider.
+final Provider<Box<String>> hiveProvider = Provider<Box<String>>((final ref) {
+  throw Exception('Hive storage was not initialized.');
+});
 
-  /// The response that caused the exception.
-  final Response response;
-
-  /// The message to print if cause of this exception is undetermined.
-  final String? customMessage;
-
-  @override
-  String toString() {
-    final responseData = response.data as Map<String, Object?>?;
-    final responseMeta = responseData?['meta'] as Map<String, Object?>?;
-    final messsage = StringBuffer(
-      responseMeta?['message'] as String? ??
-          customMessage ??
-          'There was an exception in YClients API.',
-    )
-      ..writeln()
-      ..writeln('Response: ${response.statusMessage} (${response.statusCode})')
-      ..writeln('Request Uri: ${response.realUri}')
-      ..writeln('Request Data: ${response.requestOptions.queryParameters}');
-    return messsage.toString();
-  }
-}
-
-/// The provider that contains a user
-final StateProvider userProvider = StateProvider((final ref) => null);
+/// The provider of a user.
+final StateProvider<UserModel?> userProvider =
+    StateProvider<UserModel?>((final ref) {
+  final hive = ref.read(hiveProvider);
+  final savedUser = hive.get('user');
+  return savedUser != null ? UserModel.fromJson(savedUser) : null;
+});
 
 /// The client provider for YClients API.
 final Provider<Dio> yclientsClientProvider = Provider<Dio>((final ref) {
@@ -56,34 +40,7 @@ final Provider<Dio> yclientsClientProvider = Provider<Dio>((final ref) {
     },
   );
   final dio = Dio(options);
-  dio.interceptors.add(
-    InterceptorsWrapper(
-      onResponse: (final response, final handler) {
-        final requestExtra =
-            YClientsRequestExtra.fromMap(response.requestOptions.extra);
-        final customResponse = YClientsResponse.fromMap(
-          response.data,
-          onData: requestExtra.onData,
-        );
-
-        if (requestExtra.validate && !customResponse.success) {
-          throw YClientsException(response);
-        }
-        handler.resolve(
-          Response<YClientsResponse>(
-            data: customResponse,
-            requestOptions: response.requestOptions,
-            statusCode: response.statusCode,
-            statusMessage: response.statusMessage,
-            headers: response.headers,
-            isRedirect: response.isRedirect,
-            redirects: response.redirects,
-            extra: response.extra,
-          ),
-        );
-      },
-    ),
-  );
+  dio.interceptors.add(YClientsInterceptor());
   return dio;
 });
 
@@ -188,3 +145,89 @@ final FutureProvider<Iterable<ActivityModel>> scheduleProvider =
   }
   return activities;
 });
+
+/// The class to handle the exception in the YClients API.
+@immutable
+class YClientsException implements Exception {
+  /// The class to handle the exception in the YClients API.
+  const YClientsException(final this.response, [final this.customMessage]);
+
+  /// The response that caused the exception.
+  final Response<YClientsResponse> response;
+
+  /// The message to print if cause of this exception is undetermined.
+  final String? customMessage;
+
+  @override
+  String toString() {
+    final messsage = StringBuffer(
+      response.data?.meta?.message ??
+          customMessage ??
+          'There was an exception in YClients API.',
+    )
+      ..writeln()
+      ..writeln('Response: ${response.statusMessage} (${response.statusCode})')
+      ..writeln('Request Uri: ${response.realUri}')
+      ..writeln('Request Data: ${response.requestOptions.queryParameters}');
+    return messsage.toString();
+  }
+}
+
+/// The inteceptor for YClients API.
+class YClientsInterceptor extends Interceptor {
+  Response<YClientsResponse> _getCustomResponse(
+    final Response response, {
+    final bool validate = true,
+  }) {
+    final requestExtra = response.requestOptions.extra.isNotEmpty
+        ? YClientsRequestExtra.fromMap(response.requestOptions.extra)
+        : const YClientsRequestExtra();
+    final yClientsResponse = YClientsResponse.fromMap(
+      response.data,
+      onData: requestExtra.onData,
+    );
+    final customResponse = Response<YClientsResponse>(
+      data: yClientsResponse,
+      requestOptions: response.requestOptions,
+      statusCode: response.statusCode,
+      statusMessage: response.statusMessage,
+      headers: response.headers,
+      isRedirect: response.isRedirect,
+      redirects: response.redirects,
+      extra: response.extra,
+    );
+    if (validate && requestExtra.validate && !yClientsResponse.success) {
+      throw YClientsException(customResponse);
+    }
+    return customResponse;
+  }
+
+  @override
+  void onResponse(
+    final Response response,
+    final ResponseInterceptorHandler handler,
+  ) {
+    handler.resolve(_getCustomResponse(response));
+  }
+
+  @override
+  void onError(
+    final DioError err,
+    final ErrorInterceptorHandler handler,
+  ) {
+    final response = err.response;
+    if (response != null) {
+      final customResponse = _getCustomResponse(response, validate: false);
+      handler.reject(
+        DioError(
+          response: customResponse,
+          requestOptions: err.requestOptions,
+          error: YClientsException(customResponse),
+          type: err.type,
+        ),
+      );
+    } else {
+      handler.next(err);
+    }
+  }
+}

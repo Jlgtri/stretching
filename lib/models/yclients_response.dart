@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:meta/meta.dart';
 import 'package:stretching/utils/json_converters.dart';
 
@@ -8,12 +10,12 @@ import 'package:stretching/utils/json_converters.dart';
 class YClientsRequestExtra<T extends Object> {
   /// The extra options for commiting a request to YClients API.
   const YClientsRequestExtra({
-    required final this.onData,
+    final this.onData,
     final this.validate = true,
   });
 
   /// Convert the resulting data to the object of type [T].
-  final FromJson<T> onData;
+  final FromJson<T>? onData;
 
   /// If true, throw an exception if [YClientsResponse.success] is not true.
   final bool validate;
@@ -45,6 +47,13 @@ class YClientsRequestExtra<T extends Object> {
     );
   }
 
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory YClientsRequestExtra.fromJson(final String source) =>
+      YClientsRequestExtra.fromMap(json.decode(source));
+
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
@@ -60,51 +69,6 @@ class YClientsRequestExtra<T extends Object> {
   String toString() {
     return 'YClientsRequestExtra(onData: $onData, validate: $validate)';
   }
-}
-
-/// The extra options for commiting a request to YClients API.
-@immutable
-class YClientsResponseExtra<T extends Object> {
-  /// The extra options for commiting a request to YClients API.
-  const YClientsResponseExtra({required final this.response});
-
-  /// The response from YClients API.
-  final YClientsResponse<T> response;
-
-  /// Return the copy of this model.
-  YClientsResponseExtra<T> copyWith({final YClientsResponse<T>? response}) {
-    return YClientsResponseExtra<T>(response: response ?? this.response);
-  }
-
-  /// Convert this model to map with string keys.
-  Map<String, Object?> toMap({final ToJson<T>? onData}) {
-    return <String, Object?>{'response': response.toMap(onData: onData)};
-  }
-
-  /// Convert the map with string keys to this model.
-  factory YClientsResponseExtra.fromMap(
-    final Map<String, Object?> map, {
-    final FromJson<T>? onData,
-  }) {
-    return YClientsResponseExtra<T>(
-      response: YClientsResponse.fromMap(
-        map['response']! as Map<String, Object?>,
-        onData: onData,
-      ),
-    );
-  }
-
-  @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is YClientsResponseExtra<T> && other.response == response;
-  }
-
-  @override
-  int get hashCode => response.hashCode;
-
-  @override
-  String toString() => 'YClientsResponseExtra(response: $response)';
 }
 
 /// The response from the YClients API.
@@ -161,23 +125,31 @@ class YClientsResponse<T extends Object> {
     final Map<String, Object?> map, {
     final FromJson<T>? onData,
   }) {
+    final data = map['data'];
     return YClientsResponse<T>(
       success: map['success']! as bool,
-      data: onData != null
-          ? map['data'] != null && map['data'] is Iterable
-              ? (map['data']! as Iterable)
-                  .cast<Map<String, Object?>>()
-                  .map(onData)
-              : Iterable<T>.generate(
-                  1,
-                  (final _) => onData(map['data']! as Map<String, Object?>),
-                )
-          : map['data']! as Iterable<T>,
+      data: data != null
+          ? onData != null
+              ? data is Iterable
+                  ? data.cast<Map<String, Object?>>().map(onData)
+                  : Iterable<T>.generate(
+                      1,
+                      (final _) => onData(data as Map<String, Object?>),
+                    )
+              : data as Iterable<T>
+          : Iterable<T>.empty(),
       meta: map['meta'] != null && map['meta'] is! Iterable
           ? YClientsResponseMeta.fromMap(map['meta']! as Map<String, Object?>)
           : null,
     );
   }
+
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory YClientsResponse.fromJson(final String source) =>
+      YClientsResponse.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
@@ -238,6 +210,13 @@ class YClientsResponseMeta {
       message: map['message'] as String?,
     );
   }
+
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory YClientsResponseMeta.fromJson(final String source) =>
+      YClientsResponseMeta.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {

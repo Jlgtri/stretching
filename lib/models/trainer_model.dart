@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:meta/meta.dart';
 import 'package:stretching/utils/json_converters.dart';
 
@@ -154,7 +156,7 @@ class TrainerModel {
 
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() {
-    return {
+    return <String, Object?>{
       'id': id,
       'api_id': apiId,
       'name': name,
@@ -215,6 +217,13 @@ class TrainerModel {
           : null,
     );
   }
+
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory TrainerModel.fromJson(final String source) =>
+      TrainerModel.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
@@ -321,7 +330,7 @@ class ImageGroup {
 
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() {
-    return {
+    return <String, Object?>{
       'id': id,
       'entity': entity,
       'entity_id': entityId,
@@ -341,7 +350,12 @@ class ImageGroup {
     );
   }
 
-  /// Convert this model to map with string keys.
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory ImageGroup.fromJson(final String source) =>
+      ImageGroup.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
@@ -416,6 +430,13 @@ class TrainerModelImages {
       ),
     );
   }
+
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory TrainerModelImages.fromJson(final String source) =>
+      TrainerModelImages.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
@@ -500,7 +521,7 @@ class TrainerModelImage {
 
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() {
-    return {
+    return <String, Object?>{
       'id': id,
       'path': path,
       'width': width,
@@ -523,6 +544,13 @@ class TrainerModelImage {
       version: trainerImageConverter.fromJson(map['version']! as String),
     );
   }
+
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory TrainerModelImage.fromJson(final String source) =>
+      TrainerModelImage.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
@@ -584,7 +612,7 @@ class TrainerModelPosition {
 
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() {
-    return {'id': id, 'title': title};
+    return <String, Object?>{'id': id, 'title': title};
   }
 
   /// Convert the map with string keys to this model.
@@ -594,6 +622,13 @@ class TrainerModelPosition {
       title: map['title']! as String,
     );
   }
+
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory TrainerModelPosition.fromJson(final String source) =>
+      TrainerModelPosition.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
