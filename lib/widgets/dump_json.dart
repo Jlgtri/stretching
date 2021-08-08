@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:stretching/utils/logger.dart';
 
 /// The widget that dumps data from a provider a user.
 class DumpJson<T extends Object> extends ConsumerWidget {
@@ -35,7 +36,7 @@ class DumpJson<T extends Object> extends ConsumerWidget {
           final fileName = '${DateTime.now().toIso8601String()}.json';
           final file = File(join(dirs!.first.path, fileName));
           await file.writeAsString(json.encode(data), flush: true);
-          print('Dumped json at: ${file.path}');
+          logger.i('Dumped json at: ${file.path}');
         });
         return const Placeholder();
       },

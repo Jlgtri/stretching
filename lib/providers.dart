@@ -203,7 +203,7 @@ Future<Iterable<T>>
           ).toMap(),
         ),
       );
-      savedData.addAll((response.data!.data as Iterable<Object?>).cast<T>());
+      savedData.addAll((response.data!.data! as Iterable<Object?>).cast<T>());
       previousProgress += 1 / mapData.length;
     }
     await hive.put(

@@ -38,7 +38,7 @@ Future<void> main() async {
                 overrides: <Override>[hiveProvider.overrideWithValue(storage)],
                 child: MaterialApp(
                   home: Scaffold(
-                    appBar: AppBar(title: Text('Stretching Demo')),
+                    appBar: AppBar(title: const Text('Stretching Demo')),
                     body: SingleChildScrollView(
                       child: Column(
                         children: const <Widget>[

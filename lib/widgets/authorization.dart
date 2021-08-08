@@ -152,7 +152,7 @@ class AuthorizationViewModel extends ReactiveViewModel {
             throwException: true,
           );
           final user = ref.read(userProvider);
-          user.state = response!.data!.data as UserModel;
+          user.state = response!.data!.data! as UserModel;
           final hive = ref.read(hiveProvider);
           await hive.put('user', json.encode(user.state!.toMap()));
           break;
