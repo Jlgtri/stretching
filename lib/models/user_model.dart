@@ -1,8 +1,8 @@
+// ignore_for_file: sort_constructors_first
+
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
-
-// ignore_for_file: sort_constructors_first
 
 /// The user model in the YClients API.
 ///
@@ -87,16 +87,16 @@ class UserModel {
   }
 
   /// Convert the map with string keys to this model.
-  factory UserModel.fromMap(final Map<String, Object?> json) {
+  factory UserModel.fromMap(final Map<String, Object?> map) {
     return UserModel(
-      id: json['id']! as int,
-      userToken: json['user_token']! as String,
-      name: json['name']! as String,
-      phone: json['phone']! as String,
-      login: json['login']! as String,
-      email: json['email']! as String,
-      avatar: json['avatar']! as String,
-      hash: json['0']! as String,
+      id: map['id']! as int,
+      userToken: map['user_token']! as String,
+      name: map['name']! as String,
+      phone: map['phone']! as String,
+      login: map['login']! as String,
+      email: map['email']! as String,
+      avatar: map['avatar']! as String,
+      hash: map['0']! as String,
     );
   }
 

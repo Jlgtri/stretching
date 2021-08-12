@@ -1,17 +1,17 @@
+// ignore_for_file: sort_constructors_first
+
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
 import 'package:stretching/models/trainer_model.dart';
 import 'package:stretching/utils/json_converters.dart';
 
-// ignore_for_file: sort_constructors_first
-
-/// The activity model of the yclients actitivities method.
+/// The activity model of the YClients API actitivities method.
 ///
 /// See: https://yclientsru.docs.apiary.io/#reference/12/0/4
 @immutable
 class ActivityModel {
-  /// The activity model of the yclients actitivities method.
+  /// The activity model of the YClients API actitivities method.
   ///
   /// See: https://yclientsru.docs.apiary.io/#reference/12/0/4
   const ActivityModel({
@@ -65,16 +65,18 @@ class ActivityModel {
   final String fontColor;
   final bool notified;
   final Object? comment;
+
+  /// If the online payment is available for this activity.
   final PrepaidType prepaid;
 
   /// The service of this activity.
-  final ActivityService service;
+  final ActivityServiceModel service;
 
   /// The person that is going to run the activity.
-  final StaffModel staff;
+  final ActivityStaffModel staff;
 
   /// The resources needed to run this activity.
-  final Iterable<ResourceInstance> resourceInstances;
+  final Iterable<ActivityResourceInstanceModel> resourceInstances;
 
   final Iterable<Object?> labels;
 
@@ -95,9 +97,9 @@ class ActivityModel {
     final bool? notified,
     final Object? comment,
     final PrepaidType? prepaid,
-    final ActivityService? service,
-    final StaffModel? staff,
-    final Iterable<ResourceInstance>? resourceInstances,
+    final ActivityServiceModel? service,
+    final ActivityStaffModel? staff,
+    final Iterable<ActivityResourceInstanceModel>? resourceInstances,
     final Iterable<Object?>? labels,
   }) {
     return ActivityModel(
@@ -167,11 +169,12 @@ class ActivityModel {
       notified: map['notified']! as bool,
       comment: map['comment'] as String?,
       prepaid: prepaidConverter.fromJson(map['prepaid']! as String),
-      service: ActivityService.fromMap(map['service']! as Map<String, Object?>),
-      staff: StaffModel.fromMap(map['staff']! as Map<String, Object?>),
-      resourceInstances: (map['resource_instances']! as Iterable)
+      service:
+          ActivityServiceModel.fromMap(map['service']! as Map<String, Object?>),
+      staff: ActivityStaffModel.fromMap(map['staff']! as Map<String, Object?>),
+      resourceInstances: (map['resource_instances']! as Iterable<Object?>)
           .cast<Map<String, Object?>>()
-          .map((final map) => ResourceInstance.fromMap(map)),
+          .map((final map) => ActivityResourceInstanceModel.fromMap(map)),
       labels: (map['labels']! as Iterable).cast<String>(),
     );
   }
@@ -245,9 +248,9 @@ class ActivityModel {
 
 /// The resources provided for [ActivityModel].
 @immutable
-class ResourceInstance {
+class ActivityResourceInstanceModel {
   /// The resources provided for [ActivityModel].
-  const ResourceInstance({
+  const ActivityResourceInstanceModel({
     required final this.id,
     required final this.title,
     required final this.resourceId,
@@ -263,12 +266,12 @@ class ResourceInstance {
   final int resourceId;
 
   /// Return the copy of this model.
-  ResourceInstance copyWith({
+  ActivityResourceInstanceModel copyWith({
     final int? id,
     final String? title,
     final int? resourceId,
   }) {
-    return ResourceInstance(
+    return ActivityResourceInstanceModel(
       id: id ?? this.id,
       title: title ?? this.title,
       resourceId: resourceId ?? this.resourceId,
@@ -285,8 +288,10 @@ class ResourceInstance {
   }
 
   /// Convert the map with string keys to this model.
-  factory ResourceInstance.fromMap(final Map<String, Object?> map) {
-    return ResourceInstance(
+  factory ActivityResourceInstanceModel.fromMap(
+    final Map<String, Object?> map,
+  ) {
+    return ActivityResourceInstanceModel(
       id: map['id']! as int,
       title: map['title']! as String,
       resourceId: map['resource_id']! as int,
@@ -297,13 +302,13 @@ class ResourceInstance {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory ResourceInstance.fromJson(final String source) =>
-      ResourceInstance.fromMap(json.decode(source));
+  factory ActivityResourceInstanceModel.fromJson(final String source) =>
+      ActivityResourceInstanceModel.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is ResourceInstance &&
+        other is ActivityResourceInstanceModel &&
             other.id == id &&
             other.title == title &&
             other.resourceId == resourceId;
@@ -314,15 +319,16 @@ class ResourceInstance {
 
   @override
   String toString() {
-    return 'ResourceInstance(id: $id, title: $title, resourceId: $resourceId)';
+    return 'ActivityResourceInstanceModel(id: $id, title: $title, '
+        'resourceId: $resourceId)';
   }
 }
 
 /// The service provided for [ActivityModel].
 @immutable
-class ActivityService {
+class ActivityServiceModel {
   /// The service provided for [ActivityModel].
-  const ActivityService({
+  const ActivityServiceModel({
     required final this.id,
     required final this.categoryId,
     required final this.title,
@@ -359,13 +365,14 @@ class ActivityService {
   /// The id of the salon service in the YClients API.
   final int salonServiceId;
 
+  /// If the online payment is available for this service.
   final PrepaidType prepaid;
 
   /// The category of this service.
-  final ActivityServiceCategory category;
+  final ActivityServiceCategoryModel category;
 
   /// Return the copy of this model.
-  ActivityService copyWith({
+  ActivityServiceModel copyWith({
     final int? id,
     final int? categoryId,
     final String? title,
@@ -375,9 +382,9 @@ class ActivityService {
     final String? imageUrl,
     final int? salonServiceId,
     final PrepaidType? prepaid,
-    final ActivityServiceCategory? category,
+    final ActivityServiceCategoryModel? category,
   }) {
-    return ActivityService(
+    return ActivityServiceModel(
       id: id ?? this.id,
       categoryId: categoryId ?? this.categoryId,
       title: title ?? this.title,
@@ -408,8 +415,8 @@ class ActivityService {
   }
 
   /// Convert the map with string keys to this model.
-  factory ActivityService.fromMap(final Map<String, Object?> map) {
-    return ActivityService(
+  factory ActivityServiceModel.fromMap(final Map<String, Object?> map) {
+    return ActivityServiceModel(
       id: map['id']! as int,
       categoryId: map['category_id']! as int,
       title: map['title']! as String,
@@ -419,7 +426,7 @@ class ActivityService {
       imageUrl: map['image_url']! as String,
       salonServiceId: map['salon_service_id']! as int,
       prepaid: prepaidConverter.fromJson(map['prepaid']! as String),
-      category: ActivityServiceCategory.fromMap(
+      category: ActivityServiceCategoryModel.fromMap(
         map['category']! as Map<String, Object?>,
       ),
     );
@@ -429,13 +436,13 @@ class ActivityService {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory ActivityService.fromJson(final String source) =>
-      ActivityService.fromMap(json.decode(source));
+  factory ActivityServiceModel.fromJson(final String source) =>
+      ActivityServiceModel.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is ActivityService &&
+        other is ActivityServiceModel &&
             other.id == id &&
             other.categoryId == categoryId &&
             other.title == title &&
@@ -464,18 +471,19 @@ class ActivityService {
 
   @override
   String toString() {
-    return 'ActivityService(id: $id, categoryId: $categoryId, title: $title, '
-        'priceMin: $priceMin, priceMax: $priceMax, comment: $comment, '
-        'imageUrl: $imageUrl, salonServiceId: $salonServiceId, '
-        'prepaid: $prepaid, category: $category)';
+    return 'ActivityServiceModel(id: $id, categoryId: $categoryId, '
+        'title: $title, priceMin: $priceMin, priceMax: $priceMax, '
+        'comment: $comment, imageUrl: $imageUrl, '
+        'salonServiceId: $salonServiceId, prepaid: $prepaid, '
+        'category: $category)';
   }
 }
 
-/// The category of the [ActivityService].
+/// The category of the [ActivityServiceModel].
 @immutable
-class ActivityServiceCategory {
-  /// The category of the [ActivityService].
-  const ActivityServiceCategory({
+class ActivityServiceCategoryModel {
+  /// The category of the [ActivityServiceModel].
+  const ActivityServiceCategoryModel({
     required final this.id,
     required final this.categoryId,
     required final this.title,
@@ -484,19 +492,19 @@ class ActivityServiceCategory {
   /// The id of this category in the YClients API.
   final int id;
 
-  /// The id of this category in the [ActivityService].
+  /// The id of this category in the [ActivityServiceModel].
   final int categoryId;
 
   /// The title of this category.
   final String title;
 
   /// Return the copy of this model.
-  ActivityServiceCategory copyWith({
+  ActivityServiceCategoryModel copyWith({
     final int? id,
     final int? categoryId,
     final String? title,
   }) {
-    return ActivityServiceCategory(
+    return ActivityServiceCategoryModel(
       id: id ?? this.id,
       categoryId: categoryId ?? this.categoryId,
       title: title ?? this.title,
@@ -513,11 +521,13 @@ class ActivityServiceCategory {
   }
 
   /// Convert the map with string keys to this model.
-  factory ActivityServiceCategory.fromMap(final Map<String, Object?> json) {
-    return ActivityServiceCategory(
-      id: json['id']! as int,
-      categoryId: json['category_id']! as int,
-      title: json['title']! as String,
+  factory ActivityServiceCategoryModel.fromMap(
+    final Map<String, Object?> map,
+  ) {
+    return ActivityServiceCategoryModel(
+      id: map['id']! as int,
+      categoryId: map['category_id']! as int,
+      title: map['title']! as String,
     );
   }
 
@@ -525,13 +535,13 @@ class ActivityServiceCategory {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory ActivityServiceCategory.fromJson(final String source) =>
-      ActivityServiceCategory.fromMap(json.decode(source));
+  factory ActivityServiceCategoryModel.fromJson(final String source) =>
+      ActivityServiceCategoryModel.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is ActivityServiceCategory &&
+        other is ActivityServiceCategoryModel &&
             other.id == id &&
             other.categoryId == categoryId &&
             other.title == title;
@@ -542,16 +552,16 @@ class ActivityServiceCategory {
 
   @override
   String toString() {
-    return 'ActivityServiceCategory(id: $id, categoryId: $categoryId, '
+    return 'ActivityServiceCategoryModel(id: $id, categoryId: $categoryId, '
         'title: $title)';
   }
 }
 
 /// The model of a person responsible for [ActivityModel].
 @immutable
-class StaffModel {
+class ActivityStaffModel {
   /// The model of a person responsible for [ActivityModel].
-  const StaffModel({
+  const ActivityStaffModel({
     required final this.id,
     required final this.apiId,
     required final this.name,
@@ -570,7 +580,9 @@ class StaffModel {
 
   /// The id of this staff member in YClients API.
   final int id;
-  final Object? apiId;
+
+  /// The outer id of this staff member.
+  final String? apiId;
 
   /// The name of this staff member in YClients API.
   final String name;
@@ -602,15 +614,16 @@ class StaffModel {
   /// The average score of this staff member.
   final int averageScore;
 
+  /// If the online payment is available for this staff member.
   final PrepaidType prepaid;
 
   /// The position of this staff member.
-  final StaffPosition position;
+  final ActitvityStaffPositionModel position;
 
   /// Return the copy of this model.
-  StaffModel copyWith({
+  ActivityStaffModel copyWith({
     final int? id,
-    final Object? apiId,
+    final String? apiId,
     final String? name,
     final int? companyId,
     final String? specialization,
@@ -622,9 +635,9 @@ class StaffModel {
     final int? votesCount,
     final int? averageScore,
     final PrepaidType? prepaid,
-    final StaffPosition? position,
+    final ActitvityStaffPositionModel? position,
   }) {
-    return StaffModel(
+    return ActivityStaffModel(
       id: id ?? this.id,
       apiId: apiId ?? this.apiId,
       name: name ?? this.name,
@@ -663,10 +676,10 @@ class StaffModel {
   }
 
   /// Convert the map with string keys to this model.
-  factory StaffModel.fromMap(final Map<String, Object?> map) {
-    return StaffModel(
+  factory ActivityStaffModel.fromMap(final Map<String, Object?> map) {
+    return ActivityStaffModel(
       id: map['id']! as int,
-      apiId: map['api_id'],
+      apiId: map['api_id'] as String?,
       name: map['name']! as String,
       companyId: map['company_id']! as int,
       specialization: map['specialization']! as String,
@@ -678,7 +691,9 @@ class StaffModel {
       votesCount: map['votes_count']! as int,
       averageScore: map['average_score']! as int,
       prepaid: prepaidConverter.fromJson(map['prepaid']! as String),
-      position: StaffPosition.fromMap(map['position']! as Map<String, Object?>),
+      position: ActitvityStaffPositionModel.fromMap(
+        map['position']! as Map<String, Object?>,
+      ),
     );
   }
 
@@ -686,13 +701,13 @@ class StaffModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory StaffModel.fromJson(final String source) =>
-      StaffModel.fromMap(json.decode(source));
+  factory ActivityStaffModel.fromJson(final String source) =>
+      ActivityStaffModel.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is StaffModel &&
+        other is ActivityStaffModel &&
             other.id == id &&
             other.apiId == apiId &&
             other.name == name &&
@@ -729,7 +744,7 @@ class StaffModel {
 
   @override
   String toString() {
-    return 'StaffModel(id: $id, apiId: $apiId, name: $name, '
+    return 'ActivityStaffModel(id: $id, apiId: $apiId, name: $name, '
         'companyId: $companyId, specialization: $specialization, '
         'rating: $rating, showRating: $showRating, avatar: $avatar, '
         'avatarBig: $avatarBig, commentsCount: $commentsCount, '
@@ -738,11 +753,14 @@ class StaffModel {
   }
 }
 
-/// The position for the [StaffModel].
+/// The position for the [ActivityStaffModel].
 @immutable
-class StaffPosition {
-  /// The position for the [StaffModel].
-  const StaffPosition({required final this.id, required final this.title});
+class ActitvityStaffPositionModel {
+  /// The position for the [ActivityStaffModel].
+  const ActitvityStaffPositionModel({
+    required final this.id,
+    required final this.title,
+  });
 
   /// The id of this position.
   final int id;
@@ -751,8 +769,11 @@ class StaffPosition {
   final String title;
 
   /// Return the copy of this model.
-  StaffPosition copyWith({final int? id, final String? title}) {
-    return StaffPosition(id: id ?? this.id, title: title ?? this.title);
+  ActitvityStaffPositionModel copyWith({final int? id, final String? title}) {
+    return ActitvityStaffPositionModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+    );
   }
 
   /// Convert this model to map with string keys.
@@ -761,26 +782,31 @@ class StaffPosition {
   }
 
   /// Convert the map with string keys to this model.
-  factory StaffPosition.fromMap(final Map<String, Object?> map) {
-    return StaffPosition(id: map['id']! as int, title: map['title']! as String);
+  factory ActitvityStaffPositionModel.fromMap(final Map<String, Object?> map) {
+    return ActitvityStaffPositionModel(
+      id: map['id']! as int,
+      title: map['title']! as String,
+    );
   }
 
   /// Convert this model to a json string.
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory StaffPosition.fromJson(final String source) =>
-      StaffPosition.fromMap(json.decode(source));
+  factory ActitvityStaffPositionModel.fromJson(final String source) =>
+      ActitvityStaffPositionModel.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is StaffPosition && other.id == id && other.title == title;
+        other is ActitvityStaffPositionModel &&
+            other.id == id &&
+            other.title == title;
   }
 
   @override
   int get hashCode => id.hashCode ^ title.hashCode;
 
   @override
-  String toString() => 'StaffPosition(id: $id, title: $title)';
+  String toString() => 'ActitvityStaffPositionModel(id: $id, title: $title)';
 }

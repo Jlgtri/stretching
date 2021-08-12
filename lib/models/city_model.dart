@@ -1,15 +1,15 @@
+// ignore_for_file: sort_constructors_first
+
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
 
-// ignore_for_file: sort_constructors_first
-
-/// The city model of the yclient's cities method.
+/// The city model of the YClients API cities method.
 ///
 /// See: https://yclientsru.docs.apiary.io/#reference/40/0/0
 @immutable
 class CityModel {
-  /// The city model of the yclient's cities method.
+  /// The city model of the YClients API cities method.
   ///
   /// See: https://yclientsru.docs.apiary.io/#reference/40/0/0
   const CityModel({

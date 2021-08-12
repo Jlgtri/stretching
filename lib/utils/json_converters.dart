@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:stretching/utils/enum_to_string.dart';
@@ -17,21 +19,23 @@ mixin JsonConverter<T extends Object?, S extends Object?> on Object {
   T fromJson(final S data);
 }
 
-/// The default converter of the [OptionalBoolToIntConverter] with
+/// The default converter of the [DefaultBoolToIntConverter] with
 /// `defaultValue = false`.
-const falseBoolToIntConverter = OptionalBoolToIntConverter._false();
+const DefaultBoolToIntConverter falseBoolToIntConverter =
+    DefaultBoolToIntConverter._false();
 
-/// The default converter of the [OptionalBoolToIntConverter] with
+/// The default converter of the [DefaultBoolToIntConverter] with
 /// `defaultValue = true`.
-const trueBoolToIntConverter = OptionalBoolToIntConverter._true();
+const DefaultBoolToIntConverter trueBoolToIntConverter =
+    DefaultBoolToIntConverter._true();
 
 /// The bool to int converter.
-class OptionalBoolToIntConverter implements JsonConverter<bool, int?> {
+class DefaultBoolToIntConverter implements JsonConverter<bool, int?> {
   /// The bool to int converter with `[defaultValue] = false`.
-  const OptionalBoolToIntConverter._false({final this.defaultValue = false});
+  const DefaultBoolToIntConverter._false() : defaultValue = false;
 
   /// The bool to int converter with `[defaultValue] = true`.
-  const OptionalBoolToIntConverter._true({final this.defaultValue = true});
+  const DefaultBoolToIntConverter._true() : defaultValue = true;
 
   /// The default value to return if condition is null.
   final bool defaultValue;
@@ -44,7 +48,7 @@ class OptionalBoolToIntConverter implements JsonConverter<bool, int?> {
 }
 
 /// The default converter of the [BoolToIntConverter].
-const boolToIntConverter = BoolToIntConverter._();
+const BoolToIntConverter boolToIntConverter = BoolToIntConverter._();
 
 /// The bool to int converter.
 class BoolToIntConverter implements JsonConverter<bool, int> {
@@ -92,27 +96,32 @@ extension on String {
 }
 
 /// The default converter of the [OptionalLocaleConverter].
-const optionalLocaleConverter = OptionalLocaleConverter._();
+const OptionalLocaleConverter optionalLocaleConverter =
+    OptionalLocaleConverter._();
 
 /// The custom converter for nullable [Locale].
-class OptionalLocaleConverter implements JsonConverter<Locale?, Object?> {
+class OptionalLocaleConverter implements JsonConverter<Locale?, String?> {
   /// The custom converter for nullable [Locale].
   const OptionalLocaleConverter._();
 
   @override
   Locale? fromJson(final Object? data) {
-    return data is Locale? ? data : (data as String).toLanguageTag();
+    return data is Locale?
+        ? data
+        : data is String
+            ? data.toLanguageTag()
+            : null;
   }
 
   @override
-  Object? toJson(final Locale? locale) => locale?.toLanguageTag();
+  String? toJson(final Locale? locale) => locale?.toLanguageTag();
 }
 
 /// The default converter of the [LocaleConverter].
-const localeConverter = LocaleConverter._();
+const LocaleConverter localeConverter = LocaleConverter._();
 
 /// The custom converter for [Locale].
-class LocaleConverter implements JsonConverter<Locale, Object?> {
+class LocaleConverter implements JsonConverter<Locale, String> {
   /// The custom converter for [Locale].
   const LocaleConverter._();
 
@@ -122,62 +131,102 @@ class LocaleConverter implements JsonConverter<Locale, Object?> {
   }
 
   @override
-  Object? toJson(final Locale locale) => locale.toLanguageTag();
+  String toJson(final Locale locale) => locale.toLanguageTag();
 }
 
 /// The custom converter for nullable [Iterable].
-class OptionalIterableConverter<T extends Object?>
-    implements JsonConverter<Iterable<T?>?, Object?> {
+class OptionalIterableConverter<T extends Object?, S extends Object?>
+    implements JsonConverter<Iterable<T>?, List<S>?> {
   /// The custom converter for nullable [Iterable].
   const OptionalIterableConverter(this.converter);
 
   /// The converter for the children.
-  final JsonConverter<T, Object?> converter;
+  final JsonConverter<T?, S?> converter;
 
   @override
-  Iterable<T?>? fromJson(final Object? data) {
+  Iterable<T>? fromJson(final Object? data) {
     if (data is Iterable<T?>?) {
-      return data;
+      return data?.whereType<T>();
+    } else if (data is Iterable<Object?>) {
+      return data.whereType<S>().map(converter.fromJson).whereType<T>();
     }
-    return (data as Iterable).map(converter.fromJson);
   }
 
   @override
-  Object? toJson(final Iterable<T?>? iterable) => iterable
-      ?.map((final child) => child != null ? converter.toJson(child) : null)
-      .toList();
+  List<S>? toJson(final Iterable<Object?>? iterable) =>
+      iterable?.whereType<T>().map(converter.toJson).whereType<S>().toList();
 }
 
 /// The custom converter for [Iterable].
-class IterableConverter<T extends Object?>
-    implements JsonConverter<Iterable<T>, Object?> {
+class IterableConverter<T extends Object, S extends Object>
+    implements JsonConverter<Iterable<T>, List<S>> {
   /// The custom converter for [Iterable].
   const IterableConverter(this.converter);
 
   /// The converter for the children.
-  final JsonConverter<T, Object?> converter;
+  final JsonConverter<T, S> converter;
 
   @override
   Iterable<T> fromJson(final Object? data) {
-    if (data is Iterable<T>) {
-      return data;
-    }
-
-    final iterable = data! as Iterable;
-    return iterable.map(converter.fromJson).whereType<T>();
+    return data is Iterable<T>
+        ? data
+        : (data! as Iterable)
+            .whereType<S>()
+            .map(converter.fromJson)
+            .whereType<T>();
   }
 
   @override
-  Object? toJson(final Iterable<T> iterable) =>
+  List<S> toJson(final Iterable<T> iterable) =>
       iterable.map(converter.toJson).toList();
 }
 
+/// The custom converter to convert to String.
+class StringConverter<T extends Object, S extends Object>
+    implements JsonConverter<T, String> {
+  /// The custom converter to convert to String.
+  const StringConverter(this.converter);
+
+  /// The converter for the children.
+  final JsonConverter<T, S> converter;
+
+  @override
+  T fromJson(final Object? data) {
+    return data is T ? data : converter.fromJson(json.decode(data! as String));
+  }
+
+  @override
+  String toJson(final T data) => json.encode(converter.toJson(data));
+}
+
+/// The custom converter to convert to String.
+class OptionalStringConverter<T extends Object>
+    implements JsonConverter<T?, String?> {
+  /// The custom converter to convert to String.
+  const OptionalStringConverter(this.converter);
+
+  /// The converter for the children.
+  final JsonConverter<T?, String?> converter;
+
+  @override
+  T? fromJson(final Object? data) {
+    return data is T
+        ? data
+        : data is String
+            ? converter.fromJson(json.decode(data))
+            : null;
+  }
+
+  @override
+  String? toJson(final T? data) => data != null ? json.encode(data) : null;
+}
+
 /// The default converter of the [OptionalPermissionConverter].
-const optionalPermissionConverter = OptionalPermissionConverter._();
+const OptionalPermissionConverter optionalPermissionConverter =
+    OptionalPermissionConverter._();
 
 /// The custom converter for nullable [Permission].
-class OptionalPermissionConverter
-    implements JsonConverter<Permission?, Object?> {
+class OptionalPermissionConverter implements JsonConverter<Permission?, int?> {
   /// The custom converter for nullable [Permission].
   const OptionalPermissionConverter._();
 
@@ -185,21 +234,25 @@ class OptionalPermissionConverter
   Permission? fromJson(final Object? data) {
     if (data is Permission?) {
       return data;
+    } else if (data is int) {
+      return Permission.byValue(data);
+    } else if (data is String) {
+      final permissionValue = int.tryParse(data);
+      if (permissionValue != null) {
+        return Permission.byValue(permissionValue);
+      }
     }
-
-    final permissionValue = int.tryParse(data as String);
-    return permissionValue != null ? Permission.byValue(permissionValue) : null;
   }
 
   @override
-  Object? toJson(final Permission? permission) => permission?.value;
+  int? toJson(final Permission? permission) => permission?.value;
 }
 
 /// The default converter of the [PermissionConverter].
-const permissionConverter = PermissionConverter._();
+const PermissionConverter permissionConverter = PermissionConverter._();
 
 /// The custom converter for [Permission].
-class PermissionConverter implements JsonConverter<Permission, Object?> {
+class PermissionConverter implements JsonConverter<Permission, int> {
   /// The custom converter for [Permission].
   const PermissionConverter._();
 
@@ -209,14 +262,15 @@ class PermissionConverter implements JsonConverter<Permission, Object?> {
   }
 
   @override
-  Object? toJson(final Permission permission) => permission.value;
+  int toJson(final Permission permission) => permission.value;
 }
 
 /// The default converter of the [OptionalDateTimeConverter].
-const optionalDateTimeConverter = OptionalDateTimeConverter._();
+const OptionalDateTimeConverter optionalDateTimeConverter =
+    OptionalDateTimeConverter._();
 
 /// The custom converter for nullable [DateTime].
-class OptionalDateTimeConverter implements JsonConverter<DateTime?, Object?> {
+class OptionalDateTimeConverter implements JsonConverter<DateTime?, String?> {
   /// The custom converter for nullable [DateTime].
   const OptionalDateTimeConverter._();
 
@@ -234,14 +288,14 @@ class OptionalDateTimeConverter implements JsonConverter<DateTime?, Object?> {
   }
 
   @override
-  Object? toJson(final DateTime? dateTime) => dateTime?.toIso8601String();
+  String? toJson(final DateTime? dateTime) => dateTime?.toIso8601String();
 }
 
 /// The default converter of the [DateTimeConverter].
-const dateTimeConverter = DateTimeConverter._();
+const DateTimeConverter dateTimeConverter = DateTimeConverter._();
 
 /// The custom converter for [DateTime].
-class DateTimeConverter implements JsonConverter<DateTime, Object?> {
+class DateTimeConverter implements JsonConverter<DateTime, String> {
   /// The custom converter for [DateTime].
   const DateTimeConverter._();
 
@@ -259,14 +313,15 @@ class DateTimeConverter implements JsonConverter<DateTime, Object?> {
   }
 
   @override
-  Object? toJson(final DateTime dateTime) => dateTime.toIso8601String();
+  String toJson(final DateTime dateTime) => dateTime.toIso8601String();
 }
 
 /// The default converter of the [OptionalColorConverter].
-const optionalColorConverter = OptionalColorConverter._();
+const OptionalColorConverter optionalColorConverter =
+    OptionalColorConverter._();
 
 /// The custom converter for nullable [Color].
-class OptionalColorConverter implements JsonConverter<Color?, Object?> {
+class OptionalColorConverter implements JsonConverter<Color?, String?> {
   /// The custom converter for nullable [Color].
   const OptionalColorConverter._();
 
@@ -285,16 +340,15 @@ class OptionalColorConverter implements JsonConverter<Color?, Object?> {
   }
 
   @override
-  Object? toJson(final Color? color) {
-    return color?.value.toRadixString(16).substring(2);
-  }
+  String? toJson(final Color? color) =>
+      color?.value.toRadixString(16).substring(2);
 }
 
 /// The default converter of the [ColorConverter].
 const ColorConverter colorConverter = ColorConverter._();
 
 /// The custom converter for [Color].
-class ColorConverter implements JsonConverter<Color, Object?> {
+class ColorConverter implements JsonConverter<Color, String> {
   /// The custom converter for [Color].
   const ColorConverter._();
 
@@ -312,9 +366,8 @@ class ColorConverter implements JsonConverter<Color, Object?> {
   }
 
   @override
-  Object? toJson(final Color color) {
-    return color.value.toRadixString(16).substring(2);
-  }
+  String toJson(final Color color) =>
+      color.value.toRadixString(16).substring(2);
 }
 
 /// The custom converter for nullable [Enum].
@@ -333,7 +386,7 @@ class OptionalEnumConverter<T extends Enum>
   @override
   T? fromJson(final Object? data) {
     if (values.contains(data)) {
-      return data as T?;
+      return data! as T;
     } else if (data is String) {
       return enumFromString(values, data);
     } else {

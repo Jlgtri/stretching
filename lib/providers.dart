@@ -6,9 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:meta/meta.dart';
 import 'package:stretching/const.dart';
+import 'package:stretching/models/abonement_model.dart';
 import 'package:stretching/models/activity_model.dart';
 import 'package:stretching/models/city_model.dart';
 import 'package:stretching/models/company_model.dart';
+import 'package:stretching/models/record_model.dart';
 import 'package:stretching/models/trainer_model.dart';
 import 'package:stretching/models/user_model.dart';
 import 'package:stretching/models/yclients_response.dart';
@@ -17,7 +19,7 @@ import 'package:stretching/utils/json_converters.dart';
 
 /// The main hive String box provider.
 final Provider<Box<String>> hiveProvider = Provider<Box<String>>((final ref) {
-  throw Exception('Hive storage was not initialized.');
+  throw Exception('Hive storage has not been initialized.');
 });
 
 /// The provider of a user.
@@ -31,21 +33,20 @@ final StateProvider<UserModel?> userProvider =
 /// The client provider for YClients API.
 final Provider<Dio> yclientsClientProvider = Provider<Dio>((final ref) {
   final user = ref.watch(userProvider).state;
-  final options = BaseOptions(
-    headers: <String, String>{
-      HttpHeaders.contentTypeHeader: 'application/json',
-      HttpHeaders.acceptHeader: 'application/vnd.yclients.v2+json',
-      HttpHeaders.authorizationHeader: user != null
-          ? 'Bearer $yClientsToken, User $user'
-          : 'Bearer $yClientsToken',
-    },
-  );
-  final dio = Dio(options);
-  dio.interceptors.add(YClientsInterceptor());
-  return dio;
+  return Dio(
+    BaseOptions(
+      headers: <String, String>{
+        HttpHeaders.contentTypeHeader: 'application/json',
+        HttpHeaders.acceptHeader: 'application/vnd.yclients.v2+json',
+        HttpHeaders.authorizationHeader: user != null
+            ? 'Bearer $yClientsToken, User ${user.userToken}'
+            : 'Bearer $yClientsToken',
+      },
+    ),
+  )..interceptors.add(YClientsInterceptor());
 });
 
-/// The url of the yclients platfrom API.
+/// The url of the YClients platfrom API.
 const String yClientsUrl = 'https://api.yclients.com/api/v1';
 
 /// The progress of initialising a [citiesProvider].
@@ -139,7 +140,7 @@ final FutureProvider<Iterable<ActivityModel>> scheduleProvider =
   final studios = await ref.read(studiosProvider.future);
   return getIterableDataFromYClients<ActivityModel, StudioModel>(
     ref: ref,
-    progressProvider: trainersProgressProvider,
+    progressProvider: scheduleProgressProvider,
     mapData: studios,
     saveName: 'activities',
     url: (final studio) => '$yClientsUrl/activity/${studio.id}/search',
@@ -148,6 +149,62 @@ final FutureProvider<Iterable<ActivityModel>> scheduleProvider =
     fromMap: (final data) =>
         ActivityModel.fromMap(data! as Map<String, Object?>),
   );
+});
+
+/// The progress of initialising a [userAbonementsProvider].
+final StateProvider<num?> userAbonementsProgressProvider =
+    StateProvider<num?>((final ref) => null);
+
+/// The user abonements provider for YClients API.
+///
+/// See: https://yclientsru.docs.apiary.io/#reference/28/0
+final FutureProvider<Iterable<AbonementModel>?> userAbonementsProvider =
+    FutureProvider<Iterable<AbonementModel>?>((final ref) async {
+  final user = ref.watch(userProvider).state;
+  if (user != null) {
+    final studios = await ref.read(studiosProvider.future);
+    return getIterableDataFromYClients<AbonementModel, StudioModel>(
+      ref: ref,
+      progressProvider: userAbonementsProgressProvider,
+      mapData: studios,
+      saveName: 'abonements',
+      url: (final studio) => '$yClientsUrl/user/loyalty/abonements',
+      queryParameters: (final studio) =>
+          <String, Object?>{'company_id': studio.id},
+      toMap: (final data) => data.toMap(),
+      fromMap: (final data) =>
+          AbonementModel.fromMap(data! as Map<String, Object?>),
+    );
+  } else {
+    await ref.read(hiveProvider).delete('abonements');
+  }
+});
+
+/// The progress of initialising a [userAbonementsProvider].
+final StateProvider<num?> userRecordsProgressProvider =
+    StateProvider<num?>((final ref) => null);
+
+/// The user recordrs provider for YClients API.
+///
+/// See: https://developers.yclients.com/ru/#operation/Получить%20записи%20пользователя
+final FutureProvider<Iterable<RecordModel>?> userRecordsProvider =
+    FutureProvider<Iterable<RecordModel>?>((final ref) async {
+  final user = ref.watch(userProvider).state;
+  if (user != null) {
+    final studios = await ref.read(studiosProvider.future);
+    return getIterableDataFromYClients<RecordModel, StudioModel>(
+      ref: ref,
+      progressProvider: userRecordsProgressProvider,
+      mapData: studios,
+      saveName: 'records',
+      url: (final studio) => '$yClientsUrl/user/records',
+      toMap: (final data) => data.toMap(),
+      fromMap: (final data) =>
+          RecordModel.fromMap(data! as Map<String, Object?>),
+    );
+  } else {
+    await ref.read(hiveProvider).delete('records');
+  }
 });
 
 /// Returns the iterable data from YClients API.
@@ -198,8 +255,10 @@ Future<Iterable<T>>
         },
         options: (options?.call(data) ?? Options()).copyWith(
           extra: YClientsRequestExtra<Iterable<T>>(
-            onData: (final data) =>
-                <T>[for (final map in data! as Iterable<Object?>) fromMap(map)],
+            onData: (final data) => <T>[
+              for (final map in data as Iterable<Object?>? ?? const <Object?>[])
+                fromMap(map)
+            ],
           ).toMap(),
         ),
       );

@@ -1,21 +1,27 @@
+// ignore_for_file: sort_constructors_first
+
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
 import 'package:stretching/utils/json_converters.dart';
 
-// ignore_for_file: sort_constructors_first
+/// The enum that shows if the online payment is available.
+enum PrepaidType {
+  /// The payment is allowed.
+  allowed,
 
-/// The prepaid type of the [TrainerModel].
-enum PrepaidType { allowed, forbidden }
+  /// The payment is forbidden.
+  forbidden
+}
 
 /// The converter for [PrepaidType] enum.
 const EnumConverter<PrepaidType> prepaidConverter =
     EnumConverter(PrepaidType.values);
 
-/// The trainer model of the yclient's book_staff method.
+/// The trainer model of the YClients API book_staff method.
 @immutable
 class TrainerModel {
-  /// The trainer model of the yclient's book_staff method.
+  /// The trainer model of the YClients API book_staff method.
   const TrainerModel({
     required final this.id,
     required final this.apiId,
@@ -43,7 +49,9 @@ class TrainerModel {
 
   /// The id of this trainer in YClients API.
   final int id;
-  final Object? apiId;
+
+  /// The outer id of this trainer.
+  final String? apiId;
 
   /// The name of this trainer.
   final String name;
@@ -73,7 +81,7 @@ class TrainerModel {
   final bool bookable;
 
   /// The images of this trainer.
-  final ImageGroup? imageGroup;
+  final TrainerImageGroupModel? imageGroup;
 
   /// The information about this trainer.
   final String information;
@@ -101,12 +109,12 @@ class TrainerModel {
   final PrepaidType prepaid;
 
   /// The position of this trainer.
-  final TrainerModelPosition? position;
+  final TrainerPositionModel? position;
 
   /// Return the copy of this model.
   TrainerModel copyWith({
     final int? id,
-    final Object? apiId,
+    final String? apiId,
     final String? name,
     final String? specialization,
     final int? rating,
@@ -116,7 +124,7 @@ class TrainerModel {
     final int? commentsCount,
     final int? votesCount,
     final bool? bookable,
-    final ImageGroup? imageGroup,
+    final TrainerImageGroupModel? imageGroup,
     final String? information,
     final int? positionId,
     final DateTime? scheduleTill,
@@ -126,7 +134,7 @@ class TrainerModel {
     final bool? hidden,
     final Object? user,
     final PrepaidType? prepaid,
-    final TrainerModelPosition? position,
+    final TrainerPositionModel? position,
   }) {
     return TrainerModel(
       id: id ?? this.id,
@@ -188,7 +196,7 @@ class TrainerModel {
   factory TrainerModel.fromMap(final Map<String, Object?> map) {
     return TrainerModel(
       id: map['id']! as int,
-      apiId: map['api_id'],
+      apiId: map['api_id'] as String?,
       name: map['name']! as String,
       specialization: map['specialization']! as String,
       rating: map['rating']! as int,
@@ -199,7 +207,9 @@ class TrainerModel {
       votesCount: map['votes_count']! as int,
       bookable: map['bookable']! as bool,
       imageGroup: map['image_group'] != null && map['image_group'] is! Iterable
-          ? ImageGroup.fromMap(map['image_group']! as Map<String, Object?>)
+          ? TrainerImageGroupModel.fromMap(
+              map['image_group']! as Map<String, Object?>,
+            )
           : null,
       information: map['information']! as String,
       positionId: map['position_id']! as int,
@@ -211,7 +221,7 @@ class TrainerModel {
       user: map['user'],
       prepaid: prepaidConverter.fromJson(map['prepaid']! as String),
       position: map['position'] != null && map['position'] is! Iterable
-          ? TrainerModelPosition.fromMap(
+          ? TrainerPositionModel.fromMap(
               map['position']! as Map<String, Object?>,
             )
           : null,
@@ -295,9 +305,9 @@ class TrainerModel {
 
 /// The class with all available unique [TrainerModelImageVersion] images.
 @immutable
-class ImageGroup {
+class TrainerImageGroupModel {
   /// The class with all available unique [TrainerModelImageVersion] images.
-  const ImageGroup({
+  const TrainerImageGroupModel({
     required final this.id,
     required final this.entity,
     required final this.entityId,
@@ -311,16 +321,16 @@ class ImageGroup {
   final String entityId;
 
   /// The all available unique [TrainerModelImageVersion] images.
-  final TrainerModelImages images;
+  final TrainerImageGroupImagesModel images;
 
   /// Return the copy of this model.
-  ImageGroup copyWith({
+  TrainerImageGroupModel copyWith({
     final int? id,
     final String? entity,
     final String? entityId,
-    final TrainerModelImages? images,
+    final TrainerImageGroupImagesModel? images,
   }) {
-    return ImageGroup(
+    return TrainerImageGroupModel(
       id: id ?? this.id,
       entity: entity ?? this.entity,
       entityId: entityId ?? this.entityId,
@@ -339,12 +349,12 @@ class ImageGroup {
   }
 
   /// Convert the map with string keys to this model.
-  factory ImageGroup.fromMap(final Map<String, Object?> map) {
-    return ImageGroup(
+  factory TrainerImageGroupModel.fromMap(final Map<String, Object?> map) {
+    return TrainerImageGroupModel(
       id: map['id']! as int,
       entity: map['entity']! as String,
       entityId: map['entity_id']! as String,
-      images: TrainerModelImages.fromMap(
+      images: TrainerImageGroupImagesModel.fromMap(
         map['images']! as Map<String, Object?>,
       ),
     );
@@ -354,13 +364,13 @@ class ImageGroup {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory ImageGroup.fromJson(final String source) =>
-      ImageGroup.fromMap(json.decode(source));
+  factory TrainerImageGroupModel.fromJson(final String source) =>
+      TrainerImageGroupModel.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is ImageGroup &&
+        other is TrainerImageGroupModel &&
             other.id == id &&
             other.entity == entity &&
             other.entityId == entityId &&
@@ -374,37 +384,37 @@ class ImageGroup {
 
   @override
   String toString() {
-    return 'ImageGroup(id: $id, entity: $entity, entityId: $entityId, '
-        'images: $images)';
+    return 'TrainerImageGroupModel(id: $id, entity: $entity, '
+        'entityId: $entityId, images: $images)';
   }
 }
 
 /// The class with all available unique [TrainerModelImageVersion] images.
 @immutable
-class TrainerModelImages {
+class TrainerImageGroupImagesModel {
   /// The class with all available unique [TrainerModelImageVersion] images.
-  const TrainerModelImages({
+  const TrainerImageGroupImagesModel({
     required final this.sm,
     required final this.norm,
     required final this.origin,
   });
 
   /// The image with [TrainerModelImageVersion.sm].
-  final TrainerModelImage sm;
+  final TrainerImageGroupImagesImageModel sm;
 
   /// The image with [TrainerModelImageVersion.norm].
-  final TrainerModelImage norm;
+  final TrainerImageGroupImagesImageModel norm;
 
   /// The image with [TrainerModelImageVersion.origin].
-  final TrainerModelImage origin;
+  final TrainerImageGroupImagesImageModel origin;
 
   /// Return the copy of this model.
-  TrainerModelImages copyWith({
-    final TrainerModelImage? sm,
-    final TrainerModelImage? norm,
-    final TrainerModelImage? origin,
+  TrainerImageGroupImagesModel copyWith({
+    final TrainerImageGroupImagesImageModel? sm,
+    final TrainerImageGroupImagesImageModel? norm,
+    final TrainerImageGroupImagesImageModel? origin,
   }) {
-    return TrainerModelImages(
+    return TrainerImageGroupImagesModel(
       sm: sm ?? this.sm,
       norm: norm ?? this.norm,
       origin: origin ?? this.origin,
@@ -421,11 +431,15 @@ class TrainerModelImages {
   }
 
   /// Convert the map with string keys to this model.
-  factory TrainerModelImages.fromMap(final Map<String, Object?> map) {
-    return TrainerModelImages(
-      sm: TrainerModelImage.fromMap(map['sm']! as Map<String, Object?>),
-      norm: TrainerModelImage.fromMap(map['norm']! as Map<String, Object?>),
-      origin: TrainerModelImage.fromMap(
+  factory TrainerImageGroupImagesModel.fromMap(final Map<String, Object?> map) {
+    return TrainerImageGroupImagesModel(
+      sm: TrainerImageGroupImagesImageModel.fromMap(
+        map['sm']! as Map<String, Object?>,
+      ),
+      norm: TrainerImageGroupImagesImageModel.fromMap(
+        map['norm']! as Map<String, Object?>,
+      ),
+      origin: TrainerImageGroupImagesImageModel.fromMap(
         map['origin']! as Map<String, Object?>,
       ),
     );
@@ -435,13 +449,13 @@ class TrainerModelImages {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory TrainerModelImages.fromJson(final String source) =>
-      TrainerModelImages.fromMap(json.decode(source));
+  factory TrainerImageGroupImagesModel.fromJson(final String source) =>
+      TrainerImageGroupImagesModel.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is TrainerModelImages &&
+        other is TrainerImageGroupImagesModel &&
             other.sm == sm &&
             other.norm == norm &&
             other.origin == origin;
@@ -452,11 +466,12 @@ class TrainerModelImages {
 
   @override
   String toString() {
-    return 'TrainerModelImages(sm: $sm, norm: $norm, origin: $origin)';
+    return 'TrainerImageGroupImagesModel(sm: $sm, norm: $norm, '
+        'origin: $origin)';
   }
 }
 
-/// The version of the [TrainerModelImage].
+/// The version of the [TrainerImageGroupImagesImageModel].
 enum TrainerModelImageVersion { sm, norm, origin }
 
 /// The converter for [PrepaidType] enum.
@@ -465,9 +480,9 @@ const EnumConverter<TrainerModelImageVersion> trainerImageConverter =
 
 /// A specific [version] image for a trainer.
 @immutable
-class TrainerModelImage {
+class TrainerImageGroupImagesImageModel {
   /// A specific [version] image for a trainer.
-  const TrainerModelImage({
+  const TrainerImageGroupImagesImageModel({
     required final this.id,
     required final this.path,
     required final this.width,
@@ -499,7 +514,7 @@ class TrainerModelImage {
   final TrainerModelImageVersion version;
 
   /// Return the copy of this model.
-  TrainerModelImage copyWith({
+  TrainerImageGroupImagesImageModel copyWith({
     final String? id,
     final String? path,
     final String? width,
@@ -508,7 +523,7 @@ class TrainerModelImage {
     final int? imageGroupId,
     final TrainerModelImageVersion? version,
   }) {
-    return TrainerModelImage(
+    return TrainerImageGroupImagesImageModel(
       id: id ?? this.id,
       path: path ?? this.path,
       width: width ?? this.width,
@@ -533,8 +548,10 @@ class TrainerModelImage {
   }
 
   /// Convert the map with string keys to this model.
-  factory TrainerModelImage.fromMap(final Map<String, Object?> map) {
-    return TrainerModelImage(
+  factory TrainerImageGroupImagesImageModel.fromMap(
+    final Map<String, Object?> map,
+  ) {
+    return TrainerImageGroupImagesImageModel(
       id: map['id']! as String,
       path: map['path']! as String,
       width: map['width']! as String,
@@ -549,13 +566,13 @@ class TrainerModelImage {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory TrainerModelImage.fromJson(final String source) =>
-      TrainerModelImage.fromMap(json.decode(source));
+  factory TrainerImageGroupImagesImageModel.fromJson(final String source) =>
+      TrainerImageGroupImagesImageModel.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is TrainerModelImage &&
+        other is TrainerImageGroupImagesImageModel &&
             other.id == id &&
             other.path == path &&
             other.width == width &&
@@ -578,17 +595,17 @@ class TrainerModelImage {
 
   @override
   String toString() {
-    return 'TrainerModelImage(id: $id, path: $path, width: $width, '
-        'height: $height, type: $type, imageGroupId: $imageGroupId, '
-        'version: $version)';
+    return 'TrainerImageGroupImagesImageModel(id: $id, path: $path, '
+        'width: $width, height: $height, type: $type, '
+        'imageGroupId: $imageGroupId, version: $version)';
   }
 }
 
 /// The position model for [TrainerModel].
 @immutable
-class TrainerModelPosition {
+class TrainerPositionModel {
   /// The position model for [TrainerModel].
-  const TrainerModelPosition({
+  const TrainerPositionModel({
     required final this.id,
     required final this.title,
   });
@@ -600,11 +617,11 @@ class TrainerModelPosition {
   final String title;
 
   /// Return the copy of this model.
-  TrainerModelPosition copyWith({
+  TrainerPositionModel copyWith({
     final int? id,
     final String? title,
   }) {
-    return TrainerModelPosition(
+    return TrainerPositionModel(
       id: id ?? this.id,
       title: title ?? this.title,
     );
@@ -616,8 +633,8 @@ class TrainerModelPosition {
   }
 
   /// Convert the map with string keys to this model.
-  factory TrainerModelPosition.fromMap(final Map<String, Object?> map) {
-    return TrainerModelPosition(
+  factory TrainerPositionModel.fromMap(final Map<String, Object?> map) {
+    return TrainerPositionModel(
       id: map['id']! as int,
       title: map['title']! as String,
     );
@@ -627,18 +644,18 @@ class TrainerModelPosition {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory TrainerModelPosition.fromJson(final String source) =>
-      TrainerModelPosition.fromMap(json.decode(source));
+  factory TrainerPositionModel.fromJson(final String source) =>
+      TrainerPositionModel.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is TrainerModelPosition && other.id == id && other.title == title;
+        other is TrainerPositionModel && other.id == id && other.title == title;
   }
 
   @override
   int get hashCode => id.hashCode ^ title.hashCode;
 
   @override
-  String toString() => 'TrainerModelPosition(id: $id, title: $title)';
+  String toString() => 'TrainerPositionModel(id: $id, title: $title)';
 }

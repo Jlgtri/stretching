@@ -1,9 +1,9 @@
+// ignore_for_file: sort_constructors_first
+
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
 import 'package:stretching/utils/json_converters.dart';
-
-// ignore_for_file: sort_constructors_first
 
 /// The extra options for commiting a request to YClients API.
 @immutable

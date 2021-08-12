@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:stacked/stacked.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stretching/providers.dart';
 
 /// The widget to authorize a user.
@@ -12,9 +12,16 @@ class SaveData extends ConsumerWidget {
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
+    final user = ref.watch(userProvider).state;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
+        DataProgress(
+          studiosProvider,
+          studiosProgressProvider,
+          'studios',
+          title: 'Studios',
+        ),
         DataProgress(
           trainersProvider,
           trainersProgressProvider,
@@ -27,19 +34,30 @@ class SaveData extends ConsumerWidget {
           'activities',
           title: 'Schedule',
         ),
-        DataProgress(
-          studiosProvider,
-          studiosProgressProvider,
-          'studios',
-          title: 'Studios',
-        ),
+        if (user != null) ...[
+          DataProgress(
+            userAbonementsProvider,
+            userAbonementsProgressProvider,
+            'abonements',
+            title: 'Abonements',
+          ),
+          DataProgress(
+            userRecordsProvider,
+            userRecordsProgressProvider,
+            'records',
+            title: 'Records',
+          )
+        ] else
+          const Center(
+            child: Text('Login to download Abonements and Records'),
+          ),
       ],
     );
   }
 }
 
 /// The widget that shows a progress for a [progressProvider].
-class DataProgress<T extends Object> extends ConsumerWidget {
+class DataProgress<T extends Object?> extends HookConsumerWidget {
   /// The widget that shows a progress for a [progressProvider].
   const DataProgress(
     final this.provider,
@@ -71,53 +89,65 @@ class DataProgress<T extends Object> extends ConsumerWidget {
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    return ViewModelBuilder<DataProgressViewModel<T>>.reactive(
-      disposeViewModel: false,
-      fireOnModelReadyOnce: true,
-      initialiseSpecialViewModelsOnce: true,
-      viewModelBuilder: () => DataProgressViewModel(ref),
-      builder: (final context, final viewModel, final child) {
-        final progress = ref.watch(progressProvider).state;
-        final isDownloaded = viewModel.hasProviderData(saveName);
-        final isDeleted = viewModel.isDeleted(saveName);
-        return ListTile(
-          contentPadding: const EdgeInsets.all(14),
-          enabled: !viewModel.isBusy,
-          leading: Text(
-            progress == null ? 'N/A' : '${progress.toStringAsFixed(2)}%',
-          ),
-          title: isDownloaded
-              ? FutureBuilder(
-                  future: ref.watch(provider.future),
-                  builder: (final context, final snapshot) {
-                    return !snapshot.hasData
-                        ? Text(title)
-                        : Text(
-                            '$title '
-                            '(${(snapshot.data! as Iterable).length} items)',
-                          );
-                  },
+    final deletedSaveNames = useState<Set<String>>(<String>{});
+    final isLoading = useState<bool>(false);
+
+    /// Load the [provider]'s future.
+    Future<T> loadProvider(final FutureProvider<T> provider) async {
+      isLoading.value = true;
+      try {
+        return await ref.read(provider.future);
+      } finally {
+        isLoading.value = false;
+      }
+    }
+
+    /// Delete the data associated with [saveName].
+    Future<void> deleteProviderData(final String saveName) async {
+      isLoading.value = true;
+      try {
+        deletedSaveNames.value.add(saveName);
+        return await ref.read(hiveProvider).delete(saveName);
+      } finally {
+        isLoading.value = false;
+      }
+    }
+
+    final progress = ref.watch(progressProvider).state;
+    final isDownloaded = ref.watch(hiveProvider).containsKey(saveName);
+    final isDeleted = deletedSaveNames.value.contains(saveName);
+
+    return ListTile(
+      contentPadding: const EdgeInsets.all(14),
+      enabled: !isLoading.value,
+      leading: Text(
+        progress == null ? 'N/A' : '${progress.toStringAsFixed(2)}%',
+      ),
+      title: isDownloaded
+          ? FutureBuilder(
+              future: ref.watch(provider.future),
+              builder: (final context, final snapshot) {
+                final data = snapshot.data as Iterable<Object?>?;
+                return Text(
+                  data == null ? title : '$title (${data.length} items)',
+                );
+              },
+            )
+          : Text(!isDeleted ? title : '$title (Available on restart)'),
+      trailing: !isDeleted
+          ? isDownloaded
+              ? TextButton(
+                  onPressed: !isLoading.value
+                      ? () => deleteProviderData(saveName)
+                      : null,
+                  child: Text(deleteText),
                 )
-              : isDeleted
-                  ? Text('$title (Available on restart)')
-                  : Text(title),
-          trailing: !isDeleted
-              ? isDownloaded
-                  ? TextButton(
-                      onPressed: !viewModel.isBusy
-                          ? () => viewModel.deleteProviderData(saveName)
-                          : null,
-                      child: Text(deleteText),
-                    )
-                  : TextButton(
-                      onPressed: !viewModel.isBusy
-                          ? () => viewModel.loadProvider(provider)
-                          : null,
-                      child: Text(downloadText),
-                    )
-              : null,
-        );
-      },
+              : TextButton(
+                  onPressed:
+                      !isLoading.value ? () => loadProvider(provider) : null,
+                  child: Text(downloadText),
+                )
+          : null,
     );
   }
 
@@ -138,44 +168,4 @@ class DataProgress<T extends Object> extends ConsumerWidget {
         ..add(StringProperty('deleteText', deleteText)),
     );
   }
-}
-
-/// The view model for [DataProgress].
-class DataProgressViewModel<T extends Object?> extends BaseViewModel {
-  /// The view model for [DataProgress].
-  DataProgressViewModel(final this.ref) {
-    _hive = ref.watch(hiveProvider);
-  }
-
-  late final Box<String> _hive;
-
-  final Set<String> _deletedSaveNames = <String>{};
-
-  /// The reference to the Riverpod.
-  final WidgetRef ref;
-
-  /// Load the [provider]'s future.
-  Future<T> loadProvider(final FutureProvider<T> provider) {
-    return runBusyFuture(ref.read(provider.future), throwException: true);
-  }
-
-  /// Delete the data within the [saveName].
-  Future<void> saveProviderData(final String saveName, final String data) {
-    return runBusyFuture(
-      _hive.put(saveName, data),
-      throwException: true,
-    );
-  }
-
-  /// Delete the data associated with [saveName].
-  Future<void> deleteProviderData(final String saveName) {
-    _deletedSaveNames.add(saveName);
-    return runBusyFuture(_hive.delete(saveName), throwException: true);
-  }
-
-  /// Delete the data within the [saveName].
-  bool hasProviderData(final String saveName) => _hive.containsKey(saveName);
-
-  /// If the data with the [saveName] was already deleted.
-  bool isDeleted(final String saveName) => _deletedSaveNames.contains(saveName);
 }

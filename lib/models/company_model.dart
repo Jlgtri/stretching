@@ -1,16 +1,16 @@
+// ignore_for_file: sort_constructors_first
+
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
 import 'package:stretching/utils/json_converters.dart';
 
-// ignore_for_file: sort_constructors_first
-
-/// The company model of the yclients companies method.
+/// The company model of the YClients API companies method.
 ///
 /// See: https://yclientsru.docs.apiary.io/#reference/2/0/0
 @immutable
 class CompanyModel {
-  /// The company model of the yclients companies method.
+  /// The company model of the YClients API companies method.
   ///
   /// See: https://yclientsru.docs.apiary.io/#reference/2/0/0
   const CompanyModel({
@@ -167,16 +167,16 @@ class CompanyModel {
   final int seanceDelayStep;
   final bool showAnyMaster;
 
-  /// If final this company can be deleted.
+  /// If this company can be deleted.
   final bool allowDeleteRecord;
 
-  /// If final this company can be changed.
+  /// If this company can be changed.
   final bool allowChangeRecord;
 
-  /// Disable changing final this company for a specified period (in seconds).
+  /// Disable changing this company for a specified period (in seconds).
   final int allowChangeRecordDelayStep;
 
-  /// Disable deleting final this company for a specified period (in seconds).
+  /// Disable deleting this company for a specified period (in seconds).
   final int allowDeleteRecordDelayStep;
 
   final bool timetableOff;
@@ -204,7 +204,7 @@ class CompanyModel {
   final bool isTipsEnabled;
 
   /// The links to social networks of this company.
-  final Social social;
+  final CompanySocialModel social;
 
   /// The amount of working email hours of this company.
   final int emailHoursDefault;
@@ -216,7 +216,7 @@ class CompanyModel {
   final int mainGroupId;
 
   /// The main group owner of this company.
-  final MainGroup mainGroup;
+  final CompanyMainGroupModel mainGroup;
 
   /// The optional comment field title.
   final String? bookingCommentInputName;
@@ -284,11 +284,11 @@ class CompanyModel {
     final int? activityOnlineRecordClientsCountMax,
     final bool? isIndividual,
     final bool? isTipsEnabled,
-    final Social? social,
+    final CompanySocialModel? social,
     final int? emailHoursDefault,
     final bool? isShowPrivacyPolicy,
     final int? mainGroupId,
-    final MainGroup? mainGroup,
+    final CompanyMainGroupModel? mainGroup,
     final String? bookingCommentInputName,
     final bool? bookingCommentRequired,
     final bool? bookingEmailRequired,
@@ -453,7 +453,7 @@ class CompanyModel {
       city: map['city']! as String,
       active: boolToIntConverter.fromJson(map['active']! as int),
       phone: map['phone']! as String,
-      phones: (map['phones']! as Iterable).cast<String>(),
+      phones: (map['phones']! as Iterable<Object?>).cast<String>(),
       email: map['email']! as String,
       timezone: map['timezone']! as int,
       timezoneName: map['timezone_name']! as String,
@@ -472,7 +472,7 @@ class CompanyModel {
       groupPriority: map['group_priority']! as int,
       bookformGroupPriority: map['bookform_group_priority']! as int,
       description: map['description']! as String,
-      photos: (map['photos']! as Iterable).cast<String>(),
+      photos: (map['photos']! as Iterable<Object?>).cast<String>(),
       seanceDelayStep: map['seance_delay_step']! as int,
       showAnyMaster: map['show_any_master']! as bool,
       allowDeleteRecord: map['allow_delete_record']! as bool,
@@ -501,11 +501,14 @@ class CompanyModel {
           map['activity_online_record_clients_count_max']! as int,
       isIndividual: map['is_individual']! as bool,
       isTipsEnabled: map['is_tips_enabled']! as bool,
-      social: Social.fromMap(map['social']! as Map<String, Object?>),
+      social:
+          CompanySocialModel.fromMap(map['social']! as Map<String, Object?>),
       emailHoursDefault: map['email_hours_default']! as int,
       isShowPrivacyPolicy: map['is_show_privacy_policy']! as bool,
       mainGroupId: map['main_group_id']! as int,
-      mainGroup: MainGroup.fromMap(map['main_group']! as Map<String, Object?>),
+      mainGroup: CompanyMainGroupModel.fromMap(
+        map['main_group']! as Map<String, Object?>,
+      ),
       bookingCommentInputName: map['booking_comment_input_name'] as String?,
       bookingCommentRequired: map['booking_comment_required']! as bool,
       bookingEmailRequired: map['booking_email_required']! as bool,
@@ -702,9 +705,9 @@ class CompanyModel {
 
 /// The main group of the [CompanyModel].
 @immutable
-class MainGroup {
+class CompanyMainGroupModel {
   /// The main group of the [CompanyModel].
-  const MainGroup({
+  const CompanyMainGroupModel({
     required final this.id,
     required final this.title,
   });
@@ -716,8 +719,8 @@ class MainGroup {
   final String title;
 
   /// Return the copy of this model.
-  MainGroup copyWith({final int? id, final String? title}) {
-    return MainGroup(id: id ?? this.id, title: title ?? this.title);
+  CompanyMainGroupModel copyWith({final int? id, final String? title}) {
+    return CompanyMainGroupModel(id: id ?? this.id, title: title ?? this.title);
   }
 
   /// Convert this model to map with string keys.
@@ -726,35 +729,40 @@ class MainGroup {
   }
 
   /// Convert the map with string keys to this model.
-  factory MainGroup.fromMap(final Map<String, Object?> map) {
-    return MainGroup(id: map['id']! as int, title: map['title']! as String);
+  factory CompanyMainGroupModel.fromMap(final Map<String, Object?> map) {
+    return CompanyMainGroupModel(
+      id: map['id']! as int,
+      title: map['title']! as String,
+    );
   }
 
   /// Convert this model to a json string.
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory MainGroup.fromJson(final String source) =>
-      MainGroup.fromMap(json.decode(source));
+  factory CompanyMainGroupModel.fromJson(final String source) =>
+      CompanyMainGroupModel.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is MainGroup && other.id == id && other.title == title;
+        other is CompanyMainGroupModel &&
+            other.id == id &&
+            other.title == title;
   }
 
   @override
   int get hashCode => id.hashCode ^ title.hashCode;
 
   @override
-  String toString() => 'MainGroup(id: $id, title: $title)';
+  String toString() => 'CompanyMainGroupModel(id: $id, title: $title)';
 }
 
 /// The links to social networks of the [CompanyModel].
 @immutable
-class Social {
+class CompanySocialModel {
   /// The links to social networks of the [CompanyModel].
-  const Social({
+  const CompanySocialModel({
     required final this.facebook,
     required final this.vk,
     required final this.instagram,
@@ -782,7 +790,7 @@ class Social {
   final String viber;
 
   /// Return the copy of this model.
-  Social copyWith({
+  CompanySocialModel copyWith({
     final String? facebook,
     final String? vk,
     final String? instagram,
@@ -790,7 +798,7 @@ class Social {
     final String? whatsapp,
     final String? viber,
   }) {
-    return Social(
+    return CompanySocialModel(
       facebook: facebook ?? this.facebook,
       vk: vk ?? this.vk,
       instagram: instagram ?? this.instagram,
@@ -813,8 +821,8 @@ class Social {
   }
 
   /// Convert the map with string keys to this model.
-  factory Social.fromMap(final Map<String, Object?> map) {
-    return Social(
+  factory CompanySocialModel.fromMap(final Map<String, Object?> map) {
+    return CompanySocialModel(
       facebook: map['facebook']! as String,
       vk: map['vk']! as String,
       instagram: map['instagram']! as String,
@@ -828,13 +836,13 @@ class Social {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory Social.fromJson(final String source) =>
-      Social.fromMap(json.decode(source));
+  factory CompanySocialModel.fromJson(final String source) =>
+      CompanySocialModel.fromMap(json.decode(source));
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is Social &&
+        other is CompanySocialModel &&
             other.facebook == facebook &&
             other.vk == vk &&
             other.instagram == instagram &&
@@ -855,7 +863,8 @@ class Social {
 
   @override
   String toString() {
-    return 'Social(facebook: $facebook, vk: $vk, instagram: $instagram, '
-        'telegram: $telegram, whatsapp: $whatsapp, viber: $viber)';
+    return 'CompanySocialModel(facebook: $facebook, vk: $vk, '
+        'instagram: $instagram, telegram: $telegram, whatsapp: $whatsapp, '
+        'viber: $viber)';
   }
 }

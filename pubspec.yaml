@@ -1,6 +1,6 @@
 name: stretching
 description: Stretching remake from scratch.
-version: 0.0.1
+version: 0.0.2
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
@@ -16,8 +16,8 @@ dependencies:
   easy_localization: ^3.0.0
   flutter:
     sdk: flutter
+  flutter_hooks: ^0.18.0
   flutter_riverpod: ^1.0.0-dev.6
-  google_fonts: ^2.1.0
   hive: ^2.0.4
   hive_flutter: ^1.1.0
   hooks_riverpod: ^1.0.0-dev.6
@@ -28,9 +28,6 @@ dependencies:
   path_provider: ^2.0.2
   permission_handler: ^8.1.4+2
   riverpod: ^1.0.0-dev.6
-  smooth_page_indicator: ^0.3.0-nullsafety.0
-  stacked: ^2.2.3
-  stacked_services: ^0.8.13
 
 dev_dependencies:
   args: ^2.2.0
