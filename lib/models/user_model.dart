@@ -3,6 +3,21 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
+import 'package:stretching/utils/json_converters.dart';
+
+/// The converter of the [UserModel].
+const UserConverter userConverter = UserConverter._();
+
+/// The converter of the [UserModel].
+class UserConverter implements JsonConverter<UserModel, Map<String, Object?>> {
+  const UserConverter._();
+  @override
+  UserModel fromJson(final Map<String, Object?> data) =>
+      UserModel.fromMap(data);
+
+  @override
+  Map<String, Object?> toJson(final UserModel data) => data.toMap();
+}
 
 /// The user model in the YClients API.
 ///
@@ -48,6 +63,17 @@ class UserModel {
 
   /// The authorization hash of this user.
   final String hash;
+
+  /// The empty user that app is inited with.
+  const UserModel.none()
+      : id = 0,
+        userToken = '',
+        name = '',
+        phone = '',
+        login = '',
+        email = '',
+        avatar = '',
+        hash = '';
 
   /// Return the copy of this model.
   UserModel copyWith({

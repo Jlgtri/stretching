@@ -10,6 +10,7 @@ import 'package:stretching/const.dart';
 import 'package:stretching/models/user_model.dart';
 import 'package:stretching/models/yclients_response.dart';
 import 'package:stretching/providers.dart';
+import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/utils/logger.dart';
 
 /// The step of the [Authorization] widget's lifecycle.
@@ -87,14 +88,16 @@ class Authorization extends HookConsumerWidget {
             break;
           case AuthorizationStep.code:
             response = await verifyCode(
-                phoneController.text, int.parse(codeController.text));
-            final user = ref.read(userProvider);
+              phoneController.text,
+              int.parse(codeController.text),
+            );
+            final user = ref.read(userProvider.notifier);
             user.state = response.data!.data! as UserModel;
             final hive = ref.read(hiveProvider);
             await hive.put('user', json.encode(user.state!.toMap()));
             break;
           case AuthorizationStep.done:
-            final user = ref.read(userProvider);
+            final user = ref.read(userProvider.notifier);
             if (user.state != null) {
               final hive = ref.read(hiveProvider);
               await hive.delete('user');
@@ -139,7 +142,7 @@ class Authorization extends HookConsumerWidget {
       return const Center(child: CircularProgressIndicator.adaptive());
     }
 
-    final user = ref.watch(userProvider).state;
+    final user = ref.watch(userProvider);
     if (user != null && currentStep.value != AuthorizationStep.done) {
       phoneController.text = user.phone;
       currentStep.value = AuthorizationStep.done;

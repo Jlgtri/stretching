@@ -12,6 +12,7 @@ environment:
 
 # DEPENDENCIES UPDATE: 2021-08-01
 dependencies:
+  connectivity: ^3.0.6
   dio: ^4.0.0
   easy_localization: ^3.0.0
   flutter:
@@ -27,6 +28,7 @@ dependencies:
   path: ^1.8.0
   path_provider: ^2.0.2
   permission_handler: ^8.1.4+2
+  persistent_bottom_nav_bar: ^4.0.2
   riverpod: ^1.0.0-dev.6
 
 dev_dependencies:

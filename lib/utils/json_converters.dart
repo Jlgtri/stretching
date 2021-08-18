@@ -182,13 +182,12 @@ class IterableConverter<T extends Object, S extends Object>
 }
 
 /// The custom converter to convert to String.
-class StringConverter<T extends Object, S extends Object>
-    implements JsonConverter<T, String> {
+class StringConverter<T extends Object> implements JsonConverter<T, String> {
   /// The custom converter to convert to String.
   const StringConverter(this.converter);
 
   /// The converter for the children.
-  final JsonConverter<T, S> converter;
+  final JsonConverter<T, Object> converter;
 
   @override
   T fromJson(final Object? data) {

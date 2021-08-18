@@ -12,10 +12,7 @@
 ///       - asset: fonts/IconsCG.ttf
 ///
 ///
-/// * Material Design Icons, Copyright (C) Google, Inc
-///         Author:    Google
-///         License:   Apache 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
-///         Homepage:  https://design.google.com/icons/
+///
 import 'package:flutter/widgets.dart';
 
 // ignore_for_file: public_member_api_docs
@@ -25,9 +22,36 @@ class IconsCG {
 
   static const String _kFontFam = 'IconsCG';
 
-  static const IconData arrowLeft = IconData(0xe800, fontFamily: _kFontFam);
-  static const IconData arrowRight = IconData(0xe801, fontFamily: _kFontFam);
-  static const IconData close = IconData(0xe802, fontFamily: _kFontFam);
-  static const IconData search = IconData(0xe804, fontFamily: _kFontFam);
-  static const IconData back = IconData(0xe805, fontFamily: _kFontFam);
+  static const IconData profile = IconData(0xe800, fontFamily: _kFontFam);
+  static const IconData addOutline = IconData(0xe801, fontFamily: _kFontFam);
+  static const IconData back = IconData(0xe802, fontFamily: _kFontFam);
+  static const IconData bolt = IconData(0xe803, fontFamily: _kFontFam);
+  static const IconData calendar = IconData(0xe804, fontFamily: _kFontFam);
+  static const IconData check = IconData(0xe806, fontFamily: _kFontFam);
+  static const IconData filter = IconData(0xe807, fontFamily: _kFontFam);
+  static const IconData heart = IconData(0xe808, fontFamily: _kFontFam);
+  static const IconData home = IconData(0xe809, fontFamily: _kFontFam);
+  static const IconData done = IconData(0xe80a, fontFamily: _kFontFam);
+  static const IconData instagram = IconData(0xe80b, fontFamily: _kFontFam);
+  static const IconData list = IconData(0xe80c, fontFamily: _kFontFam);
+  static const IconData phone = IconData(0xe80d, fontFamily: _kFontFam);
+  static const IconData pin = IconData(0xe80f, fontFamily: _kFontFam);
+  static const IconData pinOutline = IconData(0xe810, fontFamily: _kFontFam);
+  static const IconData search = IconData(0xe811, fontFamily: _kFontFam);
+  static const IconData share = IconData(0xe812, fontFamily: _kFontFam);
+  static const IconData training = IconData(0xe814, fontFamily: _kFontFam);
+  static const IconData clock = IconData(0xe815, fontFamily: _kFontFam);
+  static const IconData logo = IconData(0xe817, fontFamily: _kFontFam);
+  static const IconData messenger = IconData(0xe82d, fontFamily: _kFontFam);
+  static const IconData vk = IconData(0xe82f, fontFamily: _kFontFam);
+  static const IconData whatsApp = IconData(0xe830, fontFamily: _kFontFam);
+  static const IconData applePay = IconData(0xe831, fontFamily: _kFontFam);
+  static const IconData googlePay = IconData(0xe832, fontFamily: _kFontFam);
+  static const IconData visa = IconData(0xe833, fontFamily: _kFontFam);
+  static const IconData mastercard = IconData(0xe835, fontFamily: _kFontFam);
+  static const IconData world = IconData(0xe836, fontFamily: _kFontFam);
+  static const IconData add = IconData(0xe837, fontFamily: _kFontFam);
+  static const IconData star = IconData(0xe838, fontFamily: _kFontFam);
+  static const IconData telegram = IconData(0xe839, fontFamily: _kFontFam);
+  static const IconData close = IconData(0xe83b, fontFamily: _kFontFam);
 }

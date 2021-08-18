@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stretching/providers.dart';
+import 'package:stretching/providers/hive_provider.dart';
 
 /// The widget to authorize a user.
 class SaveData extends ConsumerWidget {
@@ -12,7 +13,7 @@ class SaveData extends ConsumerWidget {
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final user = ref.watch(userProvider).state;
+    final user = ref.watch(userProvider);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[

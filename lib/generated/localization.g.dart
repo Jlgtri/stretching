@@ -2,4 +2,15 @@
 
 // ignore_for_file: public_member_api_docs, lines_longer_than_80_chars
 
-abstract class TR {}
+abstract class TR {
+
+  static const String tooltipsClose = 'tooltips.close';
+  static const String tooltips = 'tooltips';
+
+  static const String navigationHome = 'navigation.home';
+  static const String navigationSchedule = 'navigation.schedule';
+  static const String navigationStudios = 'navigation.studios';
+  static const String navigationTrainers = 'navigation.trainers';
+  static const String navigationProfile = 'navigation.profile';
+  static const String navigation = 'navigation';
+}

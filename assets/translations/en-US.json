@@ -1,1 +1,10 @@
-{}
+{
+  "tooltips": { "close": "Закрыть" },
+  "navigation": {
+    "home": "Главная",
+    "schedule": "Расписание",
+    "studios": "Студии",
+    "trainers": "Тренеры",
+    "profile": "Аккаунт"
+  }
+}

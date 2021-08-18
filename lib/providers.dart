@@ -14,25 +14,23 @@ import 'package:stretching/models/record_model.dart';
 import 'package:stretching/models/trainer_model.dart';
 import 'package:stretching/models/user_model.dart';
 import 'package:stretching/models/yclients_response.dart';
+import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/secrets.dart';
 import 'package:stretching/utils/json_converters.dart';
 
-/// The main hive String box provider.
-final Provider<Box<String>> hiveProvider = Provider<Box<String>>((final ref) {
-  throw Exception('Hive storage has not been initialized.');
-});
-
 /// The provider of a user.
-final StateProvider<UserModel?> userProvider =
-    StateProvider<UserModel?>((final ref) {
-  final hive = ref.read(hiveProvider);
-  final savedUser = hive.get('user');
-  return savedUser != null ? UserModel.fromJson(savedUser) : null;
+final userProvider = StateNotifierProvider<
+    OptionalSaveToHiveNotifier<UserModel?, String>, UserModel?>((final ref) {
+  return OptionalSaveToHiveNotifier<UserModel?, String>(
+    hive: ref.watch(hiveProvider),
+    converter: const StringConverter(userConverter),
+    saveName: 'user',
+  );
 });
 
 /// The client provider for YClients API.
-final Provider<Dio> yclientsClientProvider = Provider<Dio>((final ref) {
-  final user = ref.watch(userProvider).state;
+final yclientsClientProvider = Provider<Dio>((final ref) {
+  final user = ref.watch(userProvider);
   return Dio(
     BaseOptions(
       headers: <String, String>{
@@ -50,8 +48,7 @@ final Provider<Dio> yclientsClientProvider = Provider<Dio>((final ref) {
 const String yClientsUrl = 'https://api.yclients.com/api/v1';
 
 /// The progress of initialising a [citiesProvider].
-final StateProvider<num?> citiesProgressProvider =
-    StateProvider<num?>((final ref) => null);
+final citiesProgressProvider = StateProvider<num?>((final ref) => null);
 
 /// The cities provider for YClients API.
 ///
@@ -160,7 +157,7 @@ final StateProvider<num?> userAbonementsProgressProvider =
 /// See: https://yclientsru.docs.apiary.io/#reference/28/0
 final FutureProvider<Iterable<AbonementModel>?> userAbonementsProvider =
     FutureProvider<Iterable<AbonementModel>?>((final ref) async {
-  final user = ref.watch(userProvider).state;
+  final user = ref.watch(userProvider);
   if (user != null) {
     final studios = await ref.read(studiosProvider.future);
     return getIterableDataFromYClients<AbonementModel, StudioModel>(
@@ -189,7 +186,7 @@ final StateProvider<num?> userRecordsProgressProvider =
 /// See: https://developers.yclients.com/ru/#operation/Получить%20записи%20пользователя
 final FutureProvider<Iterable<RecordModel>?> userRecordsProvider =
     FutureProvider<Iterable<RecordModel>?>((final ref) async {
-  final user = ref.watch(userProvider).state;
+  final user = ref.watch(userProvider);
   if (user != null) {
     final studios = await ref.read(studiosProvider.future);
     return getIterableDataFromYClients<RecordModel, StudioModel>(
