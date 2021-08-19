@@ -20,9 +20,9 @@ mixin ModalBottomSheets {
     required final T defaultValue,
     final String title = '',
     final String firstText = '',
-    final FutureOr<T> Function()? onFirstPressed,
+    final OnBottomSheetButton<T>? onFirstPressed,
     final String secondText = '',
-    final FutureOr<T> Function()? onSecondPressed,
+    final OnBottomSheetButton<T>? onSecondPressed,
   }) async {
     final result = await showCustomModalBottomSheet<T>(
       context: context,
@@ -140,6 +140,11 @@ class _BottomSheetBase extends StatelessWidget {
   }
 }
 
+/// The callback to call when bottom sheet button was pressed.
+typedef OnBottomSheetButton<T extends Object> = FutureOr<T> Function(
+  BuildContext context,
+)?;
+
 class _BottomSheetButtons<T extends Object> extends StatelessWidget {
   const _BottomSheetButtons({
     final this.firstText = '',
@@ -150,9 +155,9 @@ class _BottomSheetButtons<T extends Object> extends StatelessWidget {
   }) : super(key: key);
 
   final String firstText;
-  final FutureOr<T> Function()? onFirstPressed;
+  final OnBottomSheetButton<T>? onFirstPressed;
   final String secondText;
-  final FutureOr<T> Function()? onSecondPressed;
+  final OnBottomSheetButton<T>? onSecondPressed;
 
   @override
   Widget build(final BuildContext context) {
@@ -162,7 +167,8 @@ class _BottomSheetButtons<T extends Object> extends StatelessWidget {
       children: <Widget>[
         if (firstText.isNotEmpty)
           TextButton(
-            onPressed: onFirstPressed,
+            onPressed:
+                onFirstPressed != null ? () => onFirstPressed!(context) : null,
             style: TextButton.styleFrom(
               primary: colorScheme.surface,
               backgroundColor: colorScheme.onSurface,
@@ -176,7 +182,9 @@ class _BottomSheetButtons<T extends Object> extends StatelessWidget {
         if (secondText.isNotEmpty) ...[
           const SizedBox(height: 16),
           TextButton(
-            onPressed: onSecondPressed,
+            onPressed: onSecondPressed != null
+                ? () => onSecondPressed!(context)
+                : null,
             style: TextButton.styleFrom(
               primary: colorScheme.onSurface,
               backgroundColor: Colors.transparent,
@@ -199,14 +207,14 @@ class _BottomSheetButtons<T extends Object> extends StatelessWidget {
       properties
         ..add(StringProperty('firstText', firstText))
         ..add(
-          ObjectFlagProperty<void Function()>.has(
+          ObjectFlagProperty<OnBottomSheetButton<T>?>.has(
             'onFirstPressed',
             onFirstPressed,
           ),
         )
         ..add(StringProperty('secondText', secondText))
         ..add(
-          ObjectFlagProperty<void Function()>.has(
+          ObjectFlagProperty<OnBottomSheetButton<T>?>.has(
             'onSecondPressed',
             onSecondPressed,
           ),

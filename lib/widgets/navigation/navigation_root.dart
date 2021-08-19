@@ -171,12 +171,12 @@ class NavigationRoot extends HookConsumerWidget {
           defaultValue: false,
           title: TR.alertExitTitle.tr(),
           firstText: TR.alertExitApprove.tr(),
-          onFirstPressed: () {
+          onFirstPressed: (final context) {
             SystemNavigator.pop();
             return true;
           },
           secondText: TR.alertExitDeny.tr(),
-          onSecondPressed: () async {
+          onSecondPressed: (final context) async {
             await Navigator.of(context).maybePop();
             return false;
           },
