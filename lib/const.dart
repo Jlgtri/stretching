@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 /// The default [Locale] of this app.
-const Locale defaultLocale = Locale('en', 'US');
+const Locale defaultLocale = Locale('ru', 'RU');
 
 /// The list of supported locales for this app.
 const List<Locale> supportedLocales = <Locale>[defaultLocale];

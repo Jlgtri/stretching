@@ -4,6 +4,12 @@
 
 abstract class TR {
 
+  static const String alertExitTitle = 'alert.exit.title';
+  static const String alertExitApprove = 'alert.exit.approve';
+  static const String alertExitDeny = 'alert.exit.deny';
+  static const String alertExit = 'alert.exit';
+  static const String alert = 'alert';
+
   static const String tooltipsClose = 'tooltips.close';
   static const String tooltips = 'tooltips';
 

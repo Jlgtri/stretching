@@ -28,20 +28,20 @@ ThemeData get _mainTheme {
 ColorScheme get _colorScheme {
   return const ColorScheme.light(
     error: Color(0xFFF64A4A),
-    primary: Color(0xFFF5F5F5),
-    primaryVariant: Color(0xFF303030),
-    secondary: Color(0xFF757575),
-    secondaryVariant: Color(0xFF424242),
-    surface: Color(0xFFF5F5F5),
+    primary: Color(0xFFB9506E),
+    // primaryVariant: Color(0xFF303030),
+    secondary: Color(0xFF5709FF),
+    // secondaryVariant: Color(0xFF424242),
+    // surface: Color(0xFFF5F5F5),
   );
 }
 
 BottomSheetThemeData get _bottomSheetTheme {
-  return const BottomSheetThemeData(
+  return BottomSheetThemeData(
     elevation: 12,
-    backgroundColor: Colors.white,
-    modalBackgroundColor: Colors.white,
-    shape: RoundedRectangleBorder(
+    backgroundColor: _colorScheme.surface,
+    modalBackgroundColor: _colorScheme.surface,
+    shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.only(
         topLeft: Radius.circular(24),
         topRight: Radius.circular(24),
@@ -53,8 +53,16 @@ BottomSheetThemeData get _bottomSheetTheme {
 TextButtonThemeData get _textButtonTheme {
   return TextButtonThemeData(
     style: TextButton.styleFrom(
+      enableFeedback: true,
       minimumSize: Size.zero,
-      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      maximumSize: Size.infinite,
+      splashFactory: InkSplash.splashFactory,
+      animationDuration: const Duration(milliseconds: 500),
+      visualDensity: VisualDensity.comfortable,
+      enabledMouseCursor: SystemMouseCursors.click,
+      disabledMouseCursor: SystemMouseCursors.forbidden,
+      textStyle: _textTheme.button,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
   );
 }
@@ -64,10 +72,10 @@ IconThemeData get _iconTheme {
 }
 
 AppBarTheme get _appBarTheme {
-  return const AppBarTheme(
-    backgroundColor: Colors.black,
+  return AppBarTheme(
+    backgroundColor: _colorScheme.onSurface,
+    foregroundColor: _colorScheme.surface,
     shadowColor: Colors.transparent,
-    foregroundColor: Colors.white,
   );
 }
 
@@ -94,9 +102,5 @@ TextTheme get _textTheme {
       decoration: TextDecoration.underline,
     ),
     button: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-  ).apply(
-    fontFamily: 'SF',
-    displayColor: Colors.black,
-    bodyColor: const Color(0xFF03010D),
-  );
+  ).apply(fontFamily: 'SF');
 }

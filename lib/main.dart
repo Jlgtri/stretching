@@ -13,7 +13,7 @@ import 'package:stretching/providers/other_provider.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/widgets/authorization.dart';
 import 'package:stretching/widgets/load_data.dart';
-import 'package:stretching/widgets/navigation/root.dart';
+import 'package:stretching/widgets/navigation/navigation_root.dart';
 
 /// The premade initialisation of a Flutter's [WidgetsBinding].
 /// Also is used for accessing the non null [WidgetsBinding] class.

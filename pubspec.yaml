@@ -42,7 +42,7 @@ dev_dependencies:
 
 flutter:
   assets:
-    - assets/translations/en-US.json
+    - assets/translations/ru-RU.json
 
   fonts:
     - family: IconsCG

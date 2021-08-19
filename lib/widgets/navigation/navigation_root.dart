@@ -1,5 +1,6 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
@@ -160,13 +161,26 @@ class NavigationRoot extends HookConsumerWidget {
       ),
       screenTransitionAnimation: const ScreenTransitionAnimation(
         animateTabTransition: true,
+        curve: Curves.easeOut,
+        duration: Duration(milliseconds: 300),
       ),
       padding: const NavBarPadding.only(bottom: 8),
-      onWillPop: (final context) async {
-        if (context != null) {
-          await navigationController.showAlertBottomSheet(context: context);
-        }
-        return false;
+      onWillPop: (final context) {
+        return navigationController.showAlertBottomSheet<bool>(
+          context: context!,
+          defaultValue: false,
+          title: TR.alertExitTitle.tr(),
+          firstText: TR.alertExitApprove.tr(),
+          onFirstPressed: () {
+            SystemNavigator.pop();
+            return true;
+          },
+          secondText: TR.alertExitDeny.tr(),
+          onSecondPressed: () async {
+            await Navigator.of(context).maybePop();
+            return false;
+          },
+        );
       },
       items: <PersistentBottomNavBarItem>[
         for (final screen in NavigationScreen.values) screen.navBarItem
