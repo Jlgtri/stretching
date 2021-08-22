@@ -1,18 +1,18 @@
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:stretching/api.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/assets.g.dart';
-import 'package:stretching/providers.dart';
 import 'package:stretching/providers/connection_provider.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_provider.dart';
 import 'package:stretching/style.dart';
-import 'package:stretching/widgets/authorization.dart';
-import 'package:stretching/widgets/load_data.dart';
+import 'package:stretching/widgets/authorization_screen.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 
 /// The premade initialisation of a Flutter's [WidgetsBinding].
@@ -54,12 +54,13 @@ class RootScreen extends HookConsumerWidget {
       useMemoized(() async {
         await ez.delegate.load(ez.currentLocale!);
         await ref.read(connectionProvider.notifier).updateConnection();
+        await ref.read(mainYClientsProvider.future);
       }),
     );
     if (snapshot.connectionState != ConnectionState.done) {
       return const SizedBox.shrink();
     }
-
+    final hive = ref.read(hiveProvider).keys;
     return MaterialApp(
       title: 'Stretching',
       restorationScopeId: 'stretching',
@@ -69,34 +70,55 @@ class RootScreen extends HookConsumerWidget {
       themeMode: ref.watch(themeProvider),
       theme: lightTheme,
       darkTheme: darkTheme,
-      initialRoute: '/',
+      initialRoute: Routes.root.name,
+      routes: {for (final route in Routes.values) route.name: route.builder},
       // builder: (final context, final child) => TruStrainSplash(child: child!),
-      home: Consumer(
-        builder: (final context, final ref, final child) {
-          final hasConnection = ref.watch(connectionProvider);
-          // final checkedPermissions = ref.watch(checkedPermissionsProvider);
-          final userIsNull =
-              ref.watch(userProvider.select((final user) => user == null));
-
-          if (hasConnection == null) {
-            return const Center(child: Text('Splash Screen'));
-          } else if (!hasConnection) {
-            // TODO(screen): service
-            return const Placeholder();
-          } else if (userIsNull) {
-            return Scaffold(
-              appBar: AppBar(title: const Text('Stretching Demo')),
-              body: SingleChildScrollView(
-                child: Column(
-                  children: const <Widget>[SaveData(), Authorization()],
-                ),
-              ),
-            );
-          } else {
-            return const Material(child: NavigationRoot());
-          }
-        },
-      ),
     );
+  }
+}
+
+/// The enumeration of named routes for this app.
+enum Routes {
+  /// The default screen.
+  root,
+
+  /// The authorization screen.
+  auth
+}
+
+/// The extra data provided for [Routes].
+extension RoutesData on Routes {
+  /// The name of this route.
+  String get name {
+    if (this == Routes.root) {
+      return '/';
+    }
+    return Routes.root.name + describeEnum(this);
+  }
+
+  /// The builder of this route.
+  Widget Function(BuildContext) get builder {
+    switch (this) {
+      case Routes.root:
+        return (final context) {
+          return Consumer(
+            builder: (final context, final ref, final child) {
+              final hasConnection = ref.watch(connectionProvider);
+              // final checkedPermissions = ref.watch(checkedPermissionsProvider);
+
+              if (hasConnection == null) {
+                return const Center(child: Text('Splash Screen'));
+              } else if (!hasConnection) {
+                // TODO(screen): service
+                return const Placeholder();
+              } else {
+                return const Material(child: NavigationRoot());
+              }
+            },
+          );
+        };
+      case Routes.auth:
+        return (final context) => const AuthorizationScreen();
+    }
   }
 }

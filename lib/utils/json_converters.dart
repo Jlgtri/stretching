@@ -5,10 +5,10 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:stretching/utils/enum_to_string.dart';
 
 /// Convert a json object to the object of type [T].
-typedef FromJson<T extends Object> = T Function(Object? map);
+typedef FromJson<T extends Object?, S extends Object?> = T Function(S? map);
 
 /// Convert an object of type [T] to the json object.
-typedef ToJson<T extends Object> = Object? Function(T);
+typedef ToJson<T extends Object?, S extends Object?> = S? Function(T);
 
 /// The class to convert an object of type [T] to the object of type [S].
 mixin JsonConverter<T extends Object?, S extends Object?> on Object {
@@ -191,7 +191,9 @@ class StringConverter<T extends Object> implements JsonConverter<T, String> {
 
   @override
   T fromJson(final Object? data) {
-    return data is T ? data : converter.fromJson(json.decode(data! as String));
+    return data is T
+        ? data
+        : converter.fromJson(json.decode(data! as String) as Object);
   }
 
   @override
@@ -205,7 +207,7 @@ class OptionalStringConverter<T extends Object>
   const OptionalStringConverter(this.converter);
 
   /// The converter for the children.
-  final JsonConverter<T?, String?> converter;
+  final JsonConverter<T?, Object?> converter;
 
   @override
   T? fromJson(final Object? data) {
@@ -217,7 +219,8 @@ class OptionalStringConverter<T extends Object>
   }
 
   @override
-  String? toJson(final T? data) => data != null ? json.encode(data) : null;
+  String? toJson(final T? data) =>
+      data != null ? json.encode(converter.toJson(data)) : null;
 }
 
 /// The default converter of the [OptionalPermissionConverter].

@@ -3,6 +3,22 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
+import 'package:stretching/utils/json_converters.dart';
+
+/// The converter of the [CityModel].
+const CityConverter cityConverter = CityConverter._();
+
+/// The converter of the [CityModel].
+class CityConverter implements JsonConverter<CityModel, Map<String, Object?>> {
+  const CityConverter._();
+
+  @override
+  CityModel fromJson(final Map<String, Object?> data) =>
+      CityModel.fromMap(data);
+
+  @override
+  Map<String, Object?> toJson(final CityModel data) => data.toMap();
+}
 
 /// The city model of the YClients API cities method.
 ///
@@ -63,7 +79,7 @@ class CityModel {
 
   /// Convert the json string to this model.
   factory CityModel.fromJson(final String source) =>
-      CityModel.fromMap(json.decode(source));
+      CityModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {

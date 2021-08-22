@@ -6,6 +6,22 @@ import 'package:meta/meta.dart';
 import 'package:stretching/models/trainer_model.dart';
 import 'package:stretching/utils/json_converters.dart';
 
+/// The converter of the [ActivityModel].
+const ActivityConverter activityConverter = ActivityConverter._();
+
+/// The converter of the [ActivityModel].
+class ActivityConverter
+    implements JsonConverter<ActivityModel, Map<String, Object?>> {
+  const ActivityConverter._();
+
+  @override
+  ActivityModel fromJson(final Map<String, Object?> data) =>
+      ActivityModel.fromMap(data);
+
+  @override
+  Map<String, Object?> toJson(final ActivityModel data) => data.toMap();
+}
+
 /// The activity model of the YClients API actitivities method.
 ///
 /// See: https://yclientsru.docs.apiary.io/#reference/12/0/4
@@ -184,7 +200,7 @@ class ActivityModel {
 
   /// Convert the json string to this model.
   factory ActivityModel.fromJson(final String source) =>
-      ActivityModel.fromMap(json.decode(source));
+      ActivityModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -303,7 +319,9 @@ class ActivityResourceInstanceModel {
 
   /// Convert the json string to this model.
   factory ActivityResourceInstanceModel.fromJson(final String source) =>
-      ActivityResourceInstanceModel.fromMap(json.decode(source));
+      ActivityResourceInstanceModel.fromMap(
+        json.decode(source) as Map<String, Object?>,
+      );
 
   @override
   bool operator ==(final Object other) {
@@ -437,7 +455,7 @@ class ActivityServiceModel {
 
   /// Convert the json string to this model.
   factory ActivityServiceModel.fromJson(final String source) =>
-      ActivityServiceModel.fromMap(json.decode(source));
+      ActivityServiceModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -536,7 +554,9 @@ class ActivityServiceCategoryModel {
 
   /// Convert the json string to this model.
   factory ActivityServiceCategoryModel.fromJson(final String source) =>
-      ActivityServiceCategoryModel.fromMap(json.decode(source));
+      ActivityServiceCategoryModel.fromMap(
+        json.decode(source) as Map<String, Object?>,
+      );
 
   @override
   bool operator ==(final Object other) {
@@ -656,8 +676,8 @@ class ActivityStaffModel {
   }
 
   /// Convert this model to map with string keys.
-  Map<String, dynamic> toMap() {
-    return {
+  Map<String, Object?> toMap() {
+    return <String, Object?>{
       'id': id,
       'api_id': apiId,
       'name': name,
@@ -702,7 +722,7 @@ class ActivityStaffModel {
 
   /// Convert the json string to this model.
   factory ActivityStaffModel.fromJson(final String source) =>
-      ActivityStaffModel.fromMap(json.decode(source));
+      ActivityStaffModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -794,7 +814,9 @@ class ActitvityStaffPositionModel {
 
   /// Convert the json string to this model.
   factory ActitvityStaffPositionModel.fromJson(final String source) =>
-      ActitvityStaffPositionModel.fromMap(json.decode(source));
+      ActitvityStaffPositionModel.fromMap(
+        json.decode(source) as Map<String, Object?>,
+      );
 
   @override
   bool operator ==(final Object other) {

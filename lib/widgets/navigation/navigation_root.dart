@@ -1,17 +1,25 @@
+import 'dart:io';
+
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/main.dart';
+import 'package:stretching/providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/utils/enum_to_string.dart';
 import 'package:stretching/utils/json_converters.dart';
+import 'package:stretching/widgets/components/font_icon.dart';
+import 'package:stretching/widgets/home_screen.dart';
 import 'package:stretching/widgets/navigation/bottom_sheet.dart';
+import 'package:stretching/widgets/profile_screen.dart';
 
-/// The screens for the [navigationControllerProvider].
+/// The screens for the [navigationProvider].
 enum NavigationScreen {
   /// The main screen of the app.
   home,
@@ -54,7 +62,7 @@ extension NavigationScreenData on NavigationScreen {
   PersistentBottomNavBarItem get navBarItem {
     return PersistentBottomNavBarItem(
       title: title,
-      icon: Icon(icon),
+      icon: Icon(icon, size: 18),
       textStyle: const TextStyle(fontSize: 10),
       activeColorPrimary: Colors.black,
       activeColorSecondary: Colors.black,
@@ -67,11 +75,18 @@ extension NavigationScreenData on NavigationScreen {
   Widget get screen {
     switch (this) {
       case NavigationScreen.home:
+        return const HomeScreen();
       case NavigationScreen.schedule:
       case NavigationScreen.studios:
       case NavigationScreen.trainers:
+        return Center(
+          child: IconButton(
+            icon: Icon(icon, size: 64),
+            onPressed: () {},
+          ),
+        );
       case NavigationScreen.profile:
-        return Center(child: Icon(icon, size: 64));
+        return const ProfileScreen();
     }
   }
 }
@@ -82,7 +97,7 @@ final StateProvider<bool> hideNavigationProvider =
 
 /// The provider of the [NavigationScreen].
 final StateNotifierProvider<NavigationNotifier, PersistentTabController>
-    navigationControllerProvider =
+    navigationProvider =
     StateNotifierProvider<NavigationNotifier, PersistentTabController>(
         (final ref) {
   return NavigationNotifier(ref);
@@ -93,7 +108,22 @@ class NavigationNotifier
     extends SaveToHiveNotifier<PersistentTabController, String>
     with ModalBottomSheets {
   /// The notifier that contains the main app's navigation features.
-  NavigationNotifier(final this.ref)
+  factory NavigationNotifier(final ProviderRefBase ref) {
+    final notifier = NavigationNotifier._(ref);
+    ref.listen<bool>(userIsNullProvider, (final userIsNull) {
+      if (userIsNull &&
+          notifier.state.index == NavigationScreen.profile.index) {
+        if (notifier.previousScreenIndex == NavigationScreen.profile.index) {
+          notifier.state.index = NavigationScreen.home.index;
+        } else {
+          notifier.state.index = notifier.previousScreenIndex;
+        }
+      }
+    });
+    return notifier;
+  }
+
+  NavigationNotifier._(final this.ref)
       : super(
           hive: ref.watch(hiveProvider),
           saveName: 'navigation',
@@ -105,27 +135,54 @@ class NavigationNotifier
 
   @override
   final ProviderRefBase ref;
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  late int _previousScreenIndex = state.index;
+
+  /// The index of the previous navigation screen.
+  int get previousScreenIndex => _previousScreenIndex;
+
+  /// Sets the index of the previous navigation screen.
+  set previousScreenIndex(final int value) {
+    if (0 <= value && value <= NavigationScreen.values.length) {
+      _previousScreenIndex = value;
+    }
+  }
 }
 
 /// The converter of the [PersistentTabController].
 class PersistentTabControllerConverter<T extends Enum>
     implements JsonConverter<PersistentTabController, String> {
   /// The converter of the [PersistentTabController].
-  const PersistentTabControllerConverter(this.converter);
+  const PersistentTabControllerConverter(
+    final this.converter, {
+    final this.onControllerCreated,
+  });
 
   /// The converter for the children.
   final EnumConverter<T> converter;
 
+  /// The callback on a converted controller.
+  final void Function(PersistentTabController)? onControllerCreated;
+
   @override
   PersistentTabController fromJson(final Object? data) {
+    PersistentTabController controller;
     if (data is PersistentTabController) {
       return data;
     } else if (data == null) {
-      return PersistentTabController();
+      controller = PersistentTabController();
+    } else {
+      controller = PersistentTabController(
+        initialIndex: converter.fromJson(data).index,
+      );
     }
-    return PersistentTabController(
-      initialIndex: converter.fromJson(data).index,
-    );
+    onControllerCreated?.call(controller);
+    return controller;
   }
 
   @override
@@ -140,53 +197,105 @@ class NavigationRoot extends HookConsumerWidget {
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final navigationController =
-        ref.watch(navigationControllerProvider.notifier);
-    return PersistentTabView(
-      context,
-      controller: navigationController.state,
-      navBarStyle: NavBarStyle.style6,
-      resizeToAvoidBottomInset: true,
-      backgroundColor: Colors.white,
-      bottomScreenMargin: 0,
-      navBarHeight: 60,
-      hideNavigationBar: ref.watch(hideNavigationProvider).state,
-      decoration: NavBarDecoration(
-        colorBehindNavBar: Colors.indigo,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      itemAnimationProperties: const ItemAnimationProperties(
-        duration: Duration(milliseconds: 400),
-        curve: Curves.ease,
-      ),
-      screenTransitionAnimation: const ScreenTransitionAnimation(
-        animateTabTransition: true,
-        curve: Curves.easeOut,
-        duration: Duration(milliseconds: 300),
-      ),
-      padding: const NavBarPadding.only(bottom: 8),
-      onWillPop: (final context) {
-        return navigationController.showAlertBottomSheet<bool>(
-          context: context!,
-          defaultValue: false,
-          title: TR.alertExitTitle.tr(),
-          firstText: TR.alertExitApprove.tr(),
-          onFirstPressed: (final context) {
-            SystemNavigator.pop();
-            return true;
+    final navigation = ref.watch(navigationProvider.notifier);
+    final isTransitioning = useState<bool>(false);
+
+    const navBarHeight = 50.0;
+    const appBarHeight = 60.0;
+    const transitionDuration = Duration(milliseconds: 350);
+    final theme = Theme.of(context);
+    final topPadding = MediaQuery.of(context).viewPadding.top;
+    return Stack(
+      children: <Widget>[
+        PersistentTabView(
+          context,
+          controller: navigation.state,
+          navBarStyle: NavBarStyle.style6,
+          resizeToAvoidBottomInset: true,
+          bottomScreenMargin: 0,
+          navBarHeight: navBarHeight,
+          padding: const NavBarPadding.only(bottom: 10),
+          // hideNavigationBar: ref.watch(hideNavigationProvider).state,
+          itemAnimationProperties: const ItemAnimationProperties(
+            duration: transitionDuration,
+            curve: Curves.ease,
+          ),
+          screenTransitionAnimation: const ScreenTransitionAnimation(
+            animateTabTransition: true,
+            curve: Curves.easeInOut,
+            duration: transitionDuration,
+          ),
+          onWillPop: (final context) {
+            return navigation.showAlertBottomSheet<bool>(
+              context: context!,
+              defaultValue: false,
+              title: TR.alertExitTitle.tr(),
+              firstText: TR.alertExitApprove.tr(),
+              onFirstPressed: (final context) async {
+                await SystemNavigator.pop();
+                exit(0);
+              },
+              secondText: TR.alertExitDeny.tr(),
+              onSecondPressed: (final context) async {
+                await Navigator.of(context).maybePop();
+                return false;
+              },
+            );
           },
-          secondText: TR.alertExitDeny.tr(),
-          onSecondPressed: (final context) async {
-            await Navigator.of(context).maybePop();
-            return false;
+          onItemSelected: (final index) async {
+            if (index == NavigationScreen.profile.index &&
+                ref.read(userIsNullProvider)) {
+              if (navigation.previousScreenIndex ==
+                  NavigationScreen.profile.index) {
+                navigation.state.index = NavigationScreen.home.index;
+              } else {
+                navigation.state.index = navigation.previousScreenIndex;
+              }
+              await Navigator.of(context, rootNavigator: true)
+                  .pushNamed(Routes.auth.name);
+            } else if (navigation.previousScreenIndex != index) {
+              isTransitioning.value = true;
+              await Future<void>.delayed(transitionDuration);
+              isTransitioning.value = false;
+              navigation.previousScreenIndex = index;
+            }
           },
-        );
-      },
-      items: <PersistentBottomNavBarItem>[
-        for (final screen in NavigationScreen.values) screen.navBarItem
-      ],
-      screens: <Widget>[
-        for (final screen in NavigationScreen.values) screen.screen
+          items: <PersistentBottomNavBarItem>[
+            for (final screen in NavigationScreen.values) screen.navBarItem
+          ],
+          screens: <Widget>[
+            for (final screen in NavigationScreen.values)
+              Padding(
+                padding: EdgeInsets.only(
+                  top: appBarHeight + topPadding,
+                  bottom: navBarHeight,
+                ),
+                child: screen.screen,
+              ),
+          ],
+        ),
+
+        /// Custom AppBar
+        Container(
+          alignment: Alignment.center,
+          height: appBarHeight + topPadding,
+          color: theme.appBarTheme.backgroundColor,
+          child: Padding(
+            padding: MediaQuery.of(context).viewPadding,
+            child: FontIcon(
+              IconsCG.logo,
+              height: 16,
+              color: theme.appBarTheme.foregroundColor,
+            ),
+          ),
+        ),
+
+        /// Blocks input while screen is transitioning
+        if (isTransitioning.value)
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(height: navBarHeight, color: Colors.transparent),
+          ),
       ],
     );
   }

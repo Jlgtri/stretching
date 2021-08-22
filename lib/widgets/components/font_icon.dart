@@ -175,8 +175,8 @@ class FontIcon extends Icon {
   /// The widget to display icon properly from [IconData].
   const FontIcon(
     final IconData icon, {
-    final this.width = 22,
-    final double? height = 22,
+    final this.width,
+    final double? height,
     final BoxFit? fit,
     final Color? color,
     final AlignmentGeometry? alignment,
@@ -218,8 +218,8 @@ class FontIcon extends Icon {
       ..layout();
 
     return SizedBox(
-      width: width ?? painter.width,
       height: size,
+      width: width ?? painter.width,
       child: FittedBox(
         fit: fit,
         alignment: alignment,
@@ -343,7 +343,7 @@ class FontIconBackButton extends StatelessWidget {
   @override
   Widget build(final BuildContext context) {
     return FontIconButton(
-      FontIcon(IconsCG.back, color: color),
+      FontIcon(IconsCG.back, color: color, height: 24, width: 24),
       color: color,
       tooltip: MaterialLocalizations.of(context).backButtonTooltip,
       onPressed: onPressed ?? Navigator.of(context).maybePop,

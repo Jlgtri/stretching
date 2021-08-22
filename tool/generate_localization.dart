@@ -181,7 +181,8 @@ void generateFile(
     case 'keys':
       final fileData = File(files.last.path).readAsStringSync();
       if (fileData.isNotEmpty) {
-        classBuilder = '$_keysFilePrefix${_resolve(json.decode(fileData))}}\n';
+        final data = _resolve(json.decode(fileData) as Map<String, Object?>);
+        classBuilder = '$_keysFilePrefix$data}\n';
       }
       break;
     default:
@@ -195,7 +196,7 @@ void generateFile(
 }
 
 String _resolve(
-  final Map<String, dynamic> translations, [
+  final Map<String, Object?> translations, [
   final String? accKey,
 ]) {
   String capitalize(final String text) =>
@@ -206,11 +207,7 @@ String _resolve(
   for (final key in sortedKeys) {
     final keyItem = translations[key];
     if (keyItem is Map<String, Object?>) {
-      final text = _resolve(
-        translations[key],
-        accKey != null ? '$accKey.$key' : key,
-      );
-
+      final text = _resolve(keyItem, accKey != null ? '$accKey.$key' : key);
       fileContent.write(text.startsWith('\n') ? text : '\n$text');
     }
 
@@ -241,10 +238,8 @@ String _resolve(
 
 String _writeJson(final Iterable<FileSystemEntity> files) {
   final gFile = StringBuffer();
-
   const encoder = JsonEncoder.withIndent('  ');
-
-  final listLocales = [];
+  final listLocales = <String>[];
 
   for (final file in files) {
     final localeName =
@@ -252,7 +247,7 @@ String _writeJson(final Iterable<FileSystemEntity> files) {
     listLocales.add('"$localeName": $localeName');
     final fileData = File(file.path);
 
-    final data = json.decode(fileData.readAsStringSync());
+    final data = json.decode(fileData.readAsStringSync()) as Object;
 
     final mapString = encoder.convert(data);
     gFile.writeln('static const Map<String,dynamic> $localeName = $mapString;');

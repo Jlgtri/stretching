@@ -5,6 +5,22 @@ import 'dart:convert';
 import 'package:meta/meta.dart';
 import 'package:stretching/utils/json_converters.dart';
 
+/// The converter of the [AbonementModel].
+const AbonementConverter abonementConverter = AbonementConverter._();
+
+/// The converter of the [AbonementModel].
+class AbonementConverter
+    implements JsonConverter<AbonementModel, Map<String, Object?>> {
+  const AbonementConverter._();
+
+  @override
+  AbonementModel fromJson(final Map<String, Object?> data) =>
+      AbonementModel.fromMap(data);
+
+  @override
+  Map<String, Object?> toJson(final AbonementModel data) => data.toMap();
+}
+
 /// The abonement model in the YClients API.
 ///
 /// See: https://yclientsru.docs.apiary.io/#reference/28/0
@@ -168,8 +184,8 @@ class AbonementModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory AbonementModel.fromJson(final String str) =>
-      AbonementModel.fromMap(json.decode(str));
+  factory AbonementModel.fromJson(final String source) =>
+      AbonementModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -266,8 +282,9 @@ class AbonementBalanceContainerModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory AbonementBalanceContainerModel.fromJson(final String str) =>
-      AbonementBalanceContainerModel.fromMap(json.decode(str));
+  factory AbonementBalanceContainerModel.fromJson(final String source) =>
+      AbonementBalanceContainerModel.fromMap(
+          json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -333,8 +350,9 @@ class AbonementBalanceContainerLinkModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory AbonementBalanceContainerLinkModel.fromJson(final String str) =>
-      AbonementBalanceContainerLinkModel.fromMap(json.decode(str));
+  factory AbonementBalanceContainerLinkModel.fromJson(final String source) =>
+      AbonementBalanceContainerLinkModel.fromMap(
+          json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -411,9 +429,10 @@ class AbonementBalanceContainerLinkCategoryModel {
 
   /// Convert the json string to this model.
   factory AbonementBalanceContainerLinkCategoryModel.fromJson(
-    final String str,
+    final String source,
   ) =>
-      AbonementBalanceContainerLinkCategoryModel.fromMap(json.decode(str));
+      AbonementBalanceContainerLinkCategoryModel.fromMap(
+          json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -488,8 +507,8 @@ class AbonementStatusModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory AbonementStatusModel.fromJson(final String str) =>
-      AbonementStatusModel.fromMap(json.decode(str));
+  factory AbonementStatusModel.fromJson(final String source) =>
+      AbonementStatusModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -623,8 +642,8 @@ class AbonementTypeModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory AbonementTypeModel.fromJson(final String str) =>
-      AbonementTypeModel.fromMap(json.decode(str));
+  factory AbonementTypeModel.fromJson(final String source) =>
+      AbonementTypeModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {

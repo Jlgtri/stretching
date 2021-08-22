@@ -7,7 +7,7 @@ import 'package:stretching/utils/json_converters.dart';
 
 /// The extra options for commiting a request to YClients API.
 @immutable
-class YClientsRequestExtra<T extends Object> {
+class YClientsRequestExtra<T extends Object?> {
   /// The extra options for commiting a request to YClients API.
   const YClientsRequestExtra({
     final this.onData,
@@ -15,14 +15,14 @@ class YClientsRequestExtra<T extends Object> {
   });
 
   /// Convert the resulting data to the object of type [T].
-  final FromJson<T>? onData;
+  final FromJson<T?, Object?>? onData;
 
   /// If true, throw an exception if [YClientsResponse.success] is not true.
   final bool validate;
 
   /// Return the copy of this model.
   YClientsRequestExtra<T> copyWith({
-    final FromJson<T>? onData,
+    final FromJson<T?, Object?>? onData,
     final bool? validate,
   }) {
     return YClientsRequestExtra<T>(
@@ -42,7 +42,7 @@ class YClientsRequestExtra<T extends Object> {
   /// Convert the map with string keys to this model.
   factory YClientsRequestExtra.fromMap(final Map<String, Object?> map) {
     return YClientsRequestExtra<T>(
-      onData: map['onData']! as FromJson<T>,
+      onData: map['onData']! as FromJson<T?, Object?>,
       validate: map['validate']! as bool,
     );
   }
@@ -52,7 +52,7 @@ class YClientsRequestExtra<T extends Object> {
 
   /// Convert the json string to this model.
   factory YClientsRequestExtra.fromJson(final String source) =>
-      YClientsRequestExtra.fromMap(json.decode(source));
+      YClientsRequestExtra.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -108,18 +108,18 @@ class YClientsResponse<T extends Object> {
   }
 
   /// Convert this model to map with string keys.
-  Map<String, Object?> toMap({final ToJson<T>? onData}) {
+  Map<String, Object?> toMap({final ToJson<T?, Object?>? onData}) {
     return <String, Object?>{
       'success': success,
-      'data': data != null && onData != null ? onData(data!) : data,
-      'meta': meta?.toMap() ?? const [],
+      'data': data != null && onData != null ? onData(data) : data,
+      'meta': meta?.toMap() ?? const <Object>[],
     };
   }
 
   /// Convert the map with string keys to this model.
   factory YClientsResponse.fromMap(
     final Map<String, Object?> map, {
-    final FromJson<T>? onData,
+    final FromJson<T?, Object?>? onData,
   }) {
     return YClientsResponse<T>(
       success: map['success']! as bool,
@@ -135,7 +135,7 @@ class YClientsResponse<T extends Object> {
 
   /// Convert the json string to this model.
   factory YClientsResponse.fromJson(final String source) =>
-      YClientsResponse.fromMap(json.decode(source));
+      YClientsResponse.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -202,7 +202,7 @@ class YClientsResponseMeta {
 
   /// Convert the json string to this model.
   factory YClientsResponseMeta.fromJson(final String source) =>
-      YClientsResponseMeta.fromMap(json.decode(source));
+      YClientsResponseMeta.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {

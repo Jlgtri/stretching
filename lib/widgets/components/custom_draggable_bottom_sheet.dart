@@ -60,42 +60,47 @@ class CustomDraggableBottomSheet extends HookConsumerWidget {
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
+    final mediaQuery = MediaQuery.of(context);
+    final animatedContainerKey = useMemoized(() => GlobalKey());
     final sheetKey = useMemoized(() => GlobalKey());
+
     final height = useState<double>(0);
+    useMemoized(
+      () => height.value = 0,
+      [mediaQuery.orientation],
+    );
 
-    final screenSize = useMemoized(() => MediaQuery.of(context).size.height);
-    final maxScreenSize = useMemoized<double>(() {
-      var maxSize = screenSize;
-      final _mainContext = mainContext;
-      if (_mainContext != null) {
-        final topPadding = MediaQuery.of(_mainContext).viewPadding.top;
-        maxSize -= topPadding;
-      }
-      return maxSize;
-    });
+    final screenSize = useMemoized(
+      () => mediaQuery.size.height,
+      [mediaQuery.orientation],
+    );
 
-    // calculate the proportion
-    final maxChildSize = useMemoized<double>(
+    final maxScreenSize = useMemoized<double>(
       () {
-        return (height.value / maxScreenSize)
-            .clamp(0, maxScreenSize / screenSize);
+        var maxSize = screenSize;
+        final _mainContext = mainContext;
+        if (_mainContext != null) {
+          final topPadding = MediaQuery.of(_mainContext).viewPadding.top;
+          maxSize -= topPadding;
+        }
+        return maxSize;
       },
-      [height.value],
+      [mediaQuery.orientation],
     );
 
     // for some reason initSize can't equal max size for very long widgets
-
     final childKey = useMemoized(() => GlobalKey());
-    useMemoized(() {
-      ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
+    useMemoized(
+      () => ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
         final size = childKey.currentContext?.size;
         if (size != null) {
           height.value = size.height;
         }
-      });
-    });
+      }),
+      [mediaQuery.orientation],
+    );
 
-    if (height.value == 0) {
+    if (height.value <= 0) {
       return SizedBox(key: childKey, child: builder(null, null));
     }
 
@@ -107,13 +112,27 @@ class CustomDraggableBottomSheet extends HookConsumerWidget {
           : 1;
     }
 
-    var validMaxChildSize = maxChildSize * toScreenSize(childHeight);
-    validMaxChildSize -= validMaxChildSize * 0.001;
-    validMaxChildSize = validMaxChildSize.clamp(.0, maxScreenSize);
-    final minChildSize =
-        toScreenSize(dismissHeight).clamp(.0, validMaxChildSize);
-    final initialChildSize =
-        toScreenSize(initialHeight).clamp(minChildSize, validMaxChildSize);
+    final maxChildSize = useMemoized<double>(
+      () {
+        var maxChildSize = height.value / maxScreenSize;
+        maxChildSize = maxChildSize.clamp(.0, maxScreenSize / screenSize);
+        maxChildSize = maxChildSize * toScreenSize(childHeight);
+        maxChildSize -= maxChildSize * 0.001;
+        return maxChildSize.clamp(0, maxScreenSize).toDouble();
+      },
+      [mediaQuery.orientation],
+    );
+
+    final minChildSize = useMemoized<double>(
+      () => toScreenSize(dismissHeight).clamp(0, maxChildSize),
+      [mediaQuery.orientation],
+    );
+
+    final initialChildSize = useMemoized<double>(
+      () => toScreenSize(initialHeight).clamp(minChildSize, maxChildSize),
+      [mediaQuery.orientation],
+    );
+
     return Listener(
       behavior: HitTestBehavior.opaque,
       onPointerDown: (final event) {
@@ -125,11 +144,12 @@ class CustomDraggableBottomSheet extends HookConsumerWidget {
       child: DraggableScrollableSheet(
         key: sheetKey,
         expand: false,
-        maxChildSize: validMaxChildSize,
+        maxChildSize: maxChildSize,
         minChildSize: minChildSize,
         initialChildSize: initialChildSize,
         builder: (final context, final controller) {
           return AnimatedContainer(
+            key: animatedContainerKey,
             height: height.value,
             duration: const Duration(seconds: 1),
             child: SizedBox(

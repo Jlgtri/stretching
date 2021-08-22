@@ -200,11 +200,11 @@ class Options {
       exclude.add(r'^\.');
     }
     return Options(
-      sourceDir: Directory(results['source-dir']),
-      outputFile: File(results['output-file']),
-      className: results['class-name'],
+      sourceDir: Directory(results['source-dir']! as String),
+      outputFile: File(results['output-file']! as String),
+      className: results['class-name']! as String,
       exclude: RegExp(exclude.join('|')),
-      importComments: results['import-comments'],
+      importComments: results['import-comments']! as bool,
     );
   }
 }

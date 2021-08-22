@@ -6,6 +6,22 @@ import 'package:meta/meta.dart';
 import 'package:stretching/models/activity_model.dart';
 import 'package:stretching/utils/json_converters.dart';
 
+/// The converter of the [RecordModel].
+const RecordConverter recordConverter = RecordConverter._();
+
+/// The converter of the [RecordModel].
+class RecordConverter
+    implements JsonConverter<RecordModel, Map<String, Object?>> {
+  const RecordConverter._();
+
+  @override
+  RecordModel fromJson(final Map<String, Object?> data) =>
+      RecordModel.fromMap(data);
+
+  @override
+  Map<String, Object?> toJson(final RecordModel data) => data.toMap();
+}
+
 /// The user record for YClients API.
 ///
 /// The variation of the [ActivityModel] for the user.
@@ -223,8 +239,8 @@ class RecordModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory RecordModel.fromJson(final String str) =>
-      RecordModel.fromMap(json.decode(str));
+  factory RecordModel.fromJson(final String source) =>
+      RecordModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -467,8 +483,8 @@ class RecordCompanyModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory RecordCompanyModel.fromJson(final String str) =>
-      RecordCompanyModel.fromMap(json.decode(str));
+  factory RecordCompanyModel.fromJson(final String source) =>
+      RecordCompanyModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -632,8 +648,8 @@ class RecordServiceModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory RecordServiceModel.fromJson(final String str) =>
-      RecordServiceModel.fromMap(json.decode(str));
+  factory RecordServiceModel.fromJson(final String source) =>
+      RecordServiceModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -773,8 +789,8 @@ class RecordStaffModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory RecordStaffModel.fromJson(final String str) =>
-      RecordStaffModel.fromMap(json.decode(str));
+  factory RecordStaffModel.fromJson(final String source) =>
+      RecordStaffModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {

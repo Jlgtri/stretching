@@ -18,6 +18,22 @@ enum PrepaidType {
 const EnumConverter<PrepaidType> prepaidConverter =
     EnumConverter(PrepaidType.values);
 
+/// The converter of the [TrainerModel].
+const TrainerConverter trainerConverter = TrainerConverter._();
+
+/// The converter of the [TrainerModel].
+class TrainerConverter
+    implements JsonConverter<TrainerModel, Map<String, Object?>> {
+  const TrainerConverter._();
+
+  @override
+  TrainerModel fromJson(final Map<String, Object?> data) =>
+      TrainerModel.fromMap(data);
+
+  @override
+  Map<String, Object?> toJson(final TrainerModel data) => data.toMap();
+}
+
 /// The trainer model of the YClients API book_staff method.
 @immutable
 class TrainerModel {
@@ -233,7 +249,7 @@ class TrainerModel {
 
   /// Convert the json string to this model.
   factory TrainerModel.fromJson(final String source) =>
-      TrainerModel.fromMap(json.decode(source));
+      TrainerModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -365,7 +381,8 @@ class TrainerImageGroupModel {
 
   /// Convert the json string to this model.
   factory TrainerImageGroupModel.fromJson(final String source) =>
-      TrainerImageGroupModel.fromMap(json.decode(source));
+      TrainerImageGroupModel.fromMap(
+          json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -450,7 +467,8 @@ class TrainerImageGroupImagesModel {
 
   /// Convert the json string to this model.
   factory TrainerImageGroupImagesModel.fromJson(final String source) =>
-      TrainerImageGroupImagesModel.fromMap(json.decode(source));
+      TrainerImageGroupImagesModel.fromMap(
+          json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -567,7 +585,8 @@ class TrainerImageGroupImagesImageModel {
 
   /// Convert the json string to this model.
   factory TrainerImageGroupImagesImageModel.fromJson(final String source) =>
-      TrainerImageGroupImagesImageModel.fromMap(json.decode(source));
+      TrainerImageGroupImagesImageModel.fromMap(
+          json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -645,7 +664,7 @@ class TrainerPositionModel {
 
   /// Convert the json string to this model.
   factory TrainerPositionModel.fromJson(final String source) =>
-      TrainerPositionModel.fromMap(json.decode(source));
+      TrainerPositionModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {

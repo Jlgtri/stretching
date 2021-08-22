@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+final MaterialStateProperty<T> Function<T>(T) _all = MaterialStateProperty.all;
 
 /// The light theme in the app.
 ThemeData get lightTheme {
@@ -22,6 +25,8 @@ ThemeData get _mainTheme {
     bottomSheetTheme: _bottomSheetTheme,
     iconTheme: _iconTheme,
     textButtonTheme: _textButtonTheme,
+    inputDecorationTheme: _inputDecorationTheme,
+    textSelectionTheme: _textSelectionTheme,
   );
 }
 
@@ -52,17 +57,19 @@ BottomSheetThemeData get _bottomSheetTheme {
 
 TextButtonThemeData get _textButtonTheme {
   return TextButtonThemeData(
-    style: TextButton.styleFrom(
+    style: ButtonStyle(
       enableFeedback: true,
-      minimumSize: Size.zero,
-      maximumSize: Size.infinite,
+      minimumSize: _all(Size.zero),
+      maximumSize: _all(Size.infinite),
+      foregroundColor: _all(Colors.white),
       splashFactory: InkSplash.splashFactory,
       animationDuration: const Duration(milliseconds: 500),
       visualDensity: VisualDensity.comfortable,
-      enabledMouseCursor: SystemMouseCursors.click,
-      disabledMouseCursor: SystemMouseCursors.forbidden,
-      textStyle: _textTheme.button,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      mouseCursor: _all(SystemMouseCursors.click),
+      textStyle: _all(_textTheme.button),
+      shape: _all(
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
     ),
   );
 }
@@ -85,7 +92,7 @@ TextTheme get _textTheme {
       fontSize: 32,
       fontWeight: FontWeight.bold,
     ),
-    headline2: TextStyle(fontSize: 28),
+    headline2: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
     headline3: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
     subtitle1: TextStyle(
       fontSize: 16,
@@ -102,5 +109,74 @@ TextTheme get _textTheme {
       decoration: TextDecoration.underline,
     ),
     button: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-  ).apply(fontFamily: 'SF');
+  ).apply(fontFamily: 'SF', displayColor: Colors.black);
+}
+
+InputDecorationTheme get _inputDecorationTheme {
+  return InputDecorationTheme(
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    labelStyle: _textTheme.subtitle1,
+    floatingLabelStyle: _textTheme.subtitle2,
+    hintStyle: _textTheme.bodyText1,
+    helperStyle: _textTheme.bodyText1,
+    errorStyle: _textTheme.bodyText2,
+    border: const OutlineInputBorder(),
+    enabledBorder: const OutlineInputBorder(),
+    focusedBorder: const OutlineInputBorder(borderSide: BorderSide(width: 2)),
+    disabledBorder:
+        const OutlineInputBorder(borderSide: BorderSide(width: 1 / 2)),
+    errorBorder: OutlineInputBorder(
+      borderSide: BorderSide(color: _colorScheme.error),
+    ),
+    focusedErrorBorder: OutlineInputBorder(
+      borderSide: BorderSide(width: 2, color: _colorScheme.error),
+    ),
+  );
+}
+
+TextSelectionThemeData get _textSelectionTheme {
+  return TextSelectionThemeData(
+    cursorColor: Colors.black,
+    selectionColor: Colors.black.withOpacity(1 / 3),
+    selectionHandleColor: Colors.black,
+  );
+}
+
+/// The custom styles for the [TextButton].
+enum TextButtonStyle {
+  /// The light style for the [TextButton].
+  light,
+
+  /// The dark style for the [TextButton].
+  dark
+}
+
+/// The extra data to provide for [TextButtonStyle].
+extension TextButtonStyleData on TextButtonStyle {
+  /// Return this style from [theme].
+  ButtonStyle fromTheme(final ThemeData theme) {
+    switch (this) {
+      case TextButtonStyle.light:
+        return ButtonStyle(
+          overlayColor: _all(
+            theme.colorScheme.onSurface.withOpacity(1 / 3),
+          ),
+          foregroundColor: _all(theme.colorScheme.onSurface),
+          backgroundColor: _all(Colors.transparent),
+          minimumSize: _all(const Size.fromHeight(48)),
+          side: _all(
+            BorderSide(color: theme.colorScheme.onSurface),
+          ),
+        );
+      case TextButtonStyle.dark:
+        return ButtonStyle(
+          overlayColor: _all(
+            theme.colorScheme.onSurface.withOpacity(1 / 3),
+          ),
+          foregroundColor: _all(theme.colorScheme.surface),
+          backgroundColor: _all(theme.colorScheme.onSurface),
+          minimumSize: _all(const Size.fromHeight(48)),
+        );
+    }
+  }
 }

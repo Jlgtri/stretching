@@ -15,3 +15,9 @@ const String smstretchingCity = 'Москва';
 ///
 /// See: https://yclientsru.docs.apiary.io/#reference/2/0/0
 const int smstretchingGroupId = 173417;
+
+/// The country code of the desired phone number.
+const int phoneCountryCode = 38;
+
+/// The length of the sms pin code for phone number authentication.
+const int pinCodeLength = 4;

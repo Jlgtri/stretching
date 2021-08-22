@@ -27,8 +27,10 @@ class DumpJson<T extends Object> extends ConsumerWidget {
         }
         Permission.storage.request().then((final _) async {
           final dynamic snapshotData = snapshot.data;
-          final data = snapshotData is Iterable
-              ? snapshotData.map((final data) => data.toMap()).toList()
+          final dynamic data = snapshotData is Iterable<dynamic>
+              ? snapshotData
+                  .map<dynamic>((final dynamic data) => data.toMap())
+                  .toList()
               : snapshotData.toMap();
           final dirs = await getExternalStorageDirectories(
             type: StorageDirectory.downloads,

@@ -131,7 +131,7 @@ class UserModel {
 
   /// Convert the json string to this model.
   factory UserModel.fromJson(final String source) =>
-      UserModel.fromMap(json.decode(source));
+      UserModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/style.dart';
 import 'package:stretching/widgets/components/custom_draggable_bottom_sheet.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 
@@ -35,7 +36,10 @@ mixin ModalBottomSheets {
               controller: controller,
               physics: physics,
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 36, 16, 36),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 36,
+                ),
                 child: _BottomSheetButtons<T>(
                   firstText: firstText,
                   onFirstPressed: onFirstPressed,
@@ -143,7 +147,7 @@ class _BottomSheetBase extends StatelessWidget {
 /// The callback to call when bottom sheet button was pressed.
 typedef OnBottomSheetButton<T extends Object> = FutureOr<T> Function(
   BuildContext context,
-)?;
+);
 
 class _BottomSheetButtons<T extends Object> extends StatelessWidget {
   const _BottomSheetButtons({
@@ -161,7 +165,7 @@ class _BottomSheetButtons<T extends Object> extends StatelessWidget {
 
   @override
   Widget build(final BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
@@ -169,14 +173,10 @@ class _BottomSheetButtons<T extends Object> extends StatelessWidget {
           TextButton(
             onPressed:
                 onFirstPressed != null ? () => onFirstPressed!(context) : null,
-            style: TextButton.styleFrom(
-              primary: colorScheme.surface,
-              backgroundColor: colorScheme.onSurface,
-              minimumSize: const Size.fromHeight(48),
-            ),
+            style: TextButtonStyle.dark.fromTheme(theme),
             child: Text(
               firstText,
-              style: TextStyle(color: colorScheme.surface),
+              style: TextStyle(color: theme.colorScheme.surface),
             ),
           ),
         if (secondText.isNotEmpty) ...[
@@ -185,15 +185,10 @@ class _BottomSheetButtons<T extends Object> extends StatelessWidget {
             onPressed: onSecondPressed != null
                 ? () => onSecondPressed!(context)
                 : null,
-            style: TextButton.styleFrom(
-              primary: colorScheme.onSurface,
-              backgroundColor: Colors.transparent,
-              minimumSize: const Size.fromHeight(48),
-              side: BorderSide(color: colorScheme.onSurface),
-            ),
+            style: TextButtonStyle.light.fromTheme(theme),
             child: Text(
               secondText,
-              style: TextStyle(color: colorScheme.onSurface),
+              style: TextStyle(color: theme.colorScheme.onSurface),
             ),
           ),
         ]

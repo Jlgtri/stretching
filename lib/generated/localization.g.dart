@@ -19,4 +19,16 @@ abstract class TR {
   static const String navigationTrainers = 'navigation.trainers';
   static const String navigationProfile = 'navigation.profile';
   static const String navigation = 'navigation';
+
+  static const String authPhone = 'auth.phone';
+  static const String authEnterCode = 'auth.enter_code';
+  static const String authReceiveCode = 'auth.receive_code';
+  static const String authCancel = 'auth.cancel';
+  static const String auth = 'auth';
+
+  static const String homeRegister = 'home.register';
+  static const String home = 'home';
+
+  static const String profileExit = 'profile.exit';
+  static const String profile = 'profile';
 }

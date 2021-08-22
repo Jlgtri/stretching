@@ -12,6 +12,7 @@ environment:
 
 # DEPENDENCIES UPDATE: 2021-08-01
 dependencies:
+  animations: ^2.0.1
   connectivity: ^3.0.6
   dio: ^4.0.0
   easy_localization: ^3.0.0
@@ -24,11 +25,13 @@ dependencies:
   hooks_riverpod: ^1.0.0-dev.6
   intl: ^0.17.0
   logger: ^1.0.0
+  mask_text_input_formatter: ^2.0.0
   meta: ^1.7.0
   path: ^1.8.0
   path_provider: ^2.0.2
   permission_handler: ^8.1.4+2
   persistent_bottom_nav_bar: ^4.0.2
+  pin_code_fields: ^7.3.0
   riverpod: ^1.0.0-dev.6
 
 dev_dependencies:

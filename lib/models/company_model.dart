@@ -5,6 +5,22 @@ import 'dart:convert';
 import 'package:meta/meta.dart';
 import 'package:stretching/utils/json_converters.dart';
 
+/// The converter of the [CompanyModel].
+const CompanyConverter companyConverter = CompanyConverter._();
+
+/// The converter of the [CompanyModel].
+class CompanyConverter
+    implements JsonConverter<CompanyModel, Map<String, Object?>> {
+  const CompanyConverter._();
+
+  @override
+  CompanyModel fromJson(final Map<String, Object?> data) =>
+      CompanyModel.fromMap(data);
+
+  @override
+  Map<String, Object?> toJson(final CompanyModel data) => data.toMap();
+}
+
 /// The company model of the YClients API companies method.
 ///
 /// See: https://yclientsru.docs.apiary.io/#reference/2/0/0
@@ -520,7 +536,7 @@ class CompanyModel {
 
   /// Convert the json string to this model.
   factory CompanyModel.fromJson(final String source) =>
-      CompanyModel.fromMap(json.decode(source));
+      CompanyModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -741,7 +757,8 @@ class CompanyMainGroupModel {
 
   /// Convert the json string to this model.
   factory CompanyMainGroupModel.fromJson(final String source) =>
-      CompanyMainGroupModel.fromMap(json.decode(source));
+      CompanyMainGroupModel.fromMap(
+          json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
@@ -837,7 +854,7 @@ class CompanySocialModel {
 
   /// Convert the json string to this model.
   factory CompanySocialModel.fromJson(final String source) =>
-      CompanySocialModel.fromMap(json.decode(source));
+      CompanySocialModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   bool operator ==(final Object other) {
