@@ -20,6 +20,7 @@ import 'package:stretching/style.dart';
 import 'package:stretching/utils/logger.dart';
 import 'package:stretching/widgets/components/focus_wrapper.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
+import 'package:stretching/widgets/navigation/navigation_root.dart';
 
 /// The widget to authorize a user.
 class AuthorizationScreen extends HookConsumerWidget {
@@ -32,8 +33,11 @@ class AuthorizationScreen extends HookConsumerWidget {
 
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
+    final navigator = Navigator.of(context);
 
     final isLoading = useState<bool>(false);
+    final isMounted = useIsMounted();
+
     final enteringPhone = useState<bool>(true);
     final phoneFormatter = useMemoized(() {
       return MaskTextInputFormatter(
@@ -63,10 +67,7 @@ class AuthorizationScreen extends HookConsumerWidget {
     /// * If step is [AuthorizationScreenStep.code], validate previously sent
     /// sms code and login the user.
     /// * If step is [AuthorizationScreenStep.done], logout the user.
-    Future<void> updateAuthStep({
-      final void Function()? onSuccess,
-      final bool reset = false,
-    }) async {
+    Future<void> updateAuthStep({final bool reset = false}) async {
       isLoading.value = true;
       phoneError.value = codeError.value = null;
       if (reset) {
@@ -79,21 +80,25 @@ class AuthorizationScreen extends HookConsumerWidget {
       try {
         final currentPhoneValue = currentPhone.value;
         if (currentPhoneValue != null) {
+          final yClients = ref.read(yClientsProvider);
           if (enteringPhone.value) {
-            response =
-                await ref.read(yClientsProvider).sendCode(currentPhoneValue);
-            onSuccess?.call();
+            response = await yClients.sendCode(currentPhoneValue);
+            if (isMounted()) {
+              enteringPhone.value = false;
+            }
           } else {
             final currentCodeValue = currentCode.value;
             if (currentCodeValue != null) {
-              response = await ref.read(yClientsProvider).verifyCode(
-                    currentPhoneValue,
-                    currentCodeValue,
-                  );
+              response = await yClients.verifyCode(
+                currentPhoneValue,
+                currentCodeValue,
+              );
               final user = response.data?.data as UserModel?;
               if (user != null) {
                 ref.read(userProvider.notifier).state = user;
-                onSuccess?.call();
+                (ref.read(navigationProvider))
+                    .jumpToTab(NavigationScreen.profile.index);
+                await navigator.maybePop();
               }
             }
           }
@@ -112,12 +117,14 @@ class AuthorizationScreen extends HookConsumerWidget {
           rethrow;
         }
       } finally {
+        if (isMounted()) {
+          isLoading.value = false;
+        }
         logger.i(
           response ?? 'Phone: ${enteringPhone.value}',
           response != null ? 'Phone: ${enteringPhone.value}' : response,
         );
       }
-      isLoading.value = false;
     }
 
     void onPhoneFieldChanged(final String value) {
@@ -148,7 +155,7 @@ class AuthorizationScreen extends HookConsumerWidget {
                 else
                   const SizedBox.shrink(),
                 TextButton(
-                  onPressed: () => Navigator.of(context).maybePop(),
+                  onPressed: navigator.maybePop,
                   style: TextButton.styleFrom(
                     padding: const EdgeInsets.all(8),
                     primary: theme.colorScheme.onSurface,
@@ -208,22 +215,12 @@ class AuthorizationScreen extends HookConsumerWidget {
                       initialText: phoneFormatter.getMaskedText(),
                       errorText: phoneError.value,
                       onChanged: onPhoneFieldChanged,
-                      onSubmitted: (final value) async {
-                        onPhoneFieldChanged(value);
-                        if (currentPhone.value != null) {
-                          await updateAuthStep(
-                            onSuccess: () => enteringPhone.value = false,
-                          );
-                        }
-                      },
+                      onSubmitted: (final value) => updateAuthStep(),
                     ),
                     const SizedBox(height: 24),
                     TextButton(
-                      onPressed: currentPhone.value != null
-                          ? () => updateAuthStep(
-                                onSuccess: () => enteringPhone.value = false,
-                              )
-                          : null,
+                      onPressed:
+                          currentPhone.value != null ? updateAuthStep : null,
                       style: TextButtonStyle.dark.fromTheme(theme).copyWith(
                             backgroundColor: currentPhone.value == null
                                 ? MaterialStateProperty.all(Colors.grey)
@@ -264,9 +261,7 @@ class AuthorizationScreen extends HookConsumerWidget {
                         onCompleted: (final value) async {
                           if (int.tryParse(value) != null) {
                             currentCode.value = value;
-                            await updateAuthStep(
-                              onSuccess: Navigator.of(context).pop,
-                            );
+                            await updateAuthStep();
                           }
                         },
                         inputFormatters: <TextInputFormatter>[
@@ -374,7 +369,9 @@ class _AuthorizationPhoneField extends HookWidget {
         )
         ..add(
           ObjectFlagProperty<void Function(String p1)>.has(
-              'onSubmitted', onSubmitted,),
+            'onSubmitted',
+            onSubmitted,
+          ),
         ),
     );
   }
