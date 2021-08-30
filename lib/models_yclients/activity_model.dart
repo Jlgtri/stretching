@@ -190,7 +190,7 @@ class ActivityModel {
       staff: ActivityStaffModel.fromMap(map['staff']! as Map<String, Object?>),
       resourceInstances: (map['resource_instances']! as Iterable<Object?>)
           .cast<Map<String, Object?>>()
-          .map(ActivityResourceInstanceModel.fromMap),
+          .map((final map) => ActivityResourceInstanceModel.fromMap(map)),
       labels: (map['labels']! as Iterable).cast<String>(),
     );
   }

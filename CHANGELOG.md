@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Authentication Mockup
 
+- YClients API
+
+- SMStretching API
+
+- Trainers Screen
+
+- Studios Screen
+
 ## [0.0.0]
 
 ### Added

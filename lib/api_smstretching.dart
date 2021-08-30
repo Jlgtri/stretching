@@ -36,7 +36,7 @@ final AutoDisposeFutureProvider<void> smStretchingContentProvider =
           await smstretching.get<Iterable>('$smStretchingUrl/studii');
       smStudiosNotifier.state = response.data!
           .cast<Map<String, Object?>>()
-          .map(SMStudioModel.fromMap);
+          .map((final map) => SMStudioModel.fromMap(map));
     }
   } on DioError catch (e) {
     smStudiosNotifier.state = const Iterable<SMStudioModel>.empty();
@@ -50,7 +50,7 @@ final AutoDisposeFutureProvider<void> smStretchingContentProvider =
           await smstretching.get<Iterable>('$smStretchingUrl/shtab_v2');
       smTrainersNotifier.state = response.data!
           .cast<Map<String, Object?>>()
-          .map(SMTrainerModel.fromMap);
+          .map((final map) => SMTrainerModel.fromMap(map));
     }
   } on DioError catch (e) {
     smTrainersNotifier.state = const Iterable<SMTrainerModel>.empty();
