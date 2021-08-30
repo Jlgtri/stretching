@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-final MaterialStateProperty<T> Function<T>(T) _all = MaterialStateProperty.all;
-
 /// The light theme in the app.
 ThemeData get lightTheme {
   return _mainTheme.copyWith();
@@ -59,15 +57,15 @@ TextButtonThemeData get _textButtonTheme {
   return TextButtonThemeData(
     style: ButtonStyle(
       enableFeedback: true,
-      minimumSize: _all(Size.zero),
-      maximumSize: _all(Size.infinite),
-      foregroundColor: _all(Colors.white),
+      minimumSize: MaterialStateProperty.all(Size.zero),
+      maximumSize: MaterialStateProperty.all(Size.infinite),
+      foregroundColor: MaterialStateProperty.all(Colors.white),
       splashFactory: InkSplash.splashFactory,
       animationDuration: const Duration(milliseconds: 500),
       visualDensity: VisualDensity.comfortable,
-      mouseCursor: _all(SystemMouseCursors.click),
-      textStyle: _all(_textTheme.button),
-      shape: _all(
+      mouseCursor: MaterialStateProperty.all(SystemMouseCursors.click),
+      textStyle: MaterialStateProperty.all(_textTheme.button),
+      shape: MaterialStateProperty.all(
         RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     ),
@@ -158,24 +156,26 @@ extension TextButtonStyleData on TextButtonStyle {
     switch (this) {
       case TextButtonStyle.light:
         return ButtonStyle(
-          overlayColor: _all(
+          overlayColor: MaterialStateProperty.all(
             theme.colorScheme.onSurface.withOpacity(1 / 3),
           ),
-          foregroundColor: _all(theme.colorScheme.onSurface),
-          backgroundColor: _all(Colors.transparent),
-          minimumSize: _all(const Size.fromHeight(48)),
-          side: _all(
+          foregroundColor:
+              MaterialStateProperty.all(theme.colorScheme.onSurface),
+          backgroundColor: MaterialStateProperty.all(theme.colorScheme.surface),
+          minimumSize: MaterialStateProperty.all(const Size.fromHeight(48)),
+          side: MaterialStateProperty.all(
             BorderSide(color: theme.colorScheme.onSurface),
           ),
         );
       case TextButtonStyle.dark:
         return ButtonStyle(
-          overlayColor: _all(
-            theme.colorScheme.onSurface.withOpacity(1 / 3),
+          overlayColor: MaterialStateProperty.all(
+            theme.colorScheme.surface.withOpacity(1 / 3),
           ),
-          foregroundColor: _all(theme.colorScheme.surface),
-          backgroundColor: _all(theme.colorScheme.onSurface),
-          minimumSize: _all(const Size.fromHeight(48)),
+          foregroundColor: MaterialStateProperty.all(theme.colorScheme.surface),
+          backgroundColor:
+              MaterialStateProperty.all(theme.colorScheme.onSurface),
+          minimumSize: MaterialStateProperty.all(const Size.fromHeight(48)),
         );
     }
   }

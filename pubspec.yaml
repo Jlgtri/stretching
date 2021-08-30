@@ -7,19 +7,25 @@ version: 0.0.2
 publish_to: none # Remove this line if you wish to publish to pub.dev
 
 environment:
-  sdk: '>=2.14.0-350.0.dev <3.0.0'
-  flutter: '>=2.0.0'
+  sdk: '>=2.15.0-42.0.dev <3.0.0'
+  flutter: '>=2.6.0-0.0.pre'
 
 # DEPENDENCIES UPDATE: 2021-08-01
 dependencies:
   animations: ^2.0.1
+  auto_size_text: ^3.0.0-nullsafety.0
+  cached_network_image: ^3.1.0
   connectivity: ^3.0.6
+  darq: ^1.1.1
   dio: ^4.0.0
+  draggable_scrollbar: ^0.1.0
   easy_localization: ^3.0.0
   flutter:
     sdk: flutter
   flutter_hooks: ^0.18.0
   flutter_riverpod: ^1.0.0-dev.6
+  geolocator: ^7.4.1
+  google_maps_flutter: ^2.0.6
   hive: ^2.0.4
   hive_flutter: ^1.1.0
   hooks_riverpod: ^1.0.0-dev.6
@@ -45,6 +51,7 @@ dev_dependencies:
 
 flutter:
   assets:
+    - assets/google_map_style.json
     - assets/translations/ru-RU.json
 
   fonts:

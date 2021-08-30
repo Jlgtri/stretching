@@ -284,7 +284,8 @@ class AbonementBalanceContainerModel {
   /// Convert the json string to this model.
   factory AbonementBalanceContainerModel.fromJson(final String source) =>
       AbonementBalanceContainerModel.fromMap(
-          json.decode(source) as Map<String, Object?>);
+        json.decode(source) as Map<String, Object?>,
+      );
 
   @override
   bool operator ==(final Object other) {
@@ -352,7 +353,8 @@ class AbonementBalanceContainerLinkModel {
   /// Convert the json string to this model.
   factory AbonementBalanceContainerLinkModel.fromJson(final String source) =>
       AbonementBalanceContainerLinkModel.fromMap(
-          json.decode(source) as Map<String, Object?>);
+        json.decode(source) as Map<String, Object?>,
+      );
 
   @override
   bool operator ==(final Object other) {
@@ -432,7 +434,8 @@ class AbonementBalanceContainerLinkCategoryModel {
     final String source,
   ) =>
       AbonementBalanceContainerLinkCategoryModel.fromMap(
-          json.decode(source) as Map<String, Object?>);
+        json.decode(source) as Map<String, Object?>,
+      );
 
   @override
   bool operator ==(final Object other) {

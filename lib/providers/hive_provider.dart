@@ -5,7 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:meta/meta.dart';
 import 'package:stretching/utils/json_converters.dart';
 
-/// The provider of a Hive database.
+/// The provider of a [Hive] database.
 final Provider<Box<String>> hiveProvider = Provider<Box<String>>((final ref) {
   throw Exception('Hive was not initialised.');
 });
@@ -137,8 +137,58 @@ class OptionalSaveToHiveNotifier<T extends Object?, S extends Object?>
   }
 }
 
-mixin _IterableMixin<T extends Object, S extends Object>
-    on SaveToHiveNotifier<Iterable<T>, S> {
+/// The notifier that automatically save the [state] to the [hive] database.
+class SaveToHiveIterableNotifier<T extends Object, S extends Object>
+    extends StateNotifier<Iterable<T>>
+    implements SaveDataInterface<Iterable<T>, S> {
+  /// The notifier that returns a default value from the [hive] database.
+  ///
+  /// If value does not exist, returns a [defaultValue].
+  SaveToHiveIterableNotifier({
+    required final this.hive,
+    required final this.saveName,
+    required final this.converter,
+    required final Iterable<T> defaultValue,
+    final Iterable<T>? Function(Iterable<T>)? onValueCreated,
+  }) : super(
+          onValueCreated?.call(
+                hive.containsKey(saveName)
+                    ? converter.fromJson(hive.get(saveName)!).cast<T>()
+                    : defaultValue,
+              ) ??
+              (hive.containsKey(saveName)
+                  ? converter.fromJson(hive.get(saveName)!).cast<T>()
+                  : defaultValue),
+        );
+
+  /// The reference to the [Hive] database.
+  final Box<S> hive;
+
+  @override
+  final String saveName;
+
+  @override
+  final JsonConverter<Iterable<T>, S> converter;
+
+  @override
+  Future<void> save() => hive.put(saveName, converter.toJson(state));
+
+  @override
+  set state(final Iterable<T> value) {
+    super.state = value;
+    save();
+  }
+
+  @override
+  Iterable<T> get state => super.state;
+
+  /// Updates the current [state] and saves it's value to the [hive] database.
+  @mustCallSuper
+  Future<void> setStateAsync(final Iterable<T> value) async {
+    super.state = value;
+    await save();
+  }
+
   /// Add a checked permission to this notifier.
   Future<void> add(final T item) async {
     await setStateAsync(<T>[...state, item]);
@@ -157,34 +207,3 @@ mixin _IterableMixin<T extends Object, S extends Object>
     ]);
   }
 }
-
-mixin _OptionalIterableMixin<T extends Object?, S extends Object?>
-    on OptionalSaveToHiveNotifier<Iterable<T>, S> {
-  /// Add a checked permission to this notifier.
-  Future<void> add(final T item) async {
-    await setStateAsync(<T>[...?state, item]);
-  }
-
-  /// Add a checked permission to this notifier.
-  Future<void> addAll(final Iterable<T> item) async {
-    await setStateAsync(<T>[...?state, ...item]);
-  }
-
-  /// Remove a checked permission from this notifier.
-  Future<void> remove(final T item) async {
-    await setStateAsync(<T>[
-      for (final _item in state ?? Iterable<T>.empty())
-        if (_item != item) _item
-    ]);
-  }
-}
-
-/// The notifier that automatically saves the iterable to the database.
-class SaveToHiveIterableNotifier<T extends Object,
-        S extends Object> = SaveToHiveNotifier<Iterable<T>, S>
-    with _IterableMixin<T, S>;
-
-/// The notifier that automatically saves the iterable to the database.
-class OptionalSaveToHiveIterableNotifier<T extends Object?,
-        S extends Object?> = OptionalSaveToHiveNotifier<Iterable<T>, S>
-    with _OptionalIterableMixin<T, S>;

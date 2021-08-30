@@ -2,7 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stretching/generated/localization.g.dart';
-import 'package:stretching/providers.dart';
+import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 
 /// The screen for the [NavigationScreen.profile].

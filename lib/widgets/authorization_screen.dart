@@ -10,12 +10,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
-import 'package:stretching/api.dart';
+import 'package:stretching/api_yclients.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/localization.g.dart';
-import 'package:stretching/models/user_model.dart';
 import 'package:stretching/models/yclients_response.dart';
-import 'package:stretching/providers.dart';
+import 'package:stretching/models_yclients/user_model.dart';
+import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/logger.dart';
 import 'package:stretching/widgets/components/focus_wrapper.dart';
@@ -154,7 +154,7 @@ class AuthorizationScreen extends HookConsumerWidget {
                     primary: theme.colorScheme.onSurface,
                   ),
                   child: Text(
-                    TR.authCancel.tr(),
+                    TR.tooltipsCancel.tr(),
                     style: TextStyle(color: theme.colorScheme.onSurface),
                   ),
                 ),
@@ -374,7 +374,7 @@ class _AuthorizationPhoneField extends HookWidget {
         )
         ..add(
           ObjectFlagProperty<void Function(String p1)>.has(
-              'onSubmitted', onSubmitted),
+              'onSubmitted', onSubmitted,),
         ),
     );
   }

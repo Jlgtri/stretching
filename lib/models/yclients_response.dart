@@ -100,7 +100,7 @@ class YClientsResponse<T extends Object> {
     final T? data,
     final YClientsResponseMeta? meta,
   }) {
-    return YClientsResponse(
+    return YClientsResponse<T>(
       success: success ?? this.success,
       data: data ?? this.data,
       meta: meta ?? this.meta,
@@ -119,11 +119,13 @@ class YClientsResponse<T extends Object> {
   /// Convert the map with string keys to this model.
   factory YClientsResponse.fromMap(
     final Map<String, Object?> map, {
-    final FromJson<T?, Object?>? onData,
+    final FromJson<T?, Object>? onData,
   }) {
     return YClientsResponse<T>(
       success: map['success']! as bool,
-      data: onData != null ? onData(map['data']) : map['data'] as T?,
+      data: onData != null && map['data'] != null
+          ? onData(map['data'])
+          : map['data'] as T?,
       meta: map['meta'] != null && map['meta'] is! Iterable
           ? YClientsResponseMeta.fromMap(map['meta']! as Map<String, Object?>)
           : null,

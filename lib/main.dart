@@ -5,12 +5,13 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:stretching/api.dart';
+import 'package:stretching/api_smstretching.dart';
+import 'package:stretching/api_yclients.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/providers/connection_provider.dart';
 import 'package:stretching/providers/hive_provider.dart';
-import 'package:stretching/providers/other_provider.dart';
+import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/widgets/authorization_screen.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
@@ -54,13 +55,14 @@ class RootScreen extends HookConsumerWidget {
       useMemoized(() async {
         await ez.delegate.load(ez.currentLocale!);
         await ref.read(connectionProvider.notifier).updateConnection();
-        await ref.read(mainYClientsProvider.future);
+        await ref.read(locationProvider.last);
+        // await ref.read(hiveProvider).clear();
       }),
     );
     if (snapshot.connectionState != ConnectionState.done) {
       return const SizedBox.shrink();
     }
-    final hive = ref.read(hiveProvider).keys;
+
     return MaterialApp(
       title: 'Stretching',
       restorationScopeId: 'stretching',
@@ -71,8 +73,54 @@ class RootScreen extends HookConsumerWidget {
       theme: lightTheme,
       darkTheme: darkTheme,
       initialRoute: Routes.root.name,
-      routes: {for (final route in Routes.values) route.name: route.builder},
-      // builder: (final context, final child) => TruStrainSplash(child: child!),
+      routes: <String, Widget Function(BuildContext)>{
+        for (final route in Routes.values) route.name: route.builder
+      },
+      builder: (final context, final child) {
+        final smStretchingContent = ref.watch(smStretchingContentProvider);
+        return smStretchingContent.when(
+          data: (final _) {
+            final yClientsContent = ref.watch(yClientsContentProvider);
+            return yClientsContent.when(
+              data: (final _) => child!,
+              loading: () => const SizedBox.shrink(),
+              error: (final error, final stackTrace) {
+                return Material(
+                  child: Container(
+                    color: Colors.red,
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Text(error.toString()),
+                        const SizedBox(height: 50),
+                        Text(stackTrace.toString())
+                      ],
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+          loading: () => const SizedBox.shrink(),
+          error: (final error, final stackTrace) {
+            return Material(
+              child: Container(
+                color: Colors.red,
+                alignment: Alignment.center,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(error.toString()),
+                    const SizedBox(height: 50),
+                    Text(stackTrace.toString())
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

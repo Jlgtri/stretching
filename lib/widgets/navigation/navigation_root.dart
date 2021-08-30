@@ -10,14 +10,16 @@ import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/main.dart';
-import 'package:stretching/providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
+import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/utils/enum_to_string.dart';
 import 'package:stretching/utils/json_converters.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/home_screen.dart';
 import 'package:stretching/widgets/navigation/bottom_sheet.dart';
 import 'package:stretching/widgets/profile_screen.dart';
+import 'package:stretching/widgets/studios_screen.dart';
+import 'package:stretching/widgets/trainers_screen.dart';
 
 /// The screens for the [navigationProvider].
 enum NavigationScreen {
@@ -77,14 +79,16 @@ extension NavigationScreenData on NavigationScreen {
       case NavigationScreen.home:
         return const HomeScreen();
       case NavigationScreen.schedule:
-      case NavigationScreen.studios:
-      case NavigationScreen.trainers:
         return Center(
           child: IconButton(
             icon: Icon(icon, size: 64),
             onPressed: () {},
           ),
         );
+      case NavigationScreen.studios:
+        return const StudiosScreen();
+      case NavigationScreen.trainers:
+        return const TrainersScreen();
       case NavigationScreen.profile:
         return const ProfileScreen();
     }
@@ -283,9 +287,11 @@ class NavigationRoot extends HookConsumerWidget {
           child: Padding(
             padding: MediaQuery.of(context).viewPadding,
             child: FontIcon(
-              IconsCG.logo,
-              height: 16,
-              color: theme.appBarTheme.foregroundColor,
+              FontIconData(
+                IconsCG.logo,
+                height: 16,
+                color: theme.appBarTheme.foregroundColor,
+              ),
             ),
           ),
         ),

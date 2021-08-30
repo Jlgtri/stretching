@@ -21,6 +21,67 @@ mixin JsonConverter<T extends Object?, S extends Object?> on Object {
 
 /// The default converter of the [DefaultBoolToIntConverter] with
 /// `defaultValue = false`.
+const DefaultBoolToStringConverter falseBoolToStringConverter =
+    DefaultBoolToStringConverter._false();
+
+/// The default converter of the [DefaultBoolToIntConverter] with
+/// `defaultValue = true`.
+const DefaultBoolToStringConverter trueBoolToStringConverter =
+    DefaultBoolToStringConverter._true();
+
+/// The bool to int converter.
+class DefaultBoolToStringConverter implements JsonConverter<bool, String?> {
+  /// The bool to int converter with `[defaultValue] = false`.
+  const DefaultBoolToStringConverter._false() : defaultValue = false;
+
+  /// The bool to int converter with `[defaultValue] = true`.
+  const DefaultBoolToStringConverter._true() : defaultValue = true;
+
+  /// The default value to return if condition is null.
+  final bool defaultValue;
+
+  static final RegExp _trueRegExp = RegExp(
+    'yes|on|true|1',
+    caseSensitive: false,
+  );
+
+  static final RegExp _falseRegExp = RegExp(
+    'no|off|false|0',
+    caseSensitive: false,
+  );
+
+  @override
+  String toJson(final bool data) => data.toString();
+
+  @override
+  bool fromJson(final String? data) => data != null
+      ? _trueRegExp.hasMatch(data) ||
+          (!_falseRegExp.hasMatch(data) && defaultValue)
+      : defaultValue;
+}
+
+/// The default converter of the [BoolToStringConverter].
+const BoolToStringConverter boolToStringConverter = BoolToStringConverter._();
+
+/// The bool to int converter.
+class BoolToStringConverter implements JsonConverter<bool, String> {
+  /// The bool to int converter.
+  const BoolToStringConverter._();
+
+  static final RegExp _trueRegExp = RegExp(
+    'yes|on|true|1',
+    caseSensitive: false,
+  );
+
+  @override
+  String toJson(final bool data) => data.toString();
+
+  @override
+  bool fromJson(final String data) => _trueRegExp.hasMatch(data);
+}
+
+/// The default converter of the [DefaultBoolToIntConverter] with
+/// `defaultValue = false`.
 const DefaultBoolToIntConverter falseBoolToIntConverter =
     DefaultBoolToIntConverter._false();
 
@@ -56,10 +117,10 @@ class BoolToIntConverter implements JsonConverter<bool, int> {
   const BoolToIntConverter._();
 
   @override
-  bool fromJson(final int json) => json == 1;
+  int toJson(final bool data) => data ? 1 : 0;
 
   @override
-  int toJson(final bool data) => data ? 1 : 0;
+  bool fromJson(final int json) => json == 1;
 }
 
 extension on String {
@@ -182,22 +243,45 @@ class IterableConverter<T extends Object, S extends Object>
 }
 
 /// The custom converter to convert to String.
-class StringConverter<T extends Object> implements JsonConverter<T, String> {
+class StringConverter<T extends Object, S extends Object>
+    implements JsonConverter<T, String> {
   /// The custom converter to convert to String.
   const StringConverter(this.converter);
 
   /// The converter for the children.
-  final JsonConverter<T, Object> converter;
+  final JsonConverter<T, S> converter;
 
   @override
   T fromJson(final Object? data) {
     return data is T
         ? data
-        : converter.fromJson(json.decode(data! as String) as Object);
+        : converter.fromJson(json.decode(data! as String) as S);
   }
 
   @override
   String toJson(final T data) => json.encode(converter.toJson(data));
+}
+
+/// The custom converter to convert to String.
+class StringToIterableConverter<T extends Object, S extends Object>
+    implements JsonConverter<Iterable<T>, String> {
+  /// The custom converter to convert to String.
+  const StringToIterableConverter(this.converter);
+
+  /// The converter for the children.
+  final JsonConverter<Iterable<T>, Iterable<S>> converter;
+
+  @override
+  Iterable<T> fromJson(final Object? data) {
+    return data is Iterable<T>
+        ? data
+        : converter.fromJson(
+            (json.decode(data! as String) as List).cast<S>(),
+          );
+  }
+
+  @override
+  String toJson(final Iterable<T> data) => json.encode(converter.toJson(data));
 }
 
 /// The custom converter to convert to String.

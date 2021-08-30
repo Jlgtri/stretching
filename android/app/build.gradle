@@ -13,7 +13,7 @@ android {
     defaultConfig {
         resConfigs 'en', 'ru'
         applicationId 'com.fluttercrew.stretching'
-        minSdkVersion 16
+        minSdkVersion 20
         targetSdkVersion 30
         versionCode properties['flutter.versionCode']?.toInteger() ?: 1
         versionName properties['flutter.versionName'] ?: '1.0'

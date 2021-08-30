@@ -11,6 +11,7 @@ abstract class TR {
   static const String alert = 'alert';
 
   static const String tooltipsClose = 'tooltips.close';
+  static const String tooltipsCancel = 'tooltips.cancel';
   static const String tooltips = 'tooltips';
 
   static const String navigationHome = 'navigation.home';
@@ -23,11 +24,23 @@ abstract class TR {
   static const String authPhone = 'auth.phone';
   static const String authEnterCode = 'auth.enter_code';
   static const String authReceiveCode = 'auth.receive_code';
-  static const String authCancel = 'auth.cancel';
   static const String auth = 'auth';
 
   static const String homeRegister = 'home.register';
   static const String home = 'home';
+
+  static const String studiosViewList = 'studios.view.list';
+  static const String studiosViewMap = 'studios.view.map';
+  static const String studiosView = 'studios.view';
+
+  static const String studiosLocationKm = 'studios.location.km';
+  static const String studiosLocationM = 'studios.location.m';
+  static const String studiosLocationOn = 'studios.location.on';
+  static const String studiosLocation = 'studios.location';
+  static const String studios = 'studios';
+
+  static const String trainersSearch = 'trainers.search';
+  static const String trainers = 'trainers';
 
   static const String profileExit = 'profile.exit';
   static const String profile = 'profile';

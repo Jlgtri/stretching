@@ -3,6 +3,7 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
+import 'package:stretching/api_yclients.dart';
 import 'package:stretching/utils/json_converters.dart';
 
 /// The converter of the [CompanyModel].
@@ -488,7 +489,10 @@ class CompanyModel {
       groupPriority: map['group_priority']! as int,
       bookformGroupPriority: map['bookform_group_priority']! as int,
       description: map['description']! as String,
-      photos: (map['photos']! as Iterable<Object?>).cast<String>(),
+      photos:
+          (map['photos']! as Iterable<Object?>).cast<String>().map((final url) {
+        return Uri.parse(url).host.isEmpty ? '$yClientsAssetsUrl/$url' : url;
+      }),
       seanceDelayStep: map['seance_delay_step']! as int,
       showAnyMaster: map['show_any_master']! as bool,
       allowDeleteRecord: map['allow_delete_record']! as bool,

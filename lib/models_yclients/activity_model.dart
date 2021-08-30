@@ -3,7 +3,7 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
-import 'package:stretching/models/trainer_model.dart';
+import 'package:stretching/models_yclients/trainer_model.dart';
 import 'package:stretching/utils/json_converters.dart';
 
 /// The converter of the [ActivityModel].
@@ -190,7 +190,7 @@ class ActivityModel {
       staff: ActivityStaffModel.fromMap(map['staff']! as Map<String, Object?>),
       resourceInstances: (map['resource_instances']! as Iterable<Object?>)
           .cast<Map<String, Object?>>()
-          .map((final map) => ActivityResourceInstanceModel.fromMap(map)),
+          .map(ActivityResourceInstanceModel.fromMap),
       labels: (map['labels']! as Iterable).cast<String>(),
     );
   }

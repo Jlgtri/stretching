@@ -11,6 +11,7 @@ const UserConverter userConverter = UserConverter._();
 /// The converter of the [UserModel].
 class UserConverter implements JsonConverter<UserModel, Map<String, Object?>> {
   const UserConverter._();
+
   @override
   UserModel fromJson(final Map<String, Object?> data) =>
       UserModel.fromMap(data);

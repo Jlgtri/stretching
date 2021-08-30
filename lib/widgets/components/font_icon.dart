@@ -7,13 +7,11 @@ import 'package:stretching/generated/icons.g.dart';
 // ignore_for_file: sort_constructors_first
 
 /// The [IconData] extension with a data specific for rendering a widget.
-class FontIconData extends IconData {
+@immutable
+class FontIconData {
   /// The [IconData] extension with a data specific for rendering a widget.
   const FontIconData(
-    final int codePoint, {
-    final String? fontFamily,
-    final String? fontPackage,
-    final bool matchTextDirection = false,
+    final this.icon, {
     final this.width,
     final this.height,
     final this.color,
@@ -24,13 +22,10 @@ class FontIconData extends IconData {
   })  : alignment = alignment ?? Alignment.center,
         fit = fit ?? BoxFit.contain,
         selfAlignment = selfAlignment ?? Alignment.center,
-        padding = padding ?? EdgeInsets.zero,
-        super(
-          codePoint,
-          fontFamily: fontFamily,
-          fontPackage: fontPackage,
-          matchTextDirection: matchTextDirection,
-        );
+        padding = padding ?? EdgeInsets.zero;
+
+  /// The icon to pass to this font icon.
+  final IconData icon;
 
   /// The width of this icon when positioned.
   final double? width;
@@ -53,9 +48,26 @@ class FontIconData extends IconData {
   /// The padding of this icon when positioned.
   final EdgeInsetsGeometry padding;
 
-  /// Constructor of a [FontIconData] from [IconData].
-  factory FontIconData.fromIconData(
-    final IconData icon, {
+  /// Return the painter for this icon.
+  TextPainter getPainter([final IconThemeData? iconTheme]) {
+    return TextPainter(textDirection: TextDirection.ltr)
+      ..text = TextSpan(
+        text: String.fromCharCode(icon.codePoint),
+        style: TextStyle(
+          inherit: false,
+          letterSpacing: 0,
+          fontSize: height ?? iconTheme?.size,
+          color: color ?? iconTheme?.color,
+          fontFamily: icon.fontFamily,
+          package: icon.fontPackage,
+        ),
+      )
+      ..layout();
+  }
+
+  /// Return the copy of this model.
+  FontIconData copyWith({
+    final IconData? icon,
     final double? width,
     final double? height,
     final Color? color,
@@ -65,18 +77,48 @@ class FontIconData extends IconData {
     final EdgeInsetsGeometry? padding,
   }) {
     return FontIconData(
-      icon.codePoint,
-      width: width,
-      height: height,
-      color: color,
-      alignment: alignment,
-      fit: fit,
-      selfAlignment: selfAlignment,
-      padding: padding,
-      fontFamily: icon.fontFamily,
-      fontPackage: icon.fontPackage,
-      matchTextDirection: icon.matchTextDirection,
+      icon ?? this.icon,
+      width: width ?? this.width,
+      height: height ?? this.height,
+      color: color ?? this.color,
+      alignment: alignment ?? this.alignment,
+      fit: fit ?? this.fit,
+      selfAlignment: selfAlignment ?? this.selfAlignment,
+      padding: padding ?? this.padding,
     );
+  }
+
+  @override
+  bool operator ==(final Object other) {
+    return identical(this, other) ||
+        other is FontIconData &&
+            other.icon == icon &&
+            other.width == width &&
+            other.height == height &&
+            other.color == color &&
+            other.alignment == alignment &&
+            other.fit == fit &&
+            other.selfAlignment == selfAlignment &&
+            other.padding == padding;
+  }
+
+  @override
+  int get hashCode {
+    return icon.hashCode ^
+        width.hashCode ^
+        height.hashCode ^
+        color.hashCode ^
+        alignment.hashCode ^
+        fit.hashCode ^
+        selfAlignment.hashCode ^
+        padding.hashCode;
+  }
+
+  @override
+  String toString() {
+    return 'FontIconData(icon: $icon, width: $width, height: $height, '
+        'color: $color, alignment: $alignment, fit: $fit, '
+        'selfAlignment: $selfAlignment, padding: $padding)';
   }
 }
 
@@ -145,13 +187,7 @@ class MultiFontIcon extends StatelessWidget {
               alignment: icon.alignment,
               child: Padding(
                 padding: icon.padding,
-                child: FontIcon(
-                  icon,
-                  width: icon.width,
-                  color: icon.color,
-                  fit: icon.fit,
-                  alignment: icon.selfAlignment,
-                ),
+                child: FontIcon(icon),
               ),
             ),
         ],
@@ -171,58 +207,22 @@ class MultiFontIcon extends StatelessWidget {
 }
 
 /// The widget to display icon properly from [IconData].
-class FontIcon extends Icon {
+class FontIcon extends StatelessWidget {
   /// The widget to display icon properly from [IconData].
-  const FontIcon(
-    final IconData icon, {
-    final this.width,
-    final double? height,
-    final BoxFit? fit,
-    final Color? color,
-    final AlignmentGeometry? alignment,
-    final Key? key,
-  })  : fit = fit ?? BoxFit.scaleDown,
-        alignment = alignment ?? Alignment.center,
-        super(
-          icon,
-          color: color,
-          size: height,
-          textDirection: TextDirection.ltr,
-          key: key,
-        );
+  const FontIcon(final this.data, {final Key? key}) : super(key: key);
 
-  /// The size of the icon.
-  final double? width;
-
-  /// The fit of this icon.
-  final BoxFit fit;
-
-  /// The alignment of this icon within its bounds.
-  final AlignmentGeometry alignment;
+  /// The data of this font icon.
+  final FontIconData data;
 
   @override
   Widget build(final BuildContext context) {
-    final iconTheme = Theme.of(context).iconTheme;
-    final painter = TextPainter(textDirection: TextDirection.ltr)
-      ..text = TextSpan(
-        text: String.fromCharCode(icon!.codePoint),
-        style: TextStyle(
-          inherit: false,
-          letterSpacing: 0,
-          fontSize: size ?? iconTheme.size,
-          color: color ?? iconTheme.color,
-          fontFamily: icon!.fontFamily,
-          package: icon!.fontPackage,
-        ),
-      )
-      ..layout();
-
+    final painter = data.getPainter(Theme.of(context).iconTheme);
     return SizedBox(
-      height: size,
-      width: width ?? painter.width,
+      height: data.height,
+      width: data.width ?? painter.width,
       child: FittedBox(
-        fit: fit,
-        alignment: alignment,
+        fit: data.fit,
+        alignment: data.alignment,
         child: Text.rich(painter.text!),
       ),
     );
@@ -231,12 +231,7 @@ class FontIcon extends Icon {
   @override
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(
-      properties
-        ..add(DiagnosticsProperty<IconData>('icon', icon))
-        ..add(DoubleProperty('width', width))
-        ..add(ColorProperty('color', color))
-        ..add(EnumProperty<BoxFit>('fit', fit))
-        ..add(DiagnosticsProperty<AlignmentGeometry>('alignment', alignment)),
+      properties..add(DiagnosticsProperty<FontIconData>('data', data)),
     );
   }
 }
@@ -288,17 +283,18 @@ class FontIconButton extends StatelessWidget {
       child: IconButton(
         padding: EdgeInsets.zero,
         constraints: constraints ??
-            (icon.size != null || icon.width != null
+            (icon.data.height != null || icon.data.width != null
                 ? BoxConstraints(
-                      minHeight: icon.size ?? 0,
-                      maxHeight: icon.size ?? double.infinity,
-                      minWidth: icon.width ?? 0,
-                      maxWidth: icon.width ?? double.infinity,
+                      minHeight: icon.data.height ?? 0,
+                      maxHeight: icon.data.height ?? double.infinity,
+                      minWidth: icon.data.width ?? 0,
+                      maxWidth: icon.data.width ?? double.infinity,
                     ) *
                     2
                 : null),
-        splashRadius: icon.size != null || icon.width != null
-            ? max(icon.size ?? 0, icon.width ?? 0) * splashMultiplier
+        splashRadius: icon.data.height != null || icon.data.width != null
+            ? max(icon.data.height ?? 0, icon.data.height ?? 0) *
+                splashMultiplier
             : null,
         color: color,
         disabledColor: disabledColor,
@@ -343,7 +339,14 @@ class FontIconBackButton extends StatelessWidget {
   @override
   Widget build(final BuildContext context) {
     return FontIconButton(
-      FontIcon(IconsCG.back, color: color, height: 24, width: 24),
+      FontIcon(
+        FontIconData(
+          IconsCG.back,
+          color: color,
+          height: 24,
+          width: 24,
+        ),
+      ),
       color: color,
       tooltip: MaterialLocalizations.of(context).backButtonTooltip,
       onPressed: onPressed ?? Navigator.of(context).maybePop,

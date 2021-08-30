@@ -3,7 +3,7 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
-import 'package:stretching/models/activity_model.dart';
+import 'package:stretching/models_yclients/activity_model.dart';
 import 'package:stretching/utils/json_converters.dart';
 
 /// The converter of the [RecordModel].

@@ -2,10 +2,18 @@ analyzer:
   strong-mode:
     implicit-casts: false
     implicit-dynamic: false
+  enable-experiment:
+    - const-functions
+    - constructor-tearoffs
+    - extension-types
+    - value-class
+    - variance
   errors:
     invalid_assignment: error
     missing_return: error
     missing_required_param: error
+    must_call_super: error
+    null_check_always_fails: error
 
 linter:
   rules:

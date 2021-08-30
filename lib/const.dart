@@ -11,11 +11,6 @@ const List<Locale> supportedLocales = <Locale>[defaultLocale];
 /// See: https://yclientsru.docs.apiary.io/#reference/2/0/0
 const String smstretchingCity = 'Москва';
 
-/// The group id of the smstretching.
-///
-/// See: https://yclientsru.docs.apiary.io/#reference/2/0/0
-const int smstretchingGroupId = 173417;
-
 /// The country code of the desired phone number.
 const int phoneCountryCode = 38;
 

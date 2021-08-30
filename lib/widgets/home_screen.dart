@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/main.dart';
-import 'package:stretching/providers.dart';
+import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 
