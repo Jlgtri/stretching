@@ -201,21 +201,21 @@ class NavigationRoot extends HookConsumerWidget {
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final navigation = ref.watch(navigationProvider.notifier);
-    final isTransitioning = useState<bool>(false);
-
     const navBarHeight = 50.0;
     const appBarHeight = 60.0;
     const transitionDuration = Duration(milliseconds: 350);
     final theme = Theme.of(context);
-    final topPadding = MediaQuery.of(context).viewPadding.top;
+    final mediaQuery = MediaQuery.of(context);
+    final topPadding = mediaQuery.viewPadding.top;
+
+    final navigation = ref.watch(navigationProvider.notifier);
+    final isTransitioning = useState<bool>(false);
     return Stack(
       children: <Widget>[
         PersistentTabView(
           context,
           controller: navigation.state,
           navBarStyle: NavBarStyle.style6,
-          resizeToAvoidBottomInset: true,
           bottomScreenMargin: 0,
           navBarHeight: navBarHeight,
           padding: const NavBarPadding.only(bottom: 10),
@@ -285,7 +285,7 @@ class NavigationRoot extends HookConsumerWidget {
           height: appBarHeight + topPadding,
           color: theme.appBarTheme.backgroundColor,
           child: Padding(
-            padding: MediaQuery.of(context).viewPadding,
+            padding: mediaQuery.viewPadding,
             child: FontIcon(
               FontIconData(
                 IconsCG.logo,

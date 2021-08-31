@@ -3,6 +3,7 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
+import 'package:stretching/models/categories_enum.dart';
 import 'package:stretching/utils/json_converters.dart';
 
 /// The converter of the [SMTrainerModel].
@@ -125,7 +126,7 @@ class SMTrainerModel {
       'cct_author_id': cctAuthorId.toString(),
       'cct_created': cctCreated.toString(),
       'cct_modified': cctModified.toString(),
-      'classesType': classesType?.toMap(),
+      'classestype': classesType?.toMap(),
       'cct_slug': cctSlug,
     };
   }
@@ -143,9 +144,9 @@ class SMTrainerModel {
       cctAuthorId: int.parse(map['cct_author_id']! as String),
       cctCreated: DateTime.parse(map['cct_created']! as String),
       cctModified: DateTime.parse(map['cct_modified']! as String),
-      classesType: map['classesType'] != null
+      classesType: map['classestype'] != null
           ? SMTrainerClassesModel.fromMap(
-              map['classesType']! as Map<String, Object?>,
+              map['classestype']! as Map<String, Object?>,
             )
           : null,
       cctSlug: map['cct_slug']! as String,
@@ -251,6 +252,42 @@ class SMTrainerClassesModel {
   /// If Fit Boxing is in the studio tags.
   final bool fitBoxing;
 
+  /// Return the categories of this model.
+  Iterable<ClassCategory> toCategories({final bool onlyActive = true}) {
+    final categories = List<ClassCategory>.empty(growable: true);
+    if (!onlyActive || trx) {
+      categories.add(ClassCategory.trx);
+    }
+    if (!onlyActive || stretching) {
+      categories.add(ClassCategory.stretching);
+    }
+    if (!onlyActive || barreSignature) {
+      categories.add(ClassCategory.barreSignature);
+    }
+    if (!onlyActive || pilates) {
+      categories.add(ClassCategory.pilates);
+    }
+    if (!onlyActive || barre20) {
+      categories.add(ClassCategory.barre20);
+    }
+    if (!onlyActive || hotStretching) {
+      categories.add(ClassCategory.hotStretching);
+    }
+    if (!onlyActive || hotBarre) {
+      categories.add(ClassCategory.hotBarre);
+    }
+    if (!onlyActive || hotPilates) {
+      categories.add(ClassCategory.hotPilates);
+    }
+    if (!onlyActive || danceWorkout) {
+      categories.add(ClassCategory.danceWorkout);
+    }
+    if (!onlyActive || fitBoxing) {
+      categories.add(ClassCategory.fitBoxing);
+    }
+    return categories;
+  }
+
   /// Return the copy of this model.
   SMTrainerClassesModel copyWith({
     final bool? trx,
@@ -317,10 +354,11 @@ class SMTrainerClassesModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory SMTrainerClassesModel.fromJson(final String source) =>
-      SMTrainerClassesModel.fromMap(
-        json.decode(source) as Map<String, Object?>,
-      );
+  factory SMTrainerClassesModel.fromJson(final String source) {
+    return SMTrainerClassesModel.fromMap(
+      json.decode(source) as Map<String, Object?>,
+    );
+  }
 
   @override
   bool operator ==(final Object other) {

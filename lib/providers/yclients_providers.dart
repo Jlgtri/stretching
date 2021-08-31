@@ -81,18 +81,24 @@ class TrainersNotifier
         return trainer.specialization == 'Не удалять' ||
             trainer.name.contains('Сотрудник');
       })
+      ..removeWhere((final trainer) {
+        return <String>[
+          'https://api.yclients.com/images/no-master.png',
+          'https://api.yclients.com/images/no-master-sm.png'
+        ].contains(trainer.avatarBig);
+      })
       ..sort((final trainerA, final trainerB) {
-        int isDefault(final String link) => [
-              'https://api.yclients.com/images/no-master.png',
-              'https://api.yclients.com/images/no-master-sm.png'
-            ].contains(link)
-                ? -1
-                : 0;
-        final hasAvatar = isDefault(trainerB.avatarBig)
-            .compareTo(isDefault(trainerA.avatarBig));
-        if (hasAvatar != 0) {
-          return hasAvatar;
-        }
+        // int isDefault(final String link) => <String>[
+        //       'https://api.yclients.com/images/no-master.png',
+        //       'https://api.yclients.com/images/no-master-sm.png'
+        //     ].contains(link)
+        //         ? -1
+        //         : 0;
+        // final hasAvatar = isDefault(trainerB.avatarBig)
+        //     .compareTo(isDefault(trainerA.avatarBig));
+        // if (hasAvatar != 0) {
+        //   return hasAvatar;
+        // }
         return trainerA.name
             .toLowerCase()
             .compareTo(trainerB.name.toLowerCase());

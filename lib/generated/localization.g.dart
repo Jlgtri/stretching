@@ -14,6 +14,21 @@ abstract class TR {
   static const String tooltipsCancel = 'tooltips.cancel';
   static const String tooltips = 'tooltips';
 
+  static const String miscEmpty = 'misc.empty';
+  static const String misc = 'misc';
+
+  static const String categoryTrx = 'category.trx';
+  static const String categoryStretching = 'category.stretching';
+  static const String categoryBarreSignature = 'category.barre_signature';
+  static const String categoryPilates = 'category.pilates';
+  static const String categoryBarre20 = 'category.barre20';
+  static const String categoryHotStretching = 'category.hot_stretching';
+  static const String categoryHotBarre = 'category.hot_barre';
+  static const String categoryHotPilates = 'category.hot_pilates';
+  static const String categoryDanceWorkout = 'category.dance_workout';
+  static const String categoryFitBoxing = 'category.fit_boxing';
+  static const String category = 'category';
+
   static const String navigationHome = 'navigation.home';
   static const String navigationSchedule = 'navigation.schedule';
   static const String navigationStudios = 'navigation.studios';
@@ -40,6 +55,7 @@ abstract class TR {
   static const String studios = 'studios';
 
   static const String trainersSearch = 'trainers.search';
+  static const String trainersEmpty = 'trainers.empty';
   static const String trainers = 'trainers';
 
   static const String profileExit = 'profile.exit';

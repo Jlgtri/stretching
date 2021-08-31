@@ -36,7 +36,8 @@ ColorScheme get _colorScheme {
     // primaryVariant: Color(0xFF303030),
     secondary: Color(0xFF5709FF),
     // secondaryVariant: Color(0xFF424242),
-    // surface: Color(0xFFF5F5F5),
+    // surface: ,
+    background: Color(0xFFF5F5F5),
   );
 }
 
@@ -99,8 +100,8 @@ TextTheme get _textTheme {
       color: Colors.grey,
     ),
     subtitle2: TextStyle(fontSize: 16, color: Colors.grey),
-    bodyText1: TextStyle(fontSize: 18),
-    bodyText2: TextStyle(fontSize: 16),
+    bodyText1: TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
+    bodyText2: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
     caption: TextStyle(
       fontSize: 14,
       fontWeight: FontWeight.bold,
@@ -116,7 +117,7 @@ InputDecorationTheme get _inputDecorationTheme {
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     labelStyle: _textTheme.subtitle1,
     floatingLabelStyle: _textTheme.subtitle2,
-    hintStyle: _textTheme.bodyText1,
+    hintStyle: _textTheme.bodyText2,
     helperStyle: _textTheme.bodyText1,
     errorStyle: _textTheme.bodyText2,
     border: const OutlineInputBorder(),

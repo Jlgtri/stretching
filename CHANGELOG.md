@@ -7,17 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0]
+
 ### Added
 
-- Authentication Mockup
+- Authentication
 
 - YClients API
 
 - SMStretching API
 
-- Trainers Screen
+- Trainers Screen With Search
 
-- Studios Screen
+- Studios Screen With Map
 
 ## [0.0.0]
 
@@ -25,5 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial Commit
 
-[unreleased]: https://github.com/bot-fluttercrew/stretching/compare/v0.0.0...HEAD
+[unreleased]: https://github.com/bot-fluttercrew/stretching/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/bot-fluttercrew/stretching/compare/v0.0.0...v0.1.0
 [0.0.0]: https://github.com/bot-fluttercrew/stretching/releases/tag/v0.0.0

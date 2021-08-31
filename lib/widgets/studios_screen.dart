@@ -247,15 +247,18 @@ class StudiosScreen extends HookConsumerWidget {
                 padding: const EdgeInsets.only(top: 80),
                 child: ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemExtent: 80,
+                  itemExtent: 88,
                   itemCount: studios.length,
                   itemBuilder: (final context, final index) {
                     final studio = studios.elementAt(index);
-                    return StudioCard(
-                      studio: studio,
-                      onTap: (final studio, final smStudio) =>
-                          onMainStudioCardTap(studio),
-                      onAvatarTap: openStudioPage,
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: StudioCard(
+                        studio: studio,
+                        onTap: (final studio, final smStudio) =>
+                            onMainStudioCardTap(studio),
+                        onAvatarTap: openStudioPage,
+                      ),
                     );
                   },
                 ),

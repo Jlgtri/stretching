@@ -73,7 +73,6 @@ class SaveToHiveNotifier<T extends Object, S extends Object>
   T get state => super.state;
 
   /// Updates the current [state] and saves it's value to the [hive] database.
-  @mustCallSuper
   Future<void> setStateAsync(final T value) async {
     super.state = value;
     await save();
@@ -130,7 +129,6 @@ class OptionalSaveToHiveNotifier<T extends Object?, S extends Object?>
   T? get state => super.state;
 
   /// Updates the current [state] and saves it's value to the [hive] database.
-  @mustCallSuper
   Future<void> setStateAsync(final T value) async {
     super.state = value;
     await save();
@@ -183,7 +181,6 @@ class SaveToHiveIterableNotifier<T extends Object, S extends Object>
   Iterable<T> get state => super.state;
 
   /// Updates the current [state] and saves it's value to the [hive] database.
-  @mustCallSuper
   Future<void> setStateAsync(final Iterable<T> value) async {
     super.state = value;
     await save();

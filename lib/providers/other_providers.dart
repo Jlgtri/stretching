@@ -10,6 +10,13 @@ import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/utils/json_converters.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
 
+/// The premade initialisation of a Flutter's [WidgetsBinding].
+/// Also is used for accessing the non null [WidgetsBinding] class.
+final Provider<WidgetsBinding> widgetsBindingProvider =
+    Provider<WidgetsBinding>((final ref) {
+  return WidgetsFlutterBinding.ensureInitialized();
+});
+
 /// The provider that contais current theme.
 final StateNotifierProvider<SaveToHiveNotifier<ThemeMode, String>, ThemeMode>
     themeProvider =

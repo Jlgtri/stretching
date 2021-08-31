@@ -1,6 +1,7 @@
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -15,13 +16,6 @@ import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/widgets/authorization_screen.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
-
-/// The premade initialisation of a Flutter's [WidgetsBinding].
-/// Also is used for accessing the non null [WidgetsBinding] class.
-final Provider<WidgetsBinding> widgetsBindingProvider =
-    Provider<WidgetsBinding>((final ref) {
-  return WidgetsFlutterBinding.ensureInitialized();
-});
 
 Future<void> main() async {
   await Hive.initFlutter();
@@ -53,6 +47,7 @@ class RootScreen extends HookConsumerWidget {
     final ez = EasyLocalization.of(context)!;
     final snapshot = useFuture(
       useMemoized(() async {
+        await SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
         await ez.delegate.load(ez.currentLocale!);
         await ref.read(connectionProvider.notifier).updateConnection();
         await ref.read(locationProvider.last);

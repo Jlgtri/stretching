@@ -7,6 +7,19 @@
     }
   },
   "tooltips": { "close": "Закрыть", "cancel": "Отменить" },
+  "misc": { "empty": "Всё растяжимо..." },
+  "category": {
+    "trx": "TRX",
+    "stretching": "Stretching",
+    "barre_signature": "Barre Signature",
+    "pilates": "Pilates",
+    "barre20": "Barre 2.0",
+    "hot_stretching": "Hot 36° Stretching",
+    "hot_barre": "Hot 36° Barre",
+    "hot_pilates": "Hot 36° Pilates",
+    "dance_workout": "Dance Workout",
+    "fit_boxing": "Fit Boxing"
+  },
   "navigation": {
     "home": "Главная",
     "schedule": "Расписание",
@@ -28,6 +41,9 @@
       "on": "Прямо перед вами"
     }
   },
-  "trainers": { "search": "Поиск тренера" },
+  "trainers": {
+    "search": "Поиск тренера",
+    "empty": "Кажется, такой тренер у нас не работает."
+  },
   "profile": { "exit": "Выйти" }
 }
