@@ -54,4 +54,6 @@ class IconsCG {
   static const IconData star = IconData(0xe838, fontFamily: _kFontFam);
   static const IconData telegram = IconData(0xe839, fontFamily: _kFontFam);
   static const IconData close = IconData(0xe83b, fontFamily: _kFontFam);
+  static const IconData angleLeft = IconData(0xf104, fontFamily: _kFontFam);
+  static const IconData angleRight = IconData(0xf105, fontFamily: _kFontFam);
 }

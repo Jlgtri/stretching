@@ -203,6 +203,18 @@
       ]
     },
     {
+      "uid": "2556a5a890ae3dab67310543bc7d2e02",
+      "css": "angleLeft",
+      "code": 61700,
+      "src": "fontawesome5"
+    },
+    {
+      "uid": "5a86447e3f28e88c09db6ce2ba0d8bd8",
+      "css": "angleRight",
+      "code": 61701,
+      "src": "fontawesome5"
+    },
+    {
       "uid": "4343becceb7b5abcd33c43a496a161b0",
       "css": "close",
       "code": 59451,

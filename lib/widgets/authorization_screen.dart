@@ -314,7 +314,7 @@ class _AuthorizationPhoneField extends HookWidget {
   Widget build(final BuildContext context) {
     final controller = useTextEditingController(text: initialText);
     final focusNode = useFocusNode();
-    final showPrefix = useState(false);
+    final showPrefix = useState<bool>(false);
     useMemoized(() {
       controller.addListener(() {
         if (controller.text.isEmpty) {

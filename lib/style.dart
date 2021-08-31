@@ -21,6 +21,7 @@ ThemeData get _mainTheme {
     hintColor: Colors.grey.withOpacity(3 / 4),
     appBarTheme: _appBarTheme,
     bottomSheetTheme: _bottomSheetTheme,
+    buttonTheme: _buttonTheme,
     iconTheme: _iconTheme,
     textButtonTheme: _textButtonTheme,
     inputDecorationTheme: _inputDecorationTheme,
@@ -130,6 +131,10 @@ InputDecorationTheme get _inputDecorationTheme {
       borderSide: BorderSide(width: 2, color: _colorScheme.error),
     ),
   );
+}
+
+ButtonThemeData get _buttonTheme {
+  return const ButtonThemeData(padding: EdgeInsets.zero, minWidth: 0);
 }
 
 TextSelectionThemeData get _textSelectionTheme {
