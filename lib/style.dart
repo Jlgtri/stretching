@@ -1,6 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// The light [SystemUiOverlayStyle].
+SystemUiOverlayStyle get lightSystemUiOverlayStyle {
+  return SystemUiOverlayStyle(
+    statusBarColor: _appBarTheme.backgroundColor,
+  );
+}
+
+/// The dark [SystemUiOverlayStyle].
+SystemUiOverlayStyle get darkSystemUiOverlayStyle {
+  return SystemUiOverlayStyle(statusBarColor: _appBarTheme.backgroundColor);
+}
+
 /// The light theme in the app.
 ThemeData get lightTheme {
   return _mainTheme.copyWith();
@@ -23,9 +35,19 @@ ThemeData get _mainTheme {
     bottomSheetTheme: _bottomSheetTheme,
     buttonTheme: _buttonTheme,
     iconTheme: _iconTheme,
+    floatingActionButtonTheme: _floatingActionButtonTheme,
     textButtonTheme: _textButtonTheme,
     inputDecorationTheme: _inputDecorationTheme,
     textSelectionTheme: _textSelectionTheme,
+  );
+}
+
+FloatingActionButtonThemeData get _floatingActionButtonTheme {
+  return FloatingActionButtonThemeData(
+    enableFeedback: true,
+    backgroundColor: _colorScheme.surface,
+    foregroundColor: _colorScheme.onSurface,
+    smallSizeConstraints: const BoxConstraints(minHeight: 32, minWidth: 32),
   );
 }
 

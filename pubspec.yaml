@@ -1,6 +1,6 @@
 name: stretching
 description: Stretching remake from scratch.
-version: 0.1.0
+version: 0.1.2
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
@@ -26,6 +26,7 @@ dependencies:
   flutter_riverpod: ^1.0.0-dev.6
   geolocator: ^7.4.1
   google_maps_flutter: ^2.0.6
+  hawk_fab_menu:
   hive: ^2.0.4
   hive_flutter: ^1.1.0
   hooks_riverpod: ^1.0.0-dev.6
@@ -53,6 +54,7 @@ flutter:
   assets:
     - assets/google_map_style.json
     - assets/translations/ru-RU.json
+    - assets/emoji/
 
   fonts:
     - family: IconsCG

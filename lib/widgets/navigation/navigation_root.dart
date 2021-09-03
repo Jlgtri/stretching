@@ -205,8 +205,6 @@ class NavigationRoot extends HookConsumerWidget {
     const appBarHeight = 60.0;
     const transitionDuration = Duration(milliseconds: 350);
     final theme = Theme.of(context);
-    final mediaQuery = MediaQuery.of(context);
-    final topPadding = mediaQuery.viewPadding.top;
 
     final navigation = ref.watch(navigationProvider.notifier);
     final isTransitioning = useState<bool>(false);
@@ -269,23 +267,24 @@ class NavigationRoot extends HookConsumerWidget {
           ],
           screens: <Widget>[
             for (final screen in NavigationScreen.values)
-              Padding(
-                padding: EdgeInsets.only(
-                  top: appBarHeight + topPadding,
-                  bottom: navBarHeight,
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    top: appBarHeight,
+                    bottom: navBarHeight,
+                  ),
+                  child: screen.screen,
                 ),
-                child: screen.screen,
               ),
           ],
         ),
 
         /// Custom AppBar
-        Container(
-          alignment: Alignment.center,
-          height: appBarHeight + topPadding,
-          color: theme.appBarTheme.backgroundColor,
-          child: Padding(
-            padding: mediaQuery.viewPadding,
+        SafeArea(
+          child: Container(
+            alignment: Alignment.center,
+            height: appBarHeight,
+            color: theme.appBarTheme.backgroundColor,
             child: FontIcon(
               FontIconData(
                 IconsCG.logo,

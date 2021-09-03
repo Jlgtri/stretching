@@ -1,0 +1,6 @@
+*
+!.gitignore
+!requirements.txt
+
+!main.py
+!rename.py

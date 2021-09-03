@@ -82,16 +82,15 @@ class StudiosScreen extends HookConsumerWidget {
       await mapController.value?.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
-            target: LatLng(
-              studio.coordinateLat,
-              studio.coordinateLon,
-            ),
+            target: LatLng(studio.coordinateLat, studio.coordinateLon),
             zoom: _initialCameraPosition.zoom,
             bearing: _initialCameraPosition.bearing,
             tilt: _initialCameraPosition.tilt,
           ),
         ),
       );
+      await mapController.value
+          ?.showMarkerInfoWindow(MarkerId(studio.id.toString()));
       await moveToStudioOnMap(studio);
     }
 
@@ -108,10 +107,12 @@ class StudiosScreen extends HookConsumerWidget {
           GoogleMap(
             initialCameraPosition: _initialCameraPosition,
             compassEnabled: false,
+            // myLocationEnabled: true,
             myLocationButtonEnabled: false,
             zoomControlsEnabled: false,
             rotateGesturesEnabled: false,
             tiltGesturesEnabled: false,
+            mapToolbarEnabled: false,
             // onCameraMoveStarted: () {
             //   infoWindowOffset.value = Offset.zero;
             //   infoWindowOptions.value = null;
@@ -146,6 +147,33 @@ class StudiosScreen extends HookConsumerWidget {
               await controller.setMapStyle(style);
               mapController.value = controller;
             },
+          ),
+
+          /// Location FAB
+          Positioned(
+            right: 24,
+            bottom: 24,
+            child: FloatingActionButton.small(
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              onPressed: () async {
+                final location = await ref.read(locationProvider.last);
+                await mapController.value?.animateCamera(
+                  CameraUpdate.newCameraPosition(
+                    CameraPosition(
+                      target: LatLng(location.latitude, location.longitude),
+                      zoom: _initialCameraPosition.zoom,
+                      bearing: _initialCameraPosition.bearing,
+                      tilt: _initialCameraPosition.tilt,
+                    ),
+                  ),
+                );
+              },
+              backgroundColor: theme.colorScheme.surface,
+              foregroundColor: theme.colorScheme.onSurface,
+              child: const FontIcon(
+                FontIconData(IconsCG.mapLocation, height: 14),
+              ),
+            ),
           ),
 
           /// The custom info window.

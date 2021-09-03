@@ -4,6 +4,11 @@
 build.yaml
 **secrets*
 
+# Python
+__pycache__/
+.mypy_cache/
+.venv/
+
 # Miscellaneous
 *.class
 *.log

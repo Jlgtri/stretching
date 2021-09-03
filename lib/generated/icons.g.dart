@@ -42,6 +42,7 @@ class IconsCG {
   static const IconData training = IconData(0xe814, fontFamily: _kFontFam);
   static const IconData clock = IconData(0xe815, fontFamily: _kFontFam);
   static const IconData logo = IconData(0xe817, fontFamily: _kFontFam);
+  static const IconData mapLocation = IconData(0xe820, fontFamily: _kFontFam);
   static const IconData messenger = IconData(0xe82d, fontFamily: _kFontFam);
   static const IconData vk = IconData(0xe82f, fontFamily: _kFontFam);
   static const IconData whatsApp = IconData(0xe830, fontFamily: _kFontFam);

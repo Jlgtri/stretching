@@ -58,13 +58,14 @@ class RootScreen extends HookConsumerWidget {
       return const SizedBox.shrink();
     }
 
+    final themeMode = ref.watch(themeProvider);
     return MaterialApp(
-      title: 'Stretching',
+      title: 'SMSTRETCHING DEV',
       restorationScopeId: 'stretching',
       locale: ez.locale,
       localizationsDelegates: ez.delegates,
       supportedLocales: ez.supportedLocales,
-      themeMode: ref.watch(themeProvider),
+      themeMode: themeMode,
       theme: lightTheme,
       darkTheme: darkTheme,
       initialRoute: Routes.root.name,
@@ -73,47 +74,57 @@ class RootScreen extends HookConsumerWidget {
       },
       builder: (final context, final child) {
         final smStretchingContent = ref.watch(smStretchingContentProvider);
-        return smStretchingContent.when(
-          data: (final _) {
-            final yClientsContent = ref.watch(yClientsContentProvider);
-            return yClientsContent.when(
-              data: (final _) => child!,
-              loading: () => const SizedBox.shrink(),
-              error: (final error, final stackTrace) {
-                return Material(
-                  child: Container(
-                    color: Colors.red,
-                    alignment: Alignment.center,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        Text(error.toString()),
-                        const SizedBox(height: 50),
-                        Text(stackTrace.toString())
-                      ],
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: themeMode == ThemeMode.light
+              ? lightSystemUiOverlayStyle
+              : themeMode == ThemeMode.dark
+                  ? darkSystemUiOverlayStyle
+                  : MediaQuery.of(context).platformBrightness ==
+                          Brightness.light
+                      ? lightSystemUiOverlayStyle
+                      : darkSystemUiOverlayStyle,
+          child: smStretchingContent.when(
+            data: (final _) {
+              final yClientsContent = ref.watch(yClientsContentProvider);
+              return yClientsContent.when(
+                data: (final _) => child!,
+                loading: () => const SizedBox.shrink(),
+                error: (final error, final stackTrace) {
+                  return Material(
+                    child: Container(
+                      color: Colors.red,
+                      alignment: Alignment.center,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Text(error.toString()),
+                          const SizedBox(height: 50),
+                          Text(stackTrace.toString())
+                        ],
+                      ),
                     ),
+                  );
+                },
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (final error, final stackTrace) {
+              return Material(
+                child: Container(
+                  color: Colors.red,
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(error.toString()),
+                      const SizedBox(height: 50),
+                      Text(stackTrace.toString())
+                    ],
                   ),
-                );
-              },
-            );
-          },
-          loading: () => const SizedBox.shrink(),
-          error: (final error, final stackTrace) {
-            return Material(
-              child: Container(
-                color: Colors.red,
-                alignment: Alignment.center,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(error.toString()),
-                    const SizedBox(height: 50),
-                    Text(stackTrace.toString())
-                  ],
                 ),
-              ),
-            );
-          },
+              );
+            },
+          ),
         );
       },
     );
