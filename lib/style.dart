@@ -1,18 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// The light [SystemUiOverlayStyle].
-SystemUiOverlayStyle get lightSystemUiOverlayStyle {
-  return SystemUiOverlayStyle(
-    statusBarColor: _appBarTheme.backgroundColor,
-  );
-}
-
-/// The dark [SystemUiOverlayStyle].
-SystemUiOverlayStyle get darkSystemUiOverlayStyle {
-  return SystemUiOverlayStyle(statusBarColor: _appBarTheme.backgroundColor);
-}
-
 /// The light theme in the app.
 ThemeData get lightTheme {
   return _mainTheme.copyWith();

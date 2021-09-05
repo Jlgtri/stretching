@@ -1,9 +1,11 @@
 import 'dart:math';
 
+import 'package:animations/animations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:darq/darq.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,13 +14,16 @@ import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/models/categories_enum.dart';
 import 'package:stretching/models_smstretching/sm_trainer_model.dart';
+import 'package:stretching/models_yclients/trainer_model.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/providers/smstretching_providers.dart';
 import 'package:stretching/providers/yclients_providers.dart';
 import 'package:stretching/utils/json_converters.dart';
+import 'package:stretching/widgets/components/emoji_text.dart';
 import 'package:stretching/widgets/components/focus_wrapper.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
+import 'package:stretching/widgets/content_screen.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 
 /// The provider of filters for [SMTrainerModel].
@@ -249,8 +254,9 @@ class TrainersScreen extends HookConsumerWidget {
                                 child: SingleChildScrollView(
                                   controller: ScrollController(),
                                   scrollDirection: Axis.horizontal,
-                                  padding:
-                                      const EdgeInsets.symmetric(horizontal: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                  ),
                                   physics: const BouncingScrollPhysics(),
                                   child: Row(
                                     children: <Widget>[
@@ -283,50 +289,7 @@ class TrainersScreen extends HookConsumerWidget {
                           ),
                           delegate: SliverChildBuilderDelegate(
                             (final context, final index) {
-                              final trainer = trainers.elementAt(index);
-                              return Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: <Widget>[
-                                  CachedNetworkImage(
-                                    imageUrl: trainer.avatarBig,
-                                    imageBuilder:
-                                        (final context, final imageProvider) {
-                                      return CircleAvatar(
-                                        radius: 80,
-                                        foregroundImage: imageProvider,
-                                      );
-                                    },
-                                    placeholder: (final context, final url) =>
-                                        const CircularProgressIndicator(),
-                                    errorWidget: (
-                                      final context,
-                                      final url,
-                                      final dynamic error,
-                                    ) =>
-                                        const FontIcon(
-                                      FontIconData(IconsCG.logo),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Padding(
-                                      padding:
-                                          const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                                      child: Text(
-                                        trainer.name,
-                                        style:
-                                            theme.textTheme.bodyText1?.copyWith(
-                                          fontWeight: FontWeight.normal,
-                                          color: theme.colorScheme.onSurface,
-                                        ),
-                                        maxLines: 2,
-                                        // stepGranularity: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        textAlign: TextAlign.center,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              );
+                              return _TrainerCard(trainers.elementAt(index));
                             },
                             childCount: trainers.length,
                           ),
@@ -338,6 +301,11 @@ class TrainersScreen extends HookConsumerWidget {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: <Widget>[
+                                EmojiText(
+                                  areTrainersPresent ? '🤔' : '🧘‍♀️',
+                                  style: const TextStyle(fontSize: 30),
+                                ),
+                                const SizedBox(height: 10),
                                 Text(
                                   areTrainersPresent
                                       ? TR.trainersEmpty.tr()
@@ -358,6 +326,66 @@ class TrainersScreen extends HookConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _TrainerCard extends StatelessWidget {
+  const _TrainerCard(final this.trainer, {final Key? key}) : super(key: key);
+  final TrainerModel trainer;
+
+  @override
+  Widget build(final BuildContext context) {
+    final theme = Theme.of(context);
+    return OpenContainer<void>(
+      openColor: Colors.transparent,
+      closedColor: Colors.transparent,
+      middleColor: Colors.transparent,
+      openElevation: 0,
+      closedElevation: 0,
+      transitionDuration: const Duration(milliseconds: 500),
+      openBuilder: (final context, final _) => ContentScreen(
+        carouselImages: <String>[trainer.avatarBig],
+      ),
+      closedBuilder: (final context, final action) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            CachedNetworkImage(
+              imageUrl: trainer.avatarBig,
+              imageBuilder: (final context, final imageProvider) {
+                return CircleAvatar(radius: 80, foregroundImage: imageProvider);
+              },
+              placeholder: (final context, final url) =>
+                  const CircularProgressIndicator(),
+              errorWidget: (final context, final url, final dynamic error) =>
+                  const FontIcon(FontIconData(IconsCG.logo)),
+            ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                child: Text(
+                  trainer.name,
+                  style: theme.textTheme.bodyText1?.copyWith(
+                    fontWeight: FontWeight.normal,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(
+      properties..add(DiagnosticsProperty<TrainerModel>('trainer', trainer)),
     );
   }
 }

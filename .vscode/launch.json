@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "trustrain",
+      "name": "stretching",
       "request": "launch",
       "program": "lib/main.dart",
       "type": "dart"

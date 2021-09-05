@@ -10,6 +10,16 @@ abstract class TR {
   static const String alertExit = 'alert.exit';
   static const String alert = 'alert';
 
+  static const String connectionErrorTitle = 'connection_error.title';
+  static const String connectionErrorRepeat = 'connection_error.repeat';
+  static const String connectionError = 'connection_error';
+
+  static const String errorTitle = 'error.title';
+  static const String errorDescription = 'error.description';
+  static const String errorDescriptionBold = 'error.description_bold';
+  static const String errorButton = 'error.button';
+  static const String error = 'error';
+
   static const String tooltipsClose = 'tooltips.close';
   static const String tooltipsCancel = 'tooltips.cancel';
   static const String tooltips = 'tooltips';

@@ -7,15 +7,16 @@ version: 0.1.2
 publish_to: none # Remove this line if you wish to publish to pub.dev
 
 environment:
-  sdk: '>=2.15.0-42.0.dev <3.0.0'
-  flutter: '>=2.6.0-0.0.pre'
+  sdk: ">=2.15.0-42.0.dev <3.0.0"
+  flutter: ">=2.6.0-0.0.pre"
 
 dependencies:
   animations: ^2.0.1
   auto_size_text: ^3.0.0-nullsafety.0
   cached_network_image: ^3.1.0
+  carousel_slider: ^4.0.0
+  catcher: ^0.6.8
   connectivity: ^3.0.6
-  custom_info_window: ^1.0.1
   darq: ^1.1.1
   dio: ^4.0.0
   draggable_scrollbar: ^0.1.0
@@ -26,7 +27,6 @@ dependencies:
   flutter_riverpod: ^1.0.0-dev.6
   geolocator: ^7.4.1
   google_maps_flutter: ^2.0.6
-  hawk_fab_menu:
   hive: ^2.0.4
   hive_flutter: ^1.1.0
   hooks_riverpod: ^1.0.0-dev.6
@@ -40,6 +40,9 @@ dependencies:
   persistent_bottom_nav_bar: ^4.0.2
   pin_code_fields: ^7.3.0
   riverpod: ^1.0.0-dev.6
+  share: ^2.0.4
+  smooth_page_indicator: ^1.0.0+2
+  tuple: ^2.0.0
 
 dev_dependencies:
   args: ^2.2.0
@@ -48,7 +51,6 @@ dev_dependencies:
   flutter_native_splash: ^1.2.0
   flutter_test:
     sdk: flutter
-  hive_generator: ^1.1.0
 
 flutter:
   assets:
@@ -69,9 +71,9 @@ flutter_icons:
   # image_path_ios: 'assets/icon/icon_ios.png'
 
 flutter_native_splash:
-  color: '#ffffff'
+  color: "#ffffff"
   image: icon.png
-  color_dark: '#222222'
+  color_dark: "#222222"
   image_dark: icon.png
   fullscreen: true
   # android_gravity: center

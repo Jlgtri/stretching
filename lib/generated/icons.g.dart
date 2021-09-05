@@ -17,9 +17,8 @@ import 'package:flutter/widgets.dart';
 
 // ignore_for_file: public_member_api_docs
 
-class IconsCG {
+abstract class IconsCG {
   const IconsCG._();
-
   static const String _kFontFam = 'IconsCG';
 
   static const IconData profile = IconData(0xe800, fontFamily: _kFontFam);
@@ -43,6 +42,8 @@ class IconsCG {
   static const IconData clock = IconData(0xe815, fontFamily: _kFontFam);
   static const IconData logo = IconData(0xe817, fontFamily: _kFontFam);
   static const IconData mapLocation = IconData(0xe820, fontFamily: _kFontFam);
+  static const IconData globe = IconData(0xe821, fontFamily: _kFontFam);
+  static const IconData repeat = IconData(0xe822, fontFamily: _kFontFam);
   static const IconData messenger = IconData(0xe82d, fontFamily: _kFontFam);
   static const IconData vk = IconData(0xe82f, fontFamily: _kFontFam);
   static const IconData whatsApp = IconData(0xe830, fontFamily: _kFontFam);
