@@ -1,23 +1,22 @@
-import 'dart:math';
-
 import 'package:darq/darq.dart';
-import 'package:draggable_scrollbar/draggable_scrollbar.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/models_smstretching/sm_trainer_model.dart';
 import 'package:stretching/models_yclients/activity_model.dart';
 import 'package:stretching/models_yclients/company_model.dart';
 import 'package:stretching/models_yclients/trainer_model.dart';
 import 'package:stretching/providers/hive_provider.dart';
-import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/providers/yclients_providers.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/json_converters.dart';
 import 'package:stretching/widgets/components/focus_wrapper.dart';
 import 'package:stretching/widgets/navigation/components/filters.dart';
+import 'package:stretching/widgets/navigation/components/scrollbar.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 
 /// The id converter of the [CompanyModel].
@@ -130,17 +129,18 @@ class ActivitiesScreen extends HookConsumerWidget {
   /// The screen for the [NavigationScreen.trainers].
   const ActivitiesScreen({final Key? key}) : super(key: key);
 
+  /// The height of the categories picker widget.
+  static const double categoriesHeight = 84;
+
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
     final categories = ref.watch(activitiesCategoriesFilterProvider);
 
     final search = useState<String>('');
-    final scrollController = useScrollController();
     final searchController = useTextEditingController();
     final searchFocusNode = useFocusNode();
     final searchKey = useMemoized(() => GlobalKey());
-    final scrollNotificationExample = useRef<ScrollUpdateNotification?>(null);
 
     late final bool areActivitiesPresent;
     late final int filtersCount;
@@ -179,131 +179,96 @@ class ActivitiesScreen extends HookConsumerWidget {
 
     return FocusWrapper(
       unfocussableKeys: <GlobalKey>[searchKey],
-      child: DraggableScrollbar.semicircle(
-        controller: scrollController,
-        // Shows the scrollbar only if current trainers length is greater
-        // than 6 (3 rows).
-        heightScrollThumb: activities.length < 4 ? 0 : 40,
-        padding: EdgeInsets.zero,
-        backgroundColor: theme.colorScheme.onSurface,
-        labelTextBuilder: (final offset) {
-          /// Creates a label for the scrollbar with the first letter of
-          /// current trainer.
-          final index = max(0, scrollController.offset - 84) /
-              scrollController.position.maxScrollExtent *
-              activities.length;
-          final activity = activities.elementAt(
-            scrollController.hasClients
-                ? min(index.ceil(), activities.length - 1)
-                : 0,
-          );
+      child: CustomDraggableScrollBar(
+        itemsCount: activities.length,
+        visible: activities.length > 4,
+        leadingChildHeight:
+            InputDecorationStyle.search.toolbarHeight + categoriesHeight + 20,
+        trailingChildHeight: InputDecorationStyle.search.toolbarHeight,
+        labelTextBuilder: (final index) {
+          final activity = activities.elementAt(index);
           return Text(
             '${activity.date.hour}:${activity.date.minute}',
             style: theme.textTheme.subtitle2
                 ?.copyWith(color: theme.colorScheme.surface),
           );
         },
-        child: ListView(
-          shrinkWrap: true,
-          padding: EdgeInsets.zero,
-          physics: const NeverScrollableScrollPhysics(),
-          itemExtent: MediaQuery.of(context).size.height - 84,
-          children: <Widget>[
-            /// Is used for moving the scrollbar to the initial position when
-            /// search is reset. Needs to access [DraggableScrollbar] context.
-            Builder(
-              builder: (final context) {
-                if (categories.isEmpty && search.value.isEmpty) {
-                  final notification = scrollNotificationExample.value;
-                  if (notification != null) {
-                    (ref.read(widgetsBindingProvider))
-                        .addPostFrameCallback((final _) {
-                      ScrollUpdateNotification(
-                        context: notification.context ?? context,
-                        metrics: notification.metrics,
-                        depth: notification.depth,
-                        dragDetails: notification.dragDetails,
-                        scrollDelta: double.negativeInfinity,
-                      ).dispatch(notification.context ?? context);
-                    });
-                  }
-                }
-                return NotificationListener<ScrollUpdateNotification>(
-                  onNotification: (final notification) {
-                    scrollNotificationExample.value ??= notification;
-                    return false;
-                  },
-                  child: CustomScrollView(
-                    controller: scrollController,
-                    slivers: <Widget>[
-                      const SliverPadding(padding: EdgeInsets.only(top: 20)),
+        builder: (final context, final scrollController) {
+          return CustomScrollView(
+            controller: scrollController,
+            slivers: <Widget>[
+              const SliverPadding(padding: EdgeInsets.only(top: 20)),
 
-                      /// A search field and categories.
-                      SliverAppBar(
-                        primary: false,
-                        backgroundColor: Colors.transparent,
-                        toolbarHeight:
-                            InputDecorationStyle.search.toolbarHeight + 84,
-                        titleSpacing: 12,
-                        title: Material(
-                          color: theme.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(10),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              TextField(
-                                key: searchKey,
-                                cursorColor: theme.hintColor,
-                                style: theme.textTheme.bodyText2,
-                                controller: searchController,
-                                focusNode: searchFocusNode,
-                                onChanged: (final value) =>
-                                    search.value = value,
-                                decoration:
-                                    InputDecorationStyle.search.fromTheme(
-                                  theme,
-                                  suffixCount: filtersCount,
-                                  onSuffix: () {
-                                    search.value = '';
-                                    searchController.clear();
-                                    searchFocusNode.unfocus();
-                                  },
-                                ),
-                              ),
-                              categories.getSelectorWidget(
-                                theme,
-                                (final category, final value) {
-                                  final categoriesNotifier = ref.read(
-                                    activitiesCategoriesFilterProvider.notifier,
-                                  );
-                                  value
-                                      ? categoriesNotifier.add(category)
-                                      : categoriesNotifier.remove(category);
-                                },
-                              ),
-                            ],
+              /// A search field and categories.
+              SliverAppBar(
+                primary: false,
+                backgroundColor: Colors.transparent,
+                toolbarHeight: InputDecorationStyle.search.toolbarHeight +
+                    categoriesHeight,
+                titleSpacing: 0,
+                title: Material(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: TextField(
+                          key: searchKey,
+                          cursorColor: theme.hintColor,
+                          style: theme.textTheme.bodyText2,
+                          controller: searchController,
+                          focusNode: searchFocusNode,
+                          onChanged: (final value) => search.value = value,
+                          decoration: InputDecorationStyle.search.fromTheme(
+                            theme,
+                            hintText: TR.activitiesSearch.tr(),
+                            onSuffix: () {
+                              search.value = '';
+                              searchController.clear();
+                              searchFocusNode.unfocus();
+                            },
                           ),
                         ),
-                        bottom: null,
                       ),
-
-                      const SliverPadding(padding: EdgeInsets.only(top: 40)),
+                      categories.getSelectorWidget(
+                        theme,
+                        (final category, final value) {
+                          final activitiesNotifier = ref.read(
+                            activitiesCategoriesFilterProvider.notifier,
+                          );
+                          value
+                              ? activitiesNotifier.add(category)
+                              : activitiesNotifier.remove(category);
+                        },
+                      )
                     ],
                   ),
-                );
-              },
-            ),
-          ],
-        ),
+                ),
+                // bottom: PreferredSize(
+                //   preferredSize: Size.fromHeight(44),
+                //   child: null,
+                // ),
+              ),
+
+              SliverPadding(
+                padding: EdgeInsets.only(
+                  top: InputDecorationStyle.search.toolbarHeight,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
 // /// The search implemented on [ActivitiesScreen].
-// class ActivitiesSearch extends HookConsumerWidget {
+// class ActivitiesDatePicker extends HookConsumerWidget {
 //   /// The search implemented on [ActivitiesScreen].
-//   const ActivitiesSearch({final Key? key}) : super(key: key);
+//   const ActivitiesDatePicker({final Key? key}) : super(key: key);
 
 //   @override
 //   Widget build(final BuildContext context, final WidgetRef ref) {

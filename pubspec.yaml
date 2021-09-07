@@ -59,8 +59,28 @@ dev_dependencies:
 flutter:
   assets:
     - assets/google_map_style.json
+    - assets/emoji/1f499.png
+    - assets/emoji/1f525.png
+    - assets/emoji/1f609.png
+    - assets/emoji/1f60d.png
+    - assets/emoji/1f610.png
+    - assets/emoji/1f61e.png
+    - assets/emoji/1f622.png
+    - assets/emoji/1f623.png
+    - assets/emoji/1f62c.png
+    - assets/emoji/1f631.png
+    - assets/emoji/1f633.png
+    - assets/emoji/1f642.png
+    - assets/emoji/1f64c-1f3fb.png
+    - assets/emoji/1f914.png
+    - assets/emoji/1f918.png
+    - assets/emoji/1f929.png
+    - assets/emoji/1f964.png
+    - assets/emoji/1f9d8.png
+    - assets/emoji/26a1.png
+    - assets/emoji/270c-fe0f.png
+    - assets/emoji/2764-fe0f.png
     - assets/translations/ru-RU.json
-    - assets/emoji/
 
   fonts:
     - family: IconsCG

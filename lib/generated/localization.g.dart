@@ -20,6 +20,7 @@ abstract class TR {
   static const String errorButton = 'error.button';
   static const String error = 'error';
 
+  static const String tooltipsBack = 'tooltips.back';
   static const String tooltipsClose = 'tooltips.close';
   static const String tooltipsCancel = 'tooltips.cancel';
   static const String tooltipsShare = 'tooltips.share';
@@ -27,6 +28,18 @@ abstract class TR {
 
   static const String miscEmpty = 'misc.empty';
   static const String miscExtend = 'misc.extend';
+
+  static const String miscFilterTitle = 'misc.filter.title';
+  static const String miscFilterReset = 'misc.filter.reset';
+  static const String miscFilterApply = 'misc.filter.apply';
+  static const String miscFilterAllStudios = 'misc.filter.all_studios';
+  static const String miscFilterStudio = 'misc.filter.studio';
+  static const String miscFilterClass = 'misc.filter.class';
+  static const String miscFilterTime = 'misc.filter.time';
+  static const String miscFilterTimeBefore = 'misc.filter.time_before';
+  static const String miscFilterTimeAfter = 'misc.filter.time_after';
+  static const String miscFilterTrainer = 'misc.filter.trainer';
+  static const String miscFilter = 'misc.filter';
   static const String misc = 'misc';
 
   static const String categoryTrx = 'category.trx';
@@ -55,6 +68,20 @@ abstract class TR {
 
   static const String homeRegister = 'home.register';
   static const String home = 'home';
+
+  static const String activitiesSearch = 'activities.search';
+  static const String activities12h = 'activities.12h';
+
+  static const String activitiesFullnessFull = 'activities.fullness.full';
+
+  static const String activitiesFullnessLow = 'activities.fullness.low';
+  static const String activitiesFullness = 'activities.fullness';
+  static const String activitiesApply = 'activities.apply';
+  static const String activitiesCancel = 'activities.cancel';
+  static const String activitiesWaitingList = 'activities.waiting_list';
+  static const String activitiesEmpty = 'activities.empty';
+  static const String activitiesEmptyFilter = 'activities.empty_filter';
+  static const String activities = 'activities';
 
   static const String studiosViewList = 'studios.view.list';
   static const String studiosViewMap = 'studios.view.map';

@@ -192,17 +192,12 @@ class NavigationNotifier
   @override
   final ProviderRefBase ref;
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
-
   late int _previousScreenIndex = state.index;
 
-  /// The index of the previous navigation screen.
+  /// The index of the previous [NavigationScreen].
   int get previousScreenIndex => _previousScreenIndex;
 
-  /// Sets the index of the previous navigation screen.
+  /// Sets the index of the previous [NavigationScreen].
   set previousScreenIndex(final int value) {
     if (0 <= value && value <= NavigationScreen.values.length) {
       _previousScreenIndex = value;
@@ -263,6 +258,13 @@ class NavigationRoot extends HookConsumerWidget {
     final theme = Theme.of(context);
 
     final navigation = ref.watch(navigationProvider.notifier);
+    final hideAppbar = useState(
+      ref.watch(
+        hideAppBarProvider(
+          NavigationScreen.values.elementAt(ref.read(navigationProvider).index),
+        ),
+      ),
+    );
     final isTransitioning = useState<bool>(false);
     return Stack(
       alignment: Alignment.topCenter,
@@ -310,9 +312,14 @@ class NavigationRoot extends HookConsumerWidget {
               } else {
                 navigation.state.index = navigation.previousScreenIndex;
               }
+              final screen =
+                  NavigationScreen.values.elementAt(navigation.state.index);
+              hideAppbar.value = ref.watch(hideAppBarProvider(screen));
               await Navigator.of(context, rootNavigator: true)
                   .pushNamed(Routes.auth.name);
             } else if (navigation.previousScreenIndex != index) {
+              final screen = NavigationScreen.values.elementAt(index);
+              hideAppbar.value = ref.watch(hideAppBarProvider(screen));
               isTransitioning.value = true;
               await Future<void>.delayed(transitionDuration);
               isTransitioning.value = false;
@@ -339,28 +346,37 @@ class NavigationRoot extends HookConsumerWidget {
           ],
         ),
 
-        if (!ref.watch(hideAppBarProvider).state)
-          SizedBox(
-            height: appBarHeight + MediaQuery.of(context).viewPadding.top,
-            child: AppBar(
-              centerTitle: true,
-              toolbarHeight: appBarHeight,
-              systemOverlayStyle: SystemUiOverlayStyle(
-                statusBarColor: AppBarTheme.of(context).backgroundColor,
-                statusBarBrightness: theme.brightness == Brightness.light
-                    ? Brightness.dark
-                    : Brightness.light,
-                statusBarIconBrightness: theme.brightness,
-              ),
-              title: FontIcon(
-                FontIconData(
-                  IconsCG.logo,
-                  height: 16,
-                  color: theme.appBarTheme.foregroundColor,
+        IgnorePointer(
+          ignoring: hideAppbar.value.state,
+          child: AnimatedOpacity(
+            duration: transitionDuration,
+            curve: hideAppbar.value.state
+                ? const Interval(1 / 3, 2 / 3, curve: Curves.easeOut)
+                : const Interval(1 / 3, 2 / 3, curve: Curves.easeInOut),
+            opacity: hideAppbar.value.state ? 0 : 1,
+            child: SizedBox(
+              height: appBarHeight + MediaQuery.of(context).viewPadding.top,
+              child: AppBar(
+                centerTitle: true,
+                toolbarHeight: appBarHeight,
+                systemOverlayStyle: SystemUiOverlayStyle(
+                  statusBarColor: AppBarTheme.of(context).backgroundColor,
+                  statusBarBrightness: theme.brightness == Brightness.light
+                      ? Brightness.dark
+                      : Brightness.light,
+                  statusBarIconBrightness: theme.brightness,
+                ),
+                title: FontIcon(
+                  FontIconData(
+                    IconsCG.logo,
+                    height: 16,
+                    color: theme.appBarTheme.foregroundColor,
+                  ),
                 ),
               ),
             ),
           ),
+        ),
 
         /// Blocks input while screen is transitioning
         if (isTransitioning.value)

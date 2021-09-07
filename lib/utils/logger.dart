@@ -60,5 +60,13 @@ class CustomCatcherLogger implements CatcherLogger {
 /// The [Logger] adapter for the [CatcherLogger].
 class ChangedCatcherLogger extends CatcherLogger {
   @override
-  void setup() => logging.Logger.root.level = logging.Level.ALL;
+  void setup() {
+    logging.Logger.root.level = logging.Level.ALL;
+    logging.Logger.root.onRecord.listen(
+      (final rec) {
+        // ignore: avoid_print
+        print(rec.message);
+      },
+    );
+  }
 }

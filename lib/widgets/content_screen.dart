@@ -12,9 +12,9 @@ import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/hook_consumer_stateful_widget.dart';
+import 'package:stretching/providers/hide_appbar_provider.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/navigation/components/bottom_sheet.dart';
-import 'package:stretching/providers/hide_appbar_provider.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 
 /// The paragraph model for the [ContentScreen].
@@ -309,7 +309,7 @@ class _ContentCarousel extends HookWidget {
     return Stack(
       alignment: Alignment.bottomCenter,
       children: <Widget>[
-        Expanded(child: carousel),
+        carousel,
         if ((carousel.itemCount ?? 0) > 1)
           Padding(
             padding: const EdgeInsets.only(bottom: 20),

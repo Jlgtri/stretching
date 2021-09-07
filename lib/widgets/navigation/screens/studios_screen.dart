@@ -353,17 +353,12 @@ class StudioScreenCard extends ConsumerWidget {
             itemCount: smStudio.mediaGallerySite.length,
             itemBuilder: (final context, final index, final realIndex) {
               final media = smStudio.mediaGallerySite.elementAt(index);
-              return ClipRect(
-                child: OverflowBox(
-                  maxWidth: MediaQuery.of(context).size.width,
-                  maxHeight: double.infinity,
-                  child: FittedBox(
-                    fit: BoxFit.fitHeight,
-                    child: CachedNetworkImage(
-                      imageUrl: media.url,
-                    ),
-                  ),
-                ),
+              return CachedNetworkImage(
+                imageUrl: media.url,
+                fit: BoxFit.fitHeight,
+                alignment: Alignment.topCenter,
+                width: MediaQuery.of(context).size.width,
+                height: 280,
               );
             },
           ),
@@ -451,6 +446,8 @@ class StudioCard extends HookConsumerWidget {
                   ? studio.photos.first
                   : studio.logo,
           alignment: Alignment.topCenter,
+          height: (onMap ? 16 : 24) * 2,
+          width: (onMap ? 16 : 24) * 2,
           imageBuilder: (final context, final imageProvider) {
             return IgnorePointer(
               ignoring: onAvatarTap == null,
@@ -467,7 +464,7 @@ class StudioCard extends HookConsumerWidget {
             );
           },
           placeholder: (final context, final url) =>
-              const CircularProgressIndicator.adaptive(),
+              const Center(child: CircularProgressIndicator.adaptive()),
           errorWidget: (final context, final url, final dynamic error) =>
               const FontIcon(FontIconData(IconsCG.logo)),
         ),

@@ -4,7 +4,6 @@ import 'package:animations/animations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cached_video_player/cached_video_player.dart';
 import 'package:darq/darq.dart';
-import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -17,7 +16,6 @@ import 'package:stretching/hooks/disposable_change_notifier_hook.dart';
 import 'package:stretching/models_smstretching/sm_trainer_model.dart';
 import 'package:stretching/models_yclients/trainer_model.dart';
 import 'package:stretching/providers/hive_provider.dart';
-import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/providers/smstretching_providers.dart';
 import 'package:stretching/providers/yclients_providers.dart';
 import 'package:stretching/style.dart';
@@ -28,11 +26,12 @@ import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/content_screen.dart';
 import 'package:stretching/widgets/navigation/components/bottom_sheet.dart';
 import 'package:stretching/widgets/navigation/components/filters.dart';
+import 'package:stretching/widgets/navigation/components/scrollbar.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 
 /// The provider of filters for [SMTrainerModel].
 final StateNotifierProvider<SaveToHiveIterableNotifier<ClassCategory, String>,
-        Iterable<ClassCategory>> trainersCategoryFilterProvider =
+        Iterable<ClassCategory>> trainersCategoriesFilterProvider =
     StateNotifierProvider<SaveToHiveIterableNotifier<ClassCategory, String>,
         Iterable<ClassCategory>>((final ref) {
   return SaveToHiveIterableNotifier<ClassCategory, String>(
@@ -50,18 +49,18 @@ class TrainersScreen extends HookConsumerWidget {
   /// The screen for the [NavigationScreen.trainers].
   const TrainersScreen({final Key? key}) : super(key: key);
 
+  /// The height of the categories picker widget.
+  static const double categoriesHeight = 84;
+
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final mediaQuery = MediaQuery.of(context);
-    final categories = ref.watch(trainersCategoryFilterProvider);
+    final categories = ref.watch(trainersCategoriesFilterProvider);
 
     final search = useState<String>('');
-    final scrollController = useScrollController();
     final searchController = useTextEditingController();
     final searchFocusNode = useFocusNode();
     final searchKey = useMemoized(() => GlobalKey());
-    final scrollNotificationExample = useRef<ScrollUpdateNotification?>(null);
 
     final smTrainers = ref.watch(smTrainersProvider);
     late final bool areTrainersPresent;
@@ -74,7 +73,7 @@ class TrainersScreen extends HookConsumerWidget {
       /// And finally, removes dublicates.
       trainersProvider.select((final trainers) {
         areTrainersPresent = trainers.isNotEmpty;
-        final categories = ref.watch(trainersCategoryFilterProvider);
+        final categories = ref.watch(trainersCategoriesFilterProvider);
         return TrainersNotifier.normalizeTrainers(trainers)
             .where((final trainer) {
           return search.value.isEmpty ||
@@ -97,167 +96,123 @@ class TrainersScreen extends HookConsumerWidget {
       }),
     );
 
-    final totalToolbarHeight = InputDecorationStyle.search.toolbarHeight + 84;
     return FocusWrapper(
       unfocussableKeys: <GlobalKey>[searchKey],
-      child: DraggableScrollbar.semicircle(
-        controller: scrollController,
-        // Shows the scrollbar only if current trainers length is greater
-        // than 6 (3 rows).
-        heightScrollThumb: trainers.length < 7 ? 0 : 40,
-        padding: EdgeInsets.zero,
-        backgroundColor: theme.colorScheme.onSurface,
-        labelTextBuilder: (final offset) {
-          /// Creates a label for the scrollbar with the first letter of
-          /// current trainer.
-          final index = max(0, scrollController.offset - totalToolbarHeight) *
-              trainers.length ~/
-              scrollController.position.maxScrollExtent;
-          final trainer = trainers.elementAt(
-            scrollController.hasClients ? min(index, trainers.length - 1) : 0,
-          );
+      child: CustomDraggableScrollBar(
+        itemsCount: trainers.length,
+        visible: trainers.length > 6,
+        leadingChildHeight:
+            InputDecorationStyle.search.toolbarHeight + categoriesHeight + 20,
+        trailingChildHeight: InputDecorationStyle.search.toolbarHeight,
+        labelTextBuilder: (final index) {
+          final trainer =
+              trainers.elementAt(min((index + 1) & ~1, trainers.length - 1));
           return Text(
             trainer.name.isNotEmpty ? trainer.name[0].toUpperCase() : '-',
             style: theme.textTheme.subtitle2
                 ?.copyWith(color: theme.colorScheme.surface),
           );
         },
-        child: ListView(
-          shrinkWrap: true,
-          padding: EdgeInsets.zero,
-          physics: const NeverScrollableScrollPhysics(),
-          itemExtent: mediaQuery.size.height -
-              mediaQuery.viewPadding.top -
-              totalToolbarHeight,
-          children: <Widget>[
-            /// Is used for moving the scrollbar to the initial position when
-            /// search is reset. Needs to access [DraggableScrollbar] context.
-            Builder(
-              builder: (final context) {
-                if (categories.isEmpty && search.value.isEmpty) {
-                  final notification = scrollNotificationExample.value;
-                  if (notification != null) {
-                    (ref.read(widgetsBindingProvider))
-                        .addPostFrameCallback((final _) {
-                      ScrollUpdateNotification(
-                        context: notification.context ?? context,
-                        metrics: notification.metrics,
-                        depth: notification.depth,
-                        dragDetails: notification.dragDetails,
-                        scrollDelta: double.negativeInfinity,
-                      ).dispatch(notification.context ?? context);
-                    });
-                  }
-                }
-                return NotificationListener<ScrollUpdateNotification>(
-                  onNotification: (final notification) {
-                    scrollNotificationExample.value ??= notification;
-                    return false;
-                  },
-                  child: CustomScrollView(
-                    controller: scrollController,
-                    slivers: <Widget>[
-                      const SliverPadding(padding: EdgeInsets.only(top: 20)),
+        builder: (final context, final scrollController) {
+          return CustomScrollView(
+            shrinkWrap: true,
+            controller: scrollController,
+            slivers: <Widget>[
+              const SliverPadding(padding: EdgeInsets.only(top: 20)),
 
-                      /// A search field and categories.
-                      SliverAppBar(
-                        primary: false,
-                        backgroundColor: Colors.transparent,
-                        toolbarHeight:
-                            InputDecorationStyle.search.toolbarHeight,
-                        titleSpacing: 12,
-                        title: Material(
-                          color: theme.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(10),
-                          child: TextField(
-                            key: searchKey,
-                            cursorColor: theme.hintColor,
-                            style: theme.textTheme.bodyText2,
-                            controller: searchController,
-                            focusNode: searchFocusNode,
-                            onChanged: (final value) => search.value = value,
-                            decoration: InputDecorationStyle.search.fromTheme(
-                              theme,
-                              hintText: TR.trainersSearch.tr(),
-                              onSuffix: () {
-                                search.value = '';
-                                searchController.clear();
-                                searchFocusNode.unfocus();
-                              },
-                            ),
-                          ),
-                        ),
-                        bottom: categories.getSelectorWidget(
-                          theme,
-                          (final category, final value) {
-                            final categoriesNotifier = ref.read(
-                              trainersCategoryFilterProvider.notifier,
-                            );
-                            value
-                                ? categoriesNotifier.add(category)
-                                : categoriesNotifier.remove(category);
-                          },
-                        ),
-                      ),
-
-                      /// The list of trainers.
-                      if (trainers.isNotEmpty)
-                        SliverGrid(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 24,
-                            mainAxisSpacing: 24,
-                            mainAxisExtent: 210,
-                          ),
-                          delegate: SliverChildBuilderDelegate(
-                            (final context, final index) {
-                              final trainer = trainers.elementAt(index);
-                              return TrainerCard(
-                                trainer,
-                                smTrainers.firstWhere((final smTrainer) {
-                                  return smTrainer.trainerId == trainer.id;
-                                }),
-                              );
-                            },
-                            childCount: trainers.length,
-                          ),
-                        )
-                      else
-                        SliverPadding(
-                          padding: const EdgeInsets.symmetric(horizontal: 64),
-                          sliver: SliverToBoxAdapter(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                EmojiText(
-                                  areTrainersPresent ? '🤔' : '🧘‍♀️',
-                                  style: const TextStyle(fontSize: 30),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  areTrainersPresent
-                                      ? TR.trainersEmpty.tr()
-                                      : TR.miscEmpty.tr(),
-                                  style: theme.textTheme.bodyText1,
-                                  textAlign: TextAlign.center,
-                                )
-                              ],
-                            ),
-                          ),
-                        ),
-                      SliverPadding(
-                        padding: EdgeInsets.only(
-                          top: InputDecorationStyle.search.toolbarHeight,
-                        ),
-                      ),
-                    ],
+              /// A search field and categories.
+              SliverAppBar(
+                primary: false,
+                backgroundColor: Colors.transparent,
+                toolbarHeight: InputDecorationStyle.search.toolbarHeight,
+                titleSpacing: 12,
+                title: Material(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(10),
+                  child: TextField(
+                    key: searchKey,
+                    cursorColor: theme.hintColor,
+                    style: theme.textTheme.bodyText2,
+                    controller: searchController,
+                    focusNode: searchFocusNode,
+                    onChanged: (final value) => search.value = value,
+                    decoration: InputDecorationStyle.search.fromTheme(
+                      theme,
+                      hintText: TR.trainersSearch.tr(),
+                      onSuffix: () {
+                        search.value = '';
+                        searchController.clear();
+                        searchFocusNode.unfocus();
+                      },
+                    ),
                   ),
-                );
-              },
-            ),
-          ],
-        ),
+                ),
+                bottom: categories.getSelectorWidget(
+                  theme,
+                  (final category, final value) {
+                    final categoriesNotifier = ref.read(
+                      trainersCategoriesFilterProvider.notifier,
+                    );
+                    value
+                        ? categoriesNotifier.add(category)
+                        : categoriesNotifier.remove(category);
+                  },
+                ),
+              ),
+
+              /// The list of trainers.
+              if (trainers.isNotEmpty)
+                SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 24,
+                    mainAxisSpacing: 24,
+                    mainAxisExtent: 210,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (final context, final index) {
+                      final trainer = trainers.elementAt(index);
+                      return TrainerCard(
+                        trainer,
+                        smTrainers.firstWhere((final smTrainer) {
+                          return smTrainer.trainerId == trainer.id;
+                        }),
+                      );
+                    },
+                    childCount: trainers.length,
+                  ),
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 64),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        EmojiText(
+                          areTrainersPresent ? '🤔' : '🧘‍♀️',
+                          style: const TextStyle(fontSize: 30),
+                        ),
+                        const SizedBox(height: 10),
+                        Text(
+                          areTrainersPresent
+                              ? TR.trainersEmpty.tr()
+                              : TR.miscEmpty.tr(),
+                          style: theme.textTheme.bodyText1,
+                          textAlign: TextAlign.center,
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              SliverPadding(
+                padding: EdgeInsets.only(
+                  top: InputDecorationStyle.search.toolbarHeight,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -310,7 +265,7 @@ class TrainerCard extends StatelessWidget {
                   );
                 },
                 placeholder: (final context, final url) =>
-                    const CircularProgressIndicator.adaptive(),
+                    const Center(child: CircularProgressIndicator.adaptive()),
                 errorWidget: (final context, final url, final dynamic error) =>
                     const FontIcon(FontIconData(IconsCG.logo)),
               ),
