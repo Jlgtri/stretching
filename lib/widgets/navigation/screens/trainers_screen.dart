@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:animations/animations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cached_video_player/cached_video_player.dart';
 import 'package:darq/darq.dart';
 import 'package:draggable_scrollbar/draggable_scrollbar.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -12,18 +13,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
-import 'package:stretching/models/categories_enum.dart';
+import 'package:stretching/hooks/disposable_change_notifier_hook.dart';
 import 'package:stretching/models_smstretching/sm_trainer_model.dart';
 import 'package:stretching/models_yclients/trainer_model.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/providers/smstretching_providers.dart';
 import 'package:stretching/providers/yclients_providers.dart';
+import 'package:stretching/style.dart';
 import 'package:stretching/utils/json_converters.dart';
 import 'package:stretching/widgets/components/emoji_text.dart';
 import 'package:stretching/widgets/components/focus_wrapper.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/content_screen.dart';
+import 'package:stretching/widgets/navigation/components/bottom_sheet.dart';
+import 'package:stretching/widgets/navigation/components/filters.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 
 /// The provider of filters for [SMTrainerModel].
@@ -35,9 +39,7 @@ final StateNotifierProvider<SaveToHiveIterableNotifier<ClassCategory, String>,
     hive: ref.watch(hiveProvider),
     saveName: 'trainers_categories',
     converter: const StringToIterableConverter(
-      IterableConverter(
-        EnumConverter<ClassCategory>(ClassCategory.values),
-      ),
+      IterableConverter(EnumConverter<ClassCategory>(ClassCategory.values)),
     ),
     defaultValue: const Iterable<ClassCategory>.empty(),
   );
@@ -51,6 +53,7 @@ class TrainersScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     final categories = ref.watch(trainersCategoryFilterProvider);
 
     final search = useState<String>('');
@@ -94,35 +97,7 @@ class TrainersScreen extends HookConsumerWidget {
       }),
     );
 
-    Widget filterButton(final ClassCategory category) {
-      final isActive = categories.contains(category);
-      final surface = theme.colorScheme.surface;
-      final onSurface = theme.colorScheme.onSurface;
-      return MaterialButton(
-        shape: RoundedRectangleBorder(
-          side: const BorderSide(),
-          borderRadius: BorderRadius.circular(30),
-        ),
-        textColor: isActive ? surface : onSurface,
-        color: isActive ? onSurface : Colors.transparent,
-        elevation: 0,
-        focusElevation: 0,
-        hoverElevation: 0,
-        disabledElevation: 0,
-        highlightElevation: 0,
-        onPressed: () {
-          final categoriesNotifier = ref.read(
-            trainersCategoryFilterProvider.notifier,
-          );
-          isActive
-              ? categoriesNotifier.remove(category)
-              : categoriesNotifier.add(category);
-        },
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Text(category.translation),
-      );
-    }
-
+    final totalToolbarHeight = InputDecorationStyle.search.toolbarHeight + 84;
     return FocusWrapper(
       unfocussableKeys: <GlobalKey>[searchKey],
       child: DraggableScrollbar.semicircle(
@@ -135,13 +110,11 @@ class TrainersScreen extends HookConsumerWidget {
         labelTextBuilder: (final offset) {
           /// Creates a label for the scrollbar with the first letter of
           /// current trainer.
-          final index = max(0, scrollController.offset - (40 + 24) * 2) /
-              scrollController.position.maxScrollExtent *
-              trainers.length;
+          final index = max(0, scrollController.offset - totalToolbarHeight) *
+              trainers.length ~/
+              scrollController.position.maxScrollExtent;
           final trainer = trainers.elementAt(
-            scrollController.hasClients
-                ? min(index.ceil(), trainers.length - 1)
-                : 0,
+            scrollController.hasClients ? min(index, trainers.length - 1) : 0,
           );
           return Text(
             trainer.name.isNotEmpty ? trainer.name[0].toUpperCase() : '-',
@@ -153,10 +126,12 @@ class TrainersScreen extends HookConsumerWidget {
           shrinkWrap: true,
           padding: EdgeInsets.zero,
           physics: const NeverScrollableScrollPhysics(),
-          itemExtent: MediaQuery.of(context).size.height - (40 + 24) * 2,
+          itemExtent: mediaQuery.size.height -
+              mediaQuery.viewPadding.top -
+              totalToolbarHeight,
           children: <Widget>[
             /// Is used for moving the scrollbar to the initial position when
-            /// search is reset.
+            /// search is reset. Needs to access [DraggableScrollbar] context.
             Builder(
               builder: (final context) {
                 if (categories.isEmpty && search.value.isEmpty) {
@@ -188,7 +163,8 @@ class TrainersScreen extends HookConsumerWidget {
                       SliverAppBar(
                         primary: false,
                         backgroundColor: Colors.transparent,
-                        toolbarHeight: 40,
+                        toolbarHeight:
+                            InputDecorationStyle.search.toolbarHeight,
                         titleSpacing: 12,
                         title: Material(
                           color: theme.colorScheme.surface,
@@ -199,81 +175,28 @@ class TrainersScreen extends HookConsumerWidget {
                             style: theme.textTheme.bodyText2,
                             controller: searchController,
                             focusNode: searchFocusNode,
-                            decoration: InputDecoration(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 14,
-                              ),
-                              prefixIcon: Align(
-                                child: FontIcon(
-                                  FontIconData(
-                                    IconsCG.search,
-                                    color: theme.hintColor,
-                                  ),
-                                ),
-                              ),
-                              prefixIconConstraints: const BoxConstraints(
-                                minWidth: 48,
-                                maxWidth: 48,
-                              ),
-                              suffix: MaterialButton(
-                                onPressed: () {
-                                  search.value = '';
-                                  searchController.clear();
-                                  searchFocusNode.unfocus();
-                                },
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  TR.tooltipsCancel.tr(),
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onSurface,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                              fillColor: theme.colorScheme.surface,
-                              hintText: TR.trainersSearch.tr(),
-                              border: InputBorder.none,
-                              disabledBorder: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                            ),
                             onChanged: (final value) => search.value = value,
+                            decoration: InputDecorationStyle.search.fromTheme(
+                              theme,
+                              hintText: TR.trainersSearch.tr(),
+                              onSuffix: () {
+                                search.value = '';
+                                searchController.clear();
+                                searchFocusNode.unfocus();
+                              },
+                            ),
                           ),
                         ),
-                        bottom: PreferredSize(
-                          preferredSize: const Size.fromHeight(40 + 24 * 2),
-                          child: Align(
-                            alignment: Alignment.bottomLeft,
-                            child: Padding(
-                              padding: const EdgeInsets.only(bottom: 24),
-                              child: NotificationListener<ScrollNotification>(
-                                onNotification: (final notification) => true,
-                                child: SingleChildScrollView(
-                                  controller: ScrollController(),
-                                  scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                  ),
-                                  physics: const BouncingScrollPhysics(),
-                                  child: Row(
-                                    children: <Widget>[
-                                      for (final category
-                                          in ClassCategory.values)
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 4,
-                                          ),
-                                          child: filterButton(category),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
+                        bottom: categories.getSelectorWidget(
+                          theme,
+                          (final category, final value) {
+                            final categoriesNotifier = ref.read(
+                              trainersCategoryFilterProvider.notifier,
+                            );
+                            value
+                                ? categoriesNotifier.add(category)
+                                : categoriesNotifier.remove(category);
+                          },
                         ),
                       ),
 
@@ -289,7 +212,13 @@ class TrainersScreen extends HookConsumerWidget {
                           ),
                           delegate: SliverChildBuilderDelegate(
                             (final context, final index) {
-                              return _TrainerCard(trainers.elementAt(index));
+                              final trainer = trainers.elementAt(index);
+                              return TrainerCard(
+                                trainer,
+                                smTrainers.firstWhere((final smTrainer) {
+                                  return smTrainer.trainerId == trainer.id;
+                                }),
+                              );
                             },
                             childCount: trainers.length,
                           ),
@@ -317,7 +246,11 @@ class TrainersScreen extends HookConsumerWidget {
                             ),
                           ),
                         ),
-                      const SliverPadding(padding: EdgeInsets.only(top: 40)),
+                      SliverPadding(
+                        padding: EdgeInsets.only(
+                          top: InputDecorationStyle.search.toolbarHeight,
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -330,53 +263,74 @@ class TrainersScreen extends HookConsumerWidget {
   }
 }
 
-class _TrainerCard extends StatelessWidget {
-  const _TrainerCard(final this.trainer, {final Key? key}) : super(key: key);
+/// The card to display a trainer.
+///
+/// Initially shows just a card, but opens [TrainerScreen] when pressed.
+class TrainerCard extends StatelessWidget {
+  /// The card to display a trainer.
+  ///
+  /// Initially shows just a card, but opens [TrainerScreen] when pressed.
+  const TrainerCard(
+    final this.trainer,
+    final this.smTrainer, {
+    final Key? key,
+  }) : super(key: key);
+
+  /// The trainer model from YClients API to display on this screen.
   final TrainerModel trainer;
+
+  /// The trainer model from SMStretching API to display on this screen.
+  final SMTrainerModel smTrainer;
 
   @override
   Widget build(final BuildContext context) {
     final theme = Theme.of(context);
     return OpenContainer<void>(
+      tappable: false,
+      openElevation: 0,
+      closedElevation: 0,
       openColor: Colors.transparent,
       closedColor: Colors.transparent,
       middleColor: Colors.transparent,
-      openElevation: 0,
-      closedElevation: 0,
       transitionDuration: const Duration(milliseconds: 500),
-      openBuilder: (final context, final _) => ContentScreen(
-        carouselImages: <String>[trainer.avatarBig],
-      ),
+      openBuilder: (final context, final action) =>
+          TrainerScreen(trainer, smTrainer, onBackButtonPressed: action),
       closedBuilder: (final context, final action) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            CachedNetworkImage(
-              imageUrl: trainer.avatarBig,
-              imageBuilder: (final context, final imageProvider) {
-                return CircleAvatar(radius: 80, foregroundImage: imageProvider);
-              },
-              placeholder: (final context, final url) =>
-                  const CircularProgressIndicator(),
-              errorWidget: (final context, final url, final dynamic error) =>
-                  const FontIcon(FontIconData(IconsCG.logo)),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
-                child: Text(
-                  trainer.name,
-                  style: theme.textTheme.bodyText1?.copyWith(
-                    fontWeight: FontWeight.normal,
-                    color: theme.colorScheme.onSurface,
+        return MaterialButton(
+          onPressed: action,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              CachedNetworkImage(
+                imageUrl: trainer.avatarBig,
+                imageBuilder: (final context, final imageProvider) {
+                  return CircleAvatar(
+                    radius: 80,
+                    foregroundImage: imageProvider,
+                  );
+                },
+                placeholder: (final context, final url) =>
+                    const CircularProgressIndicator.adaptive(),
+                errorWidget: (final context, final url, final dynamic error) =>
+                    const FontIcon(FontIconData(IconsCG.logo)),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(8).copyWith(bottom: 0),
+                  child: Text(
+                    trainer.name,
+                    style: theme.textTheme.bodyText1?.copyWith(
+                      fontWeight: FontWeight.normal,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -385,7 +339,88 @@ class _TrainerCard extends StatelessWidget {
   @override
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(
-      properties..add(DiagnosticsProperty<TrainerModel>('trainer', trainer)),
+      properties
+        ..add(DiagnosticsProperty<TrainerModel>('trainer', trainer))
+        ..add(DiagnosticsProperty<SMTrainerModel>('smTrainer', smTrainer)),
+    );
+  }
+}
+
+/// The screen to display a trainer.
+class TrainerScreen extends HookWidget {
+  /// The screen to show off a trainer.
+  const TrainerScreen(
+    final this.trainer,
+    final this.smTrainer, {
+    final this.onBackButtonPressed,
+    final Key? key,
+  }) : super(key: key);
+
+  /// The trainer model from YClients API to display on this screen.
+  final TrainerModel trainer;
+
+  /// The trainer model from SMStretching API to display on this screen.
+  final SMTrainerModel smTrainer;
+
+  /// The callback on press of the back button.
+  final void Function()? onBackButtonPressed;
+
+  @override
+  Widget build(final BuildContext context) {
+    final videoPlayerController = useDisposableChangeNotifier(
+      useMemoized(() async {
+        final controller = VideoPlayerController.network(smTrainer.mediaPhoto);
+        await controller.initialize();
+        await controller.setLooping(true);
+        await controller.play();
+        return controller;
+      }),
+    );
+
+    return ContentScreen(
+      type: NavigationScreen.trainers,
+      onBackButtonPressed: onBackButtonPressed,
+      title: trainer.name,
+      subtitle: (smTrainer.classesType?.toCategories())
+              ?.map((final category) => category.translation)
+              .join(', ') ??
+          '',
+      bottomButtons: BottomButtons<void>(
+        inverse: true,
+        direction: Axis.horizontal,
+        firstText: TR.trainersIndividual.tr(),
+        onFirstPressed: (final context) {},
+      ),
+      paragraphs: <Tuple2<String?, String>>[
+        Tuple2(null, smTrainer.shortlyAbout)
+      ],
+      carousel: videoPlayerController == null
+          ? const Center(child: CircularProgressIndicator.adaptive())
+          : FittedBox(
+              fit: BoxFit.fitWidth,
+              child: SizedBox.fromSize(
+                size: videoPlayerController.value.size,
+                child: AspectRatio(
+                  aspectRatio: videoPlayerController.value.aspectRatio,
+                  child: VideoPlayer(videoPlayerController),
+                ),
+              ),
+            ),
+    );
+  }
+
+  @override
+  void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(
+      properties
+        ..add(DiagnosticsProperty<TrainerModel>('trainer', trainer))
+        ..add(DiagnosticsProperty<SMTrainerModel>('smTrainer', smTrainer))
+        ..add(
+          ObjectFlagProperty<void Function()>.has(
+            'onBackButtonPressed',
+            onBackButtonPressed,
+          ),
+        ),
     );
   }
 }

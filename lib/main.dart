@@ -15,9 +15,8 @@ import 'package:stretching/providers/connection_provider.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/style.dart';
-import 'package:stretching/utils/enum_to_string.dart';
+import 'package:stretching/utils/logger.dart';
 import 'package:stretching/widgets/authorization_screen.dart';
-import 'package:stretching/widgets/content_screen.dart';
 import 'package:stretching/widgets/error_screen.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 
@@ -27,6 +26,7 @@ Future<void> main() async {
     debugConfig: CatcherOptions(
       SilentReportMode(),
       <ReportHandler>[ConsoleHandler()],
+      logger: ChangedCatcherLogger(),
     ),
     releaseConfig: CatcherOptions(ErrorPageReportMode(), <ReportHandler>[]),
     rootWidget: EasyLocalization(

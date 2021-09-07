@@ -11,17 +11,18 @@ import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/main.dart';
+import 'package:stretching/providers/hide_appbar_provider.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/utils/enum_to_string.dart';
 import 'package:stretching/utils/json_converters.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
-import 'package:stretching/widgets/content_screen.dart';
-import 'package:stretching/widgets/navigation/bottom_sheet.dart';
-import 'package:stretching/widgets/navigation/home_screen.dart';
-import 'package:stretching/widgets/navigation/profile_screen.dart';
-import 'package:stretching/widgets/navigation/studios_screen.dart';
-import 'package:stretching/widgets/navigation/trainers_screen.dart';
+import 'package:stretching/widgets/navigation/components/bottom_sheet.dart';
+import 'package:stretching/widgets/navigation/screens/activities_screen.dart';
+import 'package:stretching/widgets/navigation/screens/home_screen.dart';
+import 'package:stretching/widgets/navigation/screens/profile_screen.dart';
+import 'package:stretching/widgets/navigation/screens/studios_screen.dart';
+import 'package:stretching/widgets/navigation/screens/trainers_screen.dart';
 
 // /// The enumeration of conten routes for this app.
 // enum ContentRoutes {
@@ -93,30 +94,33 @@ extension NavigationScreenData on NavigationScreen {
   }
 
   /// The navigation bar item of this navigation screen type.
-  PersistentBottomNavBarItem get navBarItem {
+  PersistentBottomNavBarItem navBarItem(final WidgetRef ref) {
     return PersistentBottomNavBarItem(
       title: title,
-      // routeAndNavigatorSettings: RouteAndNavigatorSettings(
-      //   onGenerateRoute: (final settings) {
-      //     var name = settings.name;
-      //     if (name == null || name.isEmpty) {
-      //       return null;
-      //     }
-      //     if (name.startsWith('/')) {
-      //       name = name.substring(1);
-      //     }
-      //     switch (name.split('/').first) {
-      //       case ContentRoutesData._self:
-      //         return MaterialPageRoute<Never>(
-      //           builder: (final context) => enumFromString(
-      //             ContentRoutes.values,
-      //             name!.split('/').last,
-      //           ).builder(context, settings.arguments),
-      //           settings: settings,
-      //         );
-      //     }
-      //   },
-      // ),
+      routeAndNavigatorSettings: RouteAndNavigatorSettings(
+        navigatorObservers: <NavigatorObserver>[
+          ref.watch(routeObserverProvider(this))
+        ],
+        // onGenerateRoute: (final settings) {
+        //   var name = settings.name;
+        //   if (name == null || name.isEmpty) {
+        //     return null;
+        //   }
+        //   if (name.startsWith('/')) {
+        //     name = name.substring(1);
+        //   }
+        //   switch (name.split('/').first) {
+        //     case ContentRoutesData._self:
+        //       return MaterialPageRoute<Never>(
+        //         builder: (final context) => enumFromString(
+        //           ContentRoutes.values,
+        //           name!.split('/').last,
+        //         ).builder(context, settings.arguments),
+        //         settings: settings,
+        //       );
+        //   }
+        // },
+      ),
       icon: Icon(icon, size: 18),
       textStyle: const TextStyle(fontSize: 10),
       activeColorPrimary: Colors.black,
@@ -132,12 +136,7 @@ extension NavigationScreenData on NavigationScreen {
       case NavigationScreen.home:
         return const HomeScreen();
       case NavigationScreen.schedule:
-        return Center(
-          child: IconButton(
-            icon: Icon(icon, size: 64),
-            onPressed: () {},
-          ),
-        );
+        return const ActivitiesScreen();
       case NavigationScreen.studios:
         return const StudiosScreen();
       case NavigationScreen.trainers:
@@ -252,116 +251,124 @@ class NavigationRoot extends HookConsumerWidget {
   /// The screen that provides the basic navigation.
   const NavigationRoot({final Key? key}) : super(key: key);
 
+  /// The height of the navigation bar.
+  static const double navBarHeight = 50;
+
+  /// The height of the appbar.
+  static const double appBarHeight = 60;
+
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    const navBarHeight = 50.0;
-    const appBarHeight = 60.0;
     const transitionDuration = Duration(milliseconds: 350);
     final theme = Theme.of(context);
 
     final navigation = ref.watch(navigationProvider.notifier);
     final isTransitioning = useState<bool>(false);
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        statusBarColor: AppBarTheme.of(context).backgroundColor,
-        statusBarBrightness: theme.brightness == Brightness.light
-            ? Brightness.dark
-            : Brightness.light,
-        statusBarIconBrightness: theme.brightness,
-      ),
-      child: Stack(
-        children: <Widget>[
-          PersistentTabView(
-            context,
-            controller: navigation.state,
-            navBarStyle: NavBarStyle.style6,
-            bottomScreenMargin: 0,
-            navBarHeight: navBarHeight,
-            padding: const NavBarPadding.only(bottom: 10),
-            // hideNavigationBar: ref.watch(hideNavigationProvider).state,
-            itemAnimationProperties: const ItemAnimationProperties(
-              duration: transitionDuration,
-              curve: Curves.ease,
-            ),
-            screenTransitionAnimation: const ScreenTransitionAnimation(
-              animateTabTransition: true,
-              curve: Curves.easeInOut,
-              duration: transitionDuration,
-            ),
-            onWillPop: (final context) {
-              return navigation.showAlertBottomSheet<bool>(
-                context: context!,
-                defaultValue: false,
-                title: TR.alertExitTitle.tr(),
-                firstText: TR.alertExitApprove.tr(),
-                onFirstPressed: (final context) async {
-                  await SystemNavigator.pop();
-                  exit(0);
-                },
-                secondText: TR.alertExitDeny.tr(),
-                onSecondPressed: (final context) async {
-                  await Navigator.of(context).maybePop();
-                  return false;
-                },
-              );
-            },
-            onItemSelected: (final index) async {
-              if (index == NavigationScreen.profile.index &&
-                  ref.read(userIsNullProvider)) {
-                if (navigation.previousScreenIndex ==
-                    NavigationScreen.profile.index) {
-                  navigation.state.index = NavigationScreen.home.index;
-                } else {
-                  navigation.state.index = navigation.previousScreenIndex;
-                }
-                await Navigator.of(context, rootNavigator: true)
-                    .pushNamed(Routes.auth.name);
-              } else if (navigation.previousScreenIndex != index) {
-                isTransitioning.value = true;
-                await Future<void>.delayed(transitionDuration);
-                isTransitioning.value = false;
-                navigation.previousScreenIndex = index;
+    return Stack(
+      alignment: Alignment.topCenter,
+      children: <Widget>[
+        PersistentTabView(
+          context,
+          controller: navigation.state,
+          navBarStyle: NavBarStyle.style6,
+          bottomScreenMargin: 0,
+          navBarHeight: navBarHeight,
+          padding: const NavBarPadding.only(bottom: 10),
+          // hideNavigationBar: ref.watch(hideNavigationProvider).state,
+          itemAnimationProperties: const ItemAnimationProperties(
+            duration: transitionDuration,
+            curve: Curves.ease,
+          ),
+          screenTransitionAnimation: const ScreenTransitionAnimation(
+            animateTabTransition: true,
+            curve: Curves.easeInOut,
+            duration: transitionDuration,
+          ),
+          onWillPop: (final context) {
+            return navigation.showAlertBottomSheet<bool>(
+              context: context!,
+              defaultValue: false,
+              title: TR.alertExitTitle.tr(),
+              firstText: TR.alertExitApprove.tr(),
+              onFirstPressed: (final context) async {
+                await SystemNavigator.pop();
+                exit(0);
+              },
+              secondText: TR.alertExitDeny.tr(),
+              onSecondPressed: (final context) async {
+                await Navigator.of(context).maybePop();
+                return false;
+              },
+            );
+          },
+          onItemSelected: (final index) async {
+            if (index == NavigationScreen.profile.index &&
+                ref.read(userIsNullProvider)) {
+              if (navigation.previousScreenIndex ==
+                  NavigationScreen.profile.index) {
+                navigation.state.index = NavigationScreen.home.index;
+              } else {
+                navigation.state.index = navigation.previousScreenIndex;
               }
-            },
-            items: <PersistentBottomNavBarItem>[
-              for (final screen in NavigationScreen.values) screen.navBarItem
-            ],
-            screens: <Widget>[
-              for (final screen in NavigationScreen.values)
-                SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.only(bottom: navBarHeight),
-                    child: Column(
-                      children: <Widget>[
-                        /// Custom AppBar
-                        Container(
-                          alignment: Alignment.center,
-                          height: appBarHeight,
-                          color: theme.appBarTheme.backgroundColor,
-                          child: FontIcon(
-                            FontIconData(
-                              IconsCG.logo,
-                              height: 16,
-                              color: theme.appBarTheme.foregroundColor,
-                            ),
-                          ),
-                        ),
-                        Expanded(child: screen.screen),
-                      ],
-                    ),
-                  ),
+              await Navigator.of(context, rootNavigator: true)
+                  .pushNamed(Routes.auth.name);
+            } else if (navigation.previousScreenIndex != index) {
+              isTransitioning.value = true;
+              await Future<void>.delayed(transitionDuration);
+              isTransitioning.value = false;
+              navigation.previousScreenIndex = index;
+            }
+          },
+          items: <PersistentBottomNavBarItem>[
+            for (final screen in NavigationScreen.values) screen.navBarItem(ref)
+          ],
+          selectedTabScreenContext: (final context) {
+            if (context == null) {
+              return;
+            }
+          },
+          screens: <Widget>[
+            for (final screen in NavigationScreen.values)
+              Padding(
+                padding: EdgeInsets.only(
+                  top: appBarHeight + MediaQuery.of(context).viewPadding.top,
+                  bottom: navBarHeight,
                 ),
-            ],
+                child: screen.screen,
+              )
+          ],
+        ),
+
+        if (!ref.watch(hideAppBarProvider).state)
+          SizedBox(
+            height: appBarHeight + MediaQuery.of(context).viewPadding.top,
+            child: AppBar(
+              centerTitle: true,
+              toolbarHeight: appBarHeight,
+              systemOverlayStyle: SystemUiOverlayStyle(
+                statusBarColor: AppBarTheme.of(context).backgroundColor,
+                statusBarBrightness: theme.brightness == Brightness.light
+                    ? Brightness.dark
+                    : Brightness.light,
+                statusBarIconBrightness: theme.brightness,
+              ),
+              title: FontIcon(
+                FontIconData(
+                  IconsCG.logo,
+                  height: 16,
+                  color: theme.appBarTheme.foregroundColor,
+                ),
+              ),
+            ),
           ),
 
-          /// Blocks input while screen is transitioning
-          if (isTransitioning.value)
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(height: navBarHeight, color: Colors.transparent),
-            ),
-        ],
-      ),
+        /// Blocks input while screen is transitioning
+        if (isTransitioning.value)
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(height: navBarHeight, color: Colors.transparent),
+          ),
+      ],
     );
   }
 }

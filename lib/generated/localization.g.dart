@@ -22,9 +22,11 @@ abstract class TR {
 
   static const String tooltipsClose = 'tooltips.close';
   static const String tooltipsCancel = 'tooltips.cancel';
+  static const String tooltipsShare = 'tooltips.share';
   static const String tooltips = 'tooltips';
 
   static const String miscEmpty = 'misc.empty';
+  static const String miscExtend = 'misc.extend';
   static const String misc = 'misc';
 
   static const String categoryTrx = 'category.trx';
@@ -62,10 +64,14 @@ abstract class TR {
   static const String studiosLocationM = 'studios.location.m';
   static const String studiosLocationOn = 'studios.location.on';
   static const String studiosLocation = 'studios.location';
+  static const String studiosFind = 'studios.find';
+  static const String studiosTimetable = 'studios.timetable';
+  static const String studiosAbout = 'studios.about';
   static const String studios = 'studios';
 
   static const String trainersSearch = 'trainers.search';
   static const String trainersEmpty = 'trainers.empty';
+  static const String trainersIndividual = 'trainers.individual';
   static const String trainers = 'trainers';
 
   static const String profileExit = 'profile.exit';

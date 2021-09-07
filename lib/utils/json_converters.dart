@@ -197,7 +197,7 @@ class LocaleConverter implements JsonConverter<Locale, String> {
 
 /// The custom converter for nullable [Iterable].
 class OptionalIterableConverter<T extends Object?, S extends Object?>
-    implements JsonConverter<Iterable<T>?, List<S>?> {
+    implements JsonConverter<Iterable<T>, Iterable<S>> {
   /// The custom converter for nullable [Iterable].
   const OptionalIterableConverter(this.converter);
 
@@ -205,22 +205,25 @@ class OptionalIterableConverter<T extends Object?, S extends Object?>
   final JsonConverter<T?, S?> converter;
 
   @override
-  Iterable<T>? fromJson(final Object? data) {
-    if (data is Iterable<T?>?) {
-      return data?.whereType<T>();
+  Iterable<T> fromJson(final Object? data) {
+    if (data is Iterable<T?>) {
+      return data.whereType<T>();
     } else if (data is Iterable<Object?>) {
       return data.whereType<S>().map(converter.fromJson).whereType<T>();
+    } else {
+      return Iterable<T>.empty();
     }
   }
 
   @override
-  List<S>? toJson(final Iterable<Object?>? iterable) =>
-      iterable?.whereType<T>().map(converter.toJson).whereType<S>().toList();
+  Iterable<S> toJson(final Iterable<Object?>? iterable) =>
+      iterable?.whereType<T>().map(converter.toJson).whereType<S>() ??
+      Iterable<S>.empty();
 }
 
 /// The custom converter for [Iterable].
 class IterableConverter<T extends Object, S extends Object>
-    implements JsonConverter<Iterable<T>, List<S>> {
+    implements JsonConverter<Iterable<T>, Iterable<S>> {
   /// The custom converter for [Iterable].
   const IterableConverter(this.converter);
 
@@ -238,8 +241,8 @@ class IterableConverter<T extends Object, S extends Object>
   }
 
   @override
-  List<S> toJson(final Iterable<T> iterable) =>
-      iterable.map(converter.toJson).toList();
+  Iterable<S> toJson(final Iterable<T> iterable) =>
+      iterable.map(converter.toJson);
 }
 
 /// The custom converter to convert to String.
@@ -281,7 +284,8 @@ class StringToIterableConverter<T extends Object, S extends Object>
   }
 
   @override
-  String toJson(final Iterable<T> data) => json.encode(converter.toJson(data));
+  String toJson(final Iterable<T> data) =>
+      json.encode(converter.toJson(data).toList(growable: false));
 }
 
 /// The custom converter to convert to String.

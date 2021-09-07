@@ -1,6 +1,8 @@
 import 'dart:developer';
 
+import 'package:catcher/catcher.dart';
 import 'package:logger/logger.dart';
+import 'package:logging/logging.dart' as logging;
 
 /// The global logger.
 final Logger logger = _customLogger('S');
@@ -31,4 +33,32 @@ class _DevLogOutput extends LogOutput {
       log(line, name: name);
     }
   }
+}
+
+/// The [Logger] adapter for the [CatcherLogger].
+class CustomCatcherLogger implements CatcherLogger {
+  /// The [Logger] adapter for the [CatcherLogger].
+  const CustomCatcherLogger(final this._logger);
+  final Logger _logger;
+
+  @override
+  void setup() {}
+
+  @override
+  void fine(final String message) => _logger.v(message);
+
+  @override
+  void info(final String message) => _logger.i(message);
+
+  @override
+  void warning(final String message) => _logger.w(message);
+
+  @override
+  void severe(final String message) => _logger.e(message);
+}
+
+/// The [Logger] adapter for the [CatcherLogger].
+class ChangedCatcherLogger extends CatcherLogger {
+  @override
+  void setup() => logging.Logger.root.level = logging.Level.ALL;
 }

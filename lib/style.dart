@@ -1,5 +1,10 @@
+import 'package:badges/badges.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:stretching/generated/icons.g.dart';
+import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/widgets/components/font_icon.dart';
 
 /// The light theme in the app.
 ThemeData get lightTheme {
@@ -165,7 +170,7 @@ enum TextButtonStyle {
   dark
 }
 
-/// The extra data to provide for [TextButtonStyle].
+/// The extra data provided for [TextButtonStyle].
 extension TextButtonStyleData on TextButtonStyle {
   /// Return this style from [theme].
   ButtonStyle fromTheme(final ThemeData theme) {
@@ -192,6 +197,92 @@ extension TextButtonStyleData on TextButtonStyle {
           backgroundColor:
               MaterialStateProperty.all(theme.colorScheme.onSurface),
           minimumSize: MaterialStateProperty.all(const Size.fromHeight(48)),
+        );
+    }
+  }
+}
+
+/// The custom [InputDecoration] styles.
+enum InputDecorationStyle {
+  /// The style for the search field.
+  search
+}
+
+/// The extra data provided for [InputDecorationStyle].
+extension InputDecorationStyleData on InputDecorationStyle {
+  /// Return this style's toolbar height.
+  double get toolbarHeight {
+    switch (this) {
+      case InputDecorationStyle.search:
+        return 40;
+    }
+  }
+
+  /// Return this style from [theme].
+  ///
+  /// - [onSuffix] sets the callback on suffix.
+  /// - If [suffixCount] is greater than 0, then badge is shown.
+  InputDecoration fromTheme(
+    final ThemeData theme, {
+    final String? hintText,
+    final void Function()? onSuffix,
+    final int suffixCount = 0,
+  }) {
+    switch (this) {
+      case InputDecorationStyle.search:
+        return InputDecoration(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+          prefixIcon: Align(
+            child: FontIcon(
+              FontIconData(IconsCG.search, color: theme.hintColor),
+            ),
+          ),
+          prefixIconConstraints:
+              const BoxConstraints(minWidth: 48, maxWidth: 48),
+          suffix: suffixCount <= 0
+              ? MaterialButton(
+                  onPressed: onSuffix,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    TR.tooltipsCancel.tr(),
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                )
+              : null,
+          suffixIcon: suffixCount > 0
+              ? MaterialButton(
+                  onPressed: onSuffix,
+                  child: Badge(
+                    badgeContent: Text(
+                      suffixCount.toString(),
+                      style: TextStyle(
+                        height: 10,
+                        color: theme.colorScheme.surface,
+                      ),
+                    ),
+                    badgeColor: theme.colorScheme.onSurface,
+                    animationType: BadgeAnimationType.scale,
+                    child: FontIcon(
+                      FontIconData(
+                        IconsCG.filter,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                )
+              : null,
+          fillColor: theme.colorScheme.surface,
+          hintText: hintText,
+          border: InputBorder.none,
+          disabledBorder: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
         );
     }
   }

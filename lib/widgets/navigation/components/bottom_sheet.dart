@@ -21,9 +21,9 @@ mixin ModalBottomSheets {
     required final T defaultValue,
     final String title = '',
     final String firstText = '',
-    final OnBottomSheetButton<T>? onFirstPressed,
+    final OnBottomButton<T>? onFirstPressed,
     final String secondText = '',
-    final OnBottomSheetButton<T>? onSecondPressed,
+    final OnBottomButton<T>? onSecondPressed,
   }) async {
     final result = await showCustomModalBottomSheet<T>(
       context: context,
@@ -40,7 +40,7 @@ mixin ModalBottomSheets {
                   horizontal: 16,
                   vertical: 36,
                 ),
-                child: _BottomSheetButtons<T>(
+                child: BottomButtons<T>(
                   firstText: firstText,
                   onFirstPressed: onFirstPressed,
                   secondText: secondText,
@@ -145,50 +145,84 @@ class _BottomSheetBase extends StatelessWidget {
 }
 
 /// The callback to call when bottom sheet button was pressed.
-typedef OnBottomSheetButton<T extends Object> = FutureOr<T> Function(
-  BuildContext context,
-);
+typedef OnBottomButton<T> = FutureOr<T> Function(BuildContext);
 
-class _BottomSheetButtons<T extends Object> extends StatelessWidget {
-  const _BottomSheetButtons({
-    final this.firstText = '',
+/// The buttons that are persistent at the bottom of the screen.
+class BottomButtons<T> extends StatelessWidget {
+  /// The buttons that are persistent at the bottom of the screen.
+  const BottomButtons({
+    required final this.firstText,
     final this.onFirstPressed,
     final this.secondText = '',
     final this.onSecondPressed,
+    final this.direction = Axis.vertical,
+    final this.inverse = false,
     final Key? key,
-  }) : super(key: key);
+  })  : assert(firstText != '', 'There must be at least one button.'),
+        super(key: key);
 
+  /// The text of the first button.
   final String firstText;
-  final OnBottomSheetButton<T>? onFirstPressed;
+
+  /// The callback of the first button.
+  final OnBottomButton<T>? onFirstPressed;
+
+  /// The text of the second button.
   final String secondText;
-  final OnBottomSheetButton<T>? onSecondPressed;
+
+  /// The callback of the second button.
+  final OnBottomButton<T>? onSecondPressed;
+
+  /// The axis to put
+  final Axis direction;
+
+  /// If styles of the buttons should be switched.
+  final bool inverse;
 
   @override
   Widget build(final BuildContext context) {
     final theme = Theme.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
+    return Flex(
+      direction: direction,
       children: <Widget>[
-        if (firstText.isNotEmpty)
-          TextButton(
+        Flexible(
+          child: TextButton(
             onPressed:
                 onFirstPressed != null ? () => onFirstPressed!(context) : null,
-            style: TextButtonStyle.dark.fromTheme(theme),
+            style: !inverse
+                ? TextButtonStyle.dark.fromTheme(theme)
+                : TextButtonStyle.light.fromTheme(theme),
             child: Text(
               firstText,
-              style: TextStyle(color: theme.colorScheme.surface),
+              style: TextStyle(
+                color: !inverse
+                    ? theme.colorScheme.surface
+                    : theme.colorScheme.onSurface,
+              ),
             ),
           ),
+        ),
         if (secondText.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          TextButton(
-            onPressed: onSecondPressed != null
-                ? () => onSecondPressed!(context)
-                : null,
-            style: TextButtonStyle.light.fromTheme(theme),
-            child: Text(
-              secondText,
-              style: TextStyle(color: theme.colorScheme.onSurface),
+          if (direction == Axis.vertical)
+            const SizedBox(height: 16)
+          else
+            const SizedBox(width: 8),
+          Flexible(
+            child: TextButton(
+              onPressed: onSecondPressed != null
+                  ? () => onSecondPressed!(context)
+                  : null,
+              style: !inverse
+                  ? TextButtonStyle.light.fromTheme(theme)
+                  : TextButtonStyle.dark.fromTheme(theme),
+              child: Text(
+                secondText,
+                style: TextStyle(
+                  color: !inverse
+                      ? theme.colorScheme.surface
+                      : theme.colorScheme.onSurface,
+                ),
+              ),
             ),
           ),
         ]
@@ -202,18 +236,20 @@ class _BottomSheetButtons<T extends Object> extends StatelessWidget {
       properties
         ..add(StringProperty('firstText', firstText))
         ..add(
-          ObjectFlagProperty<OnBottomSheetButton<T>?>.has(
+          ObjectFlagProperty<OnBottomButton<T>?>.has(
             'onFirstPressed',
             onFirstPressed,
           ),
         )
         ..add(StringProperty('secondText', secondText))
         ..add(
-          ObjectFlagProperty<OnBottomSheetButton<T>?>.has(
+          ObjectFlagProperty<OnBottomButton<T>?>.has(
             'onSecondPressed',
             onSecondPressed,
           ),
-        ),
+        )
+        ..add(EnumProperty<Axis>('direction', direction))
+        ..add(DiagnosticsProperty<bool>('inverse', inverse)),
     );
   }
 }

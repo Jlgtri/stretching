@@ -3,8 +3,8 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
-import 'package:stretching/models/categories_enum.dart';
 import 'package:stretching/utils/json_converters.dart';
+import 'package:stretching/widgets/navigation/components/filters.dart';
 
 /// The converter of the [SMTrainerModel].
 const SMStudioConverter smTrainerConverter = SMStudioConverter._();

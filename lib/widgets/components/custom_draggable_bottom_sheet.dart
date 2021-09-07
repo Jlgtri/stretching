@@ -138,7 +138,7 @@ class CustomDraggableBottomSheet extends HookConsumerWidget {
       onPointerDown: (final event) {
         final paintBounds = sheetKey.globalPaintBounds;
         if (paintBounds != null && !paintBounds.contains(event.position)) {
-          Navigator.of(context).pop();
+          Navigator.of(context).maybePop();
         }
       },
       child: DraggableScrollableSheet(

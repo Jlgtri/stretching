@@ -136,158 +136,147 @@ class AuthorizationScreen extends HookConsumerWidget {
       }
     }
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarBrightness: theme.brightness,
-        statusBarIconBrightness: theme.brightness == Brightness.light
-            ? Brightness.dark
-            : Brightness.light,
-      ),
-      child: FocusWrapper(
-        unfocussableKeys: <GlobalKey>[phoneKey, codeKey],
-        child: Scaffold(
-          appBar: PreferredSize(
-            preferredSize: Size.fromHeight(40 + mediaQuery.viewPadding.top),
+    return FocusWrapper(
+      unfocussableKeys: <GlobalKey>[phoneKey, codeKey],
+      child: Scaffold(
+        appBar: AppBar(
+          toolbarHeight: 40,
+          backgroundColor: Colors.transparent,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarBrightness: theme.brightness,
+            statusBarIconBrightness: theme.brightness == Brightness.light
+                ? Brightness.dark
+                : Brightness.light,
+          ),
+          leading: !enteringPhone.value
+              ? FontIconBackButton(
+                  color: theme.colorScheme.onSurface,
+                  onPressed: () => enteringPhone.value = true,
+                )
+              : const SizedBox.shrink(),
+          actions: <Widget>[
+            TextButton(
+              onPressed: navigator.maybePop,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.all(8),
+                primary: theme.colorScheme.onSurface,
+              ),
+              child: Text(
+                TR.tooltipsCancel.tr(),
+                style: TextStyle(color: theme.colorScheme.onSurface),
+              ),
+            )
+          ],
+        ),
+        body: SingleChildScrollView(
+          child: PageTransitionSwitcher(
+            reverse: !enteringPhone.value,
+            duration: const Duration(seconds: 1),
+            layoutBuilder: (final entries) => Stack(children: entries),
+            transitionBuilder: (
+              final child,
+              final animation,
+              final secondaryAnimation,
+            ) {
+              return SharedAxisTransition(
+                animation: animation,
+                secondaryAnimation: secondaryAnimation,
+                transitionType: SharedAxisTransitionType.horizontal,
+                child: child,
+              );
+            },
             child: Padding(
-              padding: EdgeInsets.only(top: mediaQuery.viewPadding.top) +
-                  const EdgeInsets.symmetric(horizontal: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              key: ValueKey(enteringPhone.value),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Column(
                 children: <Widget>[
-                  if (!enteringPhone.value)
-                    FontIconBackButton(
-                      color: theme.colorScheme.onSurface,
-                      onPressed: () => enteringPhone.value = true,
-                    )
-                  else
-                    const SizedBox.shrink(),
-                  TextButton(
-                    onPressed: navigator.maybePop,
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.all(8),
-                      primary: theme.colorScheme.onSurface,
-                    ),
+                  const SizedBox(height: 100),
+                  Center(
                     child: Text(
-                      TR.tooltipsCancel.tr(),
-                      style: TextStyle(color: theme.colorScheme.onSurface),
+                      enteringPhone.value
+                          ? TR.authPhone.tr()
+                          : <String>[
+                              TR.authEnterCode.tr(),
+                              phoneFormatter.getMaskedText(),
+                            ].join('\n'),
+                      style: theme.textTheme.headline2,
+                      textAlign: !enteringPhone.value ? TextAlign.center : null,
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-          body: SingleChildScrollView(
-            child: PageTransitionSwitcher(
-              reverse: !enteringPhone.value,
-              duration: const Duration(seconds: 1),
-              layoutBuilder: (final entries) => Stack(children: entries),
-              transitionBuilder: (
-                final child,
-                final animation,
-                final secondaryAnimation,
-              ) {
-                return SharedAxisTransition(
-                  animation: animation,
-                  secondaryAnimation: secondaryAnimation,
-                  transitionType: SharedAxisTransitionType.horizontal,
-                  child: child,
-                );
-              },
-              child: Padding(
-                key: ValueKey(enteringPhone.value),
-                padding: const EdgeInsets.symmetric(horizontal: 18),
-                child: Column(
-                  children: <Widget>[
-                    const SizedBox(height: 100),
-                    Center(
-                      child: Text(
-                        enteringPhone.value
-                            ? TR.authPhone.tr()
-                            : <String>[
-                                TR.authEnterCode.tr(),
-                                phoneFormatter.getMaskedText(),
-                              ].join('\n'),
-                        style: theme.textTheme.headline2,
-                        textAlign:
-                            !enteringPhone.value ? TextAlign.center : null,
-                      ),
+                  if (enteringPhone.value) ...[
+                    const SizedBox(height: 18),
+                    _AuthorizationPhoneField(
+                      fieldKey: phoneKey,
+                      prefix: phonePrefix,
+                      formatter: phoneFormatter,
+                      enabled: !isLoading.value && enteringPhone.value,
+                      style: theme.textTheme.headline3,
+                      initialText: phoneFormatter.getMaskedText(),
+                      errorText: phoneError.value,
+                      onChanged: onPhoneFieldChanged,
+                      onSubmitted: (final value) => updateAuthStep(),
                     ),
-                    if (enteringPhone.value) ...[
-                      const SizedBox(height: 18),
-                      _AuthorizationPhoneField(
-                        fieldKey: phoneKey,
-                        prefix: phonePrefix,
-                        formatter: phoneFormatter,
-                        enabled: !isLoading.value && enteringPhone.value,
-                        style: theme.textTheme.headline3,
-                        initialText: phoneFormatter.getMaskedText(),
-                        errorText: phoneError.value,
-                        onChanged: onPhoneFieldChanged,
-                        onSubmitted: (final value) => updateAuthStep(),
-                      ),
-                      const SizedBox(height: 24),
-                      TextButton(
-                        onPressed:
-                            currentPhone.value != null ? updateAuthStep : null,
-                        style: TextButtonStyle.dark.fromTheme(theme).copyWith(
-                              backgroundColor: currentPhone.value == null
-                                  ? MaterialStateProperty.all(Colors.grey)
-                                  : null,
-                              side:
-                                  MaterialStateProperty.all(const BorderSide()),
-                              foregroundColor:
-                                  MaterialStateProperty.all(Colors.white),
-                            ),
-                        child: Text(TR.authReceiveCode.tr()),
-                      )
-                    ] else ...[
-                      const SizedBox(height: 50),
-                      SizedBox(
-                        width: 200,
-                        child: PinCodeTextField(
-                          key: codeKey,
-                          appContext: context,
-                          length: pinCodeLength,
-                          animationType: AnimationType.fade,
-                          pinTheme: PinTheme(
-                            shape: PinCodeFieldShape.underline,
-                            activeFillColor: theme.colorScheme.onSurface,
-                            inactiveColor: theme.colorScheme.onSurface,
-                            disabledColor: theme.colorScheme.onSurface,
-                            activeColor: theme.colorScheme.onSurface,
-                            selectedColor: theme.colorScheme.onSurface,
-                            inactiveFillColor: theme.colorScheme.onSurface,
-                            errorBorderColor: theme.colorScheme.error,
-                            fieldOuterPadding: EdgeInsets.zero,
-                            fieldWidth: 32,
-                            fieldHeight: 40,
+                    const SizedBox(height: 24),
+                    TextButton(
+                      onPressed:
+                          currentPhone.value != null ? updateAuthStep : null,
+                      style: TextButtonStyle.dark.fromTheme(theme).copyWith(
+                            backgroundColor: currentPhone.value == null
+                                ? MaterialStateProperty.all(Colors.grey)
+                                : null,
+                            side: MaterialStateProperty.all(const BorderSide()),
+                            foregroundColor:
+                                MaterialStateProperty.all(Colors.white),
                           ),
-                          hapticFeedbackTypes: HapticFeedbackTypes.medium,
-                          // hintCharacter: '0',
-                          keyboardType: TextInputType.number,
-                          hintStyle: TextStyle(color: theme.hintColor),
-                          errorAnimationController: codeErrorController,
-                          onCompleted: (final value) async {
-                            if (int.tryParse(value) != null) {
-                              currentCode.value = value;
-                              await updateAuthStep();
-                            }
-                          },
-                          inputFormatters: <TextInputFormatter>[
-                            FilteringTextInputFormatter.digitsOnly
-                          ],
-                          onChanged: (final value) {},
-                          beforeTextPaste: (final text) {
-                            return text != null &&
-                                text.length == pinCodeLength &&
-                                int.tryParse(text) != null;
-                          },
+                      child: Text(TR.authReceiveCode.tr()),
+                    )
+                  ] else ...[
+                    const SizedBox(height: 50),
+                    SizedBox(
+                      width: 200,
+                      child: PinCodeTextField(
+                        key: codeKey,
+                        appContext: context,
+                        length: pinCodeLength,
+                        animationType: AnimationType.fade,
+                        pinTheme: PinTheme(
+                          shape: PinCodeFieldShape.underline,
+                          activeFillColor: theme.colorScheme.onSurface,
+                          inactiveColor: theme.colorScheme.onSurface,
+                          disabledColor: theme.colorScheme.onSurface,
+                          activeColor: theme.colorScheme.onSurface,
+                          selectedColor: theme.colorScheme.onSurface,
+                          inactiveFillColor: theme.colorScheme.onSurface,
+                          errorBorderColor: theme.colorScheme.error,
+                          fieldOuterPadding: EdgeInsets.zero,
+                          fieldWidth: 32,
+                          fieldHeight: 40,
                         ),
-                      )
-                    ]
-                  ],
-                ),
+                        hapticFeedbackTypes: HapticFeedbackTypes.medium,
+                        // hintCharacter: '0',
+                        keyboardType: TextInputType.number,
+                        hintStyle: TextStyle(color: theme.hintColor),
+                        errorAnimationController: codeErrorController,
+                        onCompleted: (final value) async {
+                          if (int.tryParse(value) != null) {
+                            currentCode.value = value;
+                            await updateAuthStep();
+                          }
+                        },
+                        inputFormatters: <TextInputFormatter>[
+                          FilteringTextInputFormatter.digitsOnly
+                        ],
+                        onChanged: (final value) {},
+                        beforeTextPaste: (final text) {
+                          return text != null &&
+                              text.length == pinCodeLength &&
+                              int.tryParse(text) != null;
+                        },
+                      ),
+                    )
+                  ]
+                ],
               ),
             ),
           ),
