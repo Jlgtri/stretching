@@ -325,10 +325,14 @@ class FontIconButton extends StatelessWidget {
 class FontIconBackButton extends StatelessWidget {
   /// The icon button to go back to previous screen.
   const FontIconBackButton({
+    final this.size = 28,
     final this.color = Colors.white,
     final this.onPressed,
     final Key? key,
   }) : super(key: key);
+
+  /// The size of this icon.
+  final double size;
 
   /// The color of this icon.
   final Color? color;
@@ -343,8 +347,8 @@ class FontIconBackButton extends StatelessWidget {
         FontIconData(
           IconsCG.back,
           color: color,
-          height: 24,
-          width: 24,
+          height: size,
+          width: size,
         ),
       ),
       color: color,
@@ -357,6 +361,7 @@ class FontIconBackButton extends StatelessWidget {
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(
       properties
+        ..add(DoubleProperty('size', size))
         ..add(ColorProperty('color', color))
         ..add(DiagnosticsProperty<void Function()>('onPressed', onPressed)),
     );

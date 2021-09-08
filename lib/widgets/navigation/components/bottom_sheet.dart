@@ -8,6 +8,7 @@ import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/widgets/components/custom_draggable_bottom_sheet.dart';
+import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 
 /// The mixin that provides modal bottom sheets for regular usage.
@@ -16,49 +17,37 @@ mixin ModalBottomSheets {
   ProviderRefBase get ref;
 
   /// Show the custom modal bottom sheet and hide the navigation bar.
-  Future<T> showAlertBottomSheet<T extends Object>({
+  Future<T?> showAlertBottomSheet<T extends Object?>({
     required final BuildContext context,
-    required final T defaultValue,
+    required final ScrollablePhysicsWidgetBuilder builder,
     final String title = '',
-    final String firstText = '',
-    final OnBottomButton<T>? onFirstPressed,
-    final String secondText = '',
-    final OnBottomButton<T>? onSecondPressed,
+    final Widget? trailing,
+    final double borderRadius = 24,
   }) async {
     final result = await showCustomModalBottomSheet<T>(
       context: context,
+      borderRadius: borderRadius,
       builder: (final _) {
         return CustomDraggableBottomSheet(
           mainContext: context,
           builder: (final controller, final physics) {
-            return _BottomSheetBase(
+            return BottomSheetHeader(
               title: title,
-              controller: controller,
-              physics: physics,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 36,
-                ),
-                child: BottomButtons<T>(
-                  firstText: firstText,
-                  onFirstPressed: onFirstPressed,
-                  secondText: secondText,
-                  onSecondPressed: onSecondPressed,
-                ),
-              ),
+              trailing: trailing,
+              // child: builder(controller, physics),
             );
           },
         );
       },
     );
-    return result ?? defaultValue;
+    return result;
   }
 
   /// Show the custom modal bottom sheet and hide the navigation bar.
   Future<T?> showCustomModalBottomSheet<T>({
     required final BuildContext context,
     required final WidgetBuilder builder,
+    final double borderRadius = 24,
   }) async {
     final hideNavigation = ref.read(hideNavigationProvider)..state = true;
     try {
@@ -67,6 +56,12 @@ mixin ModalBottomSheets {
         builder: builder,
         useRootNavigator: true,
         isScrollControlled: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(borderRadius),
+            topRight: Radius.circular(borderRadius),
+          ),
+        ),
       );
     } finally {
       hideNavigation.state = false;
@@ -74,61 +69,75 @@ mixin ModalBottomSheets {
   }
 }
 
-class _BottomSheetBase extends StatelessWidget {
-  const _BottomSheetBase({
-    final this.child,
+/// The header for the [showModalBottomSheet].
+class BottomSheetHeader extends StatelessWidget {
+  /// The header for the [showModalBottomSheet].
+  const BottomSheetHeader({
     final this.title = '',
-    final this.controller,
-    final this.physics,
+    final this.trailing,
     final Key? key,
   }) : super(key: key);
 
-  final Widget? child;
+  /// The title of this bottom sheet.
   final String title;
-  final ScrollController? controller;
-  final ScrollPhysics? physics;
+
+  /// The trailing widget in the header of this bottom sheet base.
+  final Widget? trailing;
 
   @override
   Widget build(final BuildContext context) {
     final theme = Theme.of(context);
-    return ListView(
-      shrinkWrap: true,
-      controller: controller,
-      physics: physics,
-      padding: EdgeInsets.zero,
+    return Stack(
       children: <Widget>[
-        Stack(
-          alignment: Alignment.topRight,
-          children: <Widget>[
-            if (title.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 56, 0, 0),
-                child: Row(
-                  children: <Widget>[
-                    Text(
-                      title,
-                      style: theme.textTheme.headline3?.copyWith(
-                        color: theme.colorScheme.onSurface,
-                      ),
-                    ),
-                  ],
+        /// Title
+        if (title.isNotEmpty)
+          Padding(
+            padding: trailing == null
+                ? const EdgeInsets.only(left: 16, top: 56)
+                : const EdgeInsets.only(top: 12),
+            child: Row(
+              mainAxisAlignment: trailing != null
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  title,
+                  style: theme.textTheme.headline3?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        /// Close button
+        Align(
+          alignment: trailing != null ? Alignment.topLeft : Alignment.topRight,
+          child: Padding(
+            padding: trailing != null
+                ? const EdgeInsets.only(top: 12, left: 10)
+                : const EdgeInsets.only(top: 24, right: 20),
+            child: IconButton(
+              iconSize: trailing != null ? 20 : 16,
+              splashRadius: 16,
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(maxHeight: 28, maxWidth: 28),
+              tooltip: TR.tooltipsClose.tr(),
+              icon: FontIcon(
+                FontIconData(
+                  trailing != null ? IconsCG.closeSlim : IconsCG.close,
                 ),
               ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 24, 20, 0),
-              child: IconButton(
-                iconSize: 16,
-                splashRadius: 16,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(maxHeight: 28, maxWidth: 28),
-                tooltip: TR.tooltipsClose.tr(),
-                icon: const Icon(IconsCG.close),
-                onPressed: Navigator.maybeOf(context)?.pop,
-              ),
+              onPressed: Navigator.maybeOf(context)?.pop,
             ),
-          ],
+          ),
         ),
-        if (child != null) child!,
+
+        if (trailing != null)
+          Align(
+            alignment: Alignment.topRight,
+            child: trailing,
+          ),
       ],
     );
   }
@@ -137,9 +146,8 @@ class _BottomSheetBase extends StatelessWidget {
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(
       properties
-        ..add(StringProperty('title', title))
-        ..add(DiagnosticsProperty<ScrollController?>('controller', controller))
-        ..add(DiagnosticsProperty<ScrollPhysics?>('physics', physics)),
+        ..add(DiagnosticsProperty<Widget?>('trailing', trailing))
+        ..add(StringProperty('title', title)),
     );
   }
 }
@@ -151,15 +159,14 @@ typedef OnBottomButton<T> = FutureOr<T> Function(BuildContext);
 class BottomButtons<T> extends StatelessWidget {
   /// The buttons that are persistent at the bottom of the screen.
   const BottomButtons({
-    required final this.firstText,
+    final this.firstText = '',
     final this.onFirstPressed,
     final this.secondText = '',
     final this.onSecondPressed,
     final this.direction = Axis.vertical,
     final this.inverse = false,
     final Key? key,
-  })  : assert(firstText != '', 'There must be at least one button.'),
-        super(key: key);
+  }) : super(key: key);
 
   /// The text of the first button.
   final String firstText;
@@ -182,24 +189,24 @@ class BottomButtons<T> extends StatelessWidget {
   @override
   Widget build(final BuildContext context) {
     final theme = Theme.of(context);
+    final defaultDarkStyle = TextButtonStyle.dark.fromTheme(theme);
+    final darkStyle = defaultDarkStyle.copyWith(
+      foregroundColor: MaterialStateProperty.all(theme.colorScheme.surface),
+    );
+    final defaultLightStyle = TextButtonStyle.light.fromTheme(theme);
+    final lightStyle = defaultLightStyle.copyWith(
+      foregroundColor: MaterialStateProperty.all(theme.colorScheme.onSurface),
+    );
     return Flex(
+      mainAxisSize: MainAxisSize.min,
       direction: direction,
       children: <Widget>[
         Flexible(
           child: TextButton(
             onPressed:
                 onFirstPressed != null ? () => onFirstPressed!(context) : null,
-            style: !inverse
-                ? TextButtonStyle.dark.fromTheme(theme)
-                : TextButtonStyle.light.fromTheme(theme),
-            child: Text(
-              firstText,
-              style: TextStyle(
-                color: !inverse
-                    ? theme.colorScheme.surface
-                    : theme.colorScheme.onSurface,
-              ),
-            ),
+            style: !inverse ? darkStyle : lightStyle,
+            child: Text(firstText),
           ),
         ),
         if (secondText.isNotEmpty) ...[
@@ -212,17 +219,8 @@ class BottomButtons<T> extends StatelessWidget {
               onPressed: onSecondPressed != null
                   ? () => onSecondPressed!(context)
                   : null,
-              style: !inverse
-                  ? TextButtonStyle.light.fromTheme(theme)
-                  : TextButtonStyle.dark.fromTheme(theme),
-              child: Text(
-                secondText,
-                style: TextStyle(
-                  color: !inverse
-                      ? theme.colorScheme.surface
-                      : theme.colorScheme.onSurface,
-                ),
-              ),
+              style: !inverse ? lightStyle : darkStyle,
+              child: Text(secondText),
             ),
           ),
         ]

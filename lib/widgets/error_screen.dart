@@ -114,46 +114,48 @@ class ConnectionErrorScreen extends ConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    return Align(
-      child: SingleChildScrollView(
-        primary: true,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            const FontIcon(FontIconData(IconsCG.globe, height: 40)),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
-              child: Text(
-                TR.connectionErrorTitle.tr(),
-                style: theme.textTheme.headline2,
-                textAlign: TextAlign.center,
+    return Scaffold(
+      body: Align(
+        child: SingleChildScrollView(
+          primary: true,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const FontIcon(FontIconData(IconsCG.globe, height: 40)),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
+                child: Text(
+                  TR.connectionErrorTitle.tr(),
+                  style: theme.textTheme.headline2,
+                  textAlign: TextAlign.center,
+                ),
               ),
-            ),
-            Consumer(
-              child: Text(TR.connectionErrorRepeat.tr()),
-              builder: (final context, final ref, final child) {
-                return Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: MediaQuery.of(context).size.width / 4,
-                  ),
-                  child: TextButton.icon(
-                    label: child!,
-                    icon: const Padding(
-                      padding: EdgeInsets.only(right: 4),
-                      child: FontIcon(
-                        FontIconData(IconsCG.repeat, height: 16),
-                      ),
+              Consumer(
+                child: Text(TR.connectionErrorRepeat.tr()),
+                builder: (final context, final ref, final child) {
+                  return Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: MediaQuery.of(context).size.width / 4,
                     ),
-                    style: TextButtonStyle.light.fromTheme(theme),
-                    onPressed: () => ref
-                        .read(connectionProvider.notifier)
-                        .updateConnection(),
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 100),
-          ],
+                    child: TextButton.icon(
+                      label: child!,
+                      icon: const Padding(
+                        padding: EdgeInsets.only(right: 4),
+                        child: FontIcon(
+                          FontIconData(IconsCG.repeat, height: 16),
+                        ),
+                      ),
+                      style: TextButtonStyle.light.fromTheme(theme),
+                      onPressed: () => ref
+                          .read(connectionProvider.notifier)
+                          .updateConnection(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 100),
+            ],
+          ),
         ),
       ),
     );

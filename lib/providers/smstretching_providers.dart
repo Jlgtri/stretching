@@ -39,57 +39,16 @@ final StateNotifierProvider<SaveToHiveIterableNotifier<SMStudioModel, String>,
 /// The trainers provider for SMStretching API.
 ///
 /// See: https://smstretching.ru/wp-json/jet-cct/shtab_v2
-final StateNotifierProvider<SMTrainersNotifier, Iterable<SMTrainerModel>>
-    smTrainersProvider =
-    StateNotifierProvider<SMTrainersNotifier, Iterable<SMTrainerModel>>(
-        (final ref) {
-  return SMTrainersNotifier(ref);
+final StateNotifierProvider<SaveToHiveIterableNotifier<SMTrainerModel, String>,
+        Iterable<SMTrainerModel>> smTrainersProvider =
+    StateNotifierProvider<SaveToHiveIterableNotifier<SMTrainerModel, String>,
+        Iterable<SMTrainerModel>>((final ref) {
+  return SaveToHiveIterableNotifier<SMTrainerModel, String>(
+    hive: ref.watch(hiveProvider),
+    saveName: 'smTrainers',
+    converter: const StringToIterableConverter(
+      IterableConverter(smTrainerConverter),
+    ),
+    defaultValue: const Iterable<SMTrainerModel>.empty(),
+  );
 });
-
-/// The notifier for the [smTrainersProvider];
-class SMTrainersNotifier
-    extends SaveToHiveIterableNotifier<SMTrainerModel, String> {
-  /// The notifier for the [smTrainersProvider];
-  SMTrainersNotifier(final ProviderRefBase _ref)
-      : super(
-          hive: _ref.watch(hiveProvider),
-          saveName: 'smTrainers',
-          converter: const StringToIterableConverter(
-            IterableConverter(smTrainerConverter),
-          ),
-          defaultValue: const Iterable<SMTrainerModel>.empty(),
-          onValueCreated: normalizeTrainers,
-        );
-
-  @override
-  set state(final Iterable<SMTrainerModel> value) {
-    super.state = normalizeTrainers(value);
-  }
-
-  /// Return sorted and valid trainers for this provider.
-  static Iterable<SMTrainerModel> normalizeTrainers(
-    final Iterable<SMTrainerModel> value,
-  ) {
-    return value.toList();
-    // ..removeWhere((final trainer) {
-    //   return trainer.specialization == 'Не удалять' ||
-    //       trainer.name.contains('Сотрудник');
-    // })
-    // ..sort((final trainerA, final trainerB) {
-    //   int isDefault(final String link) => [
-    //         'https://api.yclients.com/images/no-master.png',
-    //         'https://api.yclients.com/images/no-master-sm.png'
-    //       ].contains(link)
-    //           ? -1
-    //           : 0;
-    //   final hasAvatar = isDefault(trainerB.avatarBig)
-    //       .compareTo(isDefault(trainerA.avatarBig));
-    //   if (hasAvatar != 0) {
-    //     return hasAvatar;
-    //   }
-    //   return trainerA.name
-    //       .toLowerCase()
-    //       .compareTo(trainerB.name.toLowerCase());
-    // });
-  }
-}

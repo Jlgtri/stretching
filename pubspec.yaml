@@ -38,6 +38,8 @@ dependencies:
   logging: ^1.0.1
   mask_text_input_formatter: ^2.0.0
   meta: ^1.7.0
+  modal_bottom_sheet: ^2.0.0
+  native_device_orientation: ^1.0.0
   path: ^1.8.0
   path_provider: ^2.0.2
   permission_handler: ^8.1.4+2
@@ -46,7 +48,6 @@ dependencies:
   riverpod: ^1.0.0-dev.6
   share: ^2.0.4
   smooth_page_indicator: ^1.0.0+2
-  tuple: ^2.0.0
 
 dev_dependencies:
   args: ^2.2.0
@@ -77,6 +78,7 @@ flutter:
     - assets/emoji/1f929.png
     - assets/emoji/1f964.png
     - assets/emoji/1f9d8.png
+    - assets/emoji/23f1-fe0f.png
     - assets/emoji/26a1.png
     - assets/emoji/270c-fe0f.png
     - assets/emoji/2764-fe0f.png

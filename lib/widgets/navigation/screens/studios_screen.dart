@@ -17,9 +17,8 @@ import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/models/map_info_windows_options.dart';
 import 'package:stretching/models_smstretching/sm_studio_model.dart';
 import 'package:stretching/models_yclients/company_model.dart';
+import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/other_providers.dart';
-import 'package:stretching/providers/smstretching_providers.dart';
-import 'package:stretching/providers/yclients_providers.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/content_screen.dart';
@@ -43,7 +42,7 @@ class StudiosScreen extends HookConsumerWidget {
     final devicePixelRatio =
         Platform.isAndroid ? mediaQuery.devicePixelRatio : 1;
 
-    final studios = ref.watch(studiosProvider);
+    final studios = ref.watch(combinedStudiosProvider);
     final mapMarker = ref.watch(
       mapMarkerProvider(
         FontIconData(
@@ -118,12 +117,14 @@ class StudiosScreen extends HookConsumerWidget {
               data: (final marker) => <Marker>{
                 for (final studio in studios)
                   Marker(
-                    markerId: MarkerId(studio.id.toString()),
-                    position:
-                        LatLng(studio.coordinateLat, studio.coordinateLon),
+                    markerId: MarkerId(studio.item0.id.toString()),
+                    position: LatLng(
+                      studio.item0.coordinateLat,
+                      studio.item0.coordinateLon,
+                    ),
                     flat: true,
                     icon: marker,
-                    onTap: () => moveToStudioOnMap(studio),
+                    onTap: () => moveToStudioOnMap(studio.item0),
                   )
               },
               loading: () => <Marker>{},
@@ -188,9 +189,9 @@ class StudiosScreen extends HookConsumerWidget {
                 child: StudioScreenCard(
                   studios.firstWhere((final studio) {
                     final coordinates = infoWindowOptions.value!.coordinates;
-                    return studio.coordinateLat.toStringAsFixed(6) ==
+                    return studio.item0.coordinateLat.toStringAsFixed(6) ==
                             coordinates.latitude.toStringAsFixed(6) &&
-                        studio.coordinateLon.toStringAsFixed(6) ==
+                        studio.item0.coordinateLon.toStringAsFixed(6) ==
                             coordinates.longitude.toStringAsFixed(6);
                   }),
                 ),
@@ -215,6 +216,8 @@ class StudiosScreen extends HookConsumerWidget {
                             ? TextButtonStyle.light.fromTheme(theme)
                             : TextButtonStyle.dark.fromTheme(theme))
                         .copyWith(
+                      textStyle:
+                          MaterialStateProperty.all(theme.textTheme.headline5),
                       visualDensity: VisualDensity.compact,
                       shape: MaterialStateProperty.all(
                         RoundedRectangleBorder(
@@ -234,6 +237,8 @@ class StudiosScreen extends HookConsumerWidget {
                             ? TextButtonStyle.dark.fromTheme(theme)
                             : TextButtonStyle.light.fromTheme(theme))
                         .copyWith(
+                      textStyle:
+                          MaterialStateProperty.all(theme.textTheme.headline5),
                       visualDensity: VisualDensity.compact,
                       shape: MaterialStateProperty.all(
                         RoundedRectangleBorder(
@@ -277,8 +282,8 @@ class StudiosScreen extends HookConsumerWidget {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: StudioScreenCard(
                         studios.elementAt(index),
-                        onNonMapTap: (final studio, final smStudio) =>
-                            onMainStudioCardTap(studio),
+                        onNonMapTap: (final studio) =>
+                            onMainStudioCardTap(studio.item0),
                       ),
                     );
                   },
@@ -291,7 +296,7 @@ class StudiosScreen extends HookConsumerWidget {
 }
 
 /// The callback on a [StudioModel] and a [SMStudioModel].
-typedef OnStudio = void Function(StudioModel studio, SMStudioModel smStudio);
+typedef OnStudio = void Function(CombinedStudioModel studio);
 
 /// The card for the [StudiosScreen].
 class StudioScreenCard extends ConsumerWidget {
@@ -303,20 +308,13 @@ class StudioScreenCard extends ConsumerWidget {
   }) : super(key: key);
 
   /// The studio in the YClients API.
-  final StudioModel studio;
+  final CombinedStudioModel studio;
 
   /// The callback to call on tap of this card if this widget is not on map.
   final OnStudio? onNonMapTap;
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    final smStudio = ref.watch(
-      smStudiosProvider.select((final smStudios) {
-        return smStudios.firstWhere((final smStudio) {
-          return smStudio.studioYId == studio.id;
-        });
-      }),
-    );
     return OpenContainer<void>(
       tappable: false,
       openElevation: 0,
@@ -329,8 +327,8 @@ class StudioScreenCard extends ConsumerWidget {
         return ContentScreen(
           type: NavigationScreen.studios,
           onBackButtonPressed: action,
-          title: studio.title,
-          subtitle: studio.address,
+          title: studio.item1.studioName,
+          subtitle: studio.item1.studioAddress,
           bottomButtons: BottomButtons<void>(
             inverse: true,
             direction: Axis.horizontal,
@@ -340,19 +338,19 @@ class StudioScreenCard extends ConsumerWidget {
           paragraphs: <ContentParagraph>[
             Tuple2(
               TR.studiosTimetable.tr(),
-              studio.schedule.replaceAll('; ', '\n').trim(),
+              studio.item0.schedule.replaceAll('; ', '\n').trim(),
             ),
-            Tuple2(TR.studiosAbout.tr(), smStudio.about),
+            Tuple2(TR.studiosAbout.tr(), studio.item1.about),
           ],
           carousel: CarouselSlider.builder(
             options: CarouselOptions(
               height: 280,
               viewportFraction: 1,
-              enableInfiniteScroll: smStudio.mediaGallerySite.length > 1,
+              enableInfiniteScroll: studio.item1.mediaGallerySite.length > 1,
             ),
-            itemCount: smStudio.mediaGallerySite.length,
+            itemCount: studio.item1.mediaGallerySite.length,
             itemBuilder: (final context, final index, final realIndex) {
-              final media = smStudio.mediaGallerySite.elementAt(index);
+              final media = studio.item1.mediaGallerySite.elementAt(index);
               return CachedNetworkImage(
                 imageUrl: media.url,
                 fit: BoxFit.fitHeight,
@@ -367,14 +365,10 @@ class StudioScreenCard extends ConsumerWidget {
       closedBuilder: (final context, final action) {
         return StudioCard(
           studio,
-          smStudio,
           onMap: onNonMapTap == null,
-          onTap: (final studio, final smStudio) => onNonMapTap == null
-              ? action()
-              : onNonMapTap?.call(studio, smStudio),
-          onAvatarTap: onNonMapTap != null
-              ? (final studio, final smStudio) => action()
-              : null,
+          onTap: (final studio) =>
+              onNonMapTap == null ? action() : onNonMapTap?.call(studio),
+          onAvatarTap: onNonMapTap != null ? (final studio) => action() : null,
         );
       },
     );
@@ -384,7 +378,7 @@ class StudioScreenCard extends ConsumerWidget {
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(
       properties
-        ..add(DiagnosticsProperty<CompanyModel>('studio', studio))
+        ..add(DiagnosticsProperty<CombinedStudioModel>('studio', studio))
         ..add(ObjectFlagProperty<OnStudio?>.has('onNonMapTap', onNonMapTap)),
     );
   }
@@ -394,8 +388,7 @@ class StudioScreenCard extends ConsumerWidget {
 class StudioCard extends HookConsumerWidget {
   /// The card for the [StudioScreenCard].
   const StudioCard(
-    final this.studio,
-    final this.smStudio, {
+    final this.studio, {
     final this.onTap,
     final this.onAvatarTap,
     final this.onMap = false,
@@ -403,10 +396,7 @@ class StudioCard extends HookConsumerWidget {
   }) : super(key: key);
 
   /// The studio in the YClients API.
-  final StudioModel studio;
-
-  /// The studio in the SMStretching API.
-  final SMStudioModel smStudio;
+  final CombinedStudioModel studio;
 
   /// The callback to call on tap of this card.
   final OnStudio? onTap;
@@ -425,7 +415,7 @@ class StudioCard extends HookConsumerWidget {
       elevation: onMap ? 10 : 0,
       borderRadius: BorderRadius.circular(onMap ? 4 : 8),
       child: ListTile(
-        onTap: () => onTap?.call(studio, smStudio),
+        onTap: () => onTap?.call(studio),
         dense: onMap,
         enableFeedback: true,
         contentPadding: EdgeInsets.symmetric(horizontal: onMap ? 8 : 16),
@@ -440,11 +430,7 @@ class StudioCard extends HookConsumerWidget {
         hoverColor: theme.colorScheme.surface.withOpacity(2 / 3),
         horizontalTitleGap: onMap ? 8 : null,
         leading: CachedNetworkImage(
-          imageUrl: smStudio.mediaGallerySite.isNotEmpty
-              ? smStudio.mediaGallerySite.first.url
-              : studio.photos.isNotEmpty
-                  ? studio.photos.first
-                  : studio.logo,
+          imageUrl: studio.avatarUrl,
           alignment: Alignment.topCenter,
           height: (onMap ? 16 : 24) * 2,
           width: (onMap ? 16 : 24) * 2,
@@ -452,7 +438,7 @@ class StudioCard extends HookConsumerWidget {
             return IgnorePointer(
               ignoring: onAvatarTap == null,
               child: MaterialButton(
-                onPressed: () => onAvatarTap?.call(studio, smStudio),
+                onPressed: () => onAvatarTap?.call(studio),
                 padding: EdgeInsets.zero,
                 shape: const CircleBorder(),
                 minWidth: (onMap ? 16 : 24) * 2,
@@ -470,16 +456,18 @@ class StudioCard extends HookConsumerWidget {
         ),
         title: Text.rich(
           TextSpan(
-            text: studio.title,
-            style: theme.textTheme.headline6
+            text: studio.item1.studioName,
+            style: theme.textTheme.bodyText1
                 ?.copyWith(fontSize: onMap ? 12 : null),
             children: <InlineSpan>[
               if (onMap) ...[
-                const TextSpan(text: '\n', style: TextStyle(fontSize: 16)),
+                TextSpan(text: '\n', style: theme.textTheme.caption),
                 TextSpan(
-                  text: studio.address,
-                  style: theme.textTheme.bodyText2
-                      ?.copyWith(fontSize: onMap ? 10 : null),
+                  text: studio.item1.studioAddress,
+                  style: theme.textTheme.caption?.copyWith(
+                    fontSize: onMap ? 10 : null,
+                    color: Colors.grey.shade700,
+                  ),
                 ),
               ]
             ],
@@ -492,7 +480,7 @@ class StudioCard extends HookConsumerWidget {
         subtitle: !onMap
             ? Text.rich(
                 TextSpan(
-                  text: studio.address,
+                  text: studio.item1.studioAddress,
                   children: <InlineSpan>[
                     if (!onMap)
                       TextSpan(
@@ -502,8 +490,8 @@ class StudioCard extends HookConsumerWidget {
                                 GeolocatorPlatform.instance.distanceBetween(
                               position.latitude,
                               position.longitude,
-                              studio.coordinateLat,
-                              studio.coordinateLon,
+                              studio.item0.coordinateLat,
+                              studio.item0.coordinateLon,
                             );
                             if (distance < 10) {
                               // ignore: prefer_interpolation_to_compose_strings
@@ -542,13 +530,16 @@ class StudioCard extends HookConsumerWidget {
                           loading: () => '',
                           error: (final e, final st) => '',
                         ),
-                        style: theme.textTheme.subtitle2,
+                        style: theme.textTheme.caption
+                            ?.copyWith(color: Colors.grey.shade400),
                       )
                   ],
                 ),
                 softWrap: !onMap,
-                style: theme.textTheme.bodyText2
-                    ?.copyWith(fontSize: onMap ? 10 : null),
+                style: theme.textTheme.caption?.copyWith(
+                  fontSize: onMap ? 10 : null,
+                  color: Colors.grey.shade700,
+                ),
                 maxLines: onMap ? 1 : 2,
                 overflow: TextOverflow.ellipsis,
               )
@@ -573,8 +564,7 @@ class StudioCard extends HookConsumerWidget {
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(
       properties
-        ..add(DiagnosticsProperty<CompanyModel>('studio', studio))
-        ..add(DiagnosticsProperty<SMStudioModel>('smStudio', smStudio))
+        ..add(DiagnosticsProperty<CombinedStudioModel>('studio', studio))
         ..add(ObjectFlagProperty<OnStudio?>.has('onTap', onTap))
         ..add(ObjectFlagProperty<OnStudio?>.has('onAvatarTap', onAvatarTap))
         ..add(DiagnosticsProperty<bool>('onMap', onMap)),

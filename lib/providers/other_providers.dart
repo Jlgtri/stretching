@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:native_device_orientation/native_device_orientation.dart';
+import 'package:stretching/const.dart';
 import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/utils/json_converters.dart';
@@ -27,6 +29,19 @@ final StateNotifierProvider<SaveToHiveNotifier<ThemeMode, String>, ThemeMode>
     saveName: 'theme',
     converter: const EnumConverter<ThemeMode>(ThemeMode.values),
     defaultValue: ThemeMode.system,
+  );
+});
+
+/// The provider that contains current locale.
+final StateNotifierProvider<SaveToHiveNotifier<Locale, String>, Locale>
+    localeProvider =
+    StateNotifierProvider<SaveToHiveNotifier<Locale, String>, Locale>(
+        (final ref) {
+  return SaveToHiveNotifier<Locale, String>(
+    hive: ref.watch(hiveProvider),
+    saveName: 'locale',
+    converter: localeConverter,
+    defaultValue: defaultLocale,
   );
 });
 
@@ -61,3 +76,46 @@ final FutureProviderFamily<BitmapDescriptor, FontIconData> mapMarkerProvider =
       ? BitmapDescriptor.fromBytes(imageBytes.buffer.asUint8List())
       : BitmapDescriptor.defaultMarker;
 });
+
+/// The provider of current time on device.
+final StreamProvider<DateTime> timeProvider =
+    StreamProvider<DateTime>((final ref) {
+  return Stream<DateTime>.periodic(const Duration(seconds: 1), (final i) {
+    return DateTime.now();
+  });
+});
+
+/// The provider of the orientation on the device.
+final StreamProvider<NativeDeviceOrientation> orientationProvider =
+    StreamProvider((final ref) {
+  return NativeDeviceOrientationCommunicator().onOrientationChanged();
+});
+
+/// The provider of the current server time.
+final StateNotifierProvider<ServerTimeNotifier, DateTime> serverTimeProvider =
+    StateNotifierProvider<ServerTimeNotifier, DateTime>((final ref) {
+  throw Exception('The provider was not initialized');
+});
+
+/// The notifier of the current server time.
+class ServerTimeNotifier extends StateNotifier<DateTime> {
+  /// The notifier of the current server time.
+  ServerTimeNotifier(final DateTime initialServerTime)
+      : super(initialServerTime) {
+    _timer = Stopwatch()..start();
+  }
+  late final Stopwatch _timer;
+
+  /// Returns the current server time.
+  @override
+  DateTime get state => super.state.add(_timer.elapsed);
+
+  /// Sets the current server time.
+  @override
+  set state(final DateTime initialServerTime) {
+    super.state = initialServerTime;
+    _timer
+      ..reset()
+      ..start();
+  }
+}

@@ -6,6 +6,9 @@ import 'package:meta/meta.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/utils/json_converters.dart';
 
+/// The model of the smstretching studio.
+typedef StudioModel = CompanyModel;
+
 /// The converter of the [CompanyModel].
 const CompanyConverter companyConverter = CompanyConverter._();
 
@@ -26,7 +29,7 @@ class CompanyConverter
 ///
 /// See: https://yclientsru.docs.apiary.io/#reference/2/0/0
 @immutable
-class CompanyModel {
+class CompanyModel implements Comparable<CompanyModel> {
   /// The company model of the YClients API companies method.
   ///
   /// See: https://yclientsru.docs.apiary.io/#reference/2/0/0
@@ -243,6 +246,9 @@ class CompanyModel {
 
   /// If the email is required when booking.
   final bool bookingEmailRequired;
+
+  @override
+  int compareTo(final CompanyModel other) => id.compareTo(other.id);
 
   /// Return the copy of this model.
   CompanyModel copyWith({

@@ -26,7 +26,7 @@ class ActivityConverter
 ///
 /// See: https://yclientsru.docs.apiary.io/#reference/12/0/4
 @immutable
-class ActivityModel {
+class ActivityModel implements Comparable<ActivityModel> {
   /// The activity model of the YClients API actitivities method.
   ///
   /// See: https://yclientsru.docs.apiary.io/#reference/12/0/4
@@ -95,6 +95,17 @@ class ActivityModel {
   final Iterable<ActivityResourceInstanceModel> resourceInstances;
 
   final Iterable<Object?> labels;
+
+  @override
+  int compareTo(final ActivityModel other) {
+    final dateCompare = date.compareTo(other.date);
+    if (dateCompare != 0) {
+      return dateCompare;
+    }
+
+    final studioCompare = companyId.compareTo(other.companyId);
+    return studioCompare;
+  }
 
   /// Return the copy of this model.
   ActivityModel copyWith({

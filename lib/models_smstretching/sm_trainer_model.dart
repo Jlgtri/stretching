@@ -26,7 +26,7 @@ class SMStudioConverter
 ///
 /// See: https://smstretching.ru/wp-json/jet-cct/shtab_v2
 @immutable
-class SMTrainerModel {
+class SMTrainerModel implements Comparable<SMTrainerModel> {
   /// The model of the trainer in the SMStretching API.
   ///
   /// See: https://smstretching.ru/wp-json/jet-cct/shtab_v2
@@ -81,6 +81,11 @@ class SMTrainerModel {
 
   /// The type of this model in the SMStretching API.
   final String cctSlug;
+
+  @override
+  int compareTo(final SMTrainerModel other) {
+    return trainerName.toLowerCase().compareTo(other.trainerName.toLowerCase());
+  }
 
   /// Return the copy of this model.
   SMTrainerModel copyWith({

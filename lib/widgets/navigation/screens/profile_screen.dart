@@ -16,7 +16,7 @@ class ProfileScreen extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        if (!ref.watch(userIsNullProvider))
+        if (!ref.watch(unauthorizedProvider))
           Padding(
             padding: const EdgeInsets.all(32),
             child: Column(

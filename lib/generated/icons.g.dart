@@ -44,6 +44,7 @@ abstract class IconsCG {
   static const IconData mapLocation = IconData(0xe820, fontFamily: _kFontFam);
   static const IconData globe = IconData(0xe821, fontFamily: _kFontFam);
   static const IconData repeat = IconData(0xe822, fontFamily: _kFontFam);
+  static const IconData closeSlim = IconData(0xe823, fontFamily: _kFontFam);
   static const IconData messenger = IconData(0xe82d, fontFamily: _kFontFam);
   static const IconData vk = IconData(0xe82f, fontFamily: _kFontFam);
   static const IconData whatsApp = IconData(0xe830, fontFamily: _kFontFam);

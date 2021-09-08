@@ -23,9 +23,6 @@ import 'package:stretching/utils/json_converters.dart';
 //   );
 // });
 
-/// The model of the smstretching studio.
-typedef StudioModel = CompanyModel;
-
 /// The studios provider for YClients API.
 ///
 /// See: https://yclientsru.docs.apiary.io/#reference/2/0/0
@@ -42,68 +39,58 @@ final StateNotifierProvider<SaveToHiveIterableNotifier<StudioModel, String>,
   );
 });
 
+/// The normalized trainers provider for YClients API.
+final Provider<Iterable<TrainerModel>> normalizedTrainersProvider =
+    Provider<Iterable<TrainerModel>>((final ref) {
+  return ref.watch(trainersProvider.select(normalizeTrainers));
+});
+
 /// The trainers provider for YClients API.
 ///
 /// See: https://yclientsru.docs.apiary.io/#reference/6/0//
-final StateNotifierProvider<TrainersNotifier, Iterable<TrainerModel>>
-    trainersProvider =
-    StateNotifierProvider<TrainersNotifier, Iterable<TrainerModel>>(
-        (final ref) {
-  return TrainersNotifier(ref);
+final StateNotifierProvider<SaveToHiveIterableNotifier<TrainerModel, String>,
+        Iterable<TrainerModel>> trainersProvider =
+    StateNotifierProvider<SaveToHiveIterableNotifier<TrainerModel, String>,
+        Iterable<TrainerModel>>((final ref) {
+  return SaveToHiveIterableNotifier<TrainerModel, String>(
+    hive: ref.watch(hiveProvider),
+    saveName: 'trainers',
+    converter: const StringToIterableConverter(
+      IterableConverter(trainerConverter),
+    ),
+    defaultValue: const Iterable<TrainerModel>.empty(),
+  );
 });
 
-/// The notifier for the [trainersProvider];
-class TrainersNotifier
-    extends SaveToHiveIterableNotifier<TrainerModel, String> {
-  /// The notifier for the [trainersProvider];
-  TrainersNotifier(final ProviderRefBase _ref)
-      : super(
-          hive: _ref.watch(hiveProvider),
-          saveName: 'trainers',
-          converter: const StringToIterableConverter(
-            IterableConverter(trainerConverter),
-          ),
-          defaultValue: const Iterable<TrainerModel>.empty(),
-          onValueCreated: normalizeTrainers,
-        );
-
-  @override
-  set state(final Iterable<TrainerModel> value) {
-    super.state = normalizeTrainers(value);
-  }
-
-  /// Return sorted and valid trainers for this provider.
-  static Iterable<TrainerModel> normalizeTrainers(
-    final Iterable<TrainerModel> value,
-  ) {
-    return value.toList()
-      ..removeWhere((final trainer) {
-        return trainer.specialization == 'Не удалять' ||
-            trainer.name.contains('Сотрудник');
-      })
-      ..removeWhere((final trainer) {
-        return <String>[
-          'https://api.yclients.com/images/no-master.png',
-          'https://api.yclients.com/images/no-master-sm.png'
-        ].contains(trainer.avatarBig);
-      })
-      ..sort((final trainerA, final trainerB) {
-        // int isDefault(final String link) => <String>[
-        //       'https://api.yclients.com/images/no-master.png',
-        //       'https://api.yclients.com/images/no-master-sm.png'
-        //     ].contains(link)
-        //         ? -1
-        //         : 0;
-        // final hasAvatar = isDefault(trainerB.avatarBig)
-        //     .compareTo(isDefault(trainerA.avatarBig));
-        // if (hasAvatar != 0) {
-        //   return hasAvatar;
-        // }
-        return trainerA.name
-            .toLowerCase()
-            .compareTo(trainerB.name.toLowerCase());
-      });
-  }
+/// Return sorted and valid trainers for this provider.
+Iterable<TrainerModel> normalizeTrainers(
+  final Iterable<TrainerModel> value,
+) {
+  return value.toList()
+    ..removeWhere((final trainer) {
+      return trainer.specialization == 'Не удалять' ||
+          trainer.name.contains('Сотрудник');
+    })
+    ..removeWhere((final trainer) {
+      return <String>[
+        'https://api.yclients.com/images/no-master.png',
+        'https://api.yclients.com/images/no-master-sm.png'
+      ].contains(trainer.avatarBig);
+    })
+    ..sort((final trainerA, final trainerB) {
+      // int isDefault(final String link) => <String>[
+      //       'https://api.yclients.com/images/no-master.png',
+      //       'https://api.yclients.com/images/no-master-sm.png'
+      //     ].contains(link)
+      //         ? -1
+      //         : 0;
+      // final hasAvatar = isDefault(trainerB.avatarBig)
+      //     .compareTo(isDefault(trainerA.avatarBig));
+      // if (hasAvatar != 0) {
+      //   return hasAvatar;
+      // }
+      return trainerA.name.toLowerCase().compareTo(trainerB.name.toLowerCase());
+    });
 }
 
 /// The schedule provider for YClients API.

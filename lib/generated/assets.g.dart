@@ -25,6 +25,7 @@
 ///     - assets/emoji/1f929.png
 ///     - assets/emoji/1f964.png
 ///     - assets/emoji/1f9d8.png
+///     - assets/emoji/23f1-fe0f.png
 ///     - assets/emoji/26a1.png
 ///     - assets/emoji/270c-fe0f.png
 ///     - assets/emoji/2764-fe0f.png
@@ -56,6 +57,7 @@ abstract class AssetsCG {
   static const String emoji1f929 = 'assets/emoji/1f929.png';
   static const String emoji1f964 = 'assets/emoji/1f964.png';
   static const String emoji1f9d8 = 'assets/emoji/1f9d8.png';
+  static const String emoji23f1fe0f = 'assets/emoji/23f1-fe0f.png';
   static const String emoji26a1 = 'assets/emoji/26a1.png';
   static const String emoji270cfe0f = 'assets/emoji/270c-fe0f.png';
   static const String emoji2764fe0f = 'assets/emoji/2764-fe0f.png';

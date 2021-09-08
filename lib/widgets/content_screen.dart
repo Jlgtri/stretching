@@ -135,16 +135,17 @@ class ContentScreenState extends ConsumerState<ContentScreen>
               systemOverlayStyle: const SystemUiOverlayStyle(
                 statusBarColor: Colors.transparent,
               ),
-              leading:
-                  FontIconBackButton(onPressed: widget.onBackButtonPressed),
+              leading: FontIconBackButton(
+                onPressed: widget.onBackButtonPressed,
+              ),
               actions: <Widget>[
                 FontIconButton(
                   FontIcon(
                     FontIconData(
                       IconsCG.share,
                       color: appBarTheme.foregroundColor,
-                      height: 24,
-                      width: 24,
+                      height: 28,
+                      width: 28,
                     ),
                   ),
                   tooltip: TR.tooltipsShare.tr(),
@@ -177,14 +178,14 @@ class ContentScreenState extends ConsumerState<ContentScreen>
                             children: <Widget>[
                               Text(
                                 widget.title,
-                                style: theme.textTheme.headline1,
+                                style: theme.textTheme.headline2,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               Flexible(
                                 child: Text(
                                   widget.subtitle,
-                                  style: theme.textTheme.bodyText1,
+                                  style: theme.textTheme.bodyText2,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -192,7 +193,7 @@ class ContentScreenState extends ConsumerState<ContentScreen>
                               if (widget.secondSubtitle.isNotEmpty)
                                 Text(
                                   widget.secondSubtitle,
-                                  style: theme.textTheme.bodyText1
+                                  style: theme.textTheme.bodyText2
                                       ?.copyWith(color: theme.hintColor),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -232,7 +233,7 @@ class ContentScreenState extends ConsumerState<ContentScreen>
                               animationCurve: Curves.easeOut,
                               animationDuration:
                                   const Duration(milliseconds: 300),
-                              style: theme.textTheme.bodyText1,
+                              style: theme.textTheme.bodyText2,
                             ),
                           ],
                         ),

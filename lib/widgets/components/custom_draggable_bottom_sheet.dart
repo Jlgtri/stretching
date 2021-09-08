@@ -6,7 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stretching/providers/other_providers.dart';
 
 /// The builder of the scrollable for the [CustomDraggableBottomSheet].
-typedef ScrollableWidgetBuilder = Widget Function(
+typedef ScrollablePhysicsWidgetBuilder = Widget Function(
   ScrollController? controller,
   ScrollPhysics? physics,
 );
@@ -36,7 +36,7 @@ class CustomDraggableBottomSheet extends HookConsumerWidget {
         super(key: key);
 
   /// The scrollable of this bottom sheet.
-  final ScrollableWidgetBuilder builder;
+  final ScrollablePhysicsWidgetBuilder builder;
 
   /// The height of the child widget.
   ///
@@ -76,15 +76,9 @@ class CustomDraggableBottomSheet extends HookConsumerWidget {
     );
 
     final maxScreenSize = useMemoized<double>(
-      () {
-        var maxSize = screenSize;
-        final _mainContext = mainContext;
-        if (_mainContext != null) {
-          final topPadding = MediaQuery.of(_mainContext).viewPadding.top;
-          maxSize -= topPadding;
-        }
-        return maxSize;
-      },
+      () => mainContext != null
+          ? screenSize - MediaQuery.of(mainContext!).viewPadding.top
+          : screenSize,
       [mediaQuery.orientation],
     );
 
@@ -104,27 +98,23 @@ class CustomDraggableBottomSheet extends HookConsumerWidget {
       return SizedBox(key: childKey, child: builder(null, null));
     }
 
-    double toScreenSize(final double? value) {
-      return value != null
-          ? 0 <= value && value < 1
-              ? value
-              : value / maxScreenSize
-          : 1;
-    }
+    double toScreenSize(final double? value) => value != null
+        ? (0 <= value && value < 1 ? value : value / maxScreenSize)
+        : 1;
 
     final maxChildSize = useMemoized<double>(
       () {
         var maxChildSize = height.value / maxScreenSize;
-        maxChildSize = maxChildSize.clamp(.0, maxScreenSize / screenSize);
+        maxChildSize = maxChildSize.clamp(0, maxScreenSize / screenSize);
         maxChildSize = maxChildSize * toScreenSize(childHeight);
-        maxChildSize -= maxChildSize * 0.001;
+        maxChildSize += maxChildSize * 0.001;
         return maxChildSize.clamp(0, maxScreenSize).toDouble();
       },
       [mediaQuery.orientation],
     );
 
     final minChildSize = useMemoized<double>(
-      () => toScreenSize(dismissHeight).clamp(0, maxChildSize),
+      () => toScreenSize(dismissHeight ?? 1 / 2).clamp(0, maxChildSize),
       [mediaQuery.orientation],
     );
 
@@ -172,7 +162,10 @@ class CustomDraggableBottomSheet extends HookConsumerWidget {
     super.debugFillProperties(
       properties
         ..add(
-          ObjectFlagProperty<ScrollableWidgetBuilder>.has('builder', builder),
+          ObjectFlagProperty<ScrollablePhysicsWidgetBuilder>.has(
+            'builder',
+            builder,
+          ),
         )
         ..add(DoubleProperty('childHeight', childHeight))
         ..add(DoubleProperty('initialHeight', initialHeight))

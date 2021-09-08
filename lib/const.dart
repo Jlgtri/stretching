@@ -1,5 +1,8 @@
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
+import 'package:stretching/widgets/navigation/screens/activities_screen.dart';
+
 /// The default [Locale] of this app.
 const Locale defaultLocale = Locale('ru', 'RU');
 
@@ -16,3 +19,6 @@ const int phoneCountryCode = 38;
 
 /// The length of the sms pin code for phone number authentication.
 const int pinCodeLength = 4;
+
+/// The time filter to use for [ActivityTime].
+const TimeOfDay filterTime = TimeOfDay(hour: 16, minute: 45);

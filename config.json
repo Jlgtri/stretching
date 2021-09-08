@@ -231,16 +231,18 @@
       ]
     },
     {
-      "uid": "2556a5a890ae3dab67310543bc7d2e02",
-      "css": "angleLeft",
-      "code": 61700,
-      "src": "fontawesome5"
-    },
-    {
-      "uid": "5a86447e3f28e88c09db6ce2ba0d8bd8",
-      "css": "angleRight",
-      "code": 61701,
-      "src": "fontawesome5"
+      "uid": "48030fdbd69fdc1a7767b1c09a888da3",
+      "css": "closeSlim",
+      "code": 59427,
+      "src": "custom_icons",
+      "selected": true,
+      "svg": {
+        "path": "M566.7 500L1000 933.3 933.3 1000 500 566.7 66.7 1000 0 933.3 433.3 500 0 66.7 66.7 0 500 433.3 933.3 0 1000 66.7 566.7 500Z",
+        "width": 1000
+      },
+      "search": [
+        "closeslim"
+      ]
     },
     {
       "uid": "4343becceb7b5abcd33c43a496a161b0",
@@ -255,6 +257,18 @@
       "search": [
         "close"
       ]
+    },
+    {
+      "uid": "2556a5a890ae3dab67310543bc7d2e02",
+      "css": "angleLeft",
+      "code": 61700,
+      "src": "fontawesome5"
+    },
+    {
+      "uid": "5a86447e3f28e88c09db6ce2ba0d8bd8",
+      "css": "angleRight",
+      "code": 61701,
+      "src": "fontawesome5"
     },
     {
       "uid": "a8960482deb92155be6dd0c1eb6ab2a4",

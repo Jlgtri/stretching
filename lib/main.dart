@@ -36,7 +36,12 @@ Future<void> main() async {
       fallbackLocale: defaultLocale,
       child: ProviderScope(
         overrides: <Override>[
-          hiveProvider.overrideWithValue(await Hive.openBox<String>('storage'))
+          hiveProvider.overrideWithValue(
+            await Hive.openBox<String>('storage'),
+          ),
+          serverTimeProvider.overrideWithValue(
+            ServerTimeNotifier((await smStretchingServerTime())!),
+          ),
         ],
         child: const RootScreen(),
       ),
@@ -54,11 +59,18 @@ class RootScreen extends HookConsumerWidget {
     final ez = EasyLocalization.of(context)!;
     final snapshot = useFuture(
       useMemoized(() async {
-        await SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
-        await ez.delegate.load(ez.currentLocale!);
-        await ref.read(connectionProvider.notifier).updateConnection();
-        await ref.read(locationProvider.last);
         // await ref.read(hiveProvider).clear();
+        await Future.wait<void>(<Future<void>>[
+          SystemChannels.textInput.invokeMethod<void>('TextInput.hide'),
+          ez.delegate.load(ez.currentLocale!),
+          ref.read(connectionProvider.notifier).updateConnection(),
+          ref.read(locationProvider.last),
+          ref.read(orientationProvider.last),
+        ]);
+        final currentLocale = ez.currentLocale;
+        if (currentLocale != null) {
+          ref.read(localeProvider.notifier).state = currentLocale;
+        }
       }),
     );
 

@@ -15,8 +15,8 @@ import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/disposable_change_notifier_hook.dart';
 import 'package:stretching/models_smstretching/sm_trainer_model.dart';
 import 'package:stretching/models_yclients/trainer_model.dart';
+import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
-import 'package:stretching/providers/smstretching_providers.dart';
 import 'package:stretching/providers/yclients_providers.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/json_converters.dart';
@@ -44,6 +44,39 @@ final StateNotifierProvider<SaveToHiveIterableNotifier<ClassCategory, String>,
   );
 });
 
+/// Provider of the search value on trainers screen.
+final StateProvider<String> searchTrainersProvider =
+    StateProvider<String>((final ref) => '');
+
+/// Provider of the normalized trainers with applied filters.
+final Provider<Iterable<CombinedTrainerModel>> filteredTrainersProvider =
+    Provider<Iterable<CombinedTrainerModel>>((final ref) {
+  return ref.watch(
+    /// Apply a filter to trainers.
+    ///
+    /// First of all, removes all undesired trainers from yClients trainers.
+    /// Secondly, applies a text search by trainer's name.
+    /// Thirdly, applies a filter by trainer's categories.
+    /// And finally, removes dublicates.
+    trainersProvider.select((final trainers) {
+      final categories = ref.watch(trainersCategoriesFilterProvider);
+      final search = ref.watch(searchTrainersProvider).state;
+      return ref.watch(combinedTrainersProvider).where((final trainer) {
+        return search.isEmpty ||
+            (trainer.item1.trainerName.toLowerCase())
+                .contains(search.toLowerCase());
+      }).where((final trainer) {
+        if (categories.isEmpty) {
+          return true;
+        } else {
+          final trainerCategories = trainer.item1.classesType?.toCategories();
+          return trainerCategories?.any(categories.contains) ?? false;
+        }
+      }).distinct((final trainer) => trainer.item1.trainerName);
+    }),
+  );
+});
+
 /// The screen for the [NavigationScreen.trainers].
 class TrainersScreen extends HookConsumerWidget {
   /// The screen for the [NavigationScreen.trainers].
@@ -57,45 +90,13 @@ class TrainersScreen extends HookConsumerWidget {
     final theme = Theme.of(context);
     final categories = ref.watch(trainersCategoriesFilterProvider);
 
-    final search = useState<String>('');
     final searchController = useTextEditingController();
     final searchFocusNode = useFocusNode();
     final searchKey = useMemoized(() => GlobalKey());
 
-    final smTrainers = ref.watch(smTrainersProvider);
-    late final bool areTrainersPresent;
-    final trainers = ref.watch(
-      /// Apply a filter to trainers.
-      ///
-      /// First of all, removes all undesired trainers from yClients trainers.
-      /// Secondly, applies a text search by trainer's name.
-      /// Thirdly, applies a filter by trainer's categories.
-      /// And finally, removes dublicates.
-      trainersProvider.select((final trainers) {
-        areTrainersPresent = trainers.isNotEmpty;
-        final categories = ref.watch(trainersCategoriesFilterProvider);
-        return TrainersNotifier.normalizeTrainers(trainers)
-            .where((final trainer) {
-          return search.value.isEmpty ||
-              trainer.name.toLowerCase().contains(search.value.toLowerCase());
-        }).where((final trainer) {
-          final smTrainersNull = smTrainers.cast<SMTrainerModel?>();
-          final smTrainer = smTrainersNull.firstWhere(
-            (final smTrainer) => smTrainer!.trainerId == trainer.id,
-            orElse: () => null,
-          );
-          if (smTrainer == null) {
-            return false;
-          } else if (categories.isEmpty) {
-            return true;
-          } else {
-            final trainerCategories = smTrainer.classesType?.toCategories();
-            return trainerCategories?.any(categories.contains) ?? false;
-          }
-        }).distinct((final trainer) => trainer.name);
-      }),
-    );
-
+    final areTrainersPresent = ref.watch(combinedTrainersProvider
+        .select((final trainers) => trainers.isNotEmpty));
+    final trainers = ref.watch(filteredTrainersProvider);
     return FocusWrapper(
       unfocussableKeys: <GlobalKey>[searchKey],
       child: CustomDraggableScrollBar(
@@ -108,7 +109,9 @@ class TrainersScreen extends HookConsumerWidget {
           final trainer =
               trainers.elementAt(min((index + 1) & ~1, trainers.length - 1));
           return Text(
-            trainer.name.isNotEmpty ? trainer.name[0].toUpperCase() : '-',
+            trainer.item1.trainerName.isNotEmpty
+                ? trainer.item1.trainerName[0].toUpperCase()
+                : '-',
             style: theme.textTheme.subtitle2
                 ?.copyWith(color: theme.colorScheme.surface),
           );
@@ -135,12 +138,13 @@ class TrainersScreen extends HookConsumerWidget {
                     style: theme.textTheme.bodyText2,
                     controller: searchController,
                     focusNode: searchFocusNode,
-                    onChanged: (final value) => search.value = value,
+                    onChanged: (final value) =>
+                        ref.read(searchTrainersProvider).state = value,
                     decoration: InputDecorationStyle.search.fromTheme(
                       theme,
                       hintText: TR.trainersSearch.tr(),
                       onSuffix: () {
-                        search.value = '';
+                        ref.read(searchTrainersProvider).state = '';
                         searchController.clear();
                         searchFocusNode.unfocus();
                       },
@@ -170,15 +174,8 @@ class TrainersScreen extends HookConsumerWidget {
                     mainAxisExtent: 210,
                   ),
                   delegate: SliverChildBuilderDelegate(
-                    (final context, final index) {
-                      final trainer = trainers.elementAt(index);
-                      return TrainerCard(
-                        trainer,
-                        smTrainers.firstWhere((final smTrainer) {
-                          return smTrainer.trainerId == trainer.id;
-                        }),
-                      );
-                    },
+                    (final context, final index) =>
+                        TrainerCard(trainers.elementAt(index)),
                     childCount: trainers.length,
                   ),
                 )
@@ -226,16 +223,12 @@ class TrainerCard extends StatelessWidget {
   ///
   /// Initially shows just a card, but opens [TrainerScreen] when pressed.
   const TrainerCard(
-    final this.trainer,
-    final this.smTrainer, {
+    final this.trainer, {
     final Key? key,
   }) : super(key: key);
 
   /// The trainer model from YClients API to display on this screen.
-  final TrainerModel trainer;
-
-  /// The trainer model from SMStretching API to display on this screen.
-  final SMTrainerModel smTrainer;
+  final CombinedTrainerModel trainer;
 
   @override
   Widget build(final BuildContext context) {
@@ -249,7 +242,7 @@ class TrainerCard extends StatelessWidget {
       middleColor: Colors.transparent,
       transitionDuration: const Duration(milliseconds: 500),
       openBuilder: (final context, final action) =>
-          TrainerScreen(trainer, smTrainer, onBackButtonPressed: action),
+          TrainerScreen(trainer, onBackButtonPressed: action),
       closedBuilder: (final context, final action) {
         return MaterialButton(
           onPressed: action,
@@ -257,7 +250,7 @@ class TrainerCard extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               CachedNetworkImage(
-                imageUrl: trainer.avatarBig,
+                imageUrl: trainer.item1.trainerPhoto,
                 imageBuilder: (final context, final imageProvider) {
                   return CircleAvatar(
                     radius: 80,
@@ -273,11 +266,8 @@ class TrainerCard extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.all(8).copyWith(bottom: 0),
                   child: Text(
-                    trainer.name,
-                    style: theme.textTheme.bodyText1?.copyWith(
-                      fontWeight: FontWeight.normal,
-                      color: theme.colorScheme.onSurface,
-                    ),
+                    trainer.item1.trainerName,
+                    style: theme.textTheme.subtitle2,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
@@ -295,8 +285,7 @@ class TrainerCard extends StatelessWidget {
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(
       properties
-        ..add(DiagnosticsProperty<TrainerModel>('trainer', trainer))
-        ..add(DiagnosticsProperty<SMTrainerModel>('smTrainer', smTrainer)),
+        ..add(DiagnosticsProperty<CombinedTrainerModel>('trainer', trainer)),
     );
   }
 }
@@ -305,17 +294,13 @@ class TrainerCard extends StatelessWidget {
 class TrainerScreen extends HookWidget {
   /// The screen to show off a trainer.
   const TrainerScreen(
-    final this.trainer,
-    final this.smTrainer, {
+    final this.trainer, {
     final this.onBackButtonPressed,
     final Key? key,
   }) : super(key: key);
 
-  /// The trainer model from YClients API to display on this screen.
-  final TrainerModel trainer;
-
-  /// The trainer model from SMStretching API to display on this screen.
-  final SMTrainerModel smTrainer;
+  /// The pair of [TrainerModel] and [SMTrainerModel] to display on this screen.
+  final CombinedTrainerModel trainer;
 
   /// The callback on press of the back button.
   final void Function()? onBackButtonPressed;
@@ -324,7 +309,8 @@ class TrainerScreen extends HookWidget {
   Widget build(final BuildContext context) {
     final videoPlayerController = useDisposableChangeNotifier(
       useMemoized(() async {
-        final controller = VideoPlayerController.network(smTrainer.mediaPhoto);
+        final controller =
+            VideoPlayerController.network(trainer.item1.mediaPhoto);
         await controller.initialize();
         await controller.setLooping(true);
         await controller.play();
@@ -335,8 +321,8 @@ class TrainerScreen extends HookWidget {
     return ContentScreen(
       type: NavigationScreen.trainers,
       onBackButtonPressed: onBackButtonPressed,
-      title: trainer.name,
-      subtitle: (smTrainer.classesType?.toCategories())
+      title: trainer.item0.name,
+      subtitle: (trainer.item1.classesType?.toCategories())
               ?.map((final category) => category.translation)
               .join(', ') ??
           '',
@@ -347,7 +333,7 @@ class TrainerScreen extends HookWidget {
         onFirstPressed: (final context) {},
       ),
       paragraphs: <Tuple2<String?, String>>[
-        Tuple2(null, smTrainer.shortlyAbout)
+        Tuple2(null, trainer.item1.shortlyAbout)
       ],
       carousel: videoPlayerController == null
           ? const Center(child: CircularProgressIndicator.adaptive())
@@ -368,8 +354,7 @@ class TrainerScreen extends HookWidget {
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(
       properties
-        ..add(DiagnosticsProperty<TrainerModel>('trainer', trainer))
-        ..add(DiagnosticsProperty<SMTrainerModel>('smTrainer', smTrainer))
+        ..add(DiagnosticsProperty<CombinedTrainerModel>('trainer', trainer))
         ..add(
           ObjectFlagProperty<void Function()>.has(
             'onBackButtonPressed',

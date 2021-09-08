@@ -72,6 +72,14 @@ abstract class TR {
   static const String activitiesSearch = 'activities.search';
   static const String activities12h = 'activities.12h';
 
+  static const String activitiesDurationMinuteShort = 'activities.duration.minute_short';
+
+  static const String activitiesDurationMinute = 'activities.duration.minute';
+  static const String activitiesDurationHourShort = 'activities.duration.hour_short';
+
+  static const String activitiesDurationHour = 'activities.duration.hour';
+  static const String activitiesDuration = 'activities.duration';
+
   static const String activitiesFullnessFull = 'activities.fullness.full';
 
   static const String activitiesFullnessLow = 'activities.fullness.low';

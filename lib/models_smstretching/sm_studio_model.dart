@@ -25,7 +25,7 @@ class SMStudioConverter
 ///
 /// See: https://smstretching.ru/wp-json/jet-cct/studii
 @immutable
-class SMStudioModel {
+class SMStudioModel implements Comparable<SMStudioModel> {
   /// The model of a studio from SMStretching API.
   ///
   /// See: https://smstretching.ru/wp-json/jet-cct/studii
@@ -117,6 +117,9 @@ class SMStudioModel {
 
   /// The type of this model in the SMStretching API.
   final String cctSlug;
+
+  @override
+  int compareTo(final SMStudioModel other) => id.compareTo(other.id);
 
   /// Return the copy of this model.
   SMStudioModel copyWith({

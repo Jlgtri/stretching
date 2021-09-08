@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
@@ -162,11 +163,12 @@ final StateNotifierProvider<NavigationNotifier, PersistentTabController>
 /// The notifier that contains the main app's navigation features.
 class NavigationNotifier
     extends SaveToHiveNotifier<PersistentTabController, String>
-    with ModalBottomSheets {
+// with ModalBottomSheets {
+{
   /// The notifier that contains the main app's navigation features.
   factory NavigationNotifier(final ProviderRefBase ref) {
     final notifier = NavigationNotifier._(ref);
-    ref.listen<bool>(userIsNullProvider, (final userIsNull) {
+    ref.listen<bool>(unauthorizedProvider, (final userIsNull) {
       if (userIsNull &&
           notifier.state.index == NavigationScreen.profile.index) {
         if (notifier.previousScreenIndex == NavigationScreen.profile.index) {
@@ -192,7 +194,7 @@ class NavigationNotifier
   @override
   final ProviderRefBase ref;
 
-  late int _previousScreenIndex = state.index;
+  int _previousScreenIndex = 0;
 
   /// The index of the previous [NavigationScreen].
   int get previousScreenIndex => _previousScreenIndex;
@@ -286,26 +288,76 @@ class NavigationRoot extends HookConsumerWidget {
             curve: Curves.easeInOut,
             duration: transitionDuration,
           ),
-          onWillPop: (final context) {
-            return navigation.showAlertBottomSheet<bool>(
-              context: context!,
-              defaultValue: false,
-              title: TR.alertExitTitle.tr(),
-              firstText: TR.alertExitApprove.tr(),
-              onFirstPressed: (final context) async {
-                await SystemNavigator.pop();
-                exit(0);
-              },
-              secondText: TR.alertExitDeny.tr(),
-              onSecondPressed: (final context) async {
-                await Navigator.of(context).maybePop();
-                return false;
-              },
-            );
+          onWillPop: (final _) async {
+            return (await showMaterialModalBottomSheet<bool?>(
+                  context: context,
+                  builder: (final context) {
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        BottomSheetHeader(title: TR.alertExitTitle.tr()),
+                        SingleChildScrollView(
+                          primary: false,
+                          controller: ModalScrollController.of(context),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 36,
+                            ),
+                            child: BottomButtons(
+                              firstText: TR.alertExitApprove.tr(),
+                              onFirstPressed: (final context) async {
+                                await SystemNavigator.pop();
+                                exit(0);
+                              },
+                              secondText: TR.alertExitDeny.tr(),
+                              onSecondPressed: (final context) async {
+                                await Navigator.of(context).maybePop();
+                                return false;
+                              },
+                            ),
+                          ),
+                        )
+                      ],
+                    );
+                  },
+                )) ??
+                false;
+
+            // (await navigation.showAlertBottomSheet<bool?>(
+            //       context: context!,
+            //       title: TR.alertExitTitle.tr(),
+            //       builder: (final scrollController, final physics) {
+            //         return SingleChildScrollView(
+            //           primary: false,
+            //           controller: scrollController,
+            //           physics: physics,
+            //           child: Padding(
+            //             padding: const EdgeInsets.symmetric(
+            //               horizontal: 16,
+            //               vertical: 36,
+            //             ),
+            //             child: BottomButtons(
+            //               firstText: TR.alertExitApprove.tr(),
+            //               onFirstPressed: (final context) async {
+            //                 await SystemNavigator.pop();
+            //                 exit(0);
+            //               },
+            //               secondText: TR.alertExitDeny.tr(),
+            //               onSecondPressed: (final context) async {
+            //                 await Navigator.of(context).maybePop();
+            //                 return false;
+            //               },
+            //             ),
+            //           ),
+            //         );
+            //       },
+            //     )) ??
+            //     false;
           },
           onItemSelected: (final index) async {
             if (index == NavigationScreen.profile.index &&
-                ref.read(userIsNullProvider)) {
+                ref.read(unauthorizedProvider)) {
               if (navigation.previousScreenIndex ==
                   NavigationScreen.profile.index) {
                 navigation.state.index = NavigationScreen.home.index;

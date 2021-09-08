@@ -36,7 +36,7 @@ class TrainerConverter
 
 /// The trainer model of the YClients API book_staff method.
 @immutable
-class TrainerModel {
+class TrainerModel implements Comparable<TrainerModel> {
   /// The trainer model of the YClients API book_staff method.
   const TrainerModel({
     required final this.id,
@@ -80,6 +80,11 @@ class TrainerModel {
 
   /// The position of this trainer.
   final TrainerPositionModel? position;
+
+  @override
+  int compareTo(final TrainerModel other) {
+    return name.toLowerCase().compareTo(other.name.toLowerCase());
+  }
 
   /// Return the copy of this model.
   TrainerModel copyWith({

@@ -17,7 +17,7 @@ class HomeScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     return Column(
       children: <Widget>[
-        if (ref.watch(userIsNullProvider))
+        if (ref.watch(unauthorizedProvider))
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
             child: TextButton(

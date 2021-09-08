@@ -1,4 +1,3 @@
-import 'package:badges/badges.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -102,29 +101,100 @@ AppBarTheme get _appBarTheme {
 }
 
 TextTheme get _textTheme {
-  return const TextTheme(
+  final textTheme = const TextTheme(
+    /// Heading 1
     headline1: TextStyle(
       fontSize: 32,
+      height: 40 / 32,
+      fontWeight: FontWeight.w900,
+    ),
+
+    /// Heading 2
+    headline2: TextStyle(
+      fontSize: 28,
+      height: 32 / 28,
       fontWeight: FontWeight.bold,
     ),
-    headline2: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-    headline3: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
-    subtitle1: TextStyle(
+
+    /// Heading 3
+    headline3: TextStyle(
+      fontSize: 22,
+      height: 24 / 22,
+      fontWeight: FontWeight.w600,
+    ),
+
+    /// Capture 1
+    headline5: TextStyle(
       fontSize: 16,
       fontWeight: FontWeight.w500,
-      color: Colors.grey,
     ),
-    subtitle2: TextStyle(fontSize: 16, color: Colors.grey),
-    bodyText1: TextStyle(fontSize: 18, fontWeight: FontWeight.normal),
-    bodyText2: TextStyle(fontSize: 16, fontWeight: FontWeight.normal),
+
+    /// Capture 2
+    headline6: TextStyle(
+      fontSize: 14,
+      // height: 20 / 14,
+      fontWeight: FontWeight.normal,
+    ),
+
+    /// Medium Text Bold
+    subtitle1: TextStyle(
+      fontSize: 18,
+      height: 22 / 18,
+      fontWeight: FontWeight.bold,
+    ),
+
+    /// Medium Text
+    subtitle2: TextStyle(
+      fontSize: 18,
+      height: 22 / 18,
+      fontWeight: FontWeight.normal,
+    ),
+
+    /// Regular Text Bold
+    bodyText1: TextStyle(
+      fontSize: 16,
+      height: 22 / 16,
+      fontWeight: FontWeight.w600,
+    ),
+
+    /// Regular Text
+    bodyText2: TextStyle(
+      fontSize: 16,
+      height: 22 / 16,
+      fontWeight: FontWeight.normal,
+    ),
+
+    /// Capture
     caption: TextStyle(
       fontSize: 14,
-      fontWeight: FontWeight.bold,
-      color: Colors.white,
-      decoration: TextDecoration.underline,
+      height: 16 / 14,
+      fontWeight: FontWeight.normal,
     ),
-    button: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-  ).apply(fontFamily: 'SF', displayColor: Colors.black);
+
+    /// Hint
+    overline: TextStyle(
+      fontSize: 12,
+      height: 16 / 12,
+      color: Colors.grey,
+      fontWeight: FontWeight.w500,
+    ),
+
+    /// Button
+    button: TextStyle(
+      fontSize: 16,
+      height: 22 / 16,
+      fontWeight: FontWeight.w500,
+    ),
+  ).apply(
+    fontFamily: 'SF',
+    displayColor: Colors.black,
+    bodyColor: Colors.black,
+    decorationColor: Colors.black,
+  );
+  return textTheme.copyWith(
+    overline:
+        textTheme.overline?.copyWith(color: Colors.grey, letterSpacing: 0),
+  );
 }
 
 InputDecorationTheme get _inputDecorationTheme {
@@ -132,7 +202,9 @@ InputDecorationTheme get _inputDecorationTheme {
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     labelStyle: _textTheme.subtitle1,
     floatingLabelStyle: _textTheme.subtitle2,
-    hintStyle: _textTheme.bodyText2,
+    hintStyle: _textTheme.bodyText2?.copyWith(
+      color: _textTheme.overline?.color,
+    ),
     helperStyle: _textTheme.bodyText1,
     errorStyle: _textTheme.bodyText2,
     border: const OutlineInputBorder(),
@@ -177,6 +249,7 @@ extension TextButtonStyleData on TextButtonStyle {
     switch (this) {
       case TextButtonStyle.light:
         return ButtonStyle(
+          textStyle: MaterialStateProperty.all(theme.textTheme.button),
           overlayColor: MaterialStateProperty.all(
             theme.colorScheme.onSurface.withOpacity(1 / 3),
           ),
@@ -190,6 +263,7 @@ extension TextButtonStyleData on TextButtonStyle {
         );
       case TextButtonStyle.dark:
         return ButtonStyle(
+          textStyle: MaterialStateProperty.all(theme.textTheme.button),
           overlayColor: MaterialStateProperty.all(
             theme.colorScheme.surface.withOpacity(1 / 3),
           ),
@@ -220,13 +294,12 @@ extension InputDecorationStyleData on InputDecorationStyle {
 
   /// Return this style from [theme].
   ///
+  /// - [hintText] sets the hint text.
   /// - [onSuffix] sets the callback on suffix.
-  /// - If [suffixCount] is greater than 0, then badge is shown.
   InputDecoration fromTheme(
     final ThemeData theme, {
     final String? hintText,
     final void Function()? onSuffix,
-    final int suffixCount = 0,
   }) {
     switch (this) {
       case InputDecorationStyle.search:
@@ -240,9 +313,11 @@ extension InputDecorationStyleData on InputDecorationStyle {
           ),
           prefixIconConstraints:
               const BoxConstraints(minWidth: 48, maxWidth: 48),
-          suffix: suffixCount <= 0
+          suffix: onSuffix != null
               ? MaterialButton(
                   onPressed: onSuffix,
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(4),
                   ),
@@ -251,28 +326,6 @@ extension InputDecorationStyleData on InputDecorationStyle {
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
                       fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                )
-              : null,
-          suffixIcon: suffixCount > 0
-              ? MaterialButton(
-                  onPressed: onSuffix,
-                  child: Badge(
-                    badgeContent: Text(
-                      suffixCount.toString(),
-                      style: TextStyle(
-                        height: 10,
-                        color: theme.colorScheme.surface,
-                      ),
-                    ),
-                    badgeColor: theme.colorScheme.onSurface,
-                    animationType: BadgeAnimationType.scale,
-                    child: FontIcon(
-                      FontIconData(
-                        IconsCG.filter,
-                        color: theme.colorScheme.onSurface,
-                      ),
                     ),
                   ),
                 )

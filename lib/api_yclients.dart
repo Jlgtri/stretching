@@ -8,6 +8,7 @@ import 'package:stretching/models/yclients_response.dart';
 import 'package:stretching/models_smstretching/sm_studio_model.dart';
 import 'package:stretching/models_yclients/abonement_model.dart';
 import 'package:stretching/models_yclients/activity_model.dart';
+import 'package:stretching/models_yclients/company_model.dart';
 import 'package:stretching/models_yclients/record_model.dart';
 import 'package:stretching/models_yclients/trainer_model.dart';
 import 'package:stretching/models_yclients/user_model.dart';
@@ -47,10 +48,10 @@ final Provider<YClientsAPI> yClientsProvider =
 
 /// The content provider for the YClients API.
 final AutoDisposeFutureProvider<void> yClientsContentProvider =
-    FutureProvider.autoDispose<void>((final ref) async {
+    FutureProvider.autoDispose<void>((final ref) {
   final studios = ref.watch(smStudiosProvider);
   if (studios.isEmpty) {
-    return;
+    return Future<void>.value();
   }
 
   final yClients = ref.read(yClientsProvider);
@@ -78,18 +79,23 @@ final AutoDisposeFutureProvider<void> yClientsContentProvider =
   //   throw Exception('City id is not found in the fetched cities.');
   // }
 
+  final futures = List<Future<void>>.empty(growable: true);
+
   final studiosNotifier = ref.read(studiosProvider.notifier);
   try {
     if (studiosNotifier.state.isEmpty) {
-      await yClients.mapData<StudioModel, SMStudioModel>(
-        mapData: studios,
-        notifier: studiosNotifier,
-        jsonConverter: ((studiosNotifier.converter as StringToIterableConverter<
-                        StudioModel, Map<String, Object?>>)
-                    .converter
-                as IterableConverter<StudioModel, Map<String, Object?>>)
-            .converter,
-        url: (final studio) => '$yClientsUrl/company/${studio.studioYId}',
+      futures.add(
+        yClients.mapData<StudioModel, SMStudioModel>(
+          mapData: studios,
+          notifier: studiosNotifier,
+          jsonConverter: ((studiosNotifier.converter
+                          as StringToIterableConverter<StudioModel,
+                              Map<String, Object?>>)
+                      .converter
+                  as IterableConverter<StudioModel, Map<String, Object?>>)
+              .converter,
+          url: (final studio) => '$yClientsUrl/company/${studio.studioYId}',
+        ),
       );
     }
   } on DioError catch (e) {
@@ -100,13 +106,17 @@ final AutoDisposeFutureProvider<void> yClientsContentProvider =
   final trainersNotifier = ref.read(trainersProvider.notifier);
   try {
     if (trainersNotifier.state.isEmpty) {
-      await yClients.mapIterableData<TrainerModel, SMStudioModel>(
-        mapData: studios,
-        notifier: trainersNotifier,
-        jsonConverter: (trainersNotifier.converter as StringToIterableConverter<
-                TrainerModel, Map<String, Object?>>)
-            .converter,
-        url: (final studio) => '$yClientsUrl/company/${studio.studioYId}/staff',
+      futures.add(
+        yClients.mapIterableData<TrainerModel, SMStudioModel>(
+          mapData: studios,
+          notifier: trainersNotifier,
+          jsonConverter: (trainersNotifier.converter
+                  as StringToIterableConverter<TrainerModel,
+                      Map<String, Object?>>)
+              .converter,
+          url: (final studio) =>
+              '$yClientsUrl/company/${studio.studioYId}/staff',
+        ),
       );
     }
   } on DioError catch (e) {
@@ -117,38 +127,48 @@ final AutoDisposeFutureProvider<void> yClientsContentProvider =
   final scheduleNotifier = ref.read(scheduleProvider.notifier);
   try {
     if (scheduleNotifier.state.isEmpty) {
-      await yClients.mapIterableData<ActivityModel, SMStudioModel>(
-        mapData: studios,
-        notifier: scheduleNotifier,
-        jsonConverter: (scheduleNotifier.converter as StringToIterableConverter<
-                ActivityModel, Map<String, Object?>>)
-            .converter,
-        url: (final studio) =>
-            '$yClientsUrl/activity/${studio.studioYId}/search',
-        queryParameters: (final studio) => <String, Object?>{'count': 300},
+      futures.add(
+        yClients.mapIterableData<ActivityModel, SMStudioModel>(
+          mapData: studios,
+          notifier: scheduleNotifier,
+          jsonConverter: (scheduleNotifier.converter
+                  as StringToIterableConverter<ActivityModel,
+                      Map<String, Object?>>)
+              .converter,
+          url: (final studio) =>
+              '$yClientsUrl/activity/${studio.studioYId}/search',
+          queryParameters: (final studio) => <String, Object?>{'count': 300},
+        ),
       );
     }
   } on DioError catch (e) {
     scheduleNotifier.state = const Iterable<ActivityModel>.empty();
     logger.e(e.message, e, e.stackTrace);
   }
+
+  return Future.wait<void>(futures);
 });
 
 /// The user-specific content provider for the YClients API.
 final FutureProvider<void> yClientsUserContentProvider =
-    FutureProvider<void>((final ref) async {
+    FutureProvider<void>((final ref) {
+  final futures = List<Future<void>>.empty(growable: true);
+
   final yClients = ref.read(yClientsProvider);
   final abonementsNotifier = ref.read(userAbonementsProvider.notifier);
   try {
-    await yClients.mapIterableData<AbonementModel, SMStretchingStudios>(
-      mapData: SMStretchingStudios.values,
-      notifier: abonementsNotifier,
-      jsonConverter: (abonementsNotifier.converter as StringToIterableConverter<
-              AbonementModel, Map<String, Object?>>)
-          .converter,
-      url: (final studio) => '$yClientsUrl/user/loyalty/abonements',
-      queryParameters: (final studio) =>
-          <String, Object?>{'company_id': studio.id},
+    futures.add(
+      yClients.mapIterableData<AbonementModel, SMStretchingStudios>(
+        mapData: SMStretchingStudios.values,
+        notifier: abonementsNotifier,
+        jsonConverter: (abonementsNotifier.converter
+                as StringToIterableConverter<AbonementModel,
+                    Map<String, Object?>>)
+            .converter,
+        url: (final studio) => '$yClientsUrl/user/loyalty/abonements',
+        queryParameters: (final studio) =>
+            <String, Object?>{'company_id': studio.id},
+      ),
     );
   } on DioError catch (e) {
     abonementsNotifier.state = const Iterable<AbonementModel>.empty();
@@ -157,17 +177,21 @@ final FutureProvider<void> yClientsUserContentProvider =
 
   final recordNotifier = ref.read(userRecordsProvider.notifier);
   try {
-    await yClients.getIterableData<RecordModel>(
-      notifier: recordNotifier,
-      jsonConverter: (recordNotifier.converter
-              as StringToIterableConverter<RecordModel, Map<String, Object?>>)
-          .converter,
-      url: '$yClientsUrl/user/records',
+    futures.add(
+      yClients.getIterableData<RecordModel>(
+        notifier: recordNotifier,
+        jsonConverter: (recordNotifier.converter
+                as StringToIterableConverter<RecordModel, Map<String, Object?>>)
+            .converter,
+        url: '$yClientsUrl/user/records',
+      ),
     );
   } on DioError catch (e) {
     recordNotifier.state = const Iterable<RecordModel>.empty();
     logger.e(e.message, e, e.stackTrace);
   }
+
+  return Future.wait<void>(futures);
 });
 
 /// The base class for contacting with YClients API.
