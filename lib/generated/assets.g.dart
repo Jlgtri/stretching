@@ -7,6 +7,7 @@
 /// flutter:
 ///   assets:
 ///     - assets/google_map_style.json
+///     - assets/emoji/10084.png
 ///     - assets/emoji/1f499.png
 ///     - assets/emoji/1f525.png
 ///     - assets/emoji/1f609.png
@@ -29,6 +30,11 @@
 ///     - assets/emoji/26a1.png
 ///     - assets/emoji/270c-fe0f.png
 ///     - assets/emoji/2764-fe0f.png
+///     - assets/messengers/facebook.png
+///     - assets/messengers/telegram.png
+///     - assets/messengers/viber.png
+///     - assets/messengers/vk.png
+///     - assets/messengers/whatsApp.png
 ///     - assets/translations/ru-RU.json
 
 
@@ -39,6 +45,7 @@ abstract class AssetsCG {
   static const String googleMapStyle = 'assets/google_map_style.json';
 
   static const String emoji = 'assets/emoji';
+  static const String emoji10084 = 'assets/emoji/10084.png';
   static const String emoji1f499 = 'assets/emoji/1f499.png';
   static const String emoji1f525 = 'assets/emoji/1f525.png';
   static const String emoji1f609 = 'assets/emoji/1f609.png';
@@ -61,6 +68,13 @@ abstract class AssetsCG {
   static const String emoji26a1 = 'assets/emoji/26a1.png';
   static const String emoji270cfe0f = 'assets/emoji/270c-fe0f.png';
   static const String emoji2764fe0f = 'assets/emoji/2764-fe0f.png';
+
+  static const String messengers = 'assets/messengers';
+  static const String messengersFacebook = 'assets/messengers/facebook.png';
+  static const String messengersTelegram = 'assets/messengers/telegram.png';
+  static const String messengersViber = 'assets/messengers/viber.png';
+  static const String messengersVk = 'assets/messengers/vk.png';
+  static const String messengersWhatsApp = 'assets/messengers/whatsApp.png';
 
   static const String translations = 'assets/translations';
   static const String translationsRuRU = 'assets/translations/ru-RU.json';

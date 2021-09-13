@@ -125,7 +125,10 @@ String? emojiToUnicode(final String input) {
         pairs.add(input.codeUnitAt(i));
       }
     }
-    return pairs.map((final e) => e.toRadixString(16)).toList().join('-');
+    return pairs
+        .map((final e) => e.toRadixString(16))
+        .toList(growable: false)
+        .join('-');
   }
 }
 

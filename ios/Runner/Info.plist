@@ -47,6 +47,13 @@
 		<string>This app needs access to location when open.</string>
 		<key>NSLocationAlwaysUsageDescription</key>
 		<string>This app needs access to location when in the background.</string>
+		<key>NSCalendarsUsageDescription</key>
+		<string>Это поможет запускать полезный функционал, анализировать проблемы и предоставлять лучший сервис для вас.</string>
+		<key>CFBundleLocalizations</key>
+		<array>
+			<string>en</string>
+			<string>ru</string>
+		</array>
 		<key>NSAppTransportSecurity</key>
 		<dict>
 			<key>NSAllowsArbitraryLoads</key>

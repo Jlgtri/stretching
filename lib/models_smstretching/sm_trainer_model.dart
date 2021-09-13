@@ -82,11 +82,6 @@ class SMTrainerModel implements Comparable<SMTrainerModel> {
   /// The type of this model in the SMStretching API.
   final String cctSlug;
 
-  @override
-  int compareTo(final SMTrainerModel other) {
-    return trainerName.toLowerCase().compareTo(other.trainerName.toLowerCase());
-  }
-
   /// Return the copy of this model.
   SMTrainerModel copyWith({
     final int? id,
@@ -129,8 +124,8 @@ class SMTrainerModel implements Comparable<SMTrainerModel> {
       'shortly_about': shortlyAbout,
       'trainer_photo': trainerPhoto,
       'cct_author_id': cctAuthorId.toString(),
-      'cct_created': cctCreated.toString(),
-      'cct_modified': cctModified.toString(),
+      'cct_created': cctCreated.toString().split('.').first,
+      'cct_modified': cctModified.toString().split('.').first,
       'classestype': classesType?.toMap(),
       'cct_slug': cctSlug,
     };
@@ -164,6 +159,11 @@ class SMTrainerModel implements Comparable<SMTrainerModel> {
   /// Convert the json string to this model.
   factory SMTrainerModel.fromJson(final String source) =>
       SMTrainerModel.fromMap(json.decode(source) as Map<String, Object?>);
+
+  @override
+  int compareTo(final SMTrainerModel other) {
+    return trainerName.toLowerCase().compareTo(other.trainerName.toLowerCase());
+  }
 
   @override
   bool operator ==(final Object other) {

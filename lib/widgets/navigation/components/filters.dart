@@ -46,6 +46,53 @@ extension CategoriesData on ClassCategory {
   String get translation => '${TR.category}.${enumToString(this)}'.tr();
 }
 
+/// The extra data provided for [ClassCategory].
+extension IterableCategoriesData on Iterable<ClassCategory> {
+  /// Returns the widget that provides functionality for selecting and
+  /// deselecting a [ClassCategory].
+  ///
+  /// [onSelected] is called when category is tapped.
+  PreferredSizeWidget getSelectorWidget(
+    final ThemeData theme,
+    final void Function(ClassCategory category, bool value) onSelected, {
+    final double height = 36,
+    final EdgeInsets padding = const EdgeInsets.symmetric(vertical: 24),
+  }) {
+    return PreferredSize(
+      preferredSize: Size.fromHeight(height + padding.vertical),
+      child: Align(
+        alignment: Alignment.bottomLeft,
+        child: Padding(
+          padding: padding.copyWith(top: 0),
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (final notification) => true,
+            child: SingleChildScrollView(
+              primary: false,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: <Widget>[
+                  for (final category in ClassCategory.values)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: FilterButton(
+                        selected: contains(category),
+                        text: category.translation,
+                        onSelected: (final value) =>
+                            onSelected(category, value),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// The button that checks a filter.
 class FilterButton extends StatelessWidget {
   /// The button that checks a filter.
@@ -144,53 +191,6 @@ class FilterButton extends StatelessWidget {
             onSelected,
           ),
         ),
-    );
-  }
-}
-
-/// The extra data provided for [ClassCategory].
-extension IterableCategoriesData on Iterable<ClassCategory> {
-  /// Returns the widget that provides functionality for selecting and
-  /// deselecting a [ClassCategory].
-  ///
-  /// [onSelected] is called when category is tapped.
-  PreferredSizeWidget getSelectorWidget(
-    final ThemeData theme,
-    final void Function(ClassCategory category, bool value) onSelected, {
-    final double height = 36,
-    final EdgeInsets padding = const EdgeInsets.symmetric(vertical: 24),
-  }) {
-    return PreferredSize(
-      preferredSize: Size.fromHeight(height + padding.vertical),
-      child: Align(
-        alignment: Alignment.bottomLeft,
-        child: Padding(
-          padding: padding.copyWith(top: 0),
-          child: NotificationListener<ScrollNotification>(
-            onNotification: (final notification) => true,
-            child: SingleChildScrollView(
-              controller: ScrollController(),
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              physics: const BouncingScrollPhysics(),
-              child: Row(
-                children: <Widget>[
-                  for (final category in ClassCategory.values)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: FilterButton(
-                        selected: contains(category),
-                        text: category.translation,
-                        onSelected: (final value) =>
-                            onSelected(category, value),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

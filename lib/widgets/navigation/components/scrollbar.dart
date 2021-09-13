@@ -6,12 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stretching/providers/other_providers.dart';
+import 'package:stretching/widgets/appbars.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 
 /// The widget builder with a scroll controller;
 typedef ScrollWidgetBuilder = Widget Function(
   BuildContext context,
   ScrollController scrollController,
+  void Function()? resetScrollbarPosition,
 );
 
 /// Provides a scrollable to it's [builder] that consumes a scroll controller.
@@ -91,17 +93,17 @@ class CustomDraggableScrollBar extends HookConsumerWidget {
         physics: const NeverScrollableScrollPhysics(),
         itemExtent: mediaQuery.size.height -
             mediaQuery.viewPadding.top -
-            NavigationRoot.appBarHeight -
+            mainAppBar(theme).preferredSize.height -
             NavigationRoot.navBarHeight,
         children: <Widget>[
           /// Is used for moving the scrollbar to the initial position when
           /// search is reset. Needs to access [DraggableScrollbar] context.
           Builder(
             builder: (final context) {
-              if (!isHeightReset.value && resetScrollbarPosition) {
-                isHeightReset.value = true;
-                final notification = scrollNotificationExample.value;
-                if (notification != null) {
+              void Function()? resetPosition;
+              final notification = scrollNotificationExample.value;
+              if (notification != null) {
+                resetPosition = () {
                   (ref.read(widgetsBindingProvider))
                       .addPostFrameCallback((final _) {
                     ScrollUpdateNotification(
@@ -112,6 +114,10 @@ class CustomDraggableScrollBar extends HookConsumerWidget {
                       scrollDelta: double.negativeInfinity,
                     ).dispatch(notification.context ?? context);
                   });
+                };
+                if (!isHeightReset.value && resetScrollbarPosition) {
+                  isHeightReset.value = true;
+                  resetPosition();
                 }
               }
               return NotificationListener<ScrollUpdateNotification>(
@@ -119,7 +125,7 @@ class CustomDraggableScrollBar extends HookConsumerWidget {
                   scrollNotificationExample.value ??= notification;
                   return false;
                 },
-                child: builder(context, scrollController),
+                child: builder(context, scrollController, resetPosition),
               );
             },
           ),

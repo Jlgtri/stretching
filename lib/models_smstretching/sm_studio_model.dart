@@ -184,11 +184,11 @@ class SMStudioModel implements Comparable<SMStudioModel> {
       'studio_url_calendar': studioUrlCalendar,
       'media_gallery': mediaGallery,
       'cct_author_id': cctAuthorId.toString(),
-      'cct_created': cctCreated.toString(),
-      'cct_modified': cctModified.toString(),
+      'cct_created': cctCreated.toString().split('.').first,
+      'cct_modified': cctModified.toString().split('.').first,
       'studio_yid': studioYId.toString(),
       'media_gallery_site':
-          mediaGallerySite.map((final x) => x.toMap()).toList(),
+          mediaGallerySite.map((final x) => x.toMap()).toList(growable: false),
       'cct_single_post_id': cctSinglePostId.toString(),
       'link': link,
       'instagram': instagram,
@@ -219,7 +219,7 @@ class SMStudioModel implements Comparable<SMStudioModel> {
       cctModified: DateTime.parse(map['cct_modified']! as String),
       studioYId: int.parse(map['studio_yid']! as String),
       mediaGallerySite: (map['media_gallery_site']! as Iterable)
-          .whereType<Map<String, Object?>>()
+          .cast<Map<String, Object?>>()
           .map((final x) => SMStudioMediaModel.fromMap(x)),
       cctSinglePostId: int.parse(map['cct_single_post_id']! as String),
       link: map['link']! as String,
@@ -348,14 +348,8 @@ class SMStudioMediaModel {
   }
 
   /// Return the copy of this model.
-  SMStudioMediaModel copyWith({
-    final int? id,
-    final String? url,
-  }) {
-    return SMStudioMediaModel(
-      id: id ?? this.id,
-      url: url ?? this.url,
-    );
+  SMStudioMediaModel copyWith({final int? id, final String? url}) {
+    return SMStudioMediaModel(id: id ?? this.id, url: url ?? this.url);
   }
 
   @override

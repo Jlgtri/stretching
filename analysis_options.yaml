@@ -9,11 +9,15 @@ analyzer:
     - value-class
     - variance
   errors:
+    cast_nullable_to_non_nullable: warning
+    dead_code: warning
     invalid_assignment: error
     missing_return: error
     missing_required_param: error
     must_call_super: error
     null_check_always_fails: error
+    unrelated_type_equality_checks: warning
+    unnecessary_null_comparison: warning
 
 linter:
   rules:

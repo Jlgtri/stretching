@@ -406,7 +406,7 @@ class CompanyModel implements Comparable<CompanyModel> {
       'city': city,
       'active': boolToIntConverter.toJson(active),
       'phone': phone,
-      'phones': phones.toList(),
+      'phones': phones.toList(growable: false),
       'email': email,
       'timezone': timezone,
       'timezone_name': timezoneName,
@@ -424,7 +424,7 @@ class CompanyModel implements Comparable<CompanyModel> {
       'group_priority': groupPriority,
       'bookform_group_priority': bookformGroupPriority,
       'description': description,
-      'photos': photos.toList(),
+      'photos': photos.toList(growable: false),
       'seance_delay_step': seanceDelayStep,
       'show_any_master': showAnyMaster,
       'allow_delete_record': allowDeleteRecord,
@@ -766,9 +766,11 @@ class CompanyMainGroupModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory CompanyMainGroupModel.fromJson(final String source) =>
-      CompanyMainGroupModel.fromMap(
-          json.decode(source) as Map<String, Object?>);
+  factory CompanyMainGroupModel.fromJson(final String source) {
+    return CompanyMainGroupModel.fromMap(
+      json.decode(source) as Map<String, Object?>,
+    );
+  }
 
   @override
   bool operator ==(final Object other) {

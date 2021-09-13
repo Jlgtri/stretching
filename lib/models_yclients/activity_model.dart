@@ -1,6 +1,7 @@
 // ignore_for_file: sort_constructors_first
 
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:meta/meta.dart';
 import 'package:stretching/models_yclients/trainer_model.dart';
@@ -68,7 +69,7 @@ class ActivityModel implements Comparable<ActivityModel> {
   final DateTime date;
 
   /// The duration of this activity.
-  final int length;
+  final Duration length;
 
   /// The maximum count of people attending this activity.
   final int capacity;
@@ -96,16 +97,8 @@ class ActivityModel implements Comparable<ActivityModel> {
 
   final Iterable<Object?> labels;
 
-  @override
-  int compareTo(final ActivityModel other) {
-    final dateCompare = date.compareTo(other.date);
-    if (dateCompare != 0) {
-      return dateCompare;
-    }
-
-    final studioCompare = companyId.compareTo(other.companyId);
-    return studioCompare;
-  }
+  /// The count of records left on this activity.
+  int get recordsLeft => max(0, capacity - recordsCount);
 
   /// Return the copy of this model.
   ActivityModel copyWith({
@@ -114,7 +107,7 @@ class ActivityModel implements Comparable<ActivityModel> {
     final int? companyId,
     final int? staffId,
     final DateTime? date,
-    final int? length,
+    final Duration? length,
     final int? capacity,
     final int? recordsCount,
     final String? color,
@@ -160,7 +153,7 @@ class ActivityModel implements Comparable<ActivityModel> {
       'company_id': companyId,
       'staff_id': staffId,
       'date': date.toIso8601String(),
-      'length': length,
+      'length': length.inSeconds,
       'capacity': capacity,
       'records_count': recordsCount,
       'color': color,
@@ -172,9 +165,10 @@ class ActivityModel implements Comparable<ActivityModel> {
       'prepaid': prepaidConverter.toJson(prepaid),
       'service': service.toMap(),
       'staff': staff.toMap(),
-      'resource_instances':
-          resourceInstances.map((final resource) => resource.toMap()).toList(),
-      'labels': labels.map((final label) => label).toList(),
+      'resource_instances': resourceInstances
+          .map((final resource) => resource.toMap())
+          .toList(growable: false),
+      'labels': labels.map((final label) => label).toList(growable: false),
     };
   }
 
@@ -186,7 +180,7 @@ class ActivityModel implements Comparable<ActivityModel> {
       companyId: map['company_id']! as int,
       staffId: map['staff_id']! as int,
       date: dateTimeConverter.fromJson(map['date']! as String),
-      length: map['length']! as int,
+      length: Duration(seconds: map['length']! as int),
       capacity: map['capacity']! as int,
       recordsCount: map['records_count']! as int,
       color: map['color']! as String,
@@ -212,6 +206,17 @@ class ActivityModel implements Comparable<ActivityModel> {
   /// Convert the json string to this model.
   factory ActivityModel.fromJson(final String source) =>
       ActivityModel.fromMap(json.decode(source) as Map<String, Object?>);
+
+  @override
+  int compareTo(final ActivityModel other) {
+    final dateCompare = date.compareTo(other.date);
+    if (dateCompare != 0) {
+      return dateCompare;
+    }
+
+    final studioCompare = companyId.compareTo(other.companyId);
+    return studioCompare;
+  }
 
   @override
   bool operator ==(final Object other) {
@@ -329,10 +334,11 @@ class ActivityResourceInstanceModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory ActivityResourceInstanceModel.fromJson(final String source) =>
-      ActivityResourceInstanceModel.fromMap(
-        json.decode(source) as Map<String, Object?>,
-      );
+  factory ActivityResourceInstanceModel.fromJson(final String source) {
+    return ActivityResourceInstanceModel.fromMap(
+      json.decode(source) as Map<String, Object?>,
+    );
+  }
 
   @override
   bool operator ==(final Object other) {
@@ -564,10 +570,11 @@ class ActivityServiceCategoryModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory ActivityServiceCategoryModel.fromJson(final String source) =>
-      ActivityServiceCategoryModel.fromMap(
-        json.decode(source) as Map<String, Object?>,
-      );
+  factory ActivityServiceCategoryModel.fromJson(final String source) {
+    return ActivityServiceCategoryModel.fromMap(
+      json.decode(source) as Map<String, Object?>,
+    );
+  }
 
   @override
   bool operator ==(final Object other) {
@@ -824,10 +831,11 @@ class ActitvityStaffPositionModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory ActitvityStaffPositionModel.fromJson(final String source) =>
-      ActitvityStaffPositionModel.fromMap(
-        json.decode(source) as Map<String, Object?>,
-      );
+  factory ActitvityStaffPositionModel.fromJson(final String source) {
+    return ActitvityStaffPositionModel.fromMap(
+      json.decode(source) as Map<String, Object?>,
+    );
+  }
 
   @override
   bool operator ==(final Object other) {

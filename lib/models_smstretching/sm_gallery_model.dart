@@ -3,6 +3,24 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
+import 'package:stretching/utils/json_converters.dart';
+
+/// The converter of the [SMClassesGalleryModel].
+const SMClassesGalleryConverter smClassesGalleryConverter =
+    SMClassesGalleryConverter._();
+
+/// The converter of the [SMClassesGalleryModel].
+class SMClassesGalleryConverter
+    implements JsonConverter<SMClassesGalleryModel, Map<String, Object?>> {
+  const SMClassesGalleryConverter._();
+
+  @override
+  SMClassesGalleryModel fromJson(final Map<String, Object?> data) =>
+      SMClassesGalleryModel.fromMap(data);
+
+  @override
+  Map<String, Object?> toJson(final SMClassesGalleryModel data) => data.toMap();
+}
 
 /// The model of the media provided for a classes from YClients API.
 ///
@@ -52,8 +70,9 @@ class SMClassesGalleryModel {
   final DateTime cctModified;
 
   /// The additional information about this gallery.
-  final String classInfo;
-  final String takeThis;
+  final String? classInfo;
+
+  final String? takeThis;
 
   /// The type of this model in the SMStretching API.
   final String cctSlug;
@@ -96,8 +115,8 @@ class SMClassesGalleryModel {
       'classes_yid': classesYId.toString(),
       'gallery': gallery,
       'cct_author_id': cctAuthorId.toString(),
-      'cct_created': cctCreated.toString(),
-      'cct_modified': cctModified.toString(),
+      'cct_created': cctCreated.toString().split('.').first,
+      'cct_modified': cctModified.toString().split('.').first,
       'class_info': classInfo,
       'take_this': takeThis,
       'cct_slug': cctSlug,
@@ -115,8 +134,8 @@ class SMClassesGalleryModel {
       cctAuthorId: int.parse(map['cct_author_id']! as String),
       cctCreated: DateTime.parse(map['cct_created']! as String),
       cctModified: DateTime.parse(map['cct_modified']! as String),
-      classInfo: map['class_info']! as String,
-      takeThis: map['take_this']! as String,
+      classInfo: map['class_info'] as String?,
+      takeThis: map['take_this'] as String?,
       cctSlug: map['cct_slug']! as String,
     );
   }
@@ -125,10 +144,11 @@ class SMClassesGalleryModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory SMClassesGalleryModel.fromJson(final String source) =>
-      SMClassesGalleryModel.fromMap(
-        json.decode(source) as Map<String, Object?>,
-      );
+  factory SMClassesGalleryModel.fromJson(final String source) {
+    return SMClassesGalleryModel.fromMap(
+      json.decode(source) as Map<String, Object?>,
+    );
+  }
 
   @override
   bool operator ==(final Object other) {

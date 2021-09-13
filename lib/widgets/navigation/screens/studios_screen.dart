@@ -12,6 +12,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'package:stretching/api_smstretching.dart';
+import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/models/map_info_windows_options.dart';
@@ -20,10 +24,12 @@ import 'package:stretching/models_yclients/company_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/style.dart';
+import 'package:stretching/widgets/appbars.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/content_screen.dart';
 import 'package:stretching/widgets/navigation/components/bottom_sheet.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 /// The screen for the [NavigationScreen.studios].
 class StudiosScreen extends HookConsumerWidget {
@@ -39,6 +45,7 @@ class StudiosScreen extends HookConsumerWidget {
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
+    final scrollController = ModalScrollController.of(context);
     final devicePixelRatio =
         Platform.isAndroid ? mediaQuery.devicePixelRatio : 1;
 
@@ -52,6 +59,7 @@ class StudiosScreen extends HookConsumerWidget {
         ),
       ),
     );
+    final refreshController = useMemoized(() => RefreshController());
     final mapController = useState<GoogleMapController?>(null);
     final infoWindowOptions = useState<InfoWindowOptions?>(null);
     final screenCoordinates = useState<ScreenCoordinate?>(null);
@@ -273,20 +281,33 @@ class StudiosScreen extends HookConsumerWidget {
               color: theme.scaffoldBackgroundColor,
               child: Padding(
                 padding: const EdgeInsets.only(top: 80),
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemExtent: 88,
-                  itemCount: studios.length,
-                  itemBuilder: (final context, final index) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: StudioScreenCard(
-                        studios.elementAt(index),
-                        onNonMapTap: (final studio) =>
-                            onMainStudioCardTap(studio.item0),
-                      ),
-                    );
+                child: SmartRefresher(
+                  controller: refreshController,
+                  onLoading: refreshController.loadComplete,
+                  onRefresh: () async {
+                    await Future.wait(<Future<void>>[
+                      ref.read(studiosProvider.notifier).refresh(),
+                      ref.read(smStudiosProvider.notifier).refresh()
+                    ]);
+                    refreshController.refreshCompleted();
                   },
+                  child: ListView.builder(
+                    controller: scrollController,
+                    primary: false,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemExtent: 88,
+                    itemCount: studios.length,
+                    itemBuilder: (final context, final index) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: StudioScreenCard(
+                          studios.elementAt(index),
+                          onNonMapTap: (final studio) =>
+                              onMainStudioCardTap(studio.item0),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             )
@@ -329,12 +350,43 @@ class StudioScreenCard extends ConsumerWidget {
           onBackButtonPressed: action,
           title: studio.item1.studioName,
           subtitle: studio.item1.studioAddress,
-          bottomButtons: BottomButtons<void>(
-            inverse: true,
-            direction: Axis.horizontal,
-            firstText: TR.studiosFind.tr(),
-            onFirstPressed: (final context) {},
-          ),
+          persistentFooterButtons: <Widget>[
+            BottomButtons<void>(
+              inverse: true,
+              direction: Axis.horizontal,
+              firstText: TR.studiosFind.tr(),
+              onFirstPressed: (final context) => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (final builder) {
+                    return Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: NavigationRoot.navBarHeight,
+                      ),
+                      child: Scaffold(
+                        extendBodyBehindAppBar: true,
+                        appBar: mainAppBar(
+                          Theme.of(context),
+                          leading: const FontIconBackButton(),
+                        ),
+                        body: WebView(
+                          initialUrl:
+                              smStretchingUrl + studio.item1.studioUrlAbout,
+                          initialMediaPlaybackPolicy:
+                              AutoMediaPlaybackPolicy.always_allow,
+                          javascriptMode: JavascriptMode.unrestricted,
+                          navigationDelegate: (final navigation) {
+                            return navigation.url.startsWith(smStretchingUrl)
+                                ? NavigationDecision.navigate
+                                : NavigationDecision.prevent;
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
           paragraphs: <ContentParagraph>[
             Tuple2(
               TR.studiosTimetable.tr(),

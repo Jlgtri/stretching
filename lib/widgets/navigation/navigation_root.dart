@@ -4,7 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
@@ -17,11 +17,11 @@ import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/utils/enum_to_string.dart';
 import 'package:stretching/utils/json_converters.dart';
-import 'package:stretching/widgets/components/font_icon.dart';
+import 'package:stretching/widgets/appbars.dart';
 import 'package:stretching/widgets/navigation/components/bottom_sheet.dart';
 import 'package:stretching/widgets/navigation/screens/activities_screen.dart';
 import 'package:stretching/widgets/navigation/screens/home_screen.dart';
-import 'package:stretching/widgets/navigation/screens/profile_screen.dart';
+import 'package:stretching/widgets/navigation/screens/profile/profile_screen.dart';
 import 'package:stretching/widgets/navigation/screens/studios_screen.dart';
 import 'package:stretching/widgets/navigation/screens/trainers_screen.dart';
 
@@ -152,6 +152,12 @@ extension NavigationScreenData on NavigationScreen {
 final StateProvider<bool> hideNavigationProvider =
     StateProvider<bool>((final ref) => false);
 
+final StateProvider<bool> navigationTransitioningProvider =
+    StateProvider<bool>((final ref) => false);
+
+final StateProvider<int> currentNavigationProvider =
+    StateProvider<int>((final ref) => 0);
+
 /// The provider of the [NavigationScreen].
 final StateNotifierProvider<NavigationNotifier, PersistentTabController>
     navigationProvider =
@@ -168,6 +174,12 @@ class NavigationNotifier
   /// The notifier that contains the main app's navigation features.
   factory NavigationNotifier(final ProviderRefBase ref) {
     final notifier = NavigationNotifier._(ref);
+    notifier.state.addListener(() async {
+      ref.read(currentNavigationProvider).state = notifier.state.index;
+      ref.read(navigationTransitioningProvider).state = true;
+      await Future<void>.delayed(NavigationRoot.transitionDuration);
+      ref.read(navigationTransitioningProvider).state = false;
+    });
     ref.listen<bool>(unauthorizedProvider, (final userIsNull) {
       if (userIsNull &&
           notifier.state.index == NavigationScreen.profile.index) {
@@ -181,7 +193,7 @@ class NavigationNotifier
     return notifier;
   }
 
-  NavigationNotifier._(final this.ref)
+  NavigationNotifier._(final ProviderRefBase ref)
       : super(
           hive: ref.watch(hiveProvider),
           saveName: 'navigation',
@@ -190,9 +202,6 @@ class NavigationNotifier
           ),
           defaultValue: PersistentTabController(),
         );
-
-  @override
-  final ProviderRefBase ref;
 
   int _previousScreenIndex = 0;
 
@@ -251,29 +260,21 @@ class NavigationRoot extends HookConsumerWidget {
   /// The height of the navigation bar.
   static const double navBarHeight = 50;
 
-  /// The height of the appbar.
-  static const double appBarHeight = 60;
+  /// The duration of the transition in the navigation bar.
+  static const Duration transitionDuration = Duration(milliseconds: 350);
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
-    const transitionDuration = Duration(milliseconds: 350);
     final theme = Theme.of(context);
-
-    final navigation = ref.watch(navigationProvider.notifier);
-    final hideAppbar = useState(
-      ref.watch(
-        hideAppBarProvider(
-          NavigationScreen.values.elementAt(ref.read(navigationProvider).index),
-        ),
-      ),
-    );
-    final isTransitioning = useState<bool>(false);
+    final mediaQuery = MediaQuery.of(context);
+    final appBar = mainAppBar(theme);
     return Stack(
       alignment: Alignment.topCenter,
       children: <Widget>[
+        /// Root
         PersistentTabView(
           context,
-          controller: navigation.state,
+          controller: ref.watch(navigationProvider),
           navBarStyle: NavBarStyle.style6,
           bottomScreenMargin: 0,
           navBarHeight: navBarHeight,
@@ -323,39 +324,9 @@ class NavigationRoot extends HookConsumerWidget {
                   },
                 )) ??
                 false;
-
-            // (await navigation.showAlertBottomSheet<bool?>(
-            //       context: context!,
-            //       title: TR.alertExitTitle.tr(),
-            //       builder: (final scrollController, final physics) {
-            //         return SingleChildScrollView(
-            //           primary: false,
-            //           controller: scrollController,
-            //           physics: physics,
-            //           child: Padding(
-            //             padding: const EdgeInsets.symmetric(
-            //               horizontal: 16,
-            //               vertical: 36,
-            //             ),
-            //             child: BottomButtons(
-            //               firstText: TR.alertExitApprove.tr(),
-            //               onFirstPressed: (final context) async {
-            //                 await SystemNavigator.pop();
-            //                 exit(0);
-            //               },
-            //               secondText: TR.alertExitDeny.tr(),
-            //               onSecondPressed: (final context) async {
-            //                 await Navigator.of(context).maybePop();
-            //                 return false;
-            //               },
-            //             ),
-            //           ),
-            //         );
-            //       },
-            //     )) ??
-            //     false;
           },
           onItemSelected: (final index) async {
+            final navigation = ref.read(navigationProvider.notifier);
             if (index == NavigationScreen.profile.index &&
                 ref.read(unauthorizedProvider)) {
               if (navigation.previousScreenIndex ==
@@ -364,17 +335,9 @@ class NavigationRoot extends HookConsumerWidget {
               } else {
                 navigation.state.index = navigation.previousScreenIndex;
               }
-              final screen =
-                  NavigationScreen.values.elementAt(navigation.state.index);
-              hideAppbar.value = ref.watch(hideAppBarProvider(screen));
               await Navigator.of(context, rootNavigator: true)
                   .pushNamed(Routes.auth.name);
             } else if (navigation.previousScreenIndex != index) {
-              final screen = NavigationScreen.values.elementAt(index);
-              hideAppbar.value = ref.watch(hideAppBarProvider(screen));
-              isTransitioning.value = true;
-              await Future<void>.delayed(transitionDuration);
-              isTransitioning.value = false;
               navigation.previousScreenIndex = index;
             }
           },
@@ -388,54 +351,65 @@ class NavigationRoot extends HookConsumerWidget {
           },
           screens: <Widget>[
             for (final screen in NavigationScreen.values)
-              Padding(
-                padding: EdgeInsets.only(
-                  top: appBarHeight + MediaQuery.of(context).viewPadding.top,
-                  bottom: navBarHeight,
-                ),
-                child: screen.screen,
-              )
+              KeyboardVisibilityBuilder(
+                builder: (final context, final isKeyboardVisible) {
+                  return Padding(
+                    padding: EdgeInsets.only(
+                      top: screen != NavigationScreen.profile
+                          ? appBar.preferredSize.height +
+                              mediaQuery.viewPadding.top
+                          : 0,
+                      bottom: isKeyboardVisible ? 0 : navBarHeight,
+                    ),
+                    child: screen.screen,
+                  );
+                },
+              ),
           ],
         ),
 
-        IgnorePointer(
-          ignoring: hideAppbar.value.state,
-          child: AnimatedOpacity(
-            duration: transitionDuration,
-            curve: hideAppbar.value.state
-                ? const Interval(1 / 3, 2 / 3, curve: Curves.easeOut)
-                : const Interval(1 / 3, 2 / 3, curve: Curves.easeInOut),
-            opacity: hideAppbar.value.state ? 0 : 1,
-            child: SizedBox(
-              height: appBarHeight + MediaQuery.of(context).viewPadding.top,
-              child: AppBar(
-                centerTitle: true,
-                toolbarHeight: appBarHeight,
-                systemOverlayStyle: SystemUiOverlayStyle(
-                  statusBarColor: AppBarTheme.of(context).backgroundColor,
-                  statusBarBrightness: theme.brightness == Brightness.light
-                      ? Brightness.dark
-                      : Brightness.light,
-                  statusBarIconBrightness: theme.brightness,
-                ),
-                title: FontIcon(
-                  FontIconData(
-                    IconsCG.logo,
-                    height: 16,
-                    color: theme.appBarTheme.foregroundColor,
-                  ),
+        /// Custom AppBar
+        Consumer(
+          builder: (final context, final ref, final child) {
+            final hideAppbar = ref.watch(
+              hideAppBarProvider(
+                NavigationScreen.values.elementAt(
+                  ref.watch(currentNavigationProvider).state,
                 ),
               ),
-            ),
-          ),
+            );
+            return IgnorePointer(
+              ignoring: hideAppbar.state,
+              child: AnimatedOpacity(
+                duration: transitionDuration,
+                curve: hideAppbar.state
+                    ? const Interval(1 / 3, 2 / 3, curve: Curves.easeOut)
+                    : const Interval(1 / 3, 2 / 3, curve: Curves.easeInOut),
+                opacity: hideAppbar.state ? 0 : 1,
+                child: SizedBox(
+                  height:
+                      appBar.preferredSize.height + mediaQuery.viewPadding.top,
+                  child: appBar,
+                ),
+              ),
+            );
+          },
         ),
 
         /// Blocks input while screen is transitioning
-        if (isTransitioning.value)
-          Align(
+        Consumer(
+          child: Align(
             alignment: Alignment.bottomCenter,
             child: Container(height: navBarHeight, color: Colors.transparent),
           ),
+          builder: (final context, final ref, final child) {
+            final isTransitioning = ref.watch(navigationTransitioningProvider);
+            return IgnorePointer(
+              ignoring: !isTransitioning.state,
+              child: child,
+            );
+          },
+        )
       ],
     );
   }

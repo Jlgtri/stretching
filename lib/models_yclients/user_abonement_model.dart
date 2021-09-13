@@ -5,31 +5,31 @@ import 'dart:convert';
 import 'package:meta/meta.dart';
 import 'package:stretching/utils/json_converters.dart';
 
-/// The converter of the [AbonementModel].
-const AbonementConverter abonementConverter = AbonementConverter._();
+/// The converter of the [UserAbonementModel].
+const UserAbonementConverter abonementConverter = UserAbonementConverter._();
 
-/// The converter of the [AbonementModel].
-class AbonementConverter
-    implements JsonConverter<AbonementModel, Map<String, Object?>> {
-  const AbonementConverter._();
-
-  @override
-  AbonementModel fromJson(final Map<String, Object?> data) =>
-      AbonementModel.fromMap(data);
+/// The converter of the [UserAbonementModel].
+class UserAbonementConverter
+    implements JsonConverter<UserAbonementModel, Map<String, Object?>> {
+  const UserAbonementConverter._();
 
   @override
-  Map<String, Object?> toJson(final AbonementModel data) => data.toMap();
+  UserAbonementModel fromJson(final Map<String, Object?> data) =>
+      UserAbonementModel.fromMap(data);
+
+  @override
+  Map<String, Object?> toJson(final UserAbonementModel data) => data.toMap();
 }
 
 /// The abonement model in the YClients API.
 ///
 /// See: https://yclientsru.docs.apiary.io/#reference/28/0
 @immutable
-class AbonementModel {
+class UserAbonementModel implements Comparable<UserAbonementModel> {
   /// The abonement model in the YClients API.
   ///
   /// See: https://yclientsru.docs.apiary.io/#reference/28/0
-  const AbonementModel({
+  const UserAbonementModel({
     required final this.id,
     required final this.number,
     required final this.balanceString,
@@ -83,19 +83,20 @@ class AbonementModel {
   final DateTime? expirationDate;
 
   /// The status of this abonement.
-  final AbonementStatusModel status;
+  final UserAbonementStatusModel status;
 
   final bool isUnitedBalance;
   final int unitedBalanceServicesCount;
 
-  /// The object that contains a list of [AbonementBalanceContainerLinkModel].
-  final AbonementBalanceContainerModel balanceContainer;
+  /// The object that contains a list of
+  /// [UserAbonementBalanceContainerLinkModel].
+  final UserAbonementBalanceContainerModel balanceContainer;
 
   /// The extra data provided for this abonement.
-  final AbonementTypeModel type;
+  final UserAbonementTypeModel type;
 
   /// Return the copy of this model.
-  AbonementModel copyWith({
+  UserAbonementModel copyWith({
     final int? id,
     final String? number,
     final String? balanceString,
@@ -106,13 +107,13 @@ class AbonementModel {
     final int? period,
     final int? periodUnitId,
     final DateTime? expirationDate,
-    final AbonementStatusModel? status,
+    final UserAbonementStatusModel? status,
     final bool? isUnitedBalance,
     final int? unitedBalanceServicesCount,
-    final AbonementBalanceContainerModel? balanceContainer,
-    final AbonementTypeModel? type,
+    final UserAbonementBalanceContainerModel? balanceContainer,
+    final UserAbonementTypeModel? type,
   }) {
-    return AbonementModel(
+    return UserAbonementModel(
       id: id ?? this.id,
       number: number ?? this.number,
       balanceString: balanceString ?? this.balanceString,
@@ -154,8 +155,8 @@ class AbonementModel {
   }
 
   /// Convert the map with string keys to this model.
-  factory AbonementModel.fromMap(final Map<String, Object?> map) {
-    return AbonementModel(
+  factory UserAbonementModel.fromMap(final Map<String, Object?> map) {
+    return UserAbonementModel(
       id: map['id']! as int,
       number: map['number']! as String,
       balanceString: map['balance_string']! as String,
@@ -168,15 +169,16 @@ class AbonementModel {
       periodUnitId: map['period_unit_id']! as int,
       expirationDate:
           optionalDateTimeConverter.fromJson(map['expiration_date'] as String?),
-      status: AbonementStatusModel.fromMap(
+      status: UserAbonementStatusModel.fromMap(
         map['status']! as Map<String, Object?>,
       ),
       isUnitedBalance: map['is_united_balance']! as bool,
       unitedBalanceServicesCount: map['united_balance_services_count']! as int,
-      balanceContainer: AbonementBalanceContainerModel.fromMap(
+      balanceContainer: UserAbonementBalanceContainerModel.fromMap(
         map['balance_container']! as Map<String, Object?>,
       ),
-      type: AbonementTypeModel.fromMap(map['type']! as Map<String, Object?>),
+      type:
+          UserAbonementTypeModel.fromMap(map['type']! as Map<String, Object?>),
     );
   }
 
@@ -184,13 +186,26 @@ class AbonementModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory AbonementModel.fromJson(final String source) =>
-      AbonementModel.fromMap(json.decode(source) as Map<String, Object?>);
+  factory UserAbonementModel.fromJson(final String source) =>
+      UserAbonementModel.fromMap(json.decode(source) as Map<String, Object?>);
+
+  @override
+  int compareTo(final UserAbonementModel other) {
+    final expirationDateA = expirationDate;
+    final expirationDateB = other.expirationDate;
+    if (expirationDateA == null) {
+      return 1;
+    } else if (expirationDateB == null) {
+      return -1;
+    } else {
+      return expirationDateA.compareTo(expirationDateB);
+    }
+  }
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is AbonementModel &&
+        other is UserAbonementModel &&
             other.id == id &&
             other.number == number &&
             other.balanceString == balanceString &&
@@ -229,7 +244,7 @@ class AbonementModel {
 
   @override
   String toString() {
-    return 'AbonementModel(id: $id, number: $number, '
+    return 'UserAbonementModel(id: $id, number: $number, '
         'balanceString: $balanceString, createdDate: $createdDate, '
         'activatedDate: $activatedDate, isFrozen: $isFrozen, '
         'freezePeriod: $freezePeriod, period: $period, '
@@ -240,40 +255,38 @@ class AbonementModel {
   }
 }
 
-/// The balance container of the [AbonementModel].
+/// The balance container of the [UserAbonementModel].
 @immutable
-class AbonementBalanceContainerModel {
-  /// The balance container of the [AbonementModel].
-  const AbonementBalanceContainerModel({required final this.links});
+class UserAbonementBalanceContainerModel {
+  /// The balance container of the [UserAbonementModel].
+  const UserAbonementBalanceContainerModel({required final this.links});
 
   /// The links of this container.
-  final Iterable<AbonementBalanceContainerLinkModel> links;
+  final Iterable<UserAbonementBalanceContainerLinkModel> links;
 
   /// Return the copy of this model.
-  AbonementBalanceContainerModel copyWith({
-    final Iterable<AbonementBalanceContainerLinkModel>? links,
+  UserAbonementBalanceContainerModel copyWith({
+    final Iterable<UserAbonementBalanceContainerLinkModel>? links,
   }) {
-    return AbonementBalanceContainerModel(
-      links: links ?? this.links,
-    );
+    return UserAbonementBalanceContainerModel(links: links ?? this.links);
   }
 
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() {
     return <String, Object?>{
-      'links': links.map((final link) => link.toMap()).toList(),
+      'links': links.map((final link) => link.toMap()).toList(growable: false),
     };
   }
 
   /// Convert the map with string keys to this model.
-  factory AbonementBalanceContainerModel.fromMap(
+  factory UserAbonementBalanceContainerModel.fromMap(
     final Map<String, Object?> map,
   ) {
-    return AbonementBalanceContainerModel(
-      links: <AbonementBalanceContainerLinkModel>[
+    return UserAbonementBalanceContainerModel(
+      links: <UserAbonementBalanceContainerLinkModel>[
         for (final map in map['links']! as Iterable<Object?>)
           if (map is Map<String, Object?>)
-            AbonementBalanceContainerLinkModel.fromMap(map)
+            UserAbonementBalanceContainerLinkModel.fromMap(map)
       ],
     );
   }
@@ -282,33 +295,34 @@ class AbonementBalanceContainerModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory AbonementBalanceContainerModel.fromJson(final String source) =>
-      AbonementBalanceContainerModel.fromMap(
-        json.decode(source) as Map<String, Object?>,
-      );
+  factory UserAbonementBalanceContainerModel.fromJson(final String source) {
+    return UserAbonementBalanceContainerModel.fromMap(
+      json.decode(source) as Map<String, Object?>,
+    );
+  }
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is AbonementBalanceContainerModel && other.links == links;
+        other is UserAbonementBalanceContainerModel && other.links == links;
   }
 
   @override
   int get hashCode => links.hashCode;
 
   @override
-  String toString() => 'AbonementBalanceContainerModel(links: $links)';
+  String toString() => 'UserAbonementBalanceContainerModel(links: $links)';
 }
 
-/// The link of the [AbonementBalanceContainerModel].
+/// The link of the [UserAbonementBalanceContainerModel].
 ///
-/// Contains the information about [AbonementModel] balance.
+/// Contains the information about [UserAbonementModel] balance.
 @immutable
-class AbonementBalanceContainerLinkModel {
-  /// The link of the [AbonementBalanceContainerModel].
+class UserAbonementBalanceContainerLinkModel {
+  /// The link of the [UserAbonementBalanceContainerModel].
   ///
-  /// Contains the information about [AbonementModel] balance.
-  const AbonementBalanceContainerLinkModel({
+  /// Contains the information about [UserAbonementModel] balance.
+  const UserAbonementBalanceContainerLinkModel({
     required final this.count,
     required final this.category,
   });
@@ -317,14 +331,14 @@ class AbonementBalanceContainerLinkModel {
   final int count;
 
   /// This category of this link.
-  final AbonementBalanceContainerLinkCategoryModel category;
+  final UserAbonementBalanceContainerLinkCategoryModel category;
 
   /// Return the copy of this model.
-  AbonementBalanceContainerLinkModel copyWith({
+  UserAbonementBalanceContainerLinkModel copyWith({
     final int? count,
-    final AbonementBalanceContainerLinkCategoryModel? category,
+    final UserAbonementBalanceContainerLinkCategoryModel? category,
   }) {
-    return AbonementBalanceContainerLinkModel(
+    return UserAbonementBalanceContainerLinkModel(
       count: count ?? this.count,
       category: category ?? this.category,
     );
@@ -336,12 +350,12 @@ class AbonementBalanceContainerLinkModel {
   }
 
   /// Convert the map with string keys to this model.
-  factory AbonementBalanceContainerLinkModel.fromMap(
+  factory UserAbonementBalanceContainerLinkModel.fromMap(
     final Map<String, Object?> map,
   ) {
-    return AbonementBalanceContainerLinkModel(
+    return UserAbonementBalanceContainerLinkModel(
       count: map['count']! as int,
-      category: AbonementBalanceContainerLinkCategoryModel.fromMap(
+      category: UserAbonementBalanceContainerLinkCategoryModel.fromMap(
         map['category']! as Map<String, Object?>,
       ),
     );
@@ -351,15 +365,16 @@ class AbonementBalanceContainerLinkModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory AbonementBalanceContainerLinkModel.fromJson(final String source) =>
-      AbonementBalanceContainerLinkModel.fromMap(
-        json.decode(source) as Map<String, Object?>,
-      );
+  factory UserAbonementBalanceContainerLinkModel.fromJson(final String source) {
+    return UserAbonementBalanceContainerLinkModel.fromMap(
+      json.decode(source) as Map<String, Object?>,
+    );
+  }
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is AbonementBalanceContainerLinkModel &&
+        other is UserAbonementBalanceContainerLinkModel &&
             other.count == count &&
             other.category == category;
   }
@@ -369,16 +384,16 @@ class AbonementBalanceContainerLinkModel {
 
   @override
   String toString() {
-    return 'AbonementBalanceContainerLinkModel(count: $count, '
+    return 'UserAbonementBalanceContainerLinkModel(count: $count, '
         'category: $category)';
   }
 }
 
-/// The category of the [AbonementBalanceContainerLinkModel].
+/// The category of the [UserAbonementBalanceContainerLinkModel].
 @immutable
-class AbonementBalanceContainerLinkCategoryModel {
-  /// The category of the [AbonementBalanceContainerLinkModel].
-  const AbonementBalanceContainerLinkCategoryModel({
+class UserAbonementBalanceContainerLinkCategoryModel {
+  /// The category of the [UserAbonementBalanceContainerLinkModel].
+  const UserAbonementBalanceContainerLinkCategoryModel({
     required final this.id,
     required final this.categoryId,
     required final this.title,
@@ -394,12 +409,12 @@ class AbonementBalanceContainerLinkCategoryModel {
   final String title;
 
   /// Return the copy of this model.
-  AbonementBalanceContainerLinkCategoryModel copyWith({
+  UserAbonementBalanceContainerLinkCategoryModel copyWith({
     final int? id,
     final int? categoryId,
     final String? title,
   }) {
-    return AbonementBalanceContainerLinkCategoryModel(
+    return UserAbonementBalanceContainerLinkCategoryModel(
       id: id ?? this.id,
       categoryId: categoryId ?? this.categoryId,
       title: title ?? this.title,
@@ -416,10 +431,10 @@ class AbonementBalanceContainerLinkCategoryModel {
   }
 
   /// Convert the map with string keys to this model.
-  factory AbonementBalanceContainerLinkCategoryModel.fromMap(
+  factory UserAbonementBalanceContainerLinkCategoryModel.fromMap(
     final Map<String, Object?> map,
   ) {
-    return AbonementBalanceContainerLinkCategoryModel(
+    return UserAbonementBalanceContainerLinkCategoryModel(
       id: map['id']! as int,
       categoryId: map['category_id']! as int,
       title: map['title']! as String,
@@ -430,17 +445,18 @@ class AbonementBalanceContainerLinkCategoryModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory AbonementBalanceContainerLinkCategoryModel.fromJson(
+  factory UserAbonementBalanceContainerLinkCategoryModel.fromJson(
     final String source,
-  ) =>
-      AbonementBalanceContainerLinkCategoryModel.fromMap(
-        json.decode(source) as Map<String, Object?>,
-      );
+  ) {
+    return UserAbonementBalanceContainerLinkCategoryModel.fromMap(
+      json.decode(source) as Map<String, Object?>,
+    );
+  }
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is AbonementBalanceContainerLinkCategoryModel &&
+        other is UserAbonementBalanceContainerLinkCategoryModel &&
             other.id == id &&
             other.categoryId == categoryId &&
             other.title == title;
@@ -451,16 +467,16 @@ class AbonementBalanceContainerLinkCategoryModel {
 
   @override
   String toString() {
-    return 'AbonementBalanceContainerLinkCategoryModel(id: $id, '
+    return 'UserAbonementBalanceContainerLinkCategoryModel(id: $id, '
         'categoryId: $categoryId, title: $title)';
   }
 }
 
-/// The status of the [AbonementModel].
+/// The status of the [UserAbonementModel].
 @immutable
-class AbonementStatusModel {
-  /// The status of the [AbonementModel].
-  const AbonementStatusModel({
+class UserAbonementStatusModel {
+  /// The status of the [UserAbonementModel].
+  const UserAbonementStatusModel({
     required final this.id,
     required final this.title,
     required final this.extendedTitle,
@@ -476,12 +492,12 @@ class AbonementStatusModel {
   final String extendedTitle;
 
   /// Return the copy of this model.
-  AbonementStatusModel copyWith({
+  UserAbonementStatusModel copyWith({
     final int? id,
     final String? title,
     final String? extendedTitle,
   }) {
-    return AbonementStatusModel(
+    return UserAbonementStatusModel(
       id: id ?? this.id,
       title: title ?? this.title,
       extendedTitle: extendedTitle ?? this.extendedTitle,
@@ -498,8 +514,8 @@ class AbonementStatusModel {
   }
 
   /// Convert the map with string keys to this model.
-  factory AbonementStatusModel.fromMap(final Map<String, Object?> map) {
-    return AbonementStatusModel(
+  factory UserAbonementStatusModel.fromMap(final Map<String, Object?> map) {
+    return UserAbonementStatusModel(
       id: map['id']! as int,
       title: map['title']! as String,
       extendedTitle: map['extended_title']! as String,
@@ -510,13 +526,16 @@ class AbonementStatusModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory AbonementStatusModel.fromJson(final String source) =>
-      AbonementStatusModel.fromMap(json.decode(source) as Map<String, Object?>);
+  factory UserAbonementStatusModel.fromJson(final String source) {
+    return UserAbonementStatusModel.fromMap(
+      json.decode(source) as Map<String, Object?>,
+    );
+  }
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is AbonementStatusModel &&
+        other is UserAbonementStatusModel &&
             other.id == id &&
             other.title == title &&
             other.extendedTitle == extendedTitle;
@@ -527,16 +546,16 @@ class AbonementStatusModel {
 
   @override
   String toString() {
-    return 'AbonementStatusModel(id: $id, title: $title, '
+    return 'UserAbonementStatusModel(id: $id, title: $title, '
         'extendedTitle: $extendedTitle)';
   }
 }
 
-/// The extra data for the [AbonementModel].
+/// The extra data for the [UserAbonementModel].
 @immutable
-class AbonementTypeModel {
-  /// The extra data for the [AbonementModel].
-  const AbonementTypeModel({
+class UserAbonementTypeModel {
+  /// The extra data for the [UserAbonementModel].
+  const UserAbonementTypeModel({
     required final this.id,
     required final this.salonGroupId,
     required final this.title,
@@ -573,10 +592,10 @@ class AbonementTypeModel {
   final int unitedBalanceServicesCount;
 
   /// The balance container of this type.
-  final AbonementBalanceContainerModel balanceContainer;
+  final UserAbonementBalanceContainerModel balanceContainer;
 
   /// Return the copy of this model.
-  AbonementTypeModel copyWith({
+  UserAbonementTypeModel copyWith({
     final int? id,
     final int? salonGroupId,
     final String? title,
@@ -587,9 +606,9 @@ class AbonementTypeModel {
     final bool? isAllowEmptyCode,
     final bool? isUnitedBalance,
     final int? unitedBalanceServicesCount,
-    final AbonementBalanceContainerModel? balanceContainer,
+    final UserAbonementBalanceContainerModel? balanceContainer,
   }) {
-    return AbonementTypeModel(
+    return UserAbonementTypeModel(
       id: id ?? this.id,
       salonGroupId: salonGroupId ?? this.salonGroupId,
       title: title ?? this.title,
@@ -623,8 +642,8 @@ class AbonementTypeModel {
   }
 
   /// Convert the map with string keys to this model.
-  factory AbonementTypeModel.fromMap(final Map<String, Object?> map) {
-    return AbonementTypeModel(
+  factory UserAbonementTypeModel.fromMap(final Map<String, Object?> map) {
+    return UserAbonementTypeModel(
       id: map['id']! as int,
       salonGroupId: map['salon_group_id']! as int,
       title: map['title']! as String,
@@ -635,7 +654,7 @@ class AbonementTypeModel {
       isAllowEmptyCode: map['is_allow_empty_code']! as bool,
       isUnitedBalance: map['is_united_balance']! as bool,
       unitedBalanceServicesCount: map['united_balance_services_count']! as int,
-      balanceContainer: AbonementBalanceContainerModel.fromMap(
+      balanceContainer: UserAbonementBalanceContainerModel.fromMap(
         map['balance_container']! as Map<String, Object?>,
       ),
     );
@@ -645,13 +664,16 @@ class AbonementTypeModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory AbonementTypeModel.fromJson(final String source) =>
-      AbonementTypeModel.fromMap(json.decode(source) as Map<String, Object?>);
+  factory UserAbonementTypeModel.fromJson(final String source) {
+    return UserAbonementTypeModel.fromMap(
+      json.decode(source) as Map<String, Object?>,
+    );
+  }
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is AbonementTypeModel &&
+        other is UserAbonementTypeModel &&
             other.id == id &&
             other.salonGroupId == salonGroupId &&
             other.title == title &&
@@ -682,7 +704,7 @@ class AbonementTypeModel {
 
   @override
   String toString() {
-    return 'AbonementTypeModel(id: $id, salonGroupId: $salonGroupId, '
+    return 'UserAbonementTypeModel(id: $id, salonGroupId: $salonGroupId, '
         'title: $title, period: $period, periodUnitId: $periodUnitId, '
         'allowFreeze: $allowFreeze, freezeLimit: $freezeLimit, '
         'isAllowEmptyCode: $isAllowEmptyCode, '

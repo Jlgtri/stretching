@@ -30,7 +30,7 @@ class DumpJson<T extends Object> extends ConsumerWidget {
           final dynamic data = snapshotData is Iterable<dynamic>
               ? snapshotData
                   .map<dynamic>((final dynamic data) => data.toMap())
-                  .toList()
+                  .toList(growable: false)
               : snapshotData.toMap();
           final dirs = await getExternalStorageDirectories(
             type: StorageDirectory.downloads,

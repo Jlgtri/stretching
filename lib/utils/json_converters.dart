@@ -19,6 +19,25 @@ mixin JsonConverter<T extends Object?, S extends Object?> on Object {
   T fromJson(final S data);
 }
 
+/// The optional dummy converter of type [T].
+class OptionalDummyConverter<T extends Object?>
+    implements JsonConverter<T?, T?> {
+  @override
+  T? toJson(final T? data) => data;
+
+  @override
+  T? fromJson(final T? data) => data;
+}
+
+/// The dummy converter of type [T].
+class DummyConverter<T extends Object> implements JsonConverter<T, T> {
+  @override
+  T toJson(final T data) => data;
+
+  @override
+  T fromJson(final T data) => data;
+}
+
 /// The default converter of the [DefaultBoolToIntConverter] with
 /// `defaultValue = false`.
 const DefaultBoolToStringConverter falseBoolToStringConverter =

@@ -65,16 +65,8 @@ class UserModel {
   /// The authorization hash of this user.
   final String hash;
 
-  /// The empty user that app is inited with.
-  const UserModel.none()
-      : id = 0,
-        userToken = '',
-        name = '',
-        phone = '',
-        login = '',
-        email = '',
-        avatar = '',
-        hash = '';
+  /// If this user is a tester.
+  bool get test => phone.endsWith('9956567535');
 
   /// Return the copy of this model.
   UserModel copyWith({

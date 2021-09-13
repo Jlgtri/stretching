@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:catcher/catcher.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
@@ -7,19 +9,23 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:stretching/api_smstretching.dart';
-import 'package:stretching/api_yclients.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/assets.g.dart';
+import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/providers/connection_provider.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/logger.dart';
 import 'package:stretching/widgets/authorization_screen.dart';
+import 'package:stretching/widgets/components/emoji_text.dart';
 import 'package:stretching/widgets/error_screen.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
+/// TODO: client id buy abonement (create user for each studio)
 Future<void> main() async {
   await Hive.initFlutter();
   Catcher(
@@ -39,14 +45,19 @@ Future<void> main() async {
           hiveProvider.overrideWithValue(
             await Hive.openBox<String>('storage'),
           ),
-          serverTimeProvider.overrideWithValue(
-            ServerTimeNotifier((await smStretchingServerTime())!),
+          smServerTimeProvider.overrideWithValue(
+            ServerTimeNotifier((await smStretching.getServerTime())!),
           ),
+          smActivityPriceProvider
+              .overrideWithValue((await smStretching.getActivityPrice())!)
         ],
         child: const RootScreen(),
       ),
     ),
   );
+  if (Platform.isAndroid) {
+    WebView.platform = SurfaceAndroidWebView();
+  }
 }
 
 /// The root widget of the app.
@@ -91,7 +102,8 @@ class RootScreen extends HookConsumerWidget {
       title: 'SMSTRETCHING DEV',
       restorationScopeId: 'stretching',
       locale: ez.locale,
-      localizationsDelegates: ez.delegates,
+      localizationsDelegates: ez.delegates..add(RefreshLocalizations.delegate),
+      debugShowCheckedModeBanner: false,
       supportedLocales: ez.supportedLocales,
       themeMode: themeMode,
       theme: lightTheme,
@@ -99,7 +111,40 @@ class RootScreen extends HookConsumerWidget {
       initialRoute: Routes.root.name,
       navigatorKey: Catcher.navigatorKey,
       routes: <String, Widget Function(BuildContext)>{
-        for (final route in Routes.values) route.name: route.builder
+        for (final route in Routes.values)
+          if (route.builder != null) route.name: route.builder!
+      },
+      // onGenerateRoute: (final settings) {
+      //   return <String, Route<Object?>? Function(Object?)>{
+      //     for (final route in Routes.values)
+      //       if (route.onGenerateRoute != null)
+      //         route.name: route.onGenerateRoute!
+      //   }[settings.name]
+      //       ?.call(settings.arguments);
+      // },
+      builder: (final context, final child) {
+        final theme = Theme.of(context);
+        final textStyle =
+            theme.textTheme.bodyText2!.copyWith(color: theme.hintColor);
+        final emojiStyle = TextStyle(fontSize: textStyle.fontSize! * 1.25);
+        return RefreshConfiguration(
+          topHitBoundary: 150,
+          maxOverScrollExtent: 0,
+          maxUnderScrollExtent: 0,
+          headerBuilder: () => ClassicHeader(
+            height: 80,
+            textStyle: textStyle,
+            idleText: TR.miscPullToRefreshIdle.tr(),
+            releaseText: TR.miscPullToRefreshRelease.tr(),
+            refreshingText: TR.miscPullToRefreshRefreshing.tr(),
+            completeText: TR.miscPullToRefreshComplete.tr(),
+            idleIcon: EmojiText('😉', style: emojiStyle),
+            releaseIcon: EmojiText('🔥', style: emojiStyle),
+            // refreshingIcon: EmojiText('🤘', style: emojiStyle),
+            completeIcon: EmojiText('❤', style: emojiStyle),
+          ),
+          child: child!,
+        );
       },
       // builder: (final context, final child) {
       //   final mediaQuery = MediaQuery.of(context);
@@ -125,6 +170,12 @@ enum Routes {
 
   /// The authorization screen.
   auth,
+
+  // /// The webview payment screen.
+  // payment,
+
+  // /// The screen that prompts user to pay regularly or buy an abonement.
+  // bookPrompt,
 }
 
 /// The extra data provided for [Routes].
@@ -134,7 +185,7 @@ extension RoutesData on Routes {
       this == Routes.root ? '/' : Routes.root.name + describeEnum(this);
 
   /// The builder of this route.
-  Widget Function(BuildContext) get builder {
+  Widget Function(BuildContext context)? get builder {
     switch (this) {
       case Routes.auth:
         return (final context) => const AuthorizationScreen();
@@ -154,27 +205,44 @@ extension RoutesData on Routes {
                 }
                 return ErrorScreen(error.item0, error.item1);
               }
-              return (ref.watch(smStretchingContentProvider)).when(
-                data: (final _) {
-                  final yClientsContent = ref.watch(yClientsContentProvider);
-                  return yClientsContent.when(
-                    data: (final _) => const NavigationRoot(),
-                    loading: () => const SizedBox.shrink(),
-                    error: (final error, final stackTrace) {
-                      Catcher.reportCheckedError(error, stackTrace);
-                      return const SizedBox.shrink();
-                    },
-                  );
-                },
-                loading: () => const SizedBox.shrink(),
-                error: (final error, final stackTrace) {
-                  Catcher.reportCheckedError(error, stackTrace);
-                  return const SizedBox.shrink();
-                },
-              );
+              return const NavigationRoot();
             },
           );
         };
     }
   }
+
+  // /// The builder with arguments for this route.
+  // Route<Object?>? Function(Object? arguments)? get onGenerateRoute {
+  //   switch (this) {
+  //     case Routes.payment:
+  //       return (final arguments) {
+  //         if (arguments is WebViewAcquiring) {
+  //           return MaterialPageRoute(
+  //             builder: (final context) => WebViewAcquiringScreen(arguments),
+  //           );
+  //         }
+  //       };
+  //     case Routes.bookPrompt:
+  //       return (final arguments) {
+  //         // return MaterialPageRoute(
+  //         //   builder: (final context) => PromptBookScreen(
+  //         //     onAbonement: (final context) async {},
+  //         //     onRegular: (final context) async {
+  //         //       // Navigator.of(context).pushReplacementNamed(
+  //         //       //   Routes.payment.name,
+  //         //       //   arguments: await smStretching.initAcquiring(
+  //         //       //     user: user,
+  //         //       //     terminalKey: terminalKey,
+  //         //       //     password: password,
+  //         //       //     orderId: orderId,
+  //         //       //     amount: amount,
+  //         //       //   ),
+  //         //       // );
+  //         //     },
+  //         //   ),
+  //         // );
+  //       };
+  //   }
+  // }
 }

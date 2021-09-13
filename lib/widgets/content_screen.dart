@@ -14,12 +14,11 @@ import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/hook_consumer_stateful_widget.dart';
 import 'package:stretching/providers/hide_appbar_provider.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
-import 'package:stretching/widgets/navigation/components/bottom_sheet.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 
 /// The paragraph model for the [ContentScreen].
 ///
-/// First element is title and second is body.
+/// First element is a title and second is a body.
 typedef ContentParagraph = Tuple2<String?, String>;
 
 /// The screen that shows a content on a similar template.
@@ -29,11 +28,13 @@ class ContentScreen extends HookConsumerStatefulWidget {
     required final this.type,
     required final this.title,
     required final this.carousel,
-    final this.carouselHeight = 280,
+    final this.children = const Iterable<Widget>.empty(),
+    final this.carouselHeight = 240,
     final this.subtitle = '',
     final this.secondSubtitle = '',
     final this.trailing,
-    final this.bottomButtons,
+    final this.persistentFooterButtons = const Iterable<Widget>.empty(),
+    final this.bottomNavigationBar,
     final this.paragraphs = const Iterable<ContentParagraph>.empty(),
     final this.onBackButtonPressed,
     final Key? key,
@@ -41,7 +42,7 @@ class ContentScreen extends HookConsumerStatefulWidget {
         super(key: key);
 
   /// The type of this navigation screen.
-  final NavigationScreen type;
+  final NavigationScreen? type;
 
   /// The title of this screen.
   final String title;
@@ -50,6 +51,9 @@ class ContentScreen extends HookConsumerStatefulWidget {
   ///
   /// If it is a [CarouselSlider], it is automatically added an indicator.
   final Widget carousel;
+
+  /// The extra children for this screen.
+  final Iterable<Widget> children;
 
   /// The height of the [carousel].
   final double carouselHeight;
@@ -63,8 +67,11 @@ class ContentScreen extends HookConsumerStatefulWidget {
   /// The action to put on the right side of the heading.
   final Widget? trailing;
 
-  /// The widget to put at the bottom of the screen.
-  final BottomButtons? bottomButtons;
+  /// The widgets at the bottom of this screen.
+  final Iterable<Widget> persistentFooterButtons;
+
+  /// The bottom navigation bar of this screen.
+  final Widget? bottomNavigationBar;
 
   /// The children to put on this screen.
   final Iterable<ContentParagraph> paragraphs;
@@ -82,14 +89,15 @@ class ContentScreen extends HookConsumerStatefulWidget {
         ..add(EnumProperty<NavigationScreen>('type', type))
         ..add(StringProperty('title', title))
         ..add(DiagnosticsProperty<Widget>('carousel', carousel))
+        ..add(IterableProperty<Widget>('children', children))
         ..add(DoubleProperty('carouselHeight', carouselHeight))
         ..add(StringProperty('subtitle', subtitle))
         ..add(StringProperty('secondSubtitle', secondSubtitle))
         ..add(DiagnosticsProperty<Widget?>('trailing', trailing))
         ..add(
-          DiagnosticsProperty<BottomButtons?>(
-            'bottomButtons',
-            bottomButtons,
+          IterableProperty<Widget>(
+            'persistentFooterButtons',
+            persistentFooterButtons,
           ),
         )
         ..add(IterableProperty<ContentParagraph>('paragraphs', paragraphs))
@@ -107,7 +115,7 @@ class ContentScreen extends HookConsumerStatefulWidget {
 class ContentScreenState extends ConsumerState<ContentScreen>
     with HideAppBarRouteAware {
   @override
-  NavigationScreen get screenType => widget.type;
+  NavigationScreen? get screenType => widget.type;
 
   @override
   Widget build(final BuildContext context) {
@@ -116,22 +124,21 @@ class ContentScreenState extends ConsumerState<ContentScreen>
     final mediaQuery = MediaQuery.of(context);
     return Padding(
       padding: EdgeInsets.only(
-        bottom: widget.bottomButtons != null
+        bottom: widget.persistentFooterButtons.isNotEmpty
             ? NavigationRoot.navBarHeight
             : NavigationRoot.navBarHeight - 15,
       ),
       child: Scaffold(
-        persistentFooterButtons: <Widget>[
-          if (widget.bottomButtons != null) widget.bottomButtons!
-        ],
+        bottomNavigationBar: widget.bottomNavigationBar,
+        persistentFooterButtons:
+            widget.persistentFooterButtons.toList(growable: false),
         body: CustomScrollView(
-          primary: true,
+          primary: false,
           slivers: <Widget>[
             /// Carousel with indicator and actions
             SliverAppBar(
               pinned: true,
-              expandedHeight:
-                  widget.carouselHeight - mediaQuery.viewPadding.top,
+              expandedHeight: widget.carouselHeight,
               systemOverlayStyle: const SystemUiOverlayStyle(
                 statusBarColor: Colors.transparent,
               ),
@@ -162,23 +169,24 @@ class ContentScreenState extends ConsumerState<ContentScreen>
 
             /// Main Content
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-              sliver: SliverToBoxAdapter(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
+              padding: const EdgeInsets.all(16).copyWith(bottom: 0),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate(
+                  <Widget>[
                     /// Heading with trailing action
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
-                        Flexible(
+                        Expanded(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
                               Text(
                                 widget.title,
-                                style: theme.textTheme.headline2,
+                                style: widget.secondSubtitle.isNotEmpty
+                                    ? theme.textTheme.headline1
+                                    : theme.textTheme.headline2,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -201,12 +209,14 @@ class ContentScreenState extends ConsumerState<ContentScreen>
                             ],
                           ),
                         ),
-                        if (widget.trailing != null)
-                          Flexible(child: widget.trailing!),
+                        if (widget.trailing != null) widget.trailing!,
                       ],
                     ),
 
-                    /// Content
+                    /// Extra content
+                    ...widget.children,
+
+                    /// Main Content
                     for (final paragraph in widget.paragraphs)
                       Padding(
                         padding: const EdgeInsets.only(top: 24),
@@ -223,17 +233,19 @@ class ContentScreenState extends ConsumerState<ContentScreen>
                               ),
                               const SizedBox(height: 14),
                             ],
-                            ExpandableText(
-                              paragraph.item1,
-                              expandText: TR.miscExtend.tr(),
-                              maxLines: 4,
-                              linkColor: theme.hintColor,
-                              linkEllipsis: false,
-                              animation: true,
-                              animationCurve: Curves.easeOut,
-                              animationDuration:
-                                  const Duration(milliseconds: 300),
-                              style: theme.textTheme.bodyText2,
+                            Flexible(
+                              child: ExpandableText(
+                                paragraph.item1,
+                                expandText: TR.miscExtend.tr(),
+                                maxLines: 4,
+                                linkColor: theme.hintColor,
+                                linkEllipsis: false,
+                                animation: true,
+                                animationCurve: Curves.easeOut,
+                                animationDuration:
+                                    const Duration(milliseconds: 300),
+                                style: theme.textTheme.bodyText2,
+                              ),
                             ),
                           ],
                         ),

@@ -146,7 +146,9 @@ Future<void> handleLangFiles(final GenerateOptions options) async {
     files = [sourceFile];
   } else {
     //filtering format
-    files = files.where((final f) => f.path.contains('.json')).toList();
+    files = files
+        .where((final f) => f.path.contains('.json'))
+        .toList(growable: false);
   }
 
   if (files.isNotEmpty) {
@@ -203,7 +205,7 @@ String _resolve(
       '${text[0].toUpperCase()}${text.substring(1)}';
 
   final fileContent = StringBuffer();
-  final sortedKeys = translations.keys.toList();
+  final sortedKeys = translations.keys.toList(growable: false);
   for (final key in sortedKeys) {
     final keyItem = translations[key];
     if (keyItem is Map<String, Object?>) {

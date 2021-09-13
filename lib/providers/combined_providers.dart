@@ -1,16 +1,90 @@
+import 'package:add_2_calendar/add_2_calendar.dart';
 import 'package:darq/darq.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stretching/api_smstretching.dart';
+import 'package:stretching/api_yclients.dart';
+import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/models_smstretching/sm_abonement_model.dart';
+import 'package:stretching/models_smstretching/sm_gallery_model.dart';
 import 'package:stretching/models_smstretching/sm_studio_model.dart';
+import 'package:stretching/models_smstretching/sm_studio_options_model.dart';
 import 'package:stretching/models_smstretching/sm_trainer_model.dart';
+import 'package:stretching/models_smstretching/sm_user_abonement_model.dart';
 import 'package:stretching/models_yclients/activity_model.dart';
 import 'package:stretching/models_yclients/company_model.dart';
 import 'package:stretching/models_yclients/trainer_model.dart';
-import 'package:stretching/providers/smstretching_providers.dart';
-import 'package:stretching/providers/yclients_providers.dart';
+import 'package:stretching/models_yclients/user_abonement_model.dart';
 import 'package:stretching/utils/json_converters.dart';
+// /// The pair of [RecordModel] and [SMRecordModel].
+// typedef CombinedRecordModel = Tuple2<RecordModel, SMRecordModel>;
+
+// /// The provider of [RecordModel] and [SMRecordModel] pairs.
+// final Provider<Iterable<CombinedRecordModel>> combinedAbonementsProvider =
+//     Provider<Iterable<CombinedRecordModel>>((final ref) {
+//   final smUserRecords = ref.watch(
+//     smUserReProvider.select((final smUserAbonements) {
+//       return <int, SMUserAbonementModel>{
+//         for (final smUserAbonement in smUserAbonements)
+//           smUserAbonement.abonementId: smUserAbonement
+//       };
+//     }),
+//   );
+//   return <CombinedRecordModel>[
+//     for (final userAbonement in ref.watch(userAbonementsProvider))
+//       if (smUserAbonements.keys.contains(userAbonement.type.id))
+//         CombinedAbonementModel(
+//           smAbonements[userAbonement.type.id]!,
+//           userAbonement,
+//           smUserAbonements[userAbonement.id],
+//         )
+//   ]..sort(
+//       // (final abonementA, final abonementB) {
+//       //   return abonementA.item1.compareTo(abonementB.item1);
+//       // }
+//       );
+// });
+
+/// The trio of [SMAbonementModel], [UserAbonementModel] and
+/// optional [SMUserAbonementModel].
+typedef CombinedAbonementModel
+    = Tuple3<SMAbonementModel, UserAbonementModel, SMUserAbonementModel?>;
+
+/// The provider of [SMAbonementModel], [UserAbonementModel] and
+/// optional [SMUserAbonementModel] trios.
+final Provider<Iterable<CombinedAbonementModel>> combinedAbonementsProvider =
+    Provider<Iterable<CombinedAbonementModel>>((final ref) {
+  final smUserAbonements = ref.watch(
+    smUserAbonementsProvider.select((final smUserAbonements) {
+      return <int, SMUserAbonementModel>{
+        for (final smUserAbonement in smUserAbonements)
+          smUserAbonement.abonementId: smUserAbonement
+      };
+    }),
+  );
+  final smAbonements = ref.watch(
+    smAbonementsProvider.select((final smAbonements) {
+      return <int, SMAbonementModel>{
+        for (final smAbonement in smAbonements) smAbonement.yId: smAbonement
+      };
+    }),
+  );
+  return <CombinedAbonementModel>[
+    for (final userAbonement in ref.watch(userAbonementsProvider))
+      if (smAbonements.keys.contains(userAbonement.type.id))
+        CombinedAbonementModel(
+          smAbonements[userAbonement.type.id]!,
+          userAbonement,
+          smUserAbonements[userAbonement.type.id],
+        )
+  ]..sort((final abonementA, final abonementB) {
+      return abonementA.item0.compareTo(abonementB.item0);
+    });
+});
 
 /// The pair of [StudioModel] and [SMStudioModel].
-typedef CombinedStudioModel = Tuple2<StudioModel, SMStudioModel>;
+typedef CombinedStudioModel
+    = Tuple3<StudioModel, SMStudioModel, SMStudioOptionsModel>;
 
 /// The extra data provided for [CombinedStudioModel].
 extension CombinedStudioModelData on CombinedStudioModel {
@@ -24,29 +98,6 @@ extension CombinedStudioModelData on CombinedStudioModel {
   }
 }
 
-/// The id converter of the [StudioModel] and [SMStudioModel].
-final Provider<StudioIdConverter> studioIdConverterProvider =
-    Provider<StudioIdConverter>((final ref) => StudioIdConverter._(ref));
-
-/// The id converter of the [StudioModel] and [SMStudioModel].
-class StudioIdConverter implements JsonConverter<CombinedStudioModel?, int> {
-  const StudioIdConverter._(final this._ref);
-  final ProviderRefBase _ref;
-
-  @override
-  CombinedStudioModel? fromJson(final int id) {
-    final nullableCombinedStudios =
-        _ref.read(combinedStudiosProvider).cast<CombinedStudioModel?>();
-    return nullableCombinedStudios.firstWhere(
-      (final studio) => studio!.item0.id == id,
-      orElse: () => null,
-    );
-  }
-
-  @override
-  int toJson(final CombinedStudioModel? data) => data!.item0.id;
-}
-
 /// The provider of [StudioModel] and [SMStudioModel] pairs.
 final Provider<Iterable<CombinedStudioModel>> combinedStudiosProvider =
     Provider<Iterable<CombinedStudioModel>>((final ref) {
@@ -57,10 +108,23 @@ final Provider<Iterable<CombinedStudioModel>> combinedStudiosProvider =
       };
     }),
   );
+  final studiosOptions = ref.watch(
+    smStudiosOptionsProvider.select((final studiosOptions) {
+      return <int, SMStudioOptionsModel>{
+        for (final studioOptions in studiosOptions)
+          studioOptions.studioId: studioOptions
+      };
+    }),
+  );
   return <CombinedStudioModel>[
     for (final smStudio in ref.watch(smStudiosProvider))
       if (studios.keys.contains(smStudio.studioYId))
-        CombinedStudioModel(studios[smStudio.studioYId]!, smStudio)
+        if (studiosOptions.keys.contains(smStudio.studioYId))
+          CombinedStudioModel(
+            studios[smStudio.studioYId]!,
+            smStudio,
+            studiosOptions[smStudio.studioYId]!,
+          )
   ]..sort((final studioA, final studioB) {
       return studioA.item1.compareTo(studioB.item1);
     });
@@ -70,50 +134,66 @@ final Provider<Iterable<CombinedStudioModel>> combinedStudiosProvider =
 typedef CombinedTrainerModel = Tuple2<TrainerModel, SMTrainerModel>;
 
 /// The id converter of the [TrainerModel] and [SMTrainerModel].
-final Provider<TrainerIdConverter> trainerIdConverterProvider =
-    Provider<TrainerIdConverter>((final ref) => TrainerIdConverter._(ref));
+final Provider<SMTrainerIdConverter> smTrainerIdConverterProvider =
+    Provider<SMTrainerIdConverter>((final ref) => SMTrainerIdConverter._(ref));
 
 /// The id converter of the [TrainerModel] and [SMTrainerModel].
-class TrainerIdConverter implements JsonConverter<CombinedTrainerModel?, int> {
-  const TrainerIdConverter._(final this._ref);
+class SMTrainerIdConverter implements JsonConverter<SMTrainerModel?, int> {
+  const SMTrainerIdConverter._(final this._ref);
   final ProviderRefBase _ref;
 
   @override
-  CombinedTrainerModel? fromJson(final int id) {
-    final nullableCombinedTrainers =
-        _ref.read(combinedTrainersProvider).cast<CombinedTrainerModel?>();
-    return nullableCombinedTrainers.firstWhere(
-      (final trainer) => trainer!.item0.id == id,
-      orElse: () => null,
-    );
+  SMTrainerModel? fromJson(final int id) {
+    for (final trainer in _ref.read(smTrainersProvider)) {
+      if (trainer.id == id) {
+        return trainer;
+      }
+    }
   }
 
   @override
-  int toJson(final CombinedTrainerModel? data) => data!.item0.id;
+  int toJson(final SMTrainerModel? data) => data!.id;
 }
 
 /// The provider of [TrainerModel] and [SMTrainerModel] pairs.
 final Provider<Iterable<CombinedTrainerModel>> combinedTrainersProvider =
     Provider<Iterable<CombinedTrainerModel>>((final ref) {
-  final trainers = ref.watch(
-    normalizedTrainersProvider.select((final trainers) {
-      return <int, TrainerModel>{
-        for (final trainer in trainers) trainer.id: trainer
-      };
-    }),
-  );
+  final trainers = ref.watch(normalizedTrainersProvider);
+  final t = ref.watch(smTrainersProvider).toList();
   return <CombinedTrainerModel>[
-    for (final smTrainer in ref.watch(smTrainersProvider))
-      if (trainers.keys.contains(smTrainer.trainerId))
-        CombinedTrainerModel(trainers[smTrainer.trainerId]!, smTrainer)
+    for (final smTrainer in t)
+      for (final trainer in trainers)
+        if (trainer.name == smTrainer.trainerName)
+          CombinedTrainerModel(trainer, smTrainer)
   ]..sort((final trainerA, final trainerB) {
       return trainerA.item1.compareTo(trainerB.item1);
     });
 });
 
 /// The [ActivityModel] with [CombinedTrainerModel] and [CombinedStudioModel].
-typedef CombinedActivityModel
-    = Tuple3<ActivityModel, CombinedStudioModel, CombinedTrainerModel>;
+typedef CombinedActivityModel = Tuple4<ActivityModel, CombinedStudioModel,
+    CombinedTrainerModel, SMClassesGalleryModel>;
+
+/// The extra data provided for [CombinedActivityModel].
+extension CombinedActivityModelData on CombinedActivityModel {
+  /// Add this activity to calendar.
+  Future<bool> addToCalendar() {
+    return Add2Calendar.addEvent2Cal(
+      Event(
+        title: '${item0.service.title}, '
+            '${item1.item1.studioName}',
+        description: TR.successfulBookCalendarTrainer.tr(
+          args: <String>[
+            item2.item1.trainerName,
+          ],
+        ),
+        location: item1.item1.studioAddress,
+        startDate: item0.date,
+        endDate: item0.date.add(item0.length),
+      ),
+    );
+  }
+}
 
 /// The provider of [ActivityModel] with [CombinedTrainerModel] and
 /// [CombinedStudioModel] pairs.
@@ -133,15 +213,26 @@ final Provider<Iterable<CombinedActivityModel>> combinedActivitiesProvider =
       };
     }),
   );
+  final categories = ref.watch(
+    smClassesGalleryProvider.select((final smClassesGallery) {
+      return <int, SMClassesGalleryModel>{
+        for (final smClassGallery in smClassesGallery)
+          smClassGallery.classesYId: smClassGallery
+      };
+    }),
+  );
+
   return <CombinedActivityModel>[
     for (final activity in ref.watch(scheduleProvider))
       if (studios.keys.contains(activity.companyId))
         if (trainers.keys.contains(activity.staffId))
-          CombinedActivityModel(
-            activity,
-            studios[activity.companyId]!,
-            trainers[activity.staffId]!,
-          )
+          if (categories.keys.contains(activity.service.id))
+            CombinedActivityModel(
+              activity,
+              studios[activity.companyId]!,
+              trainers[activity.staffId]!,
+              categories[activity.service.id]!,
+            )
   ]..sort((final activityA, final activityB) {
       return activityA.item0.compareTo(activityB.item0);
     });

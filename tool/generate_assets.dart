@@ -195,15 +195,14 @@ class Options {
   final bool importComments;
 
   factory Options.fromParser(final ArgResults results) {
-    final exclude = (results['exclude'] as Iterable<String>).toList();
-    if (!(results['add-hidden'] as bool)) {
-      exclude.add(r'^\.');
-    }
     return Options(
       sourceDir: Directory(results['source-dir']! as String),
       outputFile: File(results['output-file']! as String),
       className: results['class-name']! as String,
-      exclude: RegExp(exclude.join('|')),
+      exclude: RegExp(<String>[
+        ...(results['exclude'] as Iterable<String>),
+        if (!(results['add-hidden'] as bool)) r'^\.'
+      ].join('|')),
       importComments: results['import-comments']! as bool,
     );
   }

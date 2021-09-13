@@ -281,7 +281,13 @@ class FontIconButton extends StatelessWidget {
       color: backgroudColor,
       shape: const CircleBorder(),
       child: IconButton(
-        padding: EdgeInsets.zero,
+        icon: icon,
+        color: color,
+        disabledColor: disabledColor,
+        tooltip: tooltip,
+        onPressed: onPressed,
+        padding: icon.data.padding,
+        alignment: icon.data.alignment,
         constraints: constraints ??
             (icon.data.height != null || icon.data.width != null
                 ? BoxConstraints(
@@ -296,11 +302,6 @@ class FontIconButton extends StatelessWidget {
             ? max(icon.data.height ?? 0, icon.data.height ?? 0) *
                 splashMultiplier
             : null,
-        color: color,
-        disabledColor: disabledColor,
-        icon: icon,
-        tooltip: tooltip,
-        onPressed: onPressed,
       ),
     );
   }
@@ -349,6 +350,8 @@ class FontIconBackButton extends StatelessWidget {
           color: color,
           height: size,
           width: size,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.only(bottom: 4),
         ),
       ),
       color: color,

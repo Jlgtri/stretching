@@ -180,26 +180,34 @@ class SaveToHiveIterableNotifier<T extends Object, S extends Object>
   Iterable<T> get state => super.state;
 
   /// Updates the current [state] and saves it's value to the [hive] database.
-  Future<void> setStateAsync(final Iterable<T> value) async {
-    super.state = value;
-    await save();
+  Future<Iterable<T>> setStateAsync(final Iterable<T> state) async {
+    try {
+      return this.state = state;
+    } finally {
+      await save();
+    }
   }
 
-  /// Add a checked permission to this notifier.
+  /// Add an [item] to this notifier.
   Future<void> add(final T item) async {
     await setStateAsync(<T>[...state, item]);
   }
 
-  /// Add a checked permission to this notifier.
-  Future<void> addAll(final Iterable<T> item) async {
-    await setStateAsync(<T>[...state, ...item]);
+  /// Add [items] to this notifier.
+  Future<void> addAll(final Iterable<T> items) async {
+    await setStateAsync(<T>[...state, ...items]);
   }
 
-  /// Remove a checked permission from this notifier.
+  /// Remove an [item] from this notifier.
   Future<void> remove(final T item) async {
     await setStateAsync(<T>[
       for (final _item in state)
         if (_item != item) _item
     ]);
+  }
+
+  /// Remove everything from this notifier.
+  Future<void> clear() async {
+    await setStateAsync(Iterable<T>.empty());
   }
 }

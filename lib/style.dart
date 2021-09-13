@@ -245,7 +245,10 @@ enum TextButtonStyle {
 /// The extra data provided for [TextButtonStyle].
 extension TextButtonStyleData on TextButtonStyle {
   /// Return this style from [theme].
-  ButtonStyle fromTheme(final ThemeData theme) {
+  ButtonStyle fromTheme(
+    final ThemeData theme, [
+    final ButtonStyle? customStyle,
+  ]) {
     switch (this) {
       case TextButtonStyle.light:
         return ButtonStyle(
@@ -260,7 +263,7 @@ extension TextButtonStyleData on TextButtonStyle {
           side: MaterialStateProperty.all(
             BorderSide(color: theme.colorScheme.onSurface),
           ),
-        );
+        ).merge(customStyle);
       case TextButtonStyle.dark:
         return ButtonStyle(
           textStyle: MaterialStateProperty.all(theme.textTheme.button),
@@ -271,7 +274,7 @@ extension TextButtonStyleData on TextButtonStyle {
           backgroundColor:
               MaterialStateProperty.all(theme.colorScheme.onSurface),
           minimumSize: MaterialStateProperty.all(const Size.fromHeight(48)),
-        );
+        ).merge(customStyle);
     }
   }
 }
@@ -330,7 +333,8 @@ extension InputDecorationStyleData on InputDecorationStyle {
                   ),
                 )
               : null,
-          fillColor: theme.colorScheme.surface,
+          filled: true,
+          fillColor: theme.scaffoldBackgroundColor,
           hintText: hintText,
           border: InputBorder.none,
           disabledBorder: InputBorder.none,

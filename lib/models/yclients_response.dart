@@ -12,6 +12,7 @@ class YClientsRequestExtra<T extends Object?> {
   const YClientsRequestExtra({
     final this.onData,
     final this.validate = true,
+    final this.devToken = false,
   });
 
   /// Convert the resulting data to the object of type [T].
@@ -20,14 +21,19 @@ class YClientsRequestExtra<T extends Object?> {
   /// If true, throw an exception if [YClientsResponse.success] is not true.
   final bool validate;
 
+  /// If the request should always consume a dev token.
+  final bool devToken;
+
   /// Return the copy of this model.
   YClientsRequestExtra<T> copyWith({
     final FromJson<T?, Object?>? onData,
     final bool? validate,
+    final bool? devToken,
   }) {
     return YClientsRequestExtra<T>(
       onData: onData ?? this.onData,
       validate: validate ?? this.validate,
+      devToken: devToken ?? this.devToken,
     );
   }
 
@@ -36,14 +42,16 @@ class YClientsRequestExtra<T extends Object?> {
     return <String, Object?>{
       'onData': onData,
       'validate': validate,
+      'devToken': devToken,
     };
   }
 
   /// Convert the map with string keys to this model.
   factory YClientsRequestExtra.fromMap(final Map<String, Object?> map) {
     return YClientsRequestExtra<T>(
-      onData: map['onData']! as FromJson<T?, Object?>,
+      onData: map['onData'] as FromJson<T?, Object?>?,
       validate: map['validate']! as bool,
+      devToken: map['devToken']! as bool,
     );
   }
 
@@ -51,23 +59,28 @@ class YClientsRequestExtra<T extends Object?> {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory YClientsRequestExtra.fromJson(final String source) =>
-      YClientsRequestExtra.fromMap(json.decode(source) as Map<String, Object?>);
+  factory YClientsRequestExtra.fromJson(final String source) {
+    return YClientsRequestExtra.fromMap(
+      json.decode(source) as Map<String, Object?>,
+    );
+  }
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
         other is YClientsRequestExtra<T> &&
             other.onData == onData &&
-            other.validate == validate;
+            other.validate == validate &&
+            other.devToken == devToken;
   }
 
   @override
-  int get hashCode => onData.hashCode ^ validate.hashCode;
+  int get hashCode => onData.hashCode ^ validate.hashCode ^ devToken.hashCode;
 
   @override
   String toString() {
-    return 'YClientsRequestExtra(onData: $onData, validate: $validate)';
+    return 'YClientsRequestExtra(onData: $onData, validate: $validate, '
+        'devToken: $devToken)';
   }
 }
 
@@ -136,8 +149,11 @@ class YClientsResponse<T extends Object> {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory YClientsResponse.fromJson(final String source) =>
-      YClientsResponse.fromMap(json.decode(source) as Map<String, Object?>);
+  factory YClientsResponse.fromJson(final String source) {
+    return YClientsResponse.fromMap(
+      json.decode(source) as Map<String, Object?>,
+    );
+  }
 
   @override
   bool operator ==(final Object other) {
@@ -203,8 +219,11 @@ class YClientsResponseMeta {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory YClientsResponseMeta.fromJson(final String source) =>
-      YClientsResponseMeta.fromMap(json.decode(source) as Map<String, Object?>);
+  factory YClientsResponseMeta.fromJson(final String source) {
+    return YClientsResponseMeta.fromMap(
+      json.decode(source) as Map<String, Object?>,
+    );
+  }
 
   @override
   bool operator ==(final Object other) {

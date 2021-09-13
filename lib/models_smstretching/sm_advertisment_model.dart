@@ -48,6 +48,29 @@ class SMAdvertismentModel {
   /// The type of this model in the SMStretching API.
   final String cctSlug;
 
+  /// Return the copy of this model.
+  SMAdvertismentModel copyWith({
+    final int? id,
+    final String? cctStatus,
+    final String? advImage,
+    final String? advLink,
+    final int? cctAuthorId,
+    final DateTime? cctCreated,
+    final DateTime? cctModified,
+    final String? cctSlug,
+  }) {
+    return SMAdvertismentModel(
+      id: id ?? this.id,
+      cctStatus: cctStatus ?? this.cctStatus,
+      advImage: advImage ?? this.advImage,
+      advLink: advLink ?? this.advLink,
+      cctAuthorId: cctAuthorId ?? this.cctAuthorId,
+      cctCreated: cctCreated ?? this.cctCreated,
+      cctModified: cctModified ?? this.cctModified,
+      cctSlug: cctSlug ?? this.cctSlug,
+    );
+  }
+
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() {
     return <String, Object?>{
@@ -55,8 +78,8 @@ class SMAdvertismentModel {
       'cct_status': cctStatus,
       'adv_image': advImage,
       'adv_link': advLink,
-      'cct_author_id': cctAuthorId.toString(),
-      'cct_created': cctCreated.toString(),
+      'cct_author_id': cctAuthorId.toString().split('.').first,
+      'cct_created': cctCreated.toString().split('.').first,
       'cct_modified': cctModified.toString(),
       'cct_slug': cctSlug,
     };
@@ -82,29 +105,6 @@ class SMAdvertismentModel {
   /// Convert the json string to this model.
   factory SMAdvertismentModel.fromJson(final String source) =>
       SMAdvertismentModel.fromMap(json.decode(source) as Map<String, Object?>);
-
-  /// Return the copy of this model.
-  SMAdvertismentModel copyWith({
-    final int? id,
-    final String? cctStatus,
-    final String? advImage,
-    final String? advLink,
-    final int? cctAuthorId,
-    final DateTime? cctCreated,
-    final DateTime? cctModified,
-    final String? cctSlug,
-  }) {
-    return SMAdvertismentModel(
-      id: id ?? this.id,
-      cctStatus: cctStatus ?? this.cctStatus,
-      advImage: advImage ?? this.advImage,
-      advLink: advLink ?? this.advLink,
-      cctAuthorId: cctAuthorId ?? this.cctAuthorId,
-      cctCreated: cctCreated ?? this.cctCreated,
-      cctModified: cctModified ?? this.cctModified,
-      cctSlug: cctSlug ?? this.cctSlug,
-    );
-  }
 
   @override
   bool operator ==(final Object other) {

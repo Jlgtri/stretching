@@ -1,6 +1,6 @@
 name: stretching
 description: Stretching remake from scratch.
-version: 0.1.5
+version: 0.8.0
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
@@ -11,6 +11,7 @@ environment:
   flutter: '>=2.6.0-0.0.pre'
 
 dependencies:
+  add_2_calendar: ^2.1.1
   animations: ^2.0.1
   auto_size_text: ^3.0.0-nullsafety.0
   badges: ^2.0.1
@@ -19,6 +20,7 @@ dependencies:
   carousel_slider: ^4.0.0
   catcher: ^0.6.8
   connectivity: ^3.0.6
+  crypto: ^3.0.1
   darq: ^1.1.1
   dio: ^4.0.0
   draggable_scrollbar: ^0.1.0
@@ -27,12 +29,13 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_hooks: ^0.18.0
-  flutter_riverpod: ^1.0.0-dev.6
+  flutter_keyboard_visibility: ^5.0.3
+  flutter_riverpod: ^1.0.0-dev.7
   geolocator: ^7.4.1
   google_maps_flutter: ^2.0.6
   hive: ^2.0.4
   hive_flutter: ^1.1.0
-  hooks_riverpod: ^1.0.0-dev.6
+  hooks_riverpod: ^1.0.0-dev.7
   intl: ^0.17.0
   logger: ^1.0.0
   logging: ^1.0.1
@@ -45,9 +48,17 @@ dependencies:
   permission_handler: ^8.1.4+2
   persistent_bottom_nav_bar: ^4.0.2
   pin_code_fields: ^7.3.0
-  riverpod: ^1.0.0-dev.6
+  pull_to_refresh: ^2.0.0
+  random_string: ^2.3.1
+  riverpod: ^1.0.0-dev.7
   share: ^2.0.4
   smooth_page_indicator: ^1.0.0+2
+  tcard: ^1.3.5
+  tinkoff_acquiring: ^3.0.4
+  url_launcher: ^6.0.10
+  validators: ^3.0.0
+  web_socket_channel: ^2.1.0
+  webview_flutter: ^2.0.12
 
 dev_dependencies:
   args: ^2.2.0
@@ -60,6 +71,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/google_map_style.json
+    - assets/emoji/10084.png
     - assets/emoji/1f499.png
     - assets/emoji/1f525.png
     - assets/emoji/1f609.png
@@ -82,6 +94,11 @@ flutter:
     - assets/emoji/26a1.png
     - assets/emoji/270c-fe0f.png
     - assets/emoji/2764-fe0f.png
+    - assets/messengers/facebook.png
+    - assets/messengers/telegram.png
+    - assets/messengers/viber.png
+    - assets/messengers/vk.png
+    - assets/messengers/whatsApp.png
     - assets/translations/ru-RU.json
 
   fonts:

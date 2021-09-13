@@ -15,10 +15,13 @@ const List<Locale> supportedLocales = <Locale>[defaultLocale];
 const String smstretchingCity = 'Москва';
 
 /// The country code of the desired phone number.
-const int phoneCountryCode = 38;
+const int phoneCountryCode = 7;
 
 /// The length of the sms pin code for phone number authentication.
 const int pinCodeLength = 4;
 
 /// The time filter to use for [ActivityTime].
 const TimeOfDay filterTime = TimeOfDay(hour: 16, minute: 45);
+
+/// The longest time that user can wait before booking
+const Duration bookTimeout = Duration(minutes: 20);

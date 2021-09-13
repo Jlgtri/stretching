@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/localization.g.dart';
@@ -18,6 +19,7 @@ import 'package:stretching/models_yclients/user_model.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/logger.dart';
+import 'package:stretching/widgets/appbars.dart';
 import 'package:stretching/widgets/components/focus_wrapper.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
@@ -32,7 +34,6 @@ class AuthorizationScreen extends HookConsumerWidget {
     const phonePrefix = '+$phoneCountryCode ';
 
     final theme = Theme.of(context);
-    final mediaQuery = MediaQuery.of(context);
     final navigator = Navigator.of(context);
 
     final isLoading = useState<bool>(false);
@@ -82,7 +83,12 @@ class AuthorizationScreen extends HookConsumerWidget {
         if (currentPhoneValue != null) {
           final yClients = ref.read(yClientsProvider);
           if (enteringPhone.value) {
-            response = await yClients.sendCode(currentPhoneValue);
+            response = await yClients.sendCode(
+              currentPhoneValue,
+              // TODO(feature): default studio
+              // TODO(feature): add user to all other studios (post clients/$company)
+              ref.read(studiosProvider).first.id,
+            );
             if (isMounted()) {
               enteringPhone.value = false;
             }
@@ -95,6 +101,10 @@ class AuthorizationScreen extends HookConsumerWidget {
               );
               final user = response.data?.data as UserModel?;
               if (user != null) {
+                await smStretching.addUser(
+                  user,
+                  ref.read(smServerTimeProvider),
+                );
                 ref.read(userProvider.notifier).state = user;
                 (ref.read(navigationProvider))
                     .jumpToTab(NavigationScreen.profile.index);
@@ -139,37 +149,19 @@ class AuthorizationScreen extends HookConsumerWidget {
     return FocusWrapper(
       unfocussableKeys: <GlobalKey>[phoneKey, codeKey],
       child: Scaffold(
-        appBar: AppBar(
-          toolbarHeight: 40,
-          backgroundColor: Colors.transparent,
-          systemOverlayStyle: SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarBrightness: theme.brightness,
-            statusBarIconBrightness: theme.brightness == Brightness.light
-                ? Brightness.dark
-                : Brightness.light,
-          ),
+        // ignore: use_build_context_synchronously
+        appBar: cancelAppBar(
+          theme,
+          onPressed: navigator.maybePop,
           leading: !enteringPhone.value
               ? FontIconBackButton(
                   color: theme.colorScheme.onSurface,
                   onPressed: () => enteringPhone.value = true,
                 )
               : const SizedBox.shrink(),
-          actions: <Widget>[
-            TextButton(
-              onPressed: navigator.maybePop,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.all(8),
-                primary: theme.colorScheme.onSurface,
-              ),
-              child: Text(
-                TR.tooltipsCancel.tr(),
-                style: TextStyle(color: theme.colorScheme.onSurface),
-              ),
-            )
-          ],
         ),
         body: SingleChildScrollView(
+          primary: false,
           child: PageTransitionSwitcher(
             reverse: !enteringPhone.value,
             duration: const Duration(seconds: 1),

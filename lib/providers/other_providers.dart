@@ -91,12 +91,6 @@ final StreamProvider<NativeDeviceOrientation> orientationProvider =
   return NativeDeviceOrientationCommunicator().onOrientationChanged();
 });
 
-/// The provider of the current server time.
-final StateNotifierProvider<ServerTimeNotifier, DateTime> serverTimeProvider =
-    StateNotifierProvider<ServerTimeNotifier, DateTime>((final ref) {
-  throw Exception('The provider was not initialized');
-});
-
 /// The notifier of the current server time.
 class ServerTimeNotifier extends StateNotifier<DateTime> {
   /// The notifier of the current server time.

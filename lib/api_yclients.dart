@@ -1,21 +1,32 @@
+import 'dart:async';
+import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 
+import 'package:darq/darq.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/native_imp.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meta/meta.dart';
-import 'package:stretching/models/studios_enum.dart';
+import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/models/yclients_response.dart';
-import 'package:stretching/models_smstretching/sm_studio_model.dart';
-import 'package:stretching/models_yclients/abonement_model.dart';
+import 'package:stretching/models_smstretching/sm_abonement_model.dart';
+import 'package:stretching/models_smstretching/sm_studio_options_model.dart';
 import 'package:stretching/models_yclients/activity_model.dart';
+import 'package:stretching/models_yclients/client_model.dart';
 import 'package:stretching/models_yclients/company_model.dart';
+import 'package:stretching/models_yclients/good_model.dart';
+import 'package:stretching/models_yclients/good_transaction_model.dart';
 import 'package:stretching/models_yclients/record_model.dart';
+import 'package:stretching/models_yclients/storage_operation_model.dart';
 import 'package:stretching/models_yclients/trainer_model.dart';
+import 'package:stretching/models_yclients/transaction_model.dart';
+import 'package:stretching/models_yclients/user_abonement_model.dart';
 import 'package:stretching/models_yclients/user_model.dart';
+import 'package:stretching/models_yclients/user_record_model.dart';
+import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/hive_provider.dart';
-import 'package:stretching/providers/smstretching_providers.dart';
 import 'package:stretching/providers/user_provider.dart';
-import 'package:stretching/providers/yclients_providers.dart';
 import 'package:stretching/secrets.dart';
 import 'package:stretching/utils/json_converters.dart';
 import 'package:stretching/utils/logger.dart';
@@ -26,184 +37,33 @@ const String yClientsAssetsUrl = 'https://assets.yclients.com';
 /// The url of the YClients API.
 const String yClientsUrl = 'https://api.yclients.com/api/v1';
 
-/// The provider of the [YClientsAPI].
-final Provider<YClientsAPI> yClientsProvider =
-    Provider<YClientsAPI>((final ref) {
-  final user = ref.watch(userProvider);
-  return YClientsAPI(
-    Dio(
-      BaseOptions(
-        responseType: ResponseType.plain,
-        headers: <String, String>{
-          HttpHeaders.contentTypeHeader: 'application/json',
-          HttpHeaders.acceptHeader: 'application/vnd.yclients.v2+json',
-          HttpHeaders.authorizationHeader: user != null
-              ? 'Bearer $yClientsToken, User ${user.userToken}'
-              : 'Bearer $yClientsToken, User $yClientsAdminToken',
-        },
-      ),
-    )..interceptors.add(YClientsInterceptor()),
-  );
-});
-
-/// The content provider for the YClients API.
-final AutoDisposeFutureProvider<void> yClientsContentProvider =
-    FutureProvider.autoDispose<void>((final ref) {
-  final studios = ref.watch(smStudiosProvider);
-  if (studios.isEmpty) {
-    return Future<void>.value();
-  }
-
-  final yClients = ref.read(yClientsProvider);
-
-  // final citiesNotifier = ref.read(citiesProvider.notifier);
-  // if (citiesNotifier.state.isEmpty) {
-  //   await yClients.getIterableData<CityModel>(
-  //     notifier: citiesNotifier,
-  //     jsonConverter: (citiesNotifier.converter
-  //             as StringToIterableConverter<CityModel, Map<String, Object?>>)
-  //         .converter,
-  //     url: '$yClientsUrl/cities',
-  //     queryParameters: <String, Object?>{'country_id': 1},
-  //   );
-  // }
-
-  // int? cityId;
-  // for (final city in citiesNotifier.state) {
-  //   if (city.title == smstretchingCity) {
-  //     cityId = city.id;
-  //     break;
-  //   }
-  // }
-  // if (cityId == null) {
-  //   throw Exception('City id is not found in the fetched cities.');
-  // }
-
-  final futures = List<Future<void>>.empty(growable: true);
-
-  final studiosNotifier = ref.read(studiosProvider.notifier);
-  try {
-    if (studiosNotifier.state.isEmpty) {
-      futures.add(
-        yClients.mapData<StudioModel, SMStudioModel>(
-          mapData: studios,
-          notifier: studiosNotifier,
-          jsonConverter: ((studiosNotifier.converter
-                          as StringToIterableConverter<StudioModel,
-                              Map<String, Object?>>)
-                      .converter
-                  as IterableConverter<StudioModel, Map<String, Object?>>)
-              .converter,
-          url: (final studio) => '$yClientsUrl/company/${studio.studioYId}',
-        ),
-      );
-    }
-  } on DioError catch (e) {
-    studiosNotifier.state = const Iterable<StudioModel>.empty();
-    logger.e(e.message, e, e.stackTrace);
-  }
-
-  final trainersNotifier = ref.read(trainersProvider.notifier);
-  try {
-    if (trainersNotifier.state.isEmpty) {
-      futures.add(
-        yClients.mapIterableData<TrainerModel, SMStudioModel>(
-          mapData: studios,
-          notifier: trainersNotifier,
-          jsonConverter: (trainersNotifier.converter
-                  as StringToIterableConverter<TrainerModel,
-                      Map<String, Object?>>)
-              .converter,
-          url: (final studio) =>
-              '$yClientsUrl/company/${studio.studioYId}/staff',
-        ),
-      );
-    }
-  } on DioError catch (e) {
-    trainersNotifier.state = const Iterable<TrainerModel>.empty();
-    logger.e(e.message, e, e.stackTrace);
-  }
-
-  final scheduleNotifier = ref.read(scheduleProvider.notifier);
-  try {
-    if (scheduleNotifier.state.isEmpty) {
-      futures.add(
-        yClients.mapIterableData<ActivityModel, SMStudioModel>(
-          mapData: studios,
-          notifier: scheduleNotifier,
-          jsonConverter: (scheduleNotifier.converter
-                  as StringToIterableConverter<ActivityModel,
-                      Map<String, Object?>>)
-              .converter,
-          url: (final studio) =>
-              '$yClientsUrl/activity/${studio.studioYId}/search',
-          queryParameters: (final studio) => <String, Object?>{'count': 300},
-        ),
-      );
-    }
-  } on DioError catch (e) {
-    scheduleNotifier.state = const Iterable<ActivityModel>.empty();
-    logger.e(e.message, e, e.stackTrace);
-  }
-
-  return Future.wait<void>(futures);
-});
-
-/// The user-specific content provider for the YClients API.
-final FutureProvider<void> yClientsUserContentProvider =
-    FutureProvider<void>((final ref) {
-  final futures = List<Future<void>>.empty(growable: true);
-
-  final yClients = ref.read(yClientsProvider);
-  final abonementsNotifier = ref.read(userAbonementsProvider.notifier);
-  try {
-    futures.add(
-      yClients.mapIterableData<AbonementModel, SMStretchingStudios>(
-        mapData: SMStretchingStudios.values,
-        notifier: abonementsNotifier,
-        jsonConverter: (abonementsNotifier.converter
-                as StringToIterableConverter<AbonementModel,
-                    Map<String, Object?>>)
-            .converter,
-        url: (final studio) => '$yClientsUrl/user/loyalty/abonements',
-        queryParameters: (final studio) =>
-            <String, Object?>{'company_id': studio.id},
-      ),
-    );
-  } on DioError catch (e) {
-    abonementsNotifier.state = const Iterable<AbonementModel>.empty();
-    logger.e(e.message, e, e.stackTrace);
-  }
-
-  final recordNotifier = ref.read(userRecordsProvider.notifier);
-  try {
-    futures.add(
-      yClients.getIterableData<RecordModel>(
-        notifier: recordNotifier,
-        jsonConverter: (recordNotifier.converter
-                as StringToIterableConverter<RecordModel, Map<String, Object?>>)
-            .converter,
-        url: '$yClientsUrl/user/records',
-      ),
-    );
-  } on DioError catch (e) {
-    recordNotifier.state = const Iterable<RecordModel>.empty();
-    logger.e(e.message, e, e.stackTrace);
-  }
-
-  return Future.wait<void>(futures);
-});
-
 /// The base class for contacting with YClients API.
-class YClientsAPI {
+class YClientsAPI extends DioForNative {
   /// The base class for contacting with YClients API.
-  const YClientsAPI(this._dio);
-  final Dio _dio;
+  YClientsAPI._([final String? userToken])
+      : super(
+          BaseOptions(
+            responseType: ResponseType.plain,
+            headers: <String, String>{
+              HttpHeaders.contentTypeHeader: 'application/json',
+              HttpHeaders.acceptHeader: 'application/vnd.yclients.v2+json',
+              HttpHeaders.authorizationHeader: userToken != null
+                  ? 'Bearer $yClientsToken, User $userToken'
+                  : 'Bearer $yClientsToken, User $yClientsAdminToken',
+            },
+            extra: const YClientsRequestExtra().toMap(),
+          ),
+        ) {
+    interceptors.add(YClientsInterceptor());
+  }
 
   /// Send the phone confirmation sms code in the YClients API.
-  Future<Response<YClientsResponse>> sendCode(final String phone) async {
-    return _dio.post<YClientsResponse>(
-      '$yClientsUrl/book_code/${SMStretchingStudios.studiyaNaChistihPrudah.id}',
+  Future<Response<YClientsResponse>> sendCode(
+    final String phone,
+    final int studioId,
+  ) {
+    return post<YClientsResponse>(
+      '$yClientsUrl/book_code/$studioId',
       data: <String, Object?>{'phone': phone},
     );
   }
@@ -212,8 +72,8 @@ class YClientsAPI {
   Future<Response<YClientsResponse>> verifyCode(
     final String phone,
     final String code,
-  ) async {
-    return _dio.post<YClientsResponse>(
+  ) {
+    return post<YClientsResponse>(
       '$yClientsUrl/user/auth',
       data: <String, Object?>{'phone': phone, 'code': code},
       options: Options(
@@ -226,58 +86,459 @@ class YClientsAPI {
     );
   }
 
+  /// Creates a record for the specified [user] and [activityId].
+  Future<Tuple2<int, String>> bookActivity({
+    required final UserModel user,
+    required final int companyId,
+    required final int activityId,
+  }) async {
+    final response = await post<YClientsResponse>(
+      '$yClientsUrl/activity/$companyId/$activityId/book',
+      data: <String, Object?>{
+        'fullname': user.name.isNotEmpty ? user.name : user.phone,
+        'phone': user.phone,
+        'email': user.email,
+        'code': '',
+        'comment': '',
+        'notify_by_sms': 0,
+        'notify_by_email': 0,
+        'type': 'mobile'
+      },
+    );
+    final data = response.data!.data! as Map<String, Object?>;
+    return Tuple2(data['id']! as int, data['hash']! as String);
+  }
+
+  /// Get a record for the specified [recordId] and [companyId].
+  Future<RecordModel> getRecord({
+    required final int companyId,
+    required final int recordId,
+  }) async {
+    final response = await get<YClientsResponse>(
+      '$yClientsUrl/record/$companyId/$recordId',
+      options: Options(
+        extra: const YClientsRequestExtra<Map<String, Object?>>(
+          devToken: true,
+        ).toMap(),
+      ),
+    );
+    return RecordModel.fromMap(response.data!.data! as Map<String, Object?>);
+  }
+
+  /// Update the record for the specified [activityId].
+  ///
+  /// - [recordClientPhone] is equal to [RecordModel.client]'s phone.
+  ///
+  /// See: https://api.yclients.com/api/v1/record/{company_id}/{record_id}
+  Future<RecordModel> updateRecord({
+    required final int companyId,
+    required final int recordId,
+    required final int activityId,
+    required final String recordClientPhone,
+    required final Map<String, Object?> data,
+  }) async {
+    final response = await put<YClientsResponse>(
+      '$yClientsUrl/record/$companyId/$recordId',
+      options: Options(
+        extra: const YClientsRequestExtra<Map<String, Object?>>(
+          devToken: true,
+        ).toMap(),
+      ),
+      data: <String, Object?>{
+        ...data,
+        'client': {'phone': recordClientPhone},
+        'activity_id': activityId.toString(),
+      },
+    );
+    return RecordModel.fromMap(response.data!.data! as Map<String, Object?>);
+  }
+
+  /// Delete the record in the YClients API.
+  ///
+  /// [recordHash] is required if user is not authorized.
+  ///
+  /// See: https://api.yclients.com/api/v1/user/records/{record_id}/{record_hash}
+  Future<bool> deleteRecord(
+    final int recordId, [
+    final String? recordHash,
+  ]) async {
+    final response = await delete<YClientsResponse>(
+      '$yClientsUrl/user/records/$recordId/${recordHash ?? ''}',
+      options: Options(
+        extra: const YClientsRequestExtra(validate: false).toMap(),
+      ),
+    );
+    return response.statusCode == 200;
+  }
+
+  /// Delete the [record] in the YClients API.
+  ///
+  /// See:
+  ///   * https://api.yclients.com/api/v1/timetable/transactions/{company_id}
+  ///   * https://api.yclients.com/api/v1/finance_transactions/{company_id}/{transaction_id}
+  Future getTransactions(
+    final UserRecordModel record,
+  ) async {
+    final response = await get<YClientsResponse>(
+      '$yClientsUrl/timetable/transactions/${record.company.id}',
+      queryParameters: <String, Object?>{'record_id': record.id},
+      options: Options(
+        extra: const YClientsRequestExtra<Iterable>(
+          devToken: true,
+        ).toMap(),
+      ),
+    );
+    logger.v(response.data);
+    // return TransactionModel.fromMap(
+    //   response.data!.data! as Iterable,
+    // );
+  }
+
+  /// See: https://api.yclients.com/api/v1/company/{company_id}/sale/{document_id}/payment
+  Future<TransactionModel> _sale(
+    final int companyId,
+    final int documentId,
+    final Map<String, Object?> data,
+  ) async {
+    final response = await post<YClientsResponse>(
+      '$yClientsUrl/company/$companyId/sale/$documentId/payment',
+      options: Options(
+        extra: const YClientsRequestExtra<Map<String, Object?>>(
+          devToken: true,
+        ).toMap(),
+      ),
+      data: data,
+    );
+    return TransactionModel.fromMap(
+      response.data!.data! as Map<String, Object?>,
+    );
+  }
+
+  /// Sale by cash with price equal to [amount].
+  ///
+  /// - [documentId] is equal to [RecordDocumentModel.id] or
+  /// [StorageOperationDocumentModel.id].
+  /// - [accountId] is equal to [SMStudioOptionsModel.kassaId].
+  ///
+  /// See: https://api.yclients.com/api/v1/company/{company_id}/sale/{document_id}/payment
+  Future<TransactionModel> saleByCash({
+    required final int companyId,
+    required final int documentId,
+    required final int accountId,
+    required final int amount,
+  }) {
+    return _sale(
+      companyId,
+      documentId,
+      <String, Object?>{
+        'payment': <String, Object?>{
+          'method': <String, Object?>{
+            'slug': 'account',
+            'account_id': accountId,
+          },
+          'amount': amount,
+        }
+      },
+    );
+  }
+
+  /// Sale by abonement.
+  ///
+  /// - [abonementId] is equal to [SMAbonementModel.yId].
+  /// - [abonementNumber] is equal to [UserAbonementModel.number].
+  /// - [documentId] is equal to [RecordDocumentModel.id].
+  ///
+  /// See: https://api.yclients.com/api/v1/company/{company_id}/sale/{document_id}/payment
+  Future<TransactionModel> saleByAbonement({
+    required final int companyId,
+    required final int documentId,
+    required final int abonementId,
+    required final String abonementNumber,
+  }) {
+    return _sale(
+      companyId,
+      documentId,
+      <String, Object?>{
+        'payment': <String, Object?>{
+          'method': <String, Object?>{
+            'slug': 'loyalty_abonement',
+            'loyalty_abonement_id': abonementId,
+          },
+          'number': abonementNumber,
+        }
+      },
+    );
+  }
+
+  /// Create a storage operation in the YClients API.
+  ///
+  /// - [companyId] equals [CompanyModel.id].
+  /// - [clientId] equals [UserModel.id].
+  /// - [storageId] equals [SMStudioOptionsModel.skladId].
+  /// - [masterId] equals [SMStudioOptionsModel.kassirMobileId].
+  /// - [goodId] equals [GoodModel.goodId].
+  /// - [goodCost] equals [GoodModel.cost].
+  ///
+  /// See: https://api.yclients.com/api/v1/storage_operations/operation/{company_id}
+  Future<StorageOperationModel> createStorageOperation({
+    required final int companyId,
+    required final int clientId,
+    required final int storageId,
+    required final int masterId,
+    required final int goodId,
+    required final int goodCost,
+    required final String goodSpecialNumber,
+    required final DateTime serverTime,
+  }) async {
+    final response = await post<YClientsResponse>(
+      '$yClientsUrl/storage_operations/operation/$companyId',
+      options: Options(
+        extra: const YClientsRequestExtra<Map<String, Object?>>(
+          devToken: true,
+        ).toMap(),
+      ),
+      data: <String, Object?>{
+        'type_id': 1,
+        'storage_id': storageId,
+        'master_id': masterId,
+        'client_id': clientId,
+        'create_date': serverTime.toIso8601String(),
+        'transactions': <Map<String, Object?>>[
+          <String, Object?>{
+            'amount': 1,
+            'operation_unit_type': 1,
+            'discount': 0,
+            'good_id': goodId,
+            'cost_per_unit': goodCost,
+            'cost': goodCost,
+            'master_id': masterId,
+            'client_id': clientId,
+            'good_special_number': goodSpecialNumber,
+          }
+        ],
+      },
+    );
+    return StorageOperationModel.fromMap(
+      response.data!.data! as Map<String, Object?>,
+    );
+  }
+
+  /// Return the clients found in the company with the specified [userPhone].
+  ///
+  /// See: https://api.yclients.com/api/v1/company/{company_id}/clients/search
+  Future<Iterable<ClientModel>> getClients({
+    required final int companyId,
+    required final String userPhone,
+  }) async {
+    final response = await post<YClientsResponse>(
+      '$yClientsUrl/company/$companyId/clients/search',
+      options: Options(
+        extra: const YClientsRequestExtra<Map<String, Object?>>(
+          devToken: true,
+        ).toMap(),
+      ),
+      data: <String, Object?>{
+        'fields': <String>[
+          'id',
+          'name',
+          'phone',
+          'email',
+          'discount',
+          'first_visit_date',
+          'last_visit_date',
+          'sold_amount',
+          'visit_count'
+        ],
+        'filters': <Map<String, Object?>>[
+          <String, Object?>{
+            'type': 'quick_search',
+            'state': <String, String>{'value': userPhone}
+          }
+        ]
+      },
+    );
+    return (response.data!.data! as Iterable)
+        .cast<Map<String, Object?>>()
+        .map((final map) => ClientModel.fromMap(map));
+  }
+
+  /// Create a client in the YClients API.
+  ///
+  /// See: https://api.yclients.com/api/v1/clients/{company_id}
+  Future<FullClientModel> createClient({
+    required final int companyId,
+    required final String userPhone,
+    final String name = '',
+    final String email = '',
+  }) async {
+    final response = await post<YClientsResponse>(
+      '$yClientsUrl/clients/$companyId',
+      data: <String, Object?>{
+        'phone': userPhone,
+        if (name.isNotEmpty) 'name': name,
+        if (email.isNotEmpty) 'email': email,
+      },
+      options: Options(
+        extra: const YClientsRequestExtra<Map<String, Object?>>(
+          devToken: true,
+        ).toMap(),
+      ),
+    );
+    return FullClientModel.fromMap(
+      response.data!.data! as Map<String, Object?>,
+    );
+  }
+
+  /// Edit a client in the YClients API.
+  ///
+  /// See: https://api.yclients.com/api/v1/client/{company_id}/{id}
+  Future<FullClientModel> editClient({
+    required final int companyId,
+    required final int clientId,
+    required final String phone,
+    required final String name,
+    final String email = '',
+  }) async {
+    final response = await put<YClientsResponse>(
+      '$yClientsUrl/client/$companyId/$clientId',
+      data: <String, Object?>{
+        'phone': '+$phone',
+        'name': name,
+        if (email.isNotEmpty) 'email': email,
+      },
+      options: Options(
+        extra: const YClientsRequestExtra<Map<String, Object?>>(
+          devToken: true,
+        ).toMap(),
+      ),
+    );
+    return FullClientModel.fromMap(
+      response.data!.data! as Map<String, Object?>,
+    );
+  }
+
+  /// Create a transaction in the YClients API.
+  ///
+  /// - [companyId] equals [CompanyModel.id].
+  /// - [masterId] equals [SMStudioOptionsModel.kassirMobileId].
+  /// - [clientId] equals [UserModel.id].
+  /// - [goodId] equals [GoodModel.goodId].
+  /// - [goodCost] equals [GoodModel.cost].
+  /// - [documentId] equals [StorageOperationDocumentModel.id].
+  ///
+  /// See: https://api.yclients.com/api/v1/storage_operations/goods_transactions/{company_id}
+  Future<GoodTransactionModel> createTransaction({
+    required final int companyId,
+    required final int masterId,
+    required final int clientId,
+    required final int goodId,
+    required final int goodCost,
+    required final String goodSpecialNumber,
+    required final int documentId,
+  }) async {
+    final response = await post<YClientsResponse>(
+      '$yClientsUrl/storage_operations/goods_transactions/$companyId',
+      options: Options(
+        extra: const YClientsRequestExtra<Map<String, Object?>>(
+          devToken: true,
+        ).toMap(),
+      ),
+      data: <String, Object?>{
+        'amount': 1,
+        'discount': 0,
+        'operation_unit_type': 1,
+        'document_id': documentId,
+        'good_id': goodId,
+        'cost_per_unit': goodCost,
+        'cost': goodCost,
+        'master_id': masterId,
+        'client_id': clientId,
+        'good_special_number': goodSpecialNumber,
+      },
+    );
+    return GoodTransactionModel.fromMap(
+      response.data!.data! as Map<String, Object?>,
+    );
+  }
+
+  /// Returns the iterable data from YClients API.
+  ///
+  /// Maps the data from [mapData] and aggregates results in the single result.
+  ///
+  /// - [url] to get the data from.
+  /// - [queryParameters] to pass with the url.
+  /// - [options] to pass with the url.
+  /// - [onPrevious] sets the breakpoint for the data.
+  Stream<T> mapIterableData<T extends Object, S extends Object>({
+    required final Iterable<S> mapData,
+    required final JsonConverter<Iterable<T>, Iterable<Map<String, Object?>>>
+        jsonConverter,
+    required final String Function(S) url,
+    final Map<String, Object?>? Function(S)? queryParameters,
+    final Options? Function(S)? options,
+    final YClientsRequestExtra<Iterable<T>>? Function(S)? extra,
+    final bool Function(Iterable<T>)? onPrevious,
+    final FutureOr<void> Function(DioError, S)? onError,
+  }) async* {
+    for (final data in mapData) {
+      final previousData = <T>[];
+      await for (final iterableData in getIterableData(
+        jsonConverter: jsonConverter,
+        url: url(data),
+        options: options?.call(data),
+        extra: extra?.call(data),
+        queryParameters: queryParameters?.call(data),
+        onError: onError != null ? (final error) => onError(error, data) : null,
+      )) {
+        previousData.add(iterableData);
+        yield iterableData;
+      }
+      if (onPrevious?.call(previousData) ?? false) {
+        break;
+      }
+    }
+  }
+
   /// Returns the iterable data from YClients API.
   ///
   /// - [url] to get the data from.
   /// - [queryParameters] to pass with the url.
   /// - [options] to pass with the url.
-  Future<void> getIterableData<T extends Object>({
-    required final SaveToHiveIterableNotifier<T, String> notifier,
+  Stream<T> getIterableData<T extends Object>({
     required final JsonConverter<Iterable<T>, Iterable<Map<String, Object?>>>
         jsonConverter,
     required final String url,
     final Map<String, Object?>? queryParameters,
     final Options? options,
-  }) async {
-    final response = await _dio.get<YClientsResponse>(
-      url,
-      queryParameters: queryParameters,
-      options: (options ?? Options()).copyWith(
-        extra: YClientsRequestExtra<Iterable<T>>(
-          onData: (final data) => jsonConverter.fromJson(
-            (data! as List).cast<Map<String, Object?>>(),
-          ),
-        ).toMap(),
-      ),
-    );
-    await notifier
-        .addAll((response.data!.data! as Iterable<Object?>).cast<T>());
-  }
-
-  /// Returns the iterable data from YClients API.
-  ///
-  /// Maps the data from [mapData] and aggregates results in the single result.
-  ///
-  /// - [url] to get the data from.
-  /// - [queryParameters] to pass with the url.
-  /// - [options] to pass with the url.
-  Future<void> mapIterableData<T extends Object, S extends Object>({
-    required final Iterable<S> mapData,
-    required final SaveToHiveIterableNotifier<T, String> notifier,
-    required final JsonConverter<Iterable<T>, Iterable<Map<String, Object?>>>
-        jsonConverter,
-    required final String Function(S) url,
-    final Map<String, Object?>? Function(S)? queryParameters,
-    final Options? Function(S)? options,
-  }) async {
-    for (final data in mapData) {
-      await getIterableData(
-        notifier: notifier,
-        jsonConverter: jsonConverter,
-        url: url(data),
-        options: options?.call(data),
-        queryParameters: queryParameters?.call(data),
+    final YClientsRequestExtra<Iterable<T>>? extra,
+    final FutureOr<void> Function(DioError)? onError,
+  }) async* {
+    try {
+      final _options = options ?? Options();
+      final _extra = extra ?? YClientsRequestExtra<Iterable<T>>();
+      final response = await get<YClientsResponse>(
+        url,
+        queryParameters: queryParameters,
+        options: _options.copyWith(
+          extra: _extra.copyWith(
+            onData: (final data) {
+              return jsonConverter.fromJson(
+                (data! as Iterable).cast<Map<String, Object?>>(),
+              );
+            },
+          ).toMap(),
+        ),
       );
+      for (final data in response.data!.data! as Iterable<Object?>) {
+        yield data! as T;
+      }
+    } on DioError catch (e) {
+      debugger(message: e.toString());
+      if (onError != null) {
+        await onError(e);
+      } else {
+        rethrow;
+      }
     }
   }
 
@@ -288,40 +549,301 @@ class YClientsAPI {
   /// - [url] to get the data from.
   /// - [queryParameters] to pass with the url.
   /// - [options] to pass with the url.
-  Future<void> mapData<T extends Object, S extends Object>({
+  Stream<T> mapData<T extends Object, S extends Object>({
     required final Iterable<S> mapData,
-    required final SaveToHiveIterableNotifier<T, String> notifier,
     required final JsonConverter<T, Map<String, Object?>> jsonConverter,
     required final String Function(S) url,
     final Map<String, Object?>? Function(S)? queryParameters,
     final Options? Function(S)? options,
-  }) async {
+    final YClientsRequestExtra? Function(S)? extra,
+    final FutureOr<void> Function(DioError, S)? onError,
+  }) async* {
     for (final data in mapData) {
-      final response = await _dio.get<YClientsResponse>(
-        url(data),
-        queryParameters: queryParameters?.call(data),
-        options: (options?.call(data) ?? Options()).copyWith(
-          extra: YClientsRequestExtra<T>(
-            onData: (final data) => data! is List
-                ? (data as List)
-                    .cast<Map<String, Object?>>()
-                    .map(jsonConverter.fromJson)
-                    .single
-                : data is Iterable
-                    ? (data as Iterable<Object>)
-                        .cast<Map<String, Object?>>()
+      try {
+        final _options = options?.call(data) ?? Options();
+        final _extra = extra?.call(data) ?? YClientsRequestExtra<T>();
+        final response = await get<YClientsResponse>(
+          url(data),
+          queryParameters: queryParameters?.call(data),
+          options: _options.copyWith(
+            extra: _extra.copyWith(
+              onData: (final data) {
+                return data! is List
+                    ? ((data as List).cast<Map<String, Object?>>())
                         .map(jsonConverter.fromJson)
                         .single
-                    : data is Map<String, Object?>
-                        ? jsonConverter.fromJson(data)
-                        : null,
-          ).toMap(),
-        ),
-      );
-      await notifier.add(response.data!.data! as T);
+                    : data is Iterable
+                        ? ((data as Iterable<Object>)
+                                .cast<Map<String, Object?>>())
+                            .map(jsonConverter.fromJson)
+                            .single
+                        : data is Map<String, Object?>
+                            ? jsonConverter.fromJson(data)
+                            : null;
+              },
+            ).toMap(),
+          ),
+        );
+        yield response.data!.data! as T;
+      } on DioError catch (e) {
+        debugger(message: e.toString());
+        if (onError != null) {
+          await onError(e, data);
+        } else {
+          rethrow;
+        }
+      }
     }
   }
 }
+
+// final StreamProvider<String> yClientsWebhookProvider =
+//     StreamProvider<String>((final ref) {
+//   return WebSocketChannel.connect(
+//     Uri.parse('wss://echo.websocket.org'),
+//   ).stream as Stream<String>;
+// });
+
+/// The provider of the [YClientsAPI].
+final Provider<YClientsAPI> yClientsProvider =
+    Provider<YClientsAPI>((final ref) {
+  return YClientsAPI._(
+    ref.watch(userProvider.select((final user) => user?.userToken)),
+  );
+});
+
+// /// The cities provider for YClients API.
+// ///
+// /// See: https://yclientsru.docs.apiary.io/#reference/40/0/0
+// final ContentProvider<CityModel> citiesProvider =
+//     ContentProvider<CityModel>((final ref) {
+//   return ContentNotifier<CityModel>(
+//     hive: ref.watch(hiveProvider),
+//     saveName: 'cities',
+//     converter: cityConverter,
+//     refreshState: (final notifier) {},
+//   );
+// });
+
+/// The studios provider for YClients API.
+///
+/// See: https://yclientsru.docs.apiary.io/#reference/2/0/0
+final StateNotifierProvider<ContentNotifier<StudioModel>, Iterable<StudioModel>>
+    studiosProvider =
+    StateNotifierProvider<ContentNotifier<StudioModel>, Iterable<StudioModel>>(
+        (final ref) {
+  return ContentNotifier<StudioModel>(
+    hive: ref.watch(hiveProvider),
+    saveName: 'studios',
+    converter: companyConverter,
+    refreshState: (final notifier) => (ref.read(yClientsProvider))
+        .mapData<StudioModel, SMStudioOptionsModel>(
+          mapData: ref.read(smStudiosOptionsProvider),
+          jsonConverter: companyConverter,
+          url: (final studio) => '$yClientsUrl/company/${studio.studioId}',
+          onError: (final error, final studio) async {
+            debugger(message: error.message);
+            logger.e(error.message, error, error.stackTrace);
+          },
+        )
+        .toList(),
+  );
+});
+
+/// The normalized trainers provider for YClients API.
+final Provider<Iterable<TrainerModel>> normalizedTrainersProvider =
+    Provider<Iterable<TrainerModel>>((final ref) {
+  return ref.watch(trainersProvider.select(normalizeTrainers));
+});
+
+/// The trainers provider for YClients API.
+///
+/// See: https://yclientsru.docs.apiary.io/#reference/6/0//
+final StateNotifierProvider<ContentNotifier<TrainerModel>,
+        Iterable<TrainerModel>> trainersProvider =
+    StateNotifierProvider<ContentNotifier<TrainerModel>,
+        Iterable<TrainerModel>>((final ref) {
+  return ContentNotifier<TrainerModel>(
+    hive: ref.watch(hiveProvider),
+    saveName: 'trainers',
+    converter: trainerConverter,
+    refreshState: (final notifier) => (ref.read(yClientsProvider))
+        .mapIterableData<TrainerModel, SMStudioOptionsModel>(
+          mapData: ref.read(smStudiosOptionsProvider),
+          jsonConverter: const IterableConverter(trainerConverter),
+          url: (final studio) =>
+              '$yClientsUrl/company/${studio.studioId}/staff',
+          extra: (final studio) => const YClientsRequestExtra(devToken: true),
+          onError: (final error, final data) async {
+            debugger(message: error.message);
+            logger.e(error.message, error, error.stackTrace);
+          },
+        )
+        .toList(),
+  );
+});
+
+/// Return sorted and valid trainers for this provider.
+Iterable<TrainerModel> normalizeTrainers(
+  final Iterable<TrainerModel> value,
+) {
+  return value.toList()
+    ..removeWhere((final trainer) {
+      return trainer.specialization == 'Не удалять' ||
+          trainer.name.contains('Сотрудник');
+    })
+    ..removeWhere((final trainer) {
+      return <String>[
+        'https://api.yclients.com/images/no-master.png',
+        'https://api.yclients.com/images/no-master-sm.png'
+      ].contains(trainer.avatarBig);
+    })
+    ..sort((final trainerA, final trainerB) {
+      // int isDefault(final String link) => <String>[
+      //       'https://api.yclients.com/images/no-master.png',
+      //       'https://api.yclients.com/images/no-master-sm.png'
+      //     ].contains(link)
+      //         ? -1
+      //         : 0;
+      // final hasAvatar = isDefault(trainerB.avatarBig)
+      //     .compareTo(isDefault(trainerA.avatarBig));
+      // if (hasAvatar != 0) {
+      //   return hasAvatar;
+      // }
+      return trainerA.name.toLowerCase().compareTo(trainerB.name.toLowerCase());
+    });
+}
+
+/// The schedule provider for YClients API.
+///
+/// See: https://yclientsru.docs.apiary.io/#reference/12/0/4
+final StateNotifierProvider<ContentNotifier<ActivityModel>,
+        Iterable<ActivityModel>> scheduleProvider =
+    StateNotifierProvider<ContentNotifier<ActivityModel>,
+        Iterable<ActivityModel>>((final ref) {
+  return ContentNotifier<ActivityModel>(
+    hive: ref.watch(hiveProvider),
+    saveName: 'activities',
+    converter: activityConverter,
+    refreshInterval: const Duration(minutes: 10),
+    refreshState: (final notifier) => (ref.read(yClientsProvider))
+        .mapIterableData<ActivityModel, SMStudioOptionsModel>(
+          mapData: ref.read(smStudiosOptionsProvider),
+          jsonConverter: const IterableConverter(activityConverter),
+          url: (final studio) =>
+              '$yClientsUrl/activity/${studio.studioId}/search',
+          queryParameters: (final studio) => <String, Object?>{'count': 300},
+          onError: (final error, final data) async {
+            debugger(message: error.message);
+            logger.e(error.message, error, error.stackTrace);
+          },
+        )
+        .toList(),
+  );
+});
+
+/// The schedule provider for YClients API.
+///
+/// See: https://yclientsru.docs.apiary.io/#reference/12/0/4
+final StateNotifierProvider<ContentNotifier<GoodModel>, Iterable<GoodModel>>
+    goodsProvider =
+    StateNotifierProvider<ContentNotifier<GoodModel>, Iterable<GoodModel>>(
+        (final ref) {
+  return ContentNotifier<GoodModel>(
+    hive: ref.watch(hiveProvider),
+    saveName: 'goods',
+    converter: goodConverter,
+    refreshState: (final notifier) async {
+      final notifierData = <GoodModel>[];
+      for (final studio in ref.read(smStudiosOptionsProvider)) {
+        await (ref.read(yClientsProvider))
+            .mapIterableData<GoodModel, int>(
+              mapData: Iterable<int>.generate(99),
+              jsonConverter: const IterableConverter(goodConverter),
+              url: (final index) => '$yClientsUrl/goods/${studio.studioId}',
+              queryParameters: (final index) => <String, Object?>{
+                'page': index + 1,
+                'count': 100,
+                'category_id': studio.categoryAbId,
+              },
+              onPrevious: (final data) => data.isEmpty,
+              extra: (final index) =>
+                  const YClientsRequestExtra<Iterable<GoodModel>>(
+                devToken: true,
+              ),
+              onError: (final error, final data) async {
+                debugger(message: error.message);
+                logger.e(error.message, error, error.stackTrace);
+              },
+            )
+            .forEach(notifierData.add);
+      }
+      return notifierData;
+    },
+  );
+});
+
+/// The user abonements provider for YClients API.
+///
+/// See: https://yclientsru.docs.apiary.io/#reference/28/0
+final StateNotifierProvider<ContentNotifier<UserAbonementModel>,
+        Iterable<UserAbonementModel>> userAbonementsProvider =
+    StateNotifierProvider<ContentNotifier<UserAbonementModel>,
+        Iterable<UserAbonementModel>>((final ref) {
+  return ContentNotifier<UserAbonementModel>(
+    hive: ref.watch(hiveProvider),
+    saveName: 'userAbonements',
+    converter: abonementConverter,
+    refreshState: (final notifier) => (ref.read(yClientsProvider))
+        .mapIterableData<UserAbonementModel, SMStudioOptionsModel>(
+          mapData: ref.read(smStudiosOptionsProvider),
+          jsonConverter: const IterableConverter(abonementConverter),
+          url: (final studio) => '$yClientsUrl/user/loyalty/abonements',
+          queryParameters: (final studio) =>
+              <String, Object?>{'company_id': studio.studioId},
+          onError: (final error, final data) async {
+            debugger(message: error.message);
+            logger.e(error.message, error, error.stackTrace);
+          },
+        )
+        .toList(),
+  );
+
+  // await ref.read(hiveProvider).delete('abonements');
+});
+
+/// The user recordrs provider for YClients API.
+///
+/// See: https://developers.yclients.com/ru/#operation/Получить%20записи%20пользователя
+final StateNotifierProvider<ContentNotifier<UserRecordModel>,
+        Iterable<UserRecordModel>> userRecordsProvider =
+    StateNotifierProvider<ContentNotifier<UserRecordModel>,
+        Iterable<UserRecordModel>>((final ref) {
+  return ContentNotifier<UserRecordModel>(
+    hive: ref.watch(hiveProvider),
+    saveName: 'userRecords',
+    converter: recordConverter,
+    refreshState: (final notifier) => (ref.read(yClientsProvider))
+        .getIterableData<UserRecordModel>(
+          jsonConverter: const IterableConverter(recordConverter),
+          url: '$yClientsUrl/user/records',
+          onError: (final error) async {
+            debugger(message: error.message);
+            logger.e(error.message, error, error.stackTrace);
+          },
+        )
+        .toList(),
+  );
+});
+
+/// The provider of whether to provide a discount to a user.
+final Provider<bool> discountProvider = Provider<bool>((final ref) {
+  return ref.watch(
+    userRecordsProvider.select((final userRecords) {
+      return !userRecords.any((final userRecord) => !userRecord.deleted);
+    }),
+  );
+});
 
 /// The class to handle the exception in the YClients API.
 @immutable
@@ -352,17 +874,21 @@ class YClientsException implements Exception {
 
 /// The interceptor for YClients API.
 class YClientsInterceptor extends Interceptor {
-  static Response<YClientsResponse> _getCustomResponse(
+  Response<YClientsResponse> _getCustomResponse(
     final Response response, {
     final bool validate = true,
   }) {
     final requestExtra = response.requestOptions.extra.isNotEmpty
         ? YClientsRequestExtra.fromMap(response.requestOptions.extra)
         : const YClientsRequestExtra();
-    final yClientsResponse = YClientsResponse.fromMap(
-      response.data as Map<String, Object?>,
-      onData: requestExtra.onData,
-    );
+    final dynamic data = response.data;
+    final yClientsResponse = data != null &&
+            (data is! String || data.trim().isNotEmpty)
+        ? YClientsResponse.fromMap(
+            (data is String ? json.decode(data) : data) as Map<String, Object?>,
+            onData: requestExtra.onData,
+          )
+        : null;
     final customResponse = Response<YClientsResponse>(
       data: yClientsResponse,
       requestOptions: response.requestOptions,
@@ -373,10 +899,31 @@ class YClientsInterceptor extends Interceptor {
       redirects: response.redirects,
       extra: response.extra,
     );
-    if (validate && requestExtra.validate && !yClientsResponse.success) {
+    if (validate &&
+        requestExtra.validate &&
+        !(yClientsResponse?.success ?? false)) {
       throw YClientsException(customResponse);
     }
     return customResponse;
+  }
+
+  @override
+  void onRequest(
+    final RequestOptions options,
+    final RequestInterceptorHandler handler,
+  ) {
+    final requestOptions = YClientsRequestExtra.fromMap(options.extra);
+    handler.next(
+      requestOptions.devToken
+          ? options.copyWith(
+              headers: <String, Object?>{
+                ...options.headers,
+                HttpHeaders.authorizationHeader:
+                    'Bearer $yClientsToken, User $yClientsAdminToken',
+              },
+            )
+          : options,
+    );
   }
 
   @override
