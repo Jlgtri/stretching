@@ -47,9 +47,8 @@ class YClientsAPI extends DioForNative {
             headers: <String, String>{
               HttpHeaders.contentTypeHeader: 'application/json',
               HttpHeaders.acceptHeader: 'application/vnd.yclients.v2+json',
-              HttpHeaders.authorizationHeader: userToken != null
-                  ? 'Bearer $yClientsToken, User $userToken'
-                  : 'Bearer $yClientsToken, User $yClientsAdminToken',
+              HttpHeaders.authorizationHeader: 'Bearer $yClientsToken, '
+                  'User ${userToken ?? yClientsAdminToken}',
             },
             extra: const YClientsRequestExtra().toMap(),
           ),
@@ -636,7 +635,7 @@ final StateNotifierProvider<ContentNotifier<StudioModel>, Iterable<StudioModel>>
     hive: ref.watch(hiveProvider),
     saveName: 'studios',
     converter: companyConverter,
-    refreshState: (final notifier) => (ref.read(yClientsProvider))
+    refreshState: (final notifier) async => (ref.read(yClientsProvider))
         .mapData<StudioModel, SMStudioOptionsModel>(
           mapData: ref.read(smStudiosOptionsProvider),
           jsonConverter: companyConverter,

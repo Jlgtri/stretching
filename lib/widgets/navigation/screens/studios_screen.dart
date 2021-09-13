@@ -287,7 +287,8 @@ class StudiosScreen extends HookConsumerWidget {
                   onRefresh: () async {
                     await Future.wait(<Future<void>>[
                       ref.read(studiosProvider.notifier).refresh(),
-                      ref.read(smStudiosProvider.notifier).refresh()
+                      ref.read(smStudiosProvider.notifier).refresh(),
+                      ref.read(smStudiosOptionsProvider.notifier).refresh(),
                     ]);
                     refreshController.refreshCompleted();
                   },

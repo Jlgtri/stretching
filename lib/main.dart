@@ -11,6 +11,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:stretching/api_smstretching.dart';
+import 'package:stretching/api_yclients.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/generated/localization.g.dart';
@@ -70,10 +71,31 @@ class RootScreen extends HookConsumerWidget {
     final ez = EasyLocalization.of(context)!;
     final snapshot = useFuture(
       useMemoized(() async {
-        // await ref.read(hiveProvider).clear();
-        await Future.wait<void>(<Future<void>>[
+        await ref.read(hiveProvider).clear();
+        await ref.read(smStudiosOptionsProvider.notifier).refresh();
+        await Future.wait(<Future<Object?>>[
           SystemChannels.textInput.invokeMethod<void>('TextInput.hide'),
           ez.delegate.load(ez.currentLocale!),
+
+          /// Abonements
+          ref.read(userAbonementsProvider.notifier).refresh(),
+          ref.read(smUserAbonementsProvider.notifier).refresh(),
+          ref.read(userDepositProvider.future),
+
+          /// Activities
+          ref.read(scheduleProvider.notifier).refresh(),
+          ref.read(userRecordsProvider.notifier).refresh(),
+          ref.read(smClassesGalleryProvider.notifier).refresh(),
+
+          /// Studios
+          ref.read(studiosProvider.notifier).refresh(),
+          ref.read(smStudiosProvider.notifier).refresh(),
+
+          /// Trainers
+          ref.read(trainersProvider.notifier).refresh(),
+          ref.read(smTrainersProvider.notifier).refresh(),
+
+          /// Other
           ref.read(connectionProvider.notifier).updateConnection(),
           ref.read(locationProvider.last),
           ref.read(orientationProvider.last),

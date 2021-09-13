@@ -282,6 +282,15 @@ class ActivitiesScreen extends HookConsumerWidget {
       }),
     );
 
+    final refresh = useFuture(
+      useMemoized(() async {
+        await Future.wait(<Future<void>>[
+          ref.read(scheduleProvider.notifier).refresh(),
+          ref.read(smClassesGalleryProvider.notifier).refresh(),
+          ref.read(userRecordsProvider.notifier).refresh(),
+        ]);
+      }),
+    );
     return
         // CustomDraggableScrollBar(
         //   itemsCount: activities.length,
@@ -307,8 +316,9 @@ class ActivitiesScreen extends HookConsumerWidget {
       onLoading: refreshController.loadComplete,
       onRefresh: () async {
         await Future.wait(<Future<void>>[
-          ref.read(userRecordsProvider.notifier).refresh(),
           ref.read(scheduleProvider.notifier).refresh(),
+          ref.read(smClassesGalleryProvider.notifier).refresh(),
+          ref.read(userRecordsProvider.notifier).refresh(),
         ]);
         refreshController.refreshCompleted();
       },

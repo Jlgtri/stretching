@@ -14,7 +14,6 @@ class ContentNotifier<T extends Object>
     required final String saveName,
     required final this.refreshState,
     final this.refreshInterval = Duration.zero,
-    final bool refreshOnInit = false,
   }) : super(
           hive: hive,
           saveName: saveName,
@@ -24,9 +23,6 @@ class ContentNotifier<T extends Object>
     refreshTimer = Timer.periodic(refreshInterval, (final timer) => refresh());
     if (refreshInterval.inSeconds < 1) {
       refreshTimer.cancel();
-    }
-    if (refreshOnInit) {
-      refresh();
     }
   }
 
