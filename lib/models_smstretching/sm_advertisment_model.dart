@@ -3,6 +3,24 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
+import 'package:stretching/utils/json_converters.dart';
+
+/// The converter of the [SMAdvertismentModel].
+const SMAdvertismentConverter smAdvertismentConverter =
+    SMAdvertismentConverter._();
+
+/// The converter of the [SMAdvertismentModel].
+class SMAdvertismentConverter
+    implements JsonConverter<SMAdvertismentModel, Map<String, Object?>> {
+  const SMAdvertismentConverter._();
+
+  @override
+  SMAdvertismentModel fromJson(final Map<String, Object?> data) =>
+      SMAdvertismentModel.fromMap(data);
+
+  @override
+  Map<String, Object?> toJson(final SMAdvertismentModel data) => data.toMap();
+}
 
 /// The advertisment model is the SMStretching API.
 ///

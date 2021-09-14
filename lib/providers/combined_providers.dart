@@ -155,6 +155,31 @@ class SMTrainerIdConverter implements JsonConverter<SMTrainerModel?, int> {
   int toJson(final SMTrainerModel? data) => data!.id;
 }
 
+/// The id converter of the [TrainerModel] and [SMTrainerModel].
+final Provider<SMClassesGalleryIdConverter>
+    smClassesGalleryIdConverterProvider = Provider<SMClassesGalleryIdConverter>(
+  (final ref) => SMClassesGalleryIdConverter._(ref),
+);
+
+/// The id converter of the [TrainerModel] and [SMTrainerModel].
+class SMClassesGalleryIdConverter
+    implements JsonConverter<SMClassesGalleryModel?, int> {
+  const SMClassesGalleryIdConverter._(final this._ref);
+  final ProviderRefBase _ref;
+
+  @override
+  SMClassesGalleryModel? fromJson(final int id) {
+    for (final smGallery in _ref.read(smClassesGalleryProvider)) {
+      if (smGallery.id == id) {
+        return smGallery;
+      }
+    }
+  }
+
+  @override
+  int toJson(final SMClassesGalleryModel? data) => data!.id;
+}
+
 /// The provider of [TrainerModel] and [SMTrainerModel] pairs.
 final Provider<Iterable<CombinedTrainerModel>> combinedTrainersProvider =
     Provider<Iterable<CombinedTrainerModel>>((final ref) {

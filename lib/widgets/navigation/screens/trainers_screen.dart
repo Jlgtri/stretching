@@ -86,8 +86,6 @@ class TrainersScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final categories = ref.watch(trainersCategoriesFilterProvider);
-
     final refreshController = useMemoized(() => RefreshController());
     final searchController = useTextEditingController();
     final searchFocusNode = useFocusNode();
@@ -167,9 +165,13 @@ class TrainersScreen extends HookConsumerWidget {
                   ),
                 ),
               ),
-              bottom: categories.getSelectorWidget(
-                theme,
-                (final category, final value) {
+              bottom: getSelectorWidget<ClassCategory>(
+                theme: theme,
+                values: ClassCategory.values,
+                text: (final value) => value.translation,
+                selected: (final value) =>
+                    ref.read(trainersCategoriesFilterProvider).contains(value),
+                onSelected: (final category, final value) {
                   final categoriesNotifier = ref.read(
                     trainersCategoriesFilterProvider.notifier,
                   );
@@ -282,6 +284,7 @@ class TrainerCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.center,
+                    textScaleFactor: 1,
                   ),
                 ),
               ),

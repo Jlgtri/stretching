@@ -15,6 +15,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final unauthorized = ref.watch(unauthorizedProvider);
     return Column(
       children: <Widget>[
         if (ref.watch(unauthorizedProvider))

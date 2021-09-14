@@ -88,17 +88,19 @@ final StateNotifierProvider<
 });
 
 /// The provider of filters for [SMTrainerModel].
-final StateNotifierProvider<SaveToHiveIterableNotifier<ClassCategory, String>,
-        Iterable<ClassCategory>> activitiesCategoriesFilterProvider =
-    StateNotifierProvider<SaveToHiveIterableNotifier<ClassCategory, String>,
-        Iterable<ClassCategory>>((final ref) {
-  return SaveToHiveIterableNotifier<ClassCategory, String>(
+final StateNotifierProvider<
+        SaveToHiveIterableNotifier<SMClassesGalleryModel, String>,
+        Iterable<SMClassesGalleryModel>> activitiesCategoriesFilterProvider =
+    StateNotifierProvider<
+        SaveToHiveIterableNotifier<SMClassesGalleryModel, String>,
+        Iterable<SMClassesGalleryModel>>((final ref) {
+  return SaveToHiveIterableNotifier<SMClassesGalleryModel, String>(
     hive: ref.watch(hiveProvider),
     saveName: 'activities_categories',
-    converter: const StringToIterableConverter(
-      IterableConverter(EnumConverter(ClassCategory.values)),
+    converter: StringToIterableConverter(
+      OptionalIterableConverter(ref.watch(smClassesGalleryIdConverterProvider)),
     ),
-    defaultValue: const Iterable<ClassCategory>.empty(),
+    defaultValue: const Iterable<SMClassesGalleryModel>.empty(),
   );
 });
 
@@ -226,7 +228,7 @@ final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
             (trainers.isEmpty || trainers.contains(activity.item2.item1)) &&
             (categories.isEmpty ||
                 categories.any((final category) {
-                  return category.translation == activity.item0.service.title;
+                  return category.classesYId == activity.item0.service.id;
                 })) &&
             (time.isEmpty ||
                 time.all((final time) => time.isWithin(activity.item0.date)));
@@ -407,17 +409,27 @@ class ActivitiesScreen extends HookConsumerWidget {
                       ],
                     ),
                   ),
-                  categories.getSelectorWidget(
-                    theme,
-                    (final category, final value) {
-                      final activitiesNotifier = ref.read(
-                        activitiesCategoriesFilterProvider.notifier,
+                  Consumer(
+                    builder: (final context, final ref, final child) {
+                      return getSelectorWidget<SMClassesGalleryModel>(
+                        theme: theme,
+                        text: (final smClassGallery) =>
+                            smClassGallery.classesName,
+                        selected: (final value) => ref
+                            .read(activitiesCategoriesFilterProvider)
+                            .contains(value),
+                        values: ref.watch(smClassesGalleryProvider),
+                        onSelected: (final category, final value) {
+                          final categoriesNotifier = ref.read(
+                            activitiesCategoriesFilterProvider.notifier,
+                          );
+                          value
+                              ? categoriesNotifier.add(category)
+                              : categoriesNotifier.remove(category);
+                        },
+                        padding: const EdgeInsets.only(top: 16),
                       );
-                      value
-                          ? activitiesNotifier.add(category)
-                          : activitiesNotifier.remove(category);
                     },
-                    padding: const EdgeInsets.only(top: 16),
                   )
                 ],
               ),
@@ -1538,11 +1550,11 @@ class FiltersScreen extends ConsumerWidget {
                 runSpacing: -4,
                 spacing: 16,
                 children: <Widget>[
-                  for (final category in ClassCategory.values)
+                  for (final category in ref.watch(smClassesGalleryProvider))
                     Consumer(
                       builder: (final context, final ref, final child) {
                         return FilterButton(
-                          text: category.translation,
+                          text: category.classesName,
                           borderColor: Colors.grey.shade300,
                           margin: const EdgeInsets.symmetric(vertical: 4),
                           selected: ref.watch(
@@ -1561,7 +1573,7 @@ class FiltersScreen extends ConsumerWidget {
                           },
                         );
                       },
-                    ),
+                    )
                 ],
               ),
             ),
@@ -1857,6 +1869,7 @@ class ActivitiesSearchResults extends ConsumerWidget {
       );
     }
 
+    final navigator = Navigator.of(context);
     return ListView.builder(
       primary: false,
       itemCount: categories.length + trainers.length + studios.length,
@@ -1867,23 +1880,47 @@ class ActivitiesSearchResults extends ConsumerWidget {
           return searchResult(
             imageUrl: studio.avatarUrl,
             title: studio.item1.studioName,
-            onTap: () {},
+            onTap: () async {
+              final notifier =
+                  ref.read(activitiesStudiosFilterProvider.notifier);
+              if (!notifier.state.contains(studio)) {
+                await notifier.add(studio);
+              }
+              await navigator.maybePop();
+              ref.read(activitiesSearchProvider).state = '';
+            },
           );
         } else if (index - studios.length < trainers.length) {
           final trainer = trainers.elementAt(index - studios.length);
           return searchResult(
             imageUrl: trainer.trainerPhoto,
             title: trainer.trainerName,
-            onTap: () {},
+            onTap: () async {
+              final notifier =
+                  ref.read(activitiesTrainersFilterProvider.notifier);
+              if (!notifier.state.contains(trainer)) {
+                await notifier.add(trainer);
+              }
+              await navigator.maybePop();
+              ref.read(activitiesSearchProvider).state = '';
+            },
           );
         } else {
           final category = categories.elementAt(
             index - studios.length - trainers.length,
           );
           return searchResult(
-            imageUrl: category.gallery,
+            imageUrl: category.gallery.split(',').first,
             title: category.classesName,
-            onTap: () {},
+            onTap: () async {
+              final notifier =
+                  ref.read(activitiesCategoriesFilterProvider.notifier);
+              if (!notifier.state.contains(category)) {
+                await notifier.add(category);
+              }
+              await navigator.maybePop();
+              ref.read(activitiesSearchProvider).state = '';
+            },
           );
         }
       },

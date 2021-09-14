@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stretching/models_smstretching/sm_abonement_model.dart';
 import 'package:stretching/models_smstretching/sm_activity_price_model.dart';
+import 'package:stretching/models_smstretching/sm_advertisment_model.dart';
 import 'package:stretching/models_smstretching/sm_gallery_model.dart';
 import 'package:stretching/models_smstretching/sm_payment_model.dart';
 import 'package:stretching/models_smstretching/sm_record_model.dart';
@@ -362,6 +363,18 @@ final FutureProvider<int> userDepositProvider =
       : 0;
 });
 
+/// The provider of the default studio id in the SMStretching API.
+final FutureProvider<int> smDefaultStudioIdProvider =
+    FutureProvider<int>((final ref) async {
+  final response = await smStretching.get<String>(
+    '$smStretchingApiUrl/options/$smStretchingUrlToken/'
+    'get_yclients_default_service_id',
+  );
+  final data = json.decode(response.data!) as Map<String, Object?>;
+  return int.parse((data['yclients_default_service_id']!
+      as Map<String, Object?>)['option_value']! as String);
+});
+
 /// The studios provider for SMStretching API.
 ///
 /// See: https://smstretching.ru/wp-json/jet-cct/studii
@@ -509,6 +522,26 @@ final StateNotifierProvider<ContentNotifier<SMClassesGalleryModel>,
           .get<Iterable>('$smStretchingContentUrl/gallery_for_classes');
       return (response.data!.cast<Map<String, Object?>>())
           .map((final map) => SMClassesGalleryModel.fromMap(map));
+    },
+  );
+});
+
+/// The provider of the advertisments from the SMStretching API.
+///
+/// See: https://smstretching.ru/wp-json/jet-cct/adv_banner
+final StateNotifierProvider<ContentNotifier<SMAdvertismentModel>,
+        Iterable<SMAdvertismentModel>> smAdvertismentsProvider =
+    StateNotifierProvider<ContentNotifier<SMAdvertismentModel>,
+        Iterable<SMAdvertismentModel>>((final ref) {
+  return ContentNotifier<SMAdvertismentModel>(
+    hive: ref.watch(hiveProvider),
+    saveName: 'smAdvertisments',
+    converter: smAdvertismentConverter,
+    refreshState: (final notifier) async {
+      final response = await smStretching
+          .get<Iterable>('$smStretchingContentUrl/adv_banner');
+      return (response.data!.cast<Map<String, Object?>>())
+          .map((final map) => SMAdvertismentModel.fromMap(map));
     },
   );
 });

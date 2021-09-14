@@ -210,22 +210,6 @@ class BusinessLogic {
       () => navigator.popUntil(ModalRoute.withName(Routes.root.name)),
     );
 
-    final _smStudiosOptions = <int, SMStudioOptionsModel>{
-      for (final smStudioOption in smStudiosOptions)
-        smStudioOption.studioId: smStudioOption
-    };
-    final possibleAbonements = <SMAbonementModel, GoodModel>{
-      for (final abonement in smAbonements.toList(growable: false)..sort())
-        if (abonement.matchActivity(activity.item0) ==
-            SMAbonementNonMatchReason.none)
-          for (final good in goods.toList(growable: false)..sort())
-            if (good.loyaltyAbonementTypeId == abonement.yId)
-              if (abonement.service == null ||
-                  good.salonId == abonement.service)
-                if (_smStudiosOptions.keys.contains(good.salonId))
-                  abonement: good
-    };
-
     final RecordModel record;
     if (prevRecord != null) {
       record = prevRecord;
@@ -235,10 +219,6 @@ class BusinessLogic {
       //       good.value == (useDiscount ? 'Пробное занятие' : 'Разовое занятие');
       // }).toList(growable: false)
       //   ..sort();
-
-      if (possibleAbonements.isEmpty) {
-        throw const BookException(BookExceptionType.general);
-      }
 
       final Tuple2<int, String> recordIdHash;
       try {
@@ -385,6 +365,26 @@ class BusinessLogic {
             );
           }
         }
+      }
+
+      final _smStudiosOptions = <int, SMStudioOptionsModel>{
+        for (final smStudioOption in smStudiosOptions)
+          smStudioOption.studioId: smStudioOption
+      };
+      final possibleAbonements = <SMAbonementModel, GoodModel>{
+        for (final smAbonement in smAbonements.toList(growable: false)..sort())
+          if (smAbonement.matchActivity(activity.item0) ==
+              SMAbonementNonMatchReason.none)
+            for (final good in goods.toList(growable: false)..sort())
+              if (good.salonId == activity.item0.id)
+                if (good.loyaltyAbonementTypeId == smAbonement.yId)
+                  if (smAbonement.service == null ||
+                      good.salonId == smAbonement.service)
+                    if (_smStudiosOptions.keys.contains(good.salonId))
+                      smAbonement: good
+      };
+      if (possibleAbonements.isEmpty) {
+        throw const BookException(BookExceptionType.general);
       }
 
       var successBook = false;

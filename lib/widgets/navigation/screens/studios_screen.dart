@@ -502,101 +502,83 @@ class StudioCard extends HookConsumerWidget {
               ),
             );
           },
-          placeholder: (final context, final url) =>
-              const Center(child: CircularProgressIndicator.adaptive()),
-          errorWidget: (final context, final url, final dynamic error) =>
-              const FontIcon(FontIconData(IconsCG.logo)),
         ),
-        title: Text.rich(
-          TextSpan(
-            text: studio.item1.studioName,
-            style: theme.textTheme.bodyText1
-                ?.copyWith(fontSize: onMap ? 12 : null),
-            children: <InlineSpan>[
-              if (onMap) ...[
-                TextSpan(text: '\n', style: theme.textTheme.caption),
-                TextSpan(
-                  text: studio.item1.studioAddress,
-                  style: theme.textTheme.caption?.copyWith(
-                    fontSize: onMap ? 10 : null,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-              ]
-            ],
-          ),
-          // softWrap: !onMap,
-          maxLines: onMap ? 2 : 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        isThreeLine: !onMap,
-        subtitle: !onMap
-            ? Text.rich(
-                TextSpan(
-                  text: studio.item1.studioAddress,
-                  children: <InlineSpan>[
-                    if (!onMap)
-                      TextSpan(
-                        text: currentLocation.when<String>(
-                          data: (final position) {
-                            final distance =
-                                GeolocatorPlatform.instance.distanceBetween(
-                              position.latitude,
-                              position.longitude,
-                              studio.item0.coordinateLat,
-                              studio.item0.coordinateLon,
-                            );
-                            if (distance < 10) {
-                              // ignore: prefer_interpolation_to_compose_strings
-                              return '\n' + TR.studiosLocationOn.tr();
-                            } else if (distance < 1000) {
-                              // ignore: prefer_interpolation_to_compose_strings
-                              return '\n' +
-                                  TR.studiosLocationM.tr(
-                                    args: <String>[
-                                      num.parse(
-                                        distance.toStringAsFixed(
-                                          distance < 100 ? 1 : 0,
-                                        ),
-                                      ).toString()
-                                    ],
-                                  );
-                            } else {
-                              final distanceInKm = distance / 1000;
-                              // ignore: prefer_interpolation_to_compose_strings
-                              return '\n' +
-                                  TR.studiosLocationKm.tr(
-                                    args: <String>[
-                                      num.parse(
-                                        distanceInKm.toStringAsFixed(
-                                          distanceInKm < 10
-                                              ? 2
-                                              : distanceInKm < 100
-                                                  ? 1
-                                                  : 0,
-                                        ),
-                                      ).toString()
-                                    ],
-                                  );
-                            }
-                          },
-                          loading: () => '',
-                          error: (final e, final st) => '',
-                        ),
-                        style: theme.textTheme.caption
-                            ?.copyWith(color: Colors.grey.shade400),
-                      )
-                  ],
-                ),
-                softWrap: !onMap,
+        title: Padding(
+          padding: EdgeInsets.only(top: !onMap ? 8 : 0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                studio.item1.studioName,
+                style: theme.textTheme.bodyText1
+                    ?.copyWith(fontSize: onMap ? 12 : null),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                studio.item1.studioAddress,
                 style: theme.textTheme.caption?.copyWith(
                   fontSize: onMap ? 10 : null,
                   color: Colors.grey.shade700,
                 ),
-                maxLines: onMap ? 1 : 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-              )
-            : null,
+              ),
+              if (!onMap) ...[
+                const SizedBox(height: 2),
+                Text(
+                  currentLocation.when<String>(
+                    data: (final position) {
+                      final distance =
+                          GeolocatorPlatform.instance.distanceBetween(
+                        position.latitude,
+                        position.longitude,
+                        studio.item0.coordinateLat,
+                        studio.item0.coordinateLon,
+                      );
+                      if (distance < 10) {
+                        return TR.studiosLocationOn.tr();
+                      } else if (distance < 1000) {
+                        return TR.studiosLocationM.tr(
+                          args: <String>[
+                            num.parse(
+                              distance.toStringAsFixed(
+                                distance < 100 ? 1 : 0,
+                              ),
+                            ).toString()
+                          ],
+                        );
+                      } else {
+                        final distanceInKm = distance / 1000;
+                        return TR.studiosLocationKm.tr(
+                          args: <String>[
+                            num.parse(
+                              distanceInKm.toStringAsFixed(
+                                distanceInKm < 10
+                                    ? 2
+                                    : distanceInKm < 100
+                                        ? 1
+                                        : 0,
+                              ),
+                            ).toString()
+                          ],
+                        );
+                      }
+                    },
+                    loading: () => '',
+                    error: (final e, final st) => '',
+                  ),
+                  style: theme.textTheme.caption
+                      ?.copyWith(color: Colors.grey.shade400),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ]
+            ],
+          ),
+        ),
         trailing: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[

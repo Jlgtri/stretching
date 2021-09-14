@@ -71,20 +71,19 @@ class RootScreen extends HookConsumerWidget {
     final ez = EasyLocalization.of(context)!;
     final snapshot = useFuture(
       useMemoized(() async {
-        await ref.read(hiveProvider).clear();
+        // await ref.read(hiveProvider).clear();
         await ref.read(smStudiosOptionsProvider.notifier).refresh();
         await Future.wait(<Future<Object?>>[
           SystemChannels.textInput.invokeMethod<void>('TextInput.hide'),
           ez.delegate.load(ez.currentLocale!),
 
+          /// Advertiments
+          ref.read(smAdvertismentsProvider.notifier).refresh(),
+
           /// Abonements
-          ref.read(userAbonementsProvider.notifier).refresh(),
           ref.read(smUserAbonementsProvider.notifier).refresh(),
-          ref.read(userDepositProvider.future),
 
           /// Activities
-          ref.read(scheduleProvider.notifier).refresh(),
-          ref.read(userRecordsProvider.notifier).refresh(),
           ref.read(smClassesGalleryProvider.notifier).refresh(),
 
           /// Studios
@@ -94,6 +93,11 @@ class RootScreen extends HookConsumerWidget {
           /// Trainers
           ref.read(trainersProvider.notifier).refresh(),
           ref.read(smTrainersProvider.notifier).refresh(),
+
+          /// User
+          ref.read(userDepositProvider.future),
+          ref.read(userAbonementsProvider.notifier).refresh(),
+          ref.read(userRecordsProvider.notifier).refresh(),
 
           /// Other
           ref.read(connectionProvider.notifier).updateConnection(),

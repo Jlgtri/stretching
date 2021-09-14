@@ -115,7 +115,6 @@ class ProfileScreen extends HookConsumerWidget {
     }
 
     final businessLogic = ref.read(businessLogicProvider);
-
     final _smStudiosOptions = <int, SMStudioOptionsModel>{
       for (final smStudioOption in businessLogic.smStudiosOptions)
         smStudioOption.studioId: smStudioOption
@@ -133,17 +132,23 @@ class ProfileScreen extends HookConsumerWidget {
       final String email,
       final SMAbonementModel? abonement,
     ) async {
-      final good = possibleAbonements[abonement];
-      final options = _smStudiosOptions[good?.salonId];
+      if (abonement == null) {
+        return;
+      }
+      final businessLogic = ref.read(businessLogicProvider);
+      final smDefaultStudioId =
+          await ref.read(smDefaultStudioIdProvider.future);
+      final good = businessLogic.goods.firstWhere((final good) {
+        return abonement.service == null
+            ? good.salonId == smDefaultStudioId
+            : good.salonId == abonement.service;
+      });
+      final options = _smStudiosOptions[good.salonId];
       final user = ref.read(userProvider);
-      if (abonement == null ||
-          good == null ||
-          options == null ||
-          user == null) {
+      if (options == null || user == null) {
         return;
       }
 
-      final businessLogic = ref.read(businessLogicProvider);
       if (await businessLogic.payTinkoff(
         navigator: navigator,
         companyId: good.salonId,
