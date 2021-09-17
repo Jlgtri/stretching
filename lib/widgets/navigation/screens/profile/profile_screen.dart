@@ -226,7 +226,7 @@ class ProfileScreen extends HookConsumerWidget {
               },
               child: ListView(
                 primary: false,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 children: <Widget>[
                   /// Deposit
                   const Padding(
@@ -312,7 +312,10 @@ class ProfileScreen extends HookConsumerWidget {
 
                   /// Menu
                   Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 32,
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[

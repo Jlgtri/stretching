@@ -110,8 +110,8 @@ class AuthorizationScreen extends HookConsumerWidget {
                     .addPostFrameCallback((final _) async {
                   (ref.read(navigationProvider))
                       .jumpToTab(NavigationScreen.profile.index);
-                  await navigator.maybePop();
                 });
+                await navigator.maybePop();
               }
             }
           }

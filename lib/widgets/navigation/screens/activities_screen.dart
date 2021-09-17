@@ -436,6 +436,13 @@ class ActivitiesScreen extends HookConsumerWidget {
             boxTextstyle: theme.textTheme.bodyText1?.copyWith(
               color: theme.appBarTheme.foregroundColor,
             ),
+            hint: Align(
+              child: Text(
+                TR.activitiesAllStudios.tr(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             value: selectedStudios.length == 1 ? selectedStudios.single : null,
             items: <DropdownMenuItem<CombinedStudioModel?>>[
               DropdownMenuItem<CombinedStudioModel?>(

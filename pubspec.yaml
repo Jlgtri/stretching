@@ -110,7 +110,43 @@ flutter:
     - family: IconsCG
       fonts:
         - asset: assets/fonts/IconsCG.ttf
+    - family: SF
+      fonts:
+        - asset: assets/fonts/Cera Pro/Cera-Pro-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Cera Pro/Cera-Pro-ThinItalic.ttf
+          weight: 100
+          style: italic
 
+        - asset: assets/fonts/Cera Pro/Cera-Pro-Light.ttf
+          weight: 300
+        - asset: assets/fonts/Cera Pro/Cera-Pro-LightItalic.ttf
+          weight: 300
+          style: italic
+
+        - asset: assets/fonts/Cera Pro/Cera-Pro-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Cera Pro/Cera-Pro-Italic.ttf
+          weight: 400
+          style: italic
+
+        - asset: assets/fonts/Cera Pro/Cera-Pro-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Cera Pro/Cera-Pro-MediumItalic.ttf
+          weight: 500
+          style: italic
+
+        - asset: assets/fonts/Cera Pro/Cera-Pro-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Cera Pro/Cera-Pro-BoldItalic.ttf
+          weight: 700
+          style: italic
+
+        - asset: assets/fonts/Cera Pro/Cera-Pro-Black.ttf
+          weight: 900
+        - asset: assets/fonts/Cera Pro/Cera-Pro-BlackItalic.ttf
+          weight: 900
+          style: italic
 flutter_icons:
   android: true
   ios: true

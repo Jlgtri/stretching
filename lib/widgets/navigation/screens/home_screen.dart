@@ -118,8 +118,11 @@ class HomeScreen extends HookConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: <Widget>[
-                    for (final smStory in smStories) StoryCardScreen(smStory)
-                  ],
+                    for (final smStory in smStories) ...[
+                      StoryCardScreen(smStory),
+                      const SizedBox(width: 6)
+                    ]
+                  ].sublist(0, smStories.length * 2 - 1),
                 ),
               ),
             ),
