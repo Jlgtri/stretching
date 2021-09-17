@@ -498,7 +498,7 @@ class ActivitiesScreen extends HookConsumerWidget {
                   primary: false,
                   floating: activities.isEmpty,
                   backgroundColor: Colors.transparent,
-                  toolbarHeight: InputDecorationStyle.search.toolbarHeight + 84,
+                  toolbarHeight: InputDecorationStyle.search.toolbarHeight + 86,
                   titleSpacing: 0,
                   title: Material(
                     color: theme.scaffoldBackgroundColor,
@@ -1270,9 +1270,10 @@ class ActivityCard extends ConsumerWidget {
                                   .format(activity.item0.date);
                               return Column(
                                 mainAxisSize: MainAxisSize.min,
-                                children: [
+                                children: <Widget>[
                                   /// Activity Date
                                   Container(
+                                    width: 90,
                                     margin: const EdgeInsets.only(bottom: 10),
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 6,

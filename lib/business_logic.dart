@@ -932,6 +932,7 @@ Future<void> refreshAllProviders(final ProviderContainer container) async {
       /// SMStretching API
       container.read(smAdvertismentsProvider.notifier).refresh(),
       container.read(smStoriesProvider.notifier).refresh(),
+      container.read(smAbonementsProvider.notifier).refresh(),
       container.read(smStudiosProvider.notifier).refresh(),
       container.read(smTrainersProvider.notifier).refresh(),
       container.read(smClassesGalleryProvider.notifier).refresh(),

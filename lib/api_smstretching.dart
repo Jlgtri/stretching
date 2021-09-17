@@ -438,7 +438,7 @@ final FutureProvider<int> smUserDepositProvider =
 /// The provider of the default studio id in the SMStretching API.
 final FutureProvider<int> smDefaultStudioIdProvider =
     FutureProvider<int>((final ref) async {
-  final response = await smStretching._dio.get<String>(
+  final response = await smStretching._dio.post<String>(
     '$smStretchingApiUrl/options/$smStretchingUrlToken/'
     'get_yclients_default_service_id',
   );

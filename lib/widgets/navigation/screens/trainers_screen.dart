@@ -82,7 +82,7 @@ class TrainersScreen extends HookConsumerWidget {
   const TrainersScreen({final Key? key}) : super(key: key);
 
   /// The height of the categories picker widget.
-  static const double categoriesHeight = 84;
+  static const double categoriesHeight = 80;
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {

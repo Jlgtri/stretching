@@ -16,6 +16,7 @@ import 'package:stretching/const.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/models/yclients_response.dart';
 import 'package:stretching/models_yclients/user_model.dart';
+import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/logger.dart';
@@ -85,8 +86,6 @@ class AuthorizationScreen extends HookConsumerWidget {
           if (enteringPhone.value) {
             response = await yClients.sendCode(
               currentPhoneValue,
-              // TODO(feature): default studio
-              // TODO(feature): add user to all other studios (post clients/$company)
               ref.read(studiosProvider).first.id,
             );
             if (isMounted()) {
@@ -104,12 +103,15 @@ class AuthorizationScreen extends HookConsumerWidget {
                 await smStretching.addUser(
                   userPhone: user.phone,
                   userEmail: user.email,
-                serverTime:  ref.read(smServerTimeProvider),
+                  serverTime: ref.read(smServerTimeProvider),
                 );
                 ref.read(userProvider.notifier).state = user;
-                (ref.read(navigationProvider))
-                    .jumpToTab(NavigationScreen.profile.index);
-                await navigator.maybePop();
+                (ref.read(widgetsBindingProvider))
+                    .addPostFrameCallback((final _) async {
+                  (ref.read(navigationProvider))
+                      .jumpToTab(NavigationScreen.profile.index);
+                  await navigator.maybePop();
+                });
               }
             }
           }
@@ -233,6 +235,7 @@ class AuthorizationScreen extends HookConsumerWidget {
                         appContext: context,
                         length: pinCodeLength,
                         animationType: AnimationType.fade,
+                        enablePinAutofill: false,
                         pinTheme: PinTheme(
                           shape: PinCodeFieldShape.underline,
                           activeFillColor: theme.colorScheme.onSurface,

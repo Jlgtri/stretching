@@ -12,16 +12,56 @@ import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/main.dart';
+import 'package:stretching/models_smstretching/sm_story_model.dart';
 import 'package:stretching/models_yclients/user_record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
+import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/style.dart';
+import 'package:stretching/utils/json_converters.dart';
 import 'package:stretching/widgets/appbars.dart';
 import 'package:stretching/widgets/components/emoji_text.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 import 'package:stretching/widgets/navigation/screens/activities_screen.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
+/// The id converter of the [SMStoryModel].
+final Provider<SMStoryIdConverter> smStoryIdConverterProvider =
+    Provider<SMStoryIdConverter>((final ref) => SMStoryIdConverter._(ref));
+
+/// The id converter of the [SMStoryModel].
+class SMStoryIdConverter implements JsonConverter<SMStoryModel?, int> {
+  const SMStoryIdConverter._(final this._ref);
+  final ProviderRefBase _ref;
+
+  @override
+  SMStoryModel? fromJson(final int media) {
+    for (final story in _ref.read(smStoriesProvider)) {
+      if (story.media == media) {
+        return story;
+      }
+    }
+  }
+
+  @override
+  int toJson(final SMStoryModel? story) => story!.media;
+}
+
+/// The provider of already watched [SMStoryModel].
+final StateNotifierProvider<SaveToHiveIterableNotifier<SMStoryModel, String>,
+        Iterable<SMStoryModel>> homeWatchedStoriesProvider =
+    StateNotifierProvider<SaveToHiveIterableNotifier<SMStoryModel, String>,
+        Iterable<SMStoryModel>>((final ref) {
+  return SaveToHiveIterableNotifier<SMStoryModel, String>(
+    hive: ref.watch(hiveProvider),
+    saveName: 'home_stories',
+    converter: StringToIterableConverter(
+      OptionalIterableConverter(ref.watch(smStoryIdConverterProvider)),
+    ),
+    defaultValue: const Iterable<SMStoryModel>.empty(),
+  );
+});
 
 /// The screen for the [NavigationScreen.home].
 class HomeScreen extends HookConsumerWidget {
@@ -44,86 +84,7 @@ class HomeScreen extends HookConsumerWidget {
             userRecord: activity
     };
     final serverTime = ref.watch(smServerTimeProvider);
-    final controller = useMemoized(() => StoryController());
     final refreshController = useMemoized(() => RefreshController());
-
-    Widget stories(
-      final String title,
-      final Iterable<String> imageUrls, {
-      final Gradient? gradient,
-    }) {
-      return OpenContainer<void>(
-        tappable: false,
-        openElevation: 0,
-        closedElevation: 0,
-        openColor: Colors.transparent,
-        closedColor: Colors.transparent,
-        middleColor: Colors.transparent,
-        useRootNavigator: true,
-        transitionDuration: const Duration(milliseconds: 500),
-        openBuilder: (final context, final action) => StoryView(
-          controller: controller,
-          onComplete: action,
-          storyItems: <StoryItem>[
-            for (final imageUrl in imageUrls)
-              StoryItem.pageImage(
-                url: imageUrl,
-                controller: controller,
-                duration: const Duration(milliseconds: 2500),
-              ),
-          ],
-          onVerticalSwipeComplete: (final direction) {
-            if (direction == Direction.down) {
-              action();
-            }
-          },
-        ),
-        closedBuilder: (final context, final action) => Container(
-          height: 96,
-          width: 96,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFF5709FF)),
-            borderRadius: const BorderRadius.all(Radius.circular(18)),
-          ),
-          child: ElevatedButton(
-            onPressed: action,
-            style: ButtonStyle(
-              padding: MaterialStateProperty.all(EdgeInsets.zero),
-              backgroundColor: MaterialStateProperty.all(Colors.transparent),
-              shape: MaterialStateProperty.all(
-                const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(16)),
-                ),
-              ),
-            ),
-            child: Ink(
-              decoration: BoxDecoration(
-                gradient: gradient,
-                borderRadius: const BorderRadius.all(Radius.circular(16)),
-              ),
-              child: Container(
-                height: 90,
-                width: 90,
-                alignment: Alignment.bottomLeft,
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.all(Radius.circular(16)),
-                ),
-                child: Text(
-                  title,
-                  style: theme.textTheme.overline?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    color: theme.colorScheme.onPrimary,
-                  ),
-                  textScaleFactor: 1,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
 
     return SmartRefresher(
       controller: refreshController,
@@ -157,48 +118,7 @@ class HomeScreen extends HookConsumerWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: <Widget>[
-                    if (smStories.isNotEmpty)
-                      stories(
-                        TR.homeStoriesDiscount.tr(),
-                        <String>[smStories.first.mediaLink],
-                        gradient: const LinearGradient(
-                          colors: <Color>[Color(0xFF9FA5E3), Color(0xFFE59BD6)],
-                          begin: Alignment.bottomLeft,
-                          end: Alignment.topRight,
-                        ),
-                      ),
-                    if (smStories.length > 1) ...[
-                      const SizedBox(width: 6),
-                      stories(
-                        TR.homeStoriesWishlist.tr(),
-                        <String>[smStories[1].mediaLink],
-                        gradient: const LinearGradient(
-                          colors: <Color>[Color(0xFFD362AD), Color(0xFF8DDBF3)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                      ),
-                    ],
-                    if (smStories.length > 2) ...[
-                      const SizedBox(width: 6),
-                      stories(
-                        TR.homeStoriesSupport.tr(),
-                        <String>[smStories[2].mediaLink],
-                        gradient: const LinearGradient(
-                          colors: <Color>[Color(0xFFB9506E), Color(0xFFB9506E)],
-                        ),
-                      ),
-                    ],
-                    if (smStories.length > 3) ...[
-                      const SizedBox(width: 6),
-                      stories(
-                        TR.homeStoriesFreeActivity.tr(),
-                        <String>[smStories[3].mediaLink],
-                        gradient: const LinearGradient(
-                          colors: <Color>[Color(0xFF534A87), Color(0xFF534A87)],
-                        ),
-                      ),
-                    ],
+                    for (final smStory in smStories) StoryCardScreen(smStory)
                   ],
                 ),
               ),
@@ -374,6 +294,140 @@ class HomeScreen extends HookConsumerWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// The screen for watching [SMStoryModel].
+class StoryCardScreen extends HookConsumerWidget {
+  /// The screen for watching [SMStoryModel].
+  const StoryCardScreen(final this.story, {final Key? key}) : super(key: key);
+
+  /// The story to show on this screen.
+  final SMStoryModel story;
+
+  @override
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final theme = Theme.of(context);
+    final controller = useMemoized(() => StoryController());
+    final alreadyWatched = ref.watch(
+      homeWatchedStoriesProvider.select((final watchedStories) {
+        return watchedStories.any((final watchedStory) {
+          return watchedStory.media == story.media;
+        });
+      }),
+    );
+    return OpenContainer<void>(
+      tappable: false,
+      openElevation: 0,
+      closedElevation: 0,
+      openColor: Colors.transparent,
+      closedColor: Colors.transparent,
+      middleColor: Colors.transparent,
+      useRootNavigator: true,
+      transitionDuration: const Duration(milliseconds: 500),
+      openBuilder: (final context, final action) => StoryView(
+        controller: controller,
+        onComplete: () async {
+          action();
+          if (!alreadyWatched) {
+            await ref.read(homeWatchedStoriesProvider.notifier).add(story);
+          }
+        },
+        storyItems: <StoryItem>[
+          StoryItem.pageImage(
+            url: story.mediaLink,
+            controller: controller,
+            duration: const Duration(milliseconds: 2500),
+          ),
+          if (story.storiesImgV2 != null)
+            for (final img in story.storiesImgV2!)
+              if (img.url.endsWith('.mp4'))
+                StoryItem.pageVideo(
+                  img.url,
+                  controller: controller,
+                  duration: const Duration(seconds: 10),
+                )
+              else
+                StoryItem.pageImage(
+                  url: img.url,
+                  controller: controller,
+                  duration: const Duration(milliseconds: 2500),
+                )
+        ],
+        onVerticalSwipeComplete: (final direction) {
+          if (direction == Direction.down) {
+            action();
+          }
+        },
+      ),
+      closedBuilder: (final context, final action) => Container(
+        height: 96,
+        width: 96,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          border: !alreadyWatched
+              ? Border.all(color: const Color(0xFF5709FF))
+              : null,
+          borderRadius: const BorderRadius.all(Radius.circular(18)),
+        ),
+        child: ElevatedButton(
+          onPressed: action,
+          style: ButtonStyle(
+            padding: MaterialStateProperty.all(EdgeInsets.zero),
+            backgroundColor: MaterialStateProperty.all(Colors.transparent),
+            shape: MaterialStateProperty.all(
+              const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(16)),
+              ),
+            ),
+            elevation: MaterialStateProperty.all(4),
+          ),
+          child: Ink(
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.all(Radius.circular(16)),
+              image: DecorationImage(
+                fit: BoxFit.cover,
+                image: CachedNetworkImageProvider(
+                  story.mediaPreviewV2?.url ?? story.mediaLink,
+                ),
+              ),
+            ),
+            child: Container(
+              height: 90,
+              width: 90,
+              alignment: Alignment.bottomLeft,
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.all(Radius.circular(16)),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: <Color>[
+                    Colors.transparent,
+                    Colors.black54,
+                  ],
+                ),
+              ),
+              child: Text(
+                story.textPreview,
+                style: theme.textTheme.overline?.copyWith(
+                  fontWeight: FontWeight.w500,
+                  color: theme.colorScheme.onPrimary,
+                ),
+                textScaleFactor: 1,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(
+      properties..add(DiagnosticsProperty<SMStoryModel>('story', story)),
     );
   }
 }

@@ -217,6 +217,7 @@ class ProfileScreen extends HookConsumerWidget {
                   await Future.wait(<Future<void>>[
                     ref.read(smUserDepositProvider.future),
                     ref.read(userAbonementsProvider.notifier).refresh(),
+                    ref.read(smAbonementsProvider.notifier).refresh(),
                     ref.read(smUserAbonementsProvider.notifier).refresh(),
                   ]);
                 } finally {
@@ -299,15 +300,12 @@ class ProfileScreen extends HookConsumerWidget {
                       ),
                     ),
                   ] else
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: BuyAbonementCard(
-                        onPressed: () => showPaymentPickerBottomSheet(
-                          context,
-                          PaymentPickerScreen(
-                            onPayment: buyAbonement,
-                            smAbonements: possibleAbonements.keys,
-                          ),
+                    BuyAbonementCard(
+                      onPressed: () => showPaymentPickerBottomSheet(
+                        context,
+                        PaymentPickerScreen(
+                          onPayment: buyAbonement,
+                          smAbonements: possibleAbonements.keys,
                         ),
                       ),
                     ),
@@ -474,7 +472,6 @@ class AbonementCard extends ConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-
     final isDeactivated = abonement.item1.expirationDate == null;
     final locale = ref.watch(localeProvider);
     return Stack(
@@ -546,9 +543,7 @@ class AbonementCard extends ConsumerWidget {
                                 .format(abonement.item1.expirationDate!)
                           ],
                         ),
-                        style: const TextStyle(
-                          fontWeight: FontWeight.normal,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.normal),
                       )
                     ]
                   ],

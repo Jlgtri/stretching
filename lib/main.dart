@@ -94,7 +94,7 @@ class RootScreen extends HookConsumerWidget {
       useMemoized(() async {
         splash.state = true;
         try {
-          // await ref.read(hiveProvider).clear();
+          await ref.read(hiveProvider).clear();
           await Future.wait(<Future<void>>[
             SystemChannels.textInput.invokeMethod<void>('TextInput.hide'),
             ez.delegate.load(ez.currentLocale!),

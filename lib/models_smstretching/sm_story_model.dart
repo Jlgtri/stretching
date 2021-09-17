@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:meta/meta.dart';
 import 'package:stretching/utils/json_converters.dart';
 
@@ -40,6 +41,8 @@ class SMStoryModel {
     required final this.mediaLink,
     required final this.previewMedia,
     required final this.textPreview,
+    required final this.mediaPreviewV2,
+    required final this.storiesImgV2,
     required final this.cctSlug,
   });
 
@@ -74,6 +77,12 @@ class SMStoryModel {
   /// The short description of this story media.
   final String textPreview;
 
+  /// The new version of the media.
+  final SMStoryContentModel? mediaPreviewV2;
+
+  /// The new version of the media.
+  final Iterable<SMStoryContentModel>? storiesImgV2;
+
   /// The type of this model in the SMStretching API.
   final String cctSlug;
 
@@ -89,6 +98,8 @@ class SMStoryModel {
     final String? mediaLink,
     final String? previewMedia,
     final String? textPreview,
+    final SMStoryContentModel? mediaPreviewV2,
+    final Iterable<SMStoryContentModel>? storiesImgV2,
     final String? cctSlug,
   }) {
     return SMStoryModel(
@@ -102,6 +113,8 @@ class SMStoryModel {
       mediaLink: mediaLink ?? this.mediaLink,
       previewMedia: previewMedia ?? this.previewMedia,
       textPreview: textPreview ?? this.textPreview,
+      mediaPreviewV2: mediaPreviewV2 ?? this.mediaPreviewV2,
+      storiesImgV2: storiesImgV2 ?? this.storiesImgV2,
       cctSlug: cctSlug ?? this.cctSlug,
     );
   }
@@ -119,6 +132,10 @@ class SMStoryModel {
       'media_link': mediaLink,
       'preview_media': previewMedia,
       'text_preview': textPreview,
+      'media_preview_v2': mediaPreviewV2?.toMap(),
+      'stories_img_v2': storiesImgV2
+          ?.map((final storyImgV2) => storyImgV2.toMap())
+          .toList(growable: false),
       'cct_slug': cctSlug,
     };
   }
@@ -136,6 +153,16 @@ class SMStoryModel {
       mediaLink: map['media_link']! as String,
       previewMedia: map['preview_media']! as String,
       textPreview: map['text_preview']! as String,
+      mediaPreviewV2: map['media_preview_v2'] != null
+          ? SMStoryContentModel.fromMap(
+              map['media_preview_v2']! as Map<String, Object?>,
+            )
+          : null,
+      storiesImgV2: map['stories_img_v2'] != null
+          ? (map['stories_img_v2']! as Iterable)
+              .cast<Map<String, Object?>>()
+              .map((final map) => SMStoryContentModel.fromMap(map))
+          : null,
       cctSlug: map['cct_slug']! as String,
     );
   }
@@ -161,6 +188,8 @@ class SMStoryModel {
             other.mediaLink == mediaLink &&
             other.previewMedia == previewMedia &&
             other.textPreview == textPreview &&
+            other.mediaPreviewV2 == mediaPreviewV2 &&
+            other.storiesImgV2 == storiesImgV2 &&
             other.cctSlug == cctSlug;
   }
 
@@ -176,6 +205,8 @@ class SMStoryModel {
         mediaLink.hashCode ^
         previewMedia.hashCode ^
         textPreview.hashCode ^
+        mediaPreviewV2.hashCode ^
+        storiesImgV2.hashCode ^
         cctSlug.hashCode;
   }
 
@@ -185,6 +216,60 @@ class SMStoryModel {
         'link: $link, cctAuthorId: $cctAuthorId, cctCreated: $cctCreated, '
         'cctModified: $cctModified, mediaLink: $mediaLink, '
         'previewMedia: $previewMedia, textPreview: $textPreview, '
+        'mediaPreviewV2: $mediaPreviewV2, storiesImgV2: $storiesImgV2, '
         'cctSlug: $cctSlug)';
   }
+}
+
+/// The content of the [SMStoryModel].
+@immutable
+class SMStoryContentModel {
+  /// The content of the [SMStoryModel].
+  const SMStoryContentModel({
+    required final this.id,
+    required final this.url,
+  });
+
+  /// The id of this content.
+  final int id;
+
+  /// The id of this content.
+  final String url;
+
+  /// Return the copy of this model.
+  SMStoryContentModel copyWith({final int? id, final String? url}) {
+    return SMStoryContentModel(id: id ?? this.id, url: url ?? this.url);
+  }
+
+  /// Convert this model to map with string keys.
+  Map<String, Object?> toMap() {
+    return <String, Object?>{'id': id, 'url': url};
+  }
+
+  /// Convert the map with string keys to this model.
+  factory SMStoryContentModel.fromMap(final Map<String, Object?> map) {
+    return SMStoryContentModel(
+      id: map['id']! as int,
+      url: map['url']! as String,
+    );
+  }
+
+  /// Convert this model to a json string.
+  String toJson() => json.encode(toMap());
+
+  /// Convert the json string to this model.
+  factory SMStoryContentModel.fromJson(final String source) =>
+      SMStoryContentModel.fromMap(json.decode(source) as Map<String, Object?>);
+
+  @override
+  bool operator ==(final Object other) {
+    return identical(this, other) ||
+        other is SMStoryContentModel && other.id == id && other.url == url;
+  }
+
+  @override
+  int get hashCode => id.hashCode ^ url.hashCode;
+
+  @override
+  String toString() => 'SMStoryContentModel(id: $id, url: $url)';
 }
