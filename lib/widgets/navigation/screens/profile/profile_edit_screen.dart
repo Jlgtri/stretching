@@ -183,8 +183,9 @@ class ProfileEditScreen extends HookConsumerWidget {
 
                           /// Update client in the SMStretching API.
                           smStretching.addUser(
-                            user.copyWith(email: email.value),
-                            ref.read(smServerTimeProvider),
+                            userPhone: user.phone,
+                            userEmail: email.value,
+                            serverTime: ref.read(smServerTimeProvider),
                           ),
 
                           /// Update client in each studio in YClients API.
@@ -219,8 +220,12 @@ class ProfileEditScreen extends HookConsumerWidget {
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(
       properties
-        ..add(ObjectFlagProperty<void Function()>.has(
-            'onBackButton', onBackButton)),
+        ..add(
+          ObjectFlagProperty<void Function()>.has(
+            'onBackButton',
+            onBackButton,
+          ),
+        ),
     );
   }
 }

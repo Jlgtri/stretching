@@ -1,16 +1,30 @@
 import 'package:catcher/catcher.dart';
 import 'package:catcher/model/platform_type.dart';
 import 'package:darq/darq.dart';
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:stretching/business_logic.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
-import 'package:stretching/providers/connection_provider.dart';
 import 'package:stretching/style.dart';
+import 'package:stretching/widgets/appbars.dart';
 import 'package:stretching/widgets/components/emoji_text.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
+
+/// The interceptor that completes with internet connection if any.
+class ConnectionInterceptor extends Interceptor {
+  @override
+  void onError(
+    final DioError err,
+    final ErrorInterceptorHandler handler,
+  ) {
+    Catcher.reportCheckedError(err, err.stackTrace);
+    handler.next(err);
+  }
+}
 
 /// The provider of the error inside the app.
 final StateProvider<Tuple2<ReportMode, Report>?> errorProvider =
@@ -29,6 +43,7 @@ class ErrorPageReportMode extends ReportMode {
     assert(context != null, 'Context is null.');
     final container = ProviderScope.containerOf(context!, listen: false);
     container.read(errorProvider).state = Tuple2(this, report);
+    super.onActionConfirmed(report);
   }
 
   @override
@@ -85,7 +100,7 @@ class ErrorScreen extends HookConsumerWidget {
                 width: 200,
                 child: TextButton(
                   style: TextButtonStyle.light.fromTheme(theme),
-                  onPressed: () => reportMode.onActionConfirmed(report),
+                  onPressed: null, //() => reportMode.onActionConfirmed(report),
                   child: Text(TR.errorButton.tr()),
                 ),
               ),
@@ -115,6 +130,7 @@ class ConnectionErrorScreen extends ConsumerWidget {
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
     return Scaffold(
+      appBar: cancelAppBar(theme, leading: const SizedBox.shrink()),
       body: Align(
         child: SingleChildScrollView(
           primary: true,
@@ -123,35 +139,29 @@ class ConnectionErrorScreen extends ConsumerWidget {
             children: <Widget>[
               const FontIcon(FontIconData(IconsCG.globe, height: 40)),
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
+                padding: const EdgeInsets.fromLTRB(48, 16, 48, 100),
                 child: Text(
                   TR.connectionErrorTitle.tr(),
                   style: theme.textTheme.headline2,
                   textAlign: TextAlign.center,
                 ),
               ),
-              Consumer(
-                child: Text(TR.connectionErrorRepeat.tr()),
-                builder: (final context, final ref, final child) {
-                  return Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: MediaQuery.of(context).size.width / 4,
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: MediaQuery.of(context).size.width / 4,
+                ),
+                child: TextButton.icon(
+                  label: Text(TR.connectionErrorRepeat.tr()),
+                  icon: const Padding(
+                    padding: EdgeInsets.only(right: 4),
+                    child: FontIcon(
+                      FontIconData(IconsCG.repeat, height: 16),
                     ),
-                    child: TextButton.icon(
-                      label: child!,
-                      icon: const Padding(
-                        padding: EdgeInsets.only(right: 4),
-                        child: FontIcon(
-                          FontIconData(IconsCG.repeat, height: 16),
-                        ),
-                      ),
-                      style: TextButtonStyle.light.fromTheme(theme),
-                      onPressed: () => ref
-                          .read(connectionProvider.notifier)
-                          .updateConnection(),
-                    ),
-                  );
-                },
+                  ),
+                  style: TextButtonStyle.light.fromTheme(theme),
+                  onPressed: () =>
+                      refreshAllProviders(ProviderScope.containerOf(context)),
+                ),
               ),
               const SizedBox(height: 100),
             ],

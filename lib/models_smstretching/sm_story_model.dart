@@ -3,6 +3,23 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
+import 'package:stretching/utils/json_converters.dart';
+
+/// The converter of the [SMStoryModel].
+const SMStoryConverter smStoryConverter = SMStoryConverter._();
+
+/// The converter of the [SMStoryModel].
+class SMStoryConverter
+    implements JsonConverter<SMStoryModel, Map<String, Object?>> {
+  const SMStoryConverter._();
+
+  @override
+  SMStoryModel fromJson(final Map<String, Object?> data) =>
+      SMStoryModel.fromMap(data);
+
+  @override
+  Map<String, Object?> toJson(final SMStoryModel data) => data.toMap();
+}
 
 /// The model of a story in the SMStretching API.
 ///
@@ -35,6 +52,7 @@ class SMStoryModel {
   /// The id of this media in the YClients API.
   final int media;
 
+  /// The link to this story.
   final String link;
 
   /// The creator of this gallery in SMStretching API.

@@ -13,6 +13,7 @@ import 'package:stretching/api_yclients.dart';
 import 'package:stretching/business_logic.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/main.dart';
 import 'package:stretching/models_smstretching/sm_abonement_model.dart';
 import 'package:stretching/models_smstretching/sm_studio_options_model.dart';
 import 'package:stretching/models_yclients/good_model.dart';
@@ -114,15 +115,15 @@ class ProfileScreen extends HookConsumerWidget {
       ref.read(hideAppBarProvider(NavigationScreen.profile)).state = false;
     }
 
-    final businessLogic = ref.read(businessLogicProvider);
     final _smStudiosOptions = <int, SMStudioOptionsModel>{
-      for (final smStudioOption in businessLogic.smStudiosOptions)
+      for (final smStudioOption in ref.watch(smStudiosOptionsProvider))
         smStudioOption.studioId: smStudioOption
     };
     final possibleAbonements = <SMAbonementModel, GoodModel>{
       for (final abonement
-          in businessLogic.smAbonements.toList(growable: false)..sort())
-        for (final good in businessLogic.goods.toList(growable: false)..sort())
+          in ref.watch(smAbonementsProvider).toList(growable: false)..sort())
+        for (final good
+            in ref.watch(goodsProvider).toList(growable: false)..sort())
           if (good.loyaltyAbonementTypeId == abonement.yId)
             if (abonement.service == null || good.salonId == abonement.service)
               if (_smStudiosOptions.keys.contains(good.salonId)) abonement: good
@@ -149,7 +150,7 @@ class ProfileScreen extends HookConsumerWidget {
         return;
       }
 
-      if (await businessLogic.payTinkoff(
+      final payment = await businessLogic.payTinkoff(
         navigator: navigator,
         companyId: good.salonId,
         email: email,
@@ -157,13 +158,22 @@ class ProfileScreen extends HookConsumerWidget {
         cost: good.cost,
         terminalKey: options.key,
         terminalPass: options.pass,
-      )) {
-        await businessLogic.createAbonement(
+      );
+      if (payment.item0) {
+        final result = await businessLogic.createAbonement(
           userPhone: user.phone,
           good: good,
           abonement: abonement,
           options: options,
         );
+
+        await smStretching.editPayment(
+          acquiring: payment.item1!,
+          serverTime: businessLogic.serverTime,
+          documentId: result.item0.documentId,
+          isAbonement: true,
+        );
+
         await Future.wait(<Future<void>>[
           ref.read(userAbonementsProvider.notifier).refresh(),
           ref.read(smUserAbonementsProvider.notifier).refresh(),
@@ -190,9 +200,6 @@ class ProfileScreen extends HookConsumerWidget {
         case ProfileNavigationScreen.support:
           return ContactScreen(onBackButton: reset);
         case ProfileNavigationScreen.root:
-          if (ref.watch(unauthorizedProvider)) {
-            return const SizedBox.shrink();
-          }
           return Padding(
             padding: EdgeInsets.only(
               top: MediaQuery.of(context).viewPadding.top +
@@ -202,13 +209,19 @@ class ProfileScreen extends HookConsumerWidget {
               controller: refreshController,
               onLoading: refreshController.loadComplete,
               onRefresh: () async {
-                ref.refresh(userDepositProvider);
-                await Future.wait(<Future<void>>[
-                  ref.read(userAbonementsProvider.notifier).refresh(),
-                  ref.read(smUserAbonementsProvider.notifier).refresh(),
-                  ref.read(userDepositProvider.future),
-                ]);
-                refreshController.refreshCompleted();
+                try {
+                  while (ref.read(connectionErrorProvider).state) {
+                    await Future<void>.delayed(const Duration(seconds: 1));
+                  }
+                  ref.refresh(smUserDepositProvider);
+                  await Future.wait(<Future<void>>[
+                    ref.read(smUserDepositProvider.future),
+                    ref.read(userAbonementsProvider.notifier).refresh(),
+                    ref.read(smUserAbonementsProvider.notifier).refresh(),
+                  ]);
+                } finally {
+                  refreshController.refreshCompleted();
+                }
               },
               child: ListView(
                 primary: false,
@@ -375,9 +388,9 @@ class BuyAbonementCard extends ConsumerWidget {
 
     return Container(
       height: 130,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: gradient,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.all(Radius.circular(16)),
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16).copyWith(top: 0),
@@ -407,8 +420,8 @@ class BuyAbonementCard extends ConsumerWidget {
                 visualDensity: VisualDensity.compact,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(4),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(4)),
                 ),
                 color: theme.colorScheme.surface,
                 child: Text(
@@ -461,11 +474,6 @@ class AbonementCard extends ConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    const gradient = LinearGradient(
-      colors: <Color>[Color(0xFFD353F0), Color(0xFF18D1EE)],
-      begin: Alignment.topRight,
-      end: Alignment.bottomLeft,
-    );
 
     final isDeactivated = abonement.item1.expirationDate == null;
     final locale = ref.watch(localeProvider);
@@ -475,9 +483,15 @@ class AbonementCard extends ConsumerWidget {
       children: <Widget>[
         Container(
           decoration: BoxDecoration(
-            gradient: !isDeactivated ? gradient : null,
-            color: isDeactivated ? theme.hintColor : null,
-            borderRadius: BorderRadius.circular(12),
+            gradient: !isDeactivated
+                ? const LinearGradient(
+                    colors: <Color>[Color(0xFFD353F0), Color(0xFF18D1EE)],
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
+                  )
+                : null,
+            color: isDeactivated ? theme.hintColor.withOpacity(1) : null,
+            borderRadius: const BorderRadius.all(Radius.circular(12)),
           ),
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -573,14 +587,7 @@ class DepositCard extends ConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    const gradient = LinearGradient(
-      colors: <Color>[Color(0xFFC665F3), Color(0xFFE75566)],
-      stops: <double>[0, 1],
-      begin: Alignment.centerRight,
-      end: Alignment.centerLeft,
-    );
-
-    return (ref.watch(userDepositProvider)).when(
+    return (ref.watch(smUserDepositProvider)).when(
       data: (final userDeposit) {
         num deposit = userDeposit;
         var leftCount = 0;
@@ -594,9 +601,14 @@ class DepositCard extends ConsumerWidget {
           return const SizedBox.shrink();
         }
         return Container(
-          decoration: BoxDecoration(
-            gradient: gradient,
-            borderRadius: BorderRadius.circular(12),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: <Color>[Color(0xFFC665F3), Color(0xFFE75566)],
+              stops: <double>[0, 1],
+              begin: Alignment.centerRight,
+              end: Alignment.centerLeft,
+            ),
+            borderRadius: BorderRadius.all(Radius.circular(12)),
           ),
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),

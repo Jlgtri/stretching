@@ -6,9 +6,11 @@
 ///
 /// flutter:
 ///   assets:
+///     - assets/logo.gif
 ///     - assets/google_map_style.json
 ///     - assets/emoji/10084.png
 ///     - assets/emoji/1f499.png
+///     - assets/emoji/1f517.png
 ///     - assets/emoji/1f525.png
 ///     - assets/emoji/1f609.png
 ///     - assets/emoji/1f60d.png
@@ -42,11 +44,13 @@
 
 abstract class AssetsCG {
 
+  static const String logo = 'assets/logo.gif';
   static const String googleMapStyle = 'assets/google_map_style.json';
 
   static const String emoji = 'assets/emoji';
   static const String emoji10084 = 'assets/emoji/10084.png';
   static const String emoji1f499 = 'assets/emoji/1f499.png';
+  static const String emoji1f517 = 'assets/emoji/1f517.png';
   static const String emoji1f525 = 'assets/emoji/1f525.png';
   static const String emoji1f609 = 'assets/emoji/1f609.png';
   static const String emoji1f60d = 'assets/emoji/1f60d.png';

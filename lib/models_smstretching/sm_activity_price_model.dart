@@ -24,6 +24,11 @@ class SMActivityPriceModel {
   /// The regular price of the activity with the discount.
   final SMActivityPriceOptionValueModel ySalePrice;
 
+  /// The empty value for prices.
+  const SMActivityPriceModel.zero()
+      : regularPrice = const SMActivityPriceOptionValueModel(0),
+        ySalePrice = const SMActivityPriceOptionValueModel(0);
+
   /// Return the copy of this model.
   SMActivityPriceModel copyWith({
     final SMActivityPriceOptionValueModel? regularPrice,

@@ -82,7 +82,9 @@ TextButtonThemeData get _textButtonTheme {
       mouseCursor: MaterialStateProperty.all(SystemMouseCursors.click),
       textStyle: MaterialStateProperty.all(_textTheme.button),
       shape: MaterialStateProperty.all(
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
       ),
     ),
   );
@@ -303,15 +305,19 @@ extension InputDecorationStyleData on InputDecorationStyle {
     final ThemeData theme, {
     final String? hintText,
     final void Function()? onSuffix,
+    final EdgeInsets prefixPadding = EdgeInsets.zero,
   }) {
     switch (this) {
       case InputDecorationStyle.search:
         return InputDecoration(
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-          prefixIcon: Align(
-            child: FontIcon(
-              FontIconData(IconsCG.search, color: theme.hintColor),
+          prefixIcon: Padding(
+            padding: prefixPadding,
+            child: Center(
+              child: FontIcon(
+                FontIconData(IconsCG.search, color: theme.hintColor),
+              ),
             ),
           ),
           prefixIconConstraints:
@@ -321,8 +327,8 @@ extension InputDecorationStyleData on InputDecorationStyle {
                   onPressed: onSuffix,
                   visualDensity: VisualDensity.compact,
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4),
+                  shape:const RoundedRectangleBorder(
+                    borderRadius:  BorderRadius.all(Radius.circular(4)),
                   ),
                   child: Text(
                     TR.tooltipsCancel.tr(),

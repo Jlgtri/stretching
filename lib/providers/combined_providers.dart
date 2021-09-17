@@ -16,34 +16,6 @@ import 'package:stretching/models_yclients/company_model.dart';
 import 'package:stretching/models_yclients/trainer_model.dart';
 import 'package:stretching/models_yclients/user_abonement_model.dart';
 import 'package:stretching/utils/json_converters.dart';
-// /// The pair of [RecordModel] and [SMRecordModel].
-// typedef CombinedRecordModel = Tuple2<RecordModel, SMRecordModel>;
-
-// /// The provider of [RecordModel] and [SMRecordModel] pairs.
-// final Provider<Iterable<CombinedRecordModel>> combinedAbonementsProvider =
-//     Provider<Iterable<CombinedRecordModel>>((final ref) {
-//   final smUserRecords = ref.watch(
-//     smUserReProvider.select((final smUserAbonements) {
-//       return <int, SMUserAbonementModel>{
-//         for (final smUserAbonement in smUserAbonements)
-//           smUserAbonement.abonementId: smUserAbonement
-//       };
-//     }),
-//   );
-//   return <CombinedRecordModel>[
-//     for (final userAbonement in ref.watch(userAbonementsProvider))
-//       if (smUserAbonements.keys.contains(userAbonement.type.id))
-//         CombinedAbonementModel(
-//           smAbonements[userAbonement.type.id]!,
-//           userAbonement,
-//           smUserAbonements[userAbonement.id],
-//         )
-//   ]..sort(
-//       // (final abonementA, final abonementB) {
-//       //   return abonementA.item1.compareTo(abonementB.item1);
-//       // }
-//       );
-// });
 
 /// The trio of [SMAbonementModel], [UserAbonementModel] and
 /// optional [SMUserAbonementModel].
@@ -69,8 +41,10 @@ final Provider<Iterable<CombinedAbonementModel>> combinedAbonementsProvider =
       };
     }),
   );
+
   return <CombinedAbonementModel>[
-    for (final userAbonement in ref.watch(userAbonementsProvider))
+    for (final userAbonement in (ref.watch(userAbonementsProvider))
+        .distinct((final userAbonement) => userAbonement.id))
       if (smAbonements.keys.contains(userAbonement.type.id))
         CombinedAbonementModel(
           smAbonements[userAbonement.type.id]!,
@@ -78,7 +52,7 @@ final Provider<Iterable<CombinedAbonementModel>> combinedAbonementsProvider =
           smUserAbonements[userAbonement.type.id],
         )
   ]..sort((final abonementA, final abonementB) {
-      return abonementA.item0.compareTo(abonementB.item0);
+      return abonementA.item1.compareTo(abonementB.item1);
     });
 });
 

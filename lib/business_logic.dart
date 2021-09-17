@@ -19,14 +19,18 @@ import 'package:stretching/models_smstretching/sm_record_model.dart';
 import 'package:stretching/models_smstretching/sm_studio_options_model.dart';
 import 'package:stretching/models_yclients/activity_model.dart';
 import 'package:stretching/models_yclients/good_model.dart';
+import 'package:stretching/models_yclients/good_transaction_model.dart';
 import 'package:stretching/models_yclients/record_model.dart';
+import 'package:stretching/models_yclients/storage_operation_model.dart';
+import 'package:stretching/models_yclients/transaction_model.dart';
+import 'package:stretching/models_yclients/user_abonement_model.dart';
 import 'package:stretching/models_yclients/user_model.dart';
-import 'package:stretching/models_yclients/user_record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/utils/enum_to_string.dart';
 import 'package:stretching/utils/logger.dart';
 import 'package:stretching/widgets/book_screens.dart';
+import 'package:stretching/widgets/error_screen.dart';
 import 'package:stretching/widgets/navigation/modals/payment_picker.dart';
 import 'package:tinkoff_acquiring/tinkoff_acquiring.dart' hide Route;
 
@@ -210,23 +214,44 @@ class BusinessLogic {
       () => navigator.popUntil(ModalRoute.withName(Routes.root.name)),
     );
 
+    final clients = await _yClients.getClients(
+      companyId: activity.item0.companyId,
+      userPhone: user.phone,
+    );
+
+    final String email;
+    if (clients.isNotEmpty) {
+      email = clients.first.email;
+    } else {
+      final client = await _yClients.createClient(
+        companyId: activity.item0.companyId,
+        userPhone: user.phone,
+      );
+      logger.i(client);
+      email = client.email;
+    }
+
     final RecordModel record;
+    final Future<SMRecordModel?> Function() cancel;
     if (prevRecord != null) {
       record = prevRecord;
+      cancel = () => cancelBook(
+            discount: useDiscount,
+            recordDate: record.date,
+            recordId: record.id,
+            userPhone: user.phone,
+          );
     } else {
-      // final possiblePayments = goods.where((final good) {
-      //   return good.salonId == activity.item0.companyId &&
-      //       good.value == (useDiscount ? 'Пробное занятие' : 'Разовое занятие');
-      // }).toList(growable: false)
-      //   ..sort();
-
       final Tuple2<int, String> recordIdHash;
       try {
         recordIdHash = await _yClients.bookActivity(
-          user: user,
+          userEmail: email,
+          userPhone: user.phone,
+          userName: user.name.isNotEmpty ? user.name : user.phone,
           activityId: activity.item0.id,
           companyId: activity.item0.companyId,
         );
+        logger.i(recordIdHash);
       } on DioError catch (e) {
         final dynamic error = e.error;
         if (error is YClientsException) {
@@ -247,18 +272,35 @@ class BusinessLogic {
           recordId: recordIdHash.item0,
           companyId: activity.item0.companyId,
         );
+        logger.i(record.toJson());
       } on DioError catch (_) {
         await _yClients.deleteRecord(recordIdHash.item0, recordIdHash.item1);
         throw const BookException(BookExceptionType.general);
       }
 
+      cancel = () => cancelBook(
+            discount: useDiscount,
+            recordDate: record.date,
+            recordId: record.id,
+            userPhone: user.phone,
+          );
+
       if (record.documents.isEmpty) {
-        await _yClients.deleteRecord(recordIdHash.item0, recordIdHash.item1);
+        await cancel();
         throw BookException(BookExceptionType.general, record);
       }
 
       try {
-        await _smStretching.createRecord(
+        if (!await _smStretching.addUser(
+          userPhone: user.phone,
+          userEmail: email,
+          serverTime: serverTime,
+        )) {
+          await cancel();
+          throw BookException(BookExceptionType.general, record);
+        }
+
+        if (!await _smStretching.createRecord(
           documentId: record.documents.first.id,
           smRecord: SMRecordModel.fromActivity(
             activity.item0,
@@ -266,9 +308,12 @@ class BusinessLogic {
             userPhone: user.phone,
             date: serverTime,
           ),
-        );
+        )) {
+          await cancel();
+          throw BookException(BookExceptionType.general, record);
+        }
       } on DioError catch (_) {
-        await _yClients.deleteRecord(recordIdHash.item0, recordIdHash.item1);
+        await cancel();
         throw BookException(BookExceptionType.general, record);
       }
     }
@@ -276,46 +321,81 @@ class BusinessLogic {
     Future<bool> update(
       final ActivityPaidBy paidBy, {
       final ActivityRecordStatus status = ActivityRecordStatus.paid,
-      final int? abonementId,
-      final int? companyId,
+      final UserAbonementModel? abonement,
+      final int? orderId,
     }) async {
       try {
-        await Future.wait<void>([
-          _smStretching.editRecord(
-            SMRecordModel.fromActivity(
-              activity.item0,
-              recordId: record.id,
-              payment: paidBy,
-              userActive: status,
-              date: serverTime,
-              abonement:
-                  paidBy == ActivityPaidBy.abonement ? abonementId : null,
-              userPhone: user.phone,
-            ).copyWith(companyId: companyId),
-          ),
-          _yClients.updateRecord(
+        if (paidBy != ActivityPaidBy.abonement) {
+          if (!await _yClients.changeVisit(
             recordId: record.id,
-            activityId: record.activityId,
-            companyId: companyId ?? record.companyId,
-            recordClientPhone: user.phone,
-            data: <String, Object?>{
-              'attendance': 2,
-              'send_sms': true,
-              'save_if_busy': false,
-            },
+            visitId: record.visitId,
+            serviceId: record.services.first.id,
+            regularCost: regularPrice,
+            ySaleCost: useDiscount ? ySalePrice : regularPrice,
+          )) {
+            await cancel();
+            throw BookException(BookExceptionType.general, record);
+          }
+        }
+
+        await _yClients.updateRecord(
+          recordId: record.id,
+          activityId: activity.item0.id,
+          companyId: activity.item0.companyId,
+          data: <String, Object?>{
+            'attendance': 2,
+            'send_sms': true,
+            'save_if_busy': false,
+            'client': <String, Object?>{
+              'name': user.phone,
+              'phone': user.phone,
+              'email': email,
+            }
+          },
+        );
+
+        if (paidBy != ActivityPaidBy.abonement) {
+          await _yClients.saleByCash(
+            companyId: activity.item0.companyId,
+            documentId: record.documents.first.id,
+            accountId: activity.item1.item2.kassaId,
+            amount: useDiscount ? ySalePrice : regularPrice,
+          );
+        } else if (abonement != null) {
+          await _yClients.saleByAbonement(
+            companyId: record.companyId,
+            documentId: record.documents.first.id,
+            abonementId: abonement.id,
+            abonementNumber: abonement.number,
+          );
+        }
+
+        return await _smStretching.editRecord(
+          SMRecordModel.fromActivity(
+            activity.item0,
+            recordId: record.id,
+            payment: paidBy,
+            userActive: status,
+            date: serverTime,
+            abonement:
+                paidBy == ActivityPaidBy.abonement ? abonement?.id : null,
+            userPhone: user.phone,
+            orderId: paidBy == ActivityPaidBy.regular ? orderId : null,
           ),
-        ]);
-        return true;
+        );
       } on DioError catch (e) {
         debugger(message: e.message);
         return false;
       }
     }
 
+    /// Try to get and pay by deposit first.
+    final userDeposit = await _smStretching.getUserDeposit(user.phone);
+    if (userDeposit == null) {
+      await cancel();
+      throw BookException(BookExceptionType.general, record);
+    }
     var dismiss = false;
-
-    /// Try to pay by deposit first.
-    final userDeposit = (await _smStretching.getUserDeposit(user.phone))!;
     final updateDeposit = _smStretching.updateUserDeposit;
     if (useDiscount && userDeposit >= ySalePrice) {
       if (await updateDeposit(user.phone, userDeposit - ySalePrice)) {
@@ -341,21 +421,9 @@ class BusinessLogic {
         }
         abonementNonMatchReason = abonement.item0.matchActivity(activity.item0);
         if (abonementNonMatchReason == SMAbonementNonMatchReason.none) {
-          try {
-            final transaction = await _yClients.saleByAbonement(
-              companyId: record.companyId,
-              documentId: record.documents.first.id,
-              abonementId: abonement.item1.id,
-              abonementNumber: abonement.item1.number,
-            );
-          } on DioError catch (e) {
-            logger.e(e.message, e, e.stackTrace);
-            continue;
-          }
-
           if (await update(
             ActivityPaidBy.abonement,
-            abonementId: abonement.item1.id,
+            abonement: abonement.item1,
           )) {
             return Tuple2(
               record,
@@ -376,17 +444,18 @@ class BusinessLogic {
           if (smAbonement.matchActivity(activity.item0) ==
               SMAbonementNonMatchReason.none)
             for (final good in goods.toList(growable: false)..sort())
-              if (good.salonId == activity.item0.id)
-                if (good.loyaltyAbonementTypeId == smAbonement.yId)
-                  if (smAbonement.service == null ||
-                      good.salonId == smAbonement.service)
-                    if (_smStudiosOptions.keys.contains(good.salonId))
-                      smAbonement: good
+              if (good.loyaltyAbonementTypeId == smAbonement.yId)
+                if (smAbonement.service == null ||
+                    good.salonId == smAbonement.service)
+                  if (_smStudiosOptions.keys.contains(good.salonId))
+                    smAbonement: good
       };
       if (possibleAbonements.isEmpty) {
+        await cancel();
         throw const BookException(BookExceptionType.general);
       }
 
+      /// Otherwise navigate for picking a real payment for abonement or record.
       var successBook = false;
       final result = await navigator.push(
         MaterialPageRoute<BookResult>(
@@ -399,7 +468,7 @@ class BusinessLogic {
                 ySalePrice: ySalePrice,
                 abonementPrice: possibleAbonements.keys.first.cost,
                 discount: useDiscount,
-                abonementNonMatchReason: abonementNonMatchReason,
+                // abonementNonMatchReason: abonementNonMatchReason,
                 onAbonement: (final context) async {
                   await showPaymentPickerBottomSheet(
                     context,
@@ -415,7 +484,7 @@ class BusinessLogic {
                           return;
                         }
 
-                        if (!(await payTinkoff(
+                        final payment = await payTinkoff(
                           email: email,
                           navigator: navigator,
                           companyId: good.salonId,
@@ -424,23 +493,34 @@ class BusinessLogic {
                           terminalKey: options.key,
                           terminalPass: options.pass,
                           canContinue: () => timer.isActive,
-                        ))) {
+                        );
+
+                        if (!payment.item0 || payment.item1 == null) {
+                          await cancel();
                           throw BookException(
                             BookExceptionType.payment,
                             record,
                           );
                         }
 
-                        await createAbonement(
+                        final result = await createAbonement(
                           abonement: abonement,
                           good: good,
                           options: options,
                           userPhone: user.phone,
                         );
 
+                        await _smStretching.editPayment(
+                          acquiring: payment.item1!,
+                          serverTime: serverTime,
+                          documentId: result.item0.documentId,
+                          isAbonement: true,
+                        );
+
                         successBook = true;
 
-                        /// Close the prompt screen and retry the payment.
+                        /// Close the prompt screen and pay by freshly created
+                        /// abonement.
                         await navigator.maybePop();
                       },
                     ),
@@ -452,7 +532,7 @@ class BusinessLogic {
                     PaymentPickerScreen(
                       payment: useDiscount ? ySalePrice : regularPrice,
                       onPayment: (final email, final abonement) async {
-                        if (!(await payTinkoff(
+                        final payment = await payTinkoff(
                           cost: useDiscount ? ySalePrice : regularPrice,
                           email: email,
                           navigator: navigator,
@@ -461,22 +541,34 @@ class BusinessLogic {
                           terminalPass: activity.item1.item2.pass,
                           userPhone: user.phone,
                           canContinue: () => timer.isActive,
-                          documentId: record.documents.first.id,
                           recordId: record.id,
-                        ))) {
+                        );
+                        if (!payment.item0 || payment.item1 == null) {
+                          await cancelBook(
+                            discount: useDiscount,
+                            recordDate: record.date,
+                            recordId: record.id,
+                            userPhone: user.phone,
+                          );
                           throw BookException(
                             BookExceptionType.payment,
                             record,
                           );
                         }
-                        final transaction = await _yClients.saleByCash(
-                          companyId: record.companyId,
+
+                        await _smStretching.editPayment(
+                          acquiring: payment.item1!,
+                          serverTime: serverTime,
                           documentId: record.documents.first.id,
-                          accountId: activity.item1.item2.kassaId,
-                          amount: useDiscount ? ySalePrice : regularPrice,
+                          isAbonement: false,
                         );
 
-                        if (await update(ActivityPaidBy.regular)) {
+                        if (await update(
+                          ActivityPaidBy.regular,
+                          orderId:
+                              int.tryParse(payment.item1?.item0.orderId ?? ''),
+                        )) {
+                          successBook = true;
                           await navigator.maybePop(
                             useDiscount
                                 ? BookResult.discount
@@ -500,38 +592,44 @@ class BusinessLogic {
     }
 
     if (!timer.isActive) {
+      await cancel();
       throw BookException(BookExceptionType.timeout, record);
     } else {
       timer.cancel();
       if (dismiss) {
-        await _yClients.deleteRecord(record.id);
+        await cancel();
         throw BookException(BookExceptionType.dismiss, record);
       } else if (updateAndTryAgain != null) {
         return await updateAndTryAgain(record);
       } else {
-        await _yClients.deleteRecord(record.id);
+        await cancel();
         throw BookException(BookExceptionType.general, record);
       }
     }
   }
 
-  /// Cancel the booking of the created [userRecord].
+  /// Cancel the booking of the created [recordId].
   ///
   /// Returns the fetched record from SMStretching API if any.
   Future<SMRecordModel?> cancelBook({
-    required final UserModel user,
-    required final UserRecordModel userRecord,
+    required final String userPhone,
+    required final int recordId,
+    required final DateTime recordDate,
     required final bool discount,
   }) async {
-    if (userRecord.date.difference(serverTime).inHours < 12) {
+    if (recordDate.difference(serverTime).inHours < 12) {
       throw const CancelBookException(CancelBookExceptionType.timeHacking);
     }
     try {
       /// Get record in the SMStretching API.
-      for (final smRecord in await _smStretching.getRecords(
-        userPhone: user.phone,
-        recordId: userRecord.id,
+      for (var smRecord in await _smStretching.getRecords(
+        userPhone: userPhone,
+        recordId: recordId,
       )) {
+        smRecord = smRecord.copyWith(
+          mobile: true,
+          userActive: ActivityRecordStatus.canceled,
+        );
         // /// Refund record payment in Tinkoff.
         // for (final payment in await _smStretching.getPayments(
         //   userPhone: user.phone,
@@ -548,21 +646,16 @@ class BusinessLogic {
         // }
 
         /// Set canceled status.
-        await _smStretching.editRecord(
-          smRecord.copyWith(userActive: ActivityRecordStatus.canceled),
-        );
+        await _smStretching.editRecord(smRecord);
 
         /// Refund to deposit.
         if (smRecord.payment == ActivityPaidBy.deposit ||
             smRecord.payment == ActivityPaidBy.regular) {
-          final userDeposit = await _smStretching.getUserDeposit(user.phone);
+          final userDeposit = await _smStretching.getUserDeposit(userPhone);
           final price = discount ? ySalePrice : regularPrice;
           await _smStretching.updateUserDeposit(
-            user.phone,
+            userPhone,
             userDeposit! + price,
-          );
-          await _smStretching.editRecord(
-            smRecord.copyWith(userActive: ActivityRecordStatus.canceled),
           );
         }
 
@@ -571,7 +664,7 @@ class BusinessLogic {
     } finally {
       /// Delete record in the YClients API.
       try {
-        await _yClients.deleteRecord(userRecord.id);
+        await _yClients.deleteRecord(recordId);
       } on DioError catch (e) {
         final dynamic error = e.error;
         if (error is YClientsException) {
@@ -595,7 +688,8 @@ class BusinessLogic {
   ///   3. Create a storage transaction for the [good].
   ///   4. Create a finance transaction with the [good] actual cost.
   ///   5. Create a record in the SMStretching API.
-  Future<void> createAbonement({
+  Future<Tuple3<StorageOperationModel, GoodTransactionModel, TransactionModel>>
+      createAbonement({
     required final String userPhone,
     required final GoodModel good,
     required final SMAbonementModel abonement,
@@ -632,7 +726,7 @@ class BusinessLogic {
     );
 
     /// Create abonement transaction.
-    final transaction = await _yClients.createTransaction(
+    final goodTransaction = await _yClients.createTransaction(
       clientId: clientId,
       companyId: good.salonId,
       masterId: options.kassirMobileId,
@@ -644,7 +738,7 @@ class BusinessLogic {
 
     /// Create finance transaction of selling an
     /// abonement.
-    final financeTransaction = await _yClients.saleByCash(
+    final transaction = await _yClients.saleByCash(
       amount: good.cost,
       companyId: good.salonId,
       accountId: options.kassaId,
@@ -670,6 +764,8 @@ class BusinessLogic {
       createdAt: serverTime,
       dateEnd: dateEnd,
     );
+
+    return Tuple3(storageOperation, goodTransaction, transaction);
   }
 
   /// Updates a client in the YClients API.
@@ -714,8 +810,7 @@ class BusinessLogic {
   /// Initialize and proceed the payment with Tinkoff.
   ///
   /// - [navigator] is found in [BuildContext].
-  /// - []
-  Future<bool> payTinkoff({
+  Future<Tuple2<bool, WebViewAcquiring?>> payTinkoff({
     required final NavigatorState navigator,
     required final int companyId,
     required final String email,
@@ -724,18 +819,17 @@ class BusinessLogic {
     required final String terminalKey,
     required final String terminalPass,
     final int? recordId,
-    final int? documentId,
     final FutureOr<bool> Function()? canContinue,
   }) async {
     final orderId = await _smStretching.createPayment(
       recordId: recordId,
       companyId: companyId,
-      documentId: documentId,
       userPhone: userPhone,
     );
     bool? returnValue;
+    WebViewAcquiring? acquiring;
     if (orderId != null) {
-      final acquiring = await _initAcquiring(
+      acquiring = await _initAcquiring(
         email: email,
         userPhone: userPhone,
         orderId: orderId.toString(),
@@ -747,7 +841,7 @@ class BusinessLogic {
       var retry = true;
       while (retry && (await canContinue?.call() ?? true)) {
         final route = MaterialPageRoute<bool>(
-          builder: (final context) => WebViewAcquiringScreen(acquiring),
+          builder: (final context) => WebViewAcquiringScreen(acquiring!),
         );
         returnValue = firstTry
             ? await navigator.pushReplacement(route)
@@ -755,10 +849,6 @@ class BusinessLogic {
 
         firstTry = false;
         if (returnValue ?? false) {
-          await _smStretching.editPayment(
-            acquiring: acquiring,
-            serverTime: serverTime,
-          );
           retry = false;
         } else if (await canContinue?.call() ?? true) {
           final _retry = await navigator.push(
@@ -775,13 +865,13 @@ class BusinessLogic {
         }
       }
     }
-    return returnValue ?? false;
+    return Tuple2(returnValue ?? false, acquiring);
   }
 
   /// Creates payment url to proceed with the payment.
   ///
   /// Returns an inited request and inited response.
-  Future<Tuple2<InitRequest, InitResponse>> _initAcquiring({
+  Future<WebViewAcquiring> _initAcquiring({
     required final String userPhone,
     required final String terminalKey,
     required final String password,
@@ -812,5 +902,43 @@ class BusinessLogic {
       signToken: sha256.convert(utf8.encode(concatenated)).toString(),
     );
     return Tuple2(request, await acquiring.init(request));
+  }
+}
+
+/// Refreshes all api providers.
+Future<void> refreshAllProviders(final ProviderContainer container) async {
+  final serverTime = await smStretching.getServerTime();
+  final activityPrice = await smStretching.getActivityPrice();
+  if (serverTime == null || activityPrice == null) {
+    return;
+  }
+  container.updateOverrides(<Override>[
+    smServerTimeProvider.overrideWithValue(ServerTimeNotifier(serverTime)),
+    smActivityPriceProvider.overrideWithValue(activityPrice)
+  ]);
+  container.read(errorProvider).state = null;
+  container.read(splashProvider).state = true;
+  await container.read(smStudiosOptionsProvider.notifier).refresh();
+  try {
+    await Future.wait(<Future<Object?>>[
+      /// YClients API
+      container.read(studiosProvider.notifier).refresh(),
+      container.read(trainersProvider.notifier).refresh(),
+      container.read(scheduleProvider.notifier).refresh(),
+      container.read(goodsProvider.notifier).refresh(),
+      container.read(userAbonementsProvider.notifier).refresh(),
+      container.read(userRecordsProvider.notifier).refresh(),
+
+      /// SMStretching API
+      container.read(smAdvertismentsProvider.notifier).refresh(),
+      container.read(smStoriesProvider.notifier).refresh(),
+      container.read(smStudiosProvider.notifier).refresh(),
+      container.read(smTrainersProvider.notifier).refresh(),
+      container.read(smClassesGalleryProvider.notifier).refresh(),
+      container.read(smUserDepositProvider.future),
+      container.read(smUserAbonementsProvider.notifier).refresh(),
+    ]);
+  } finally {
+    container.read(splashProvider).state = false;
   }
 }

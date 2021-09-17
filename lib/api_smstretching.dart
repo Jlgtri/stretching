@@ -4,15 +4,18 @@ import 'dart:io';
 
 import 'package:darq/darq.dart';
 import 'package:dio/dio.dart';
-import 'package:dio/native_imp.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stretching/api_yclients.dart';
 import 'package:stretching/models_smstretching/sm_abonement_model.dart';
 import 'package:stretching/models_smstretching/sm_activity_price_model.dart';
 import 'package:stretching/models_smstretching/sm_advertisment_model.dart';
 import 'package:stretching/models_smstretching/sm_gallery_model.dart';
 import 'package:stretching/models_smstretching/sm_payment_model.dart';
 import 'package:stretching/models_smstretching/sm_record_model.dart';
+import 'package:stretching/models_smstretching/sm_story_model.dart';
 import 'package:stretching/models_smstretching/sm_studio_model.dart';
 import 'package:stretching/models_smstretching/sm_studio_options_model.dart';
 import 'package:stretching/models_smstretching/sm_trainer_model.dart';
@@ -21,11 +24,16 @@ import 'package:stretching/models_smstretching/sm_wishlist_model.dart';
 import 'package:stretching/models_yclients/activity_model.dart';
 import 'package:stretching/models_yclients/storage_operation_model.dart';
 import 'package:stretching/models_yclients/user_model.dart';
+import 'package:stretching/models_yclients/user_record_model.dart';
 import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/secrets.dart';
+import 'package:stretching/utils/json_converters.dart';
+import 'package:stretching/utils/logger.dart';
+import 'package:stretching/widgets/error_screen.dart';
+import 'package:stretching/widgets/navigation/modals/rating_picker.dart';
 import 'package:tinkoff_acquiring/tinkoff_acquiring.dart';
 
 /// The link to the SMStretching.
@@ -41,26 +49,35 @@ const String smStretchingApiUrl = '$smStretchingUrl/mobile';
 final SMStretchingAPI smStretching = SMStretchingAPI._();
 
 /// The base class for working with SMStretching API.
-class SMStretchingAPI extends DioForNative {
+class SMStretchingAPI {
   /// The base class for working with SMStretching API.
-  SMStretchingAPI._()
-      : super(
-          BaseOptions(
-            headers: <String, String>{
-              HttpHeaders.contentTypeHeader: 'application/json',
-              HttpHeaders.authorizationHeader:
-                  'smstretchingstudio:$smStretchingHeaderToken'
-            },
-          ),
-        );
+  SMStretchingAPI._() {
+    _dio = Dio(
+      BaseOptions(
+        headers: <String, String>{
+          HttpHeaders.contentTypeHeader: 'application/json',
+          HttpHeaders.authorizationHeader:
+              'smstretchingstudio:$smStretchingHeaderToken'
+        },
+      ),
+    );
+    _dio.interceptors.add(ConnectionInterceptor());
+  }
+  late final Dio _dio;
 
   /// Adds a user in the SMStretching API.
-  Future<bool> addUser(final UserModel user, final DateTime serverTime) async {
-    final response = await post<String?>(
+  ///
+  /// See: https://smstretching.ru/mobile/users/{token}/add_user
+  Future<bool> addUser({
+    required final String userPhone,
+    required final String userEmail,
+    required final DateTime serverTime,
+  }) async {
+    final response = await _dio.post<String?>(
       '$smStretchingApiUrl/users/$smStretchingUrlToken/add_user',
       data: <String, Object?>{
-        'phone': user.phone,
-        'email': user.email,
+        'phone': userPhone,
+        'email': userEmail,
         'date_add': serverTime.toString().split('.').first,
         // 'app_token': token,
         'type_device': kIsWeb
@@ -79,8 +96,10 @@ class SMStretchingAPI extends DioForNative {
   }
 
   /// The server time of the SMStretching API.
+  ///
+  /// See: https://smstretching.ru/mobile/options/{token}/get_time
   Future<DateTime?> getServerTime() async {
-    final response = await post<String?>(
+    final response = await _dio.post<String?>(
       '$smStretchingApiUrl/options/$smStretchingUrlToken/get_time',
     );
     final data = response.data;
@@ -88,8 +107,10 @@ class SMStretchingAPI extends DioForNative {
   }
 
   /// The actities price of the SMStretching API.
+  ///
+  /// See: https://smstretching.ru/mobile/options/{token}/get_price
   Future<SMActivityPriceModel?> getActivityPrice() async {
-    final response = await post<String?>(
+    final response = await _dio.post<String?>(
       '$smStretchingApiUrl/options/$smStretchingUrlToken/get_price',
     );
     final data = response.data;
@@ -97,8 +118,10 @@ class SMStretchingAPI extends DioForNative {
   }
 
   /// Returns the current [userPhone]'s deposit.
+  ///
+  /// See: https://smstretching.ru/mobile/users/{token}/get_user_deposit
   Future<int?> getUserDeposit(final String userPhone) async {
-    final response = await post<String>(
+    final response = await _dio.post<String>(
       '$smStretchingApiUrl/users/$smStretchingUrlToken/get_user_deposit',
       data: <String, Object?>{'phone': userPhone},
     );
@@ -116,11 +139,13 @@ class SMStretchingAPI extends DioForNative {
   /// Tries to update user deposit with the specified [amount].
   ///
   /// Returns true if operation was successful and false otherwise.
+  ///
+  /// See: https://smstretching.ru/mobile/users/{token}/edit_user_deposit
   Future<bool> updateUserDeposit(
     final String userPhone,
     final int amount,
   ) async {
-    final response = await post<String>(
+    final response = await _dio.post<String>(
       '$smStretchingApiUrl/users/$smStretchingUrlToken/edit_user_deposit',
       data: <String, Object?>{'phone': userPhone, 'user_deposit': amount},
     );
@@ -134,13 +159,14 @@ class SMStretchingAPI extends DioForNative {
     required final int documentId,
     required final SMRecordModel smRecord,
   }) async {
-    final response = await post<String>(
+    final response = await _dio.post<String>(
       '$smStretchingApiUrl/records/$smStretchingUrlToken/add',
       data: <String, Object?>{
         ...smRecord.toMap(post: true),
         'document_id': documentId,
       },
     );
+    logger.i(response, response.data);
     return response.statusCode == 200;
   }
 
@@ -148,11 +174,12 @@ class SMStretchingAPI extends DioForNative {
   ///
   /// See: https://smstretching.ru/mobile/records/{token}/edit/{record_id}
   Future<bool> editRecord(final SMRecordModel smRecord) async {
-    final response = await post<String>(
+    final response = await _dio.post<String>(
       '$smStretchingApiUrl/records/$smStretchingUrlToken/edit/'
       '${smRecord.recordId}',
       data: smRecord.toMap(post: true, edit: true),
     );
+    logger.i(response, response.data);
     return response.statusCode == 200;
   }
 
@@ -163,7 +190,7 @@ class SMStretchingAPI extends DioForNative {
     required final String userPhone,
     required final int recordId,
   }) async {
-    final response = await post<String>(
+    final response = await _dio.post<String>(
       '$smStretchingApiUrl/records/$smStretchingUrlToken/get/$recordId',
       data: <String, Object?>{'user_phone': userPhone},
     );
@@ -183,17 +210,15 @@ class SMStretchingAPI extends DioForNative {
   Future<int?> createPayment({
     required final int companyId,
     required final int? recordId,
-    required final int? documentId,
     required final String userPhone,
   }) async {
-    final response = await post<String>(
+    final response = await _dio.post<String>(
       '$smStretchingApiUrl/payment/$smStretchingUrlToken/add',
       data: <String, Object?>{
         'mobile': 1,
         'company_id': companyId,
         'user_phone': userPhone,
         if (recordId != null) 'record_id': recordId,
-        if (documentId != null) 'document_id': documentId,
       },
     );
     final data = json.decode(response.data!) as Map<String, Object?>;
@@ -209,7 +234,7 @@ class SMStretchingAPI extends DioForNative {
     required final String userPhone,
     final bool mobile = true,
   }) async {
-    final response = await post<String>(
+    final response = await _dio.post<String>(
       '$smStretchingApiUrl/payment/$smStretchingUrlToken/get',
       data: <String, Object?>{
         'mobile': mobile ? 1 : 0,
@@ -232,11 +257,15 @@ class SMStretchingAPI extends DioForNative {
   Future<bool> editPayment({
     required final Tuple2<InitRequest, InitResponse> acquiring,
     required final DateTime serverTime,
+    required final int documentId,
+    required final bool isAbonement,
   }) async {
-    final response = await post<String>(
+    final response = await _dio.post<String>(
       '$smStretchingApiUrl/payment/$smStretchingUrlToken/edit/'
       '${acquiring.item0.orderId}',
       data: <String, Object?>{
+        'document_id': documentId,
+        'is_abonement': isAbonement ? 1 : 0,
         'status': acquiring.item1.toJson()['Status'],
         'PaymentId': acquiring.item1.paymentId,
         'Amount': acquiring.item1.amount,
@@ -260,7 +289,7 @@ class SMStretchingAPI extends DioForNative {
     required final int valueId,
     required final bool abonement,
   }) async {
-    final response = await post<String>(
+    final response = await _dio.post<String>(
       '$smStretchingApiUrl/payment/$smStretchingUrlToken/edit/$orderId',
       data: <String, Object?>{
         'status': status,
@@ -290,7 +319,7 @@ class SMStretchingAPI extends DioForNative {
     required final DateTime createdAt,
     required final DateTime? dateEnd,
   }) async {
-    final response = await post<String>(
+    final response = await _dio.post<String>(
       '$smStretchingApiUrl/goods/$smStretchingUrlToken/add',
       data: <String, Object?>{
         'mobile': 1,
@@ -306,13 +335,36 @@ class SMStretchingAPI extends DioForNative {
     return response.statusCode == 200;
   }
 
+  /// Activates abonement in the SMStretching API.
+  ///
+  /// - [documentId] equals [StorageOperationDocumentModel.id].
+  /// - [dateEnd] equals the date of activation plus active period.
+  /// - [active] - activate or deactivate.
+  ///
+  /// See: https://smstretching.ru/mobile/goods/{token}/activate/{document_id}
+  Future<bool> activateAbonement({
+    required final int documentId,
+    required final DateTime dateEnd,
+    final bool active = true,
+  }) async {
+    final response = await _dio.post<String>(
+      '$smStretchingApiUrl/goods/$smStretchingUrlToken/activate/$documentId',
+      data: <String, Object?>{
+        'active': active ? 1 : 0,
+        'document_id': documentId,
+        'date_end': dateEnd.toString(),
+      },
+    );
+    return response.statusCode == 200;
+  }
+
   /// Return the wishlist items for the [userPhone] in the SMStretching API.
   ///
   /// See: https://smstretching.ru/mobile/wishlist/{token}/get
   Future<Iterable<SMWishlistModel>> getWishlist(
     final String userPhone,
   ) async {
-    final response = await post<String>(
+    final response = await _dio.post<String>(
       '$smStretchingApiUrl/wishlist/$smStretchingUrlToken/get',
       data: <String, Object?>{'user_phone': userPhone},
     );
@@ -328,9 +380,29 @@ class SMStretchingAPI extends DioForNative {
   ///
   /// See: https://smstretching.ru/mobile/wishlist/{token}/get
   Future<bool> createWishlist(final SMWishlistModel wishlist) async {
-    final response = await post<String>(
+    final response = await _dio.post<String>(
       '$smStretchingApiUrl/wishlist/$smStretchingUrlToken/add',
       data: wishlist.toMap(post: true),
+    );
+    return response.statusCode == 200;
+  }
+
+  /// Edit a rating of the record item in the SMStretching API.
+  ///
+  /// See: https://smstretching.ru/mobile/records/{token}/edit_rating/{record_id}
+  Future<bool> editRating({
+    required final int recordId,
+    required final String userPhone,
+    required final int rating,
+    final String comment = '',
+  }) async {
+    final response = await _dio.post<String>(
+      '$smStretchingApiUrl/records/$smStretchingUrlToken/edit_rating/$recordId',
+      data: <String, Object?>{
+        'user_phone': userPhone,
+        'rating': rating,
+        'comment': comment,
+      },
     );
     return response.statusCode == 200;
   }
@@ -355,7 +427,7 @@ final Provider<SMActivityPriceModel> smActivityPriceProvider =
 /// The provider of the current user's deposit.
 ///
 /// See: https://smstretching.ru/mobile/users/{token}/get_user_deposit
-final FutureProvider<int> userDepositProvider =
+final FutureProvider<int> smUserDepositProvider =
     FutureProvider<int>((final ref) async {
   final userPhone = ref.watch(userProvider.select((final user) => user?.phone));
   return userPhone != null
@@ -366,13 +438,15 @@ final FutureProvider<int> userDepositProvider =
 /// The provider of the default studio id in the SMStretching API.
 final FutureProvider<int> smDefaultStudioIdProvider =
     FutureProvider<int>((final ref) async {
-  final response = await smStretching.get<String>(
+  final response = await smStretching._dio.get<String>(
     '$smStretchingApiUrl/options/$smStretchingUrlToken/'
     'get_yclients_default_service_id',
   );
   final data = json.decode(response.data!) as Map<String, Object?>;
-  return int.parse((data['yclients_default_service_id']!
-      as Map<String, Object?>)['option_value']! as String);
+  return int.parse(
+    (data['yclients_default_service_id']!
+        as Map<String, Object?>)['option_value']! as String,
+  );
 });
 
 /// The studios provider for SMStretching API.
@@ -387,8 +461,8 @@ final StateNotifierProvider<ContentNotifier<SMStudioModel>,
     saveName: 'smStudios',
     converter: smStudioConverter,
     refreshState: (final notifier) async {
-      final response =
-          await smStretching.get<Iterable>('$smStretchingContentUrl/studii');
+      final response = await smStretching._dio
+          .get<Iterable>('$smStretchingContentUrl/studii');
       return (response.data!.cast<Map<String, Object?>>())
           .map((final map) => SMStudioModel.fromMap(map));
     },
@@ -407,7 +481,7 @@ final StateNotifierProvider<ContentNotifier<SMStudioOptionsModel>,
     saveName: 'smStudiosOptions',
     converter: smStudioOptionsConverter,
     refreshState: (final notifier) async {
-      final response = await smStretching.post<String>(
+      final response = await smStretching._dio.post<String>(
         '$smStretchingApiUrl/options/$smStretchingUrlToken/get_all',
       );
       final data = json.decode(response.data!) as Map<String, Object?>;
@@ -430,8 +504,8 @@ final StateNotifierProvider<ContentNotifier<SMTrainerModel>,
     saveName: 'smTrainers',
     converter: smTrainerConverter,
     refreshState: (final notifier) async {
-      final response =
-          await smStretching.get<String>('$smStretchingContentUrl/shtab_v2');
+      final response = await smStretching._dio
+          .get<String>('$smStretchingContentUrl/shtab_v2');
       return ((json.decode(response.data!) as Iterable)
               .cast<Map<String, Object?>>())
           .map((final map) => SMTrainerModel.fromMap(map));
@@ -455,7 +529,7 @@ final StateNotifierProvider<ContentNotifier<SMUserAbonementModel>,
       if (user == null) {
         return const Iterable<SMUserAbonementModel>.empty();
       }
-      final response = await smStretching.post<String>(
+      final response = await smStretching._dio.post<String>(
         '$smStretchingApiUrl/goods/$smStretchingUrlToken/get_all_user',
         data: <String, Object?>{'user_phone': user.phone},
       );
@@ -468,16 +542,9 @@ final StateNotifierProvider<ContentNotifier<SMUserAbonementModel>,
           .map((final map) => SMUserAbonementModel.fromMap(map));
     },
   );
-  ref.listen(
-    userProvider.select((final user) => user?.phone),
-    (final userPhone) async {
-      if (userPhone == null) {
-        await notifier.clear();
-      } else {
-        await notifier.refresh();
-      }
-    },
-  );
+  ref.listen<bool>(unauthorizedProvider, (final unauthorized) async {
+    unauthorized ? await notifier.clear() : await notifier.refresh();
+  });
   return notifier;
 });
 
@@ -494,7 +561,7 @@ final StateNotifierProvider<ContentNotifier<SMAbonementModel>,
     converter: smAbonementConverter,
     refreshInterval: const Duration(hours: 1),
     refreshState: (final notifier) async {
-      final response = await smStretching.post<String>(
+      final response = await smStretching._dio.post<String>(
         '$smStretchingApiUrl/goods/$smStretchingUrlToken/get_all',
       );
       final data = json.decode(response.data!) as Map<String, Object?>;
@@ -518,7 +585,7 @@ final StateNotifierProvider<ContentNotifier<SMClassesGalleryModel>,
     saveName: 'smClassesGallery',
     converter: smClassesGalleryConverter,
     refreshState: (final notifier) async {
-      final response = await smStretching
+      final response = await smStretching._dio
           .get<Iterable>('$smStretchingContentUrl/gallery_for_classes');
       return (response.data!.cast<Map<String, Object?>>())
           .map((final map) => SMClassesGalleryModel.fromMap(map));
@@ -538,10 +605,109 @@ final StateNotifierProvider<ContentNotifier<SMAdvertismentModel>,
     saveName: 'smAdvertisments',
     converter: smAdvertismentConverter,
     refreshState: (final notifier) async {
-      final response = await smStretching
+      final response = await smStretching._dio
           .get<Iterable>('$smStretchingContentUrl/adv_banner');
       return (response.data!.cast<Map<String, Object?>>())
           .map((final map) => SMAdvertismentModel.fromMap(map));
     },
   );
 });
+
+/// The provider of the stories from the SMStretching API.
+///
+/// See: https://smstretching.ru/wp-json/jet-cct/stories
+final StateNotifierProvider<ContentNotifier<SMStoryModel>,
+        Iterable<SMStoryModel>> smStoriesProvider =
+    StateNotifierProvider<ContentNotifier<SMStoryModel>,
+        Iterable<SMStoryModel>>((final ref) {
+  return ContentNotifier<SMStoryModel>(
+    hive: ref.watch(hiveProvider),
+    saveName: 'smStories',
+    converter: smStoryConverter,
+    refreshState: (final notifier) async {
+      final response = await smStretching._dio
+          .get<Iterable>('$smStretchingContentUrl/stories');
+      return (response.data!.cast<Map<String, Object?>>())
+          .map((final map) => SMStoryModel.fromMap(map));
+    },
+  );
+});
+
+/// The id converter of the [UserRecordModel].
+final Provider<UserRecordIdConverter> userRecordIdConverterProvider =
+    Provider<UserRecordIdConverter>((final ref) {
+  return UserRecordIdConverter._(ref);
+});
+
+/// The id converter of the [UserRecordModel].
+class UserRecordIdConverter implements JsonConverter<UserRecordModel?, int> {
+  const UserRecordIdConverter._(final this._ref);
+  final ProviderRefBase _ref;
+
+  @override
+  UserRecordModel? fromJson(final int id) {
+    for (final userRecord in _ref.read(userRecordsProvider)) {
+      if (userRecord.id == id) {
+        return userRecord;
+      }
+    }
+  }
+
+  @override
+  int toJson(final UserRecordModel? data) => data!.id;
+}
+
+/// The provider of already pushed ids for [UserRecordModel].
+final StateNotifierProvider<SaveToHiveIterableNotifier<UserRecordModel, String>,
+        Iterable<UserRecordModel>> activitiesStudiosFilterProvider =
+    StateNotifierProvider<SaveToHiveIterableNotifier<UserRecordModel, String>,
+        Iterable<UserRecordModel>>((final ref) {
+  return SaveToHiveIterableNotifier<UserRecordModel, String>(
+    hive: ref.watch(hiveProvider),
+    saveName: 'pushed_records',
+    converter: StringToIterableConverter(
+      OptionalIterableConverter(ref.watch(userRecordIdConverterProvider)),
+    ),
+    defaultValue: const Iterable<UserRecordModel>.empty(),
+  );
+});
+
+/// The event handler for push a review screen to user when a record finishes.
+class ReviewRecordsEventHandler extends WidgetsBindingObserver {
+  /// The event handler for push a review screen to user when a record finishes.
+  ReviewRecordsEventHandler(final this._context, final this._ref);
+  final BuildContext _context;
+  final WidgetRef _ref;
+
+  @override
+  Future<void> didChangeAppLifecycleState(final AppLifecycleState state) async {
+    final userPhone = _ref.read(userProvider)?.phone;
+    if (state != AppLifecycleState.resumed || userPhone == null) {
+      return;
+    }
+    final navigator = Navigator.of(_context, rootNavigator: true);
+    final currentTime = _ref.read(smServerTimeProvider);
+    final pushedRecordsNotifier =
+        _ref.read(activitiesStudiosFilterProvider.notifier);
+    for (final userRecord in _ref.read(userRecordsProvider)) {
+      final recordTime = userRecord.date.add(userRecord.length);
+      if (!userRecord.deleted &&
+          currentTime.isAfter(recordTime) &&
+          currentTime.difference(recordTime) < const Duration(days: 1) &&
+          !pushedRecordsNotifier.state.contains(userRecord)) {
+        await pushedRecordsNotifier.add(userRecord);
+        final records = await smStretching.getRecords(
+          userPhone: userPhone,
+          recordId: userRecord.id,
+        );
+        if (records.any((final record) => record.rating == 0)) {
+          await navigator.push(
+            MaterialPageRoute<void>(
+              builder: (final context) => RatingPicker(userRecord),
+            ),
+          );
+        }
+      }
+    }
+  }
+}

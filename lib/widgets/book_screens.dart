@@ -12,6 +12,7 @@ import 'package:stretching/models_smstretching/sm_abonement_model.dart';
 import 'package:stretching/models_yclients/activity_model.dart';
 import 'package:stretching/models_yclients/record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
+import 'package:stretching/style.dart';
 import 'package:stretching/widgets/appbars.dart';
 import 'package:stretching/widgets/components/emoji_text.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
@@ -330,11 +331,14 @@ class ResultBookScreen extends StatelessWidget {
                 const SizedBox(height: 30),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 75),
-                  child: BottomButtons<dynamic>(
-                    inverse: true,
-                    firstText: button,
-                    onFirstPressed: (final context) =>
-                        Navigator.of(context).maybePop(true),
+                  child: TextButton(
+                    style: (TextButtonStyle.light.fromTheme(theme)).copyWith(
+                      backgroundColor: MaterialStateProperty.all(
+                        Colors.transparent,
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(context).maybePop(true),
+                    child: Text(button),
                   ),
                 ),
                 const SizedBox(height: 50),

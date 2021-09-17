@@ -30,12 +30,14 @@ class ContentNotifier<T extends Object>
   late final Timer refreshTimer;
 
   /// The callback to refresh a state of this provider.
-  final FutureOr<Iterable<T>> Function(ContentNotifier<T>) refreshState;
+  final FutureOr<Iterable<T>?> Function(ContentNotifier<T>) refreshState;
 
   /// The interval for automatic refreshing of state of this notifier.
   final Duration refreshInterval;
 
   /// Refresh this state with a callback.
-  Future<Iterable<T>> refresh() async =>
-      setStateAsync(await refreshState(this));
+  Future<Iterable<T>> refresh() async {
+    final state = await refreshState(this);
+    return state is Iterable<T> ? await setStateAsync(state) : this.state;
+  }
 }

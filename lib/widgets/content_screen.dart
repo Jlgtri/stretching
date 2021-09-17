@@ -9,7 +9,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/hook_consumer_stateful_widget.dart';
 import 'package:stretching/providers/hide_appbar_provider.dart';
@@ -120,8 +119,6 @@ class ContentScreenState extends ConsumerState<ContentScreen>
   @override
   Widget build(final BuildContext context) {
     final theme = Theme.of(context);
-    final appBarTheme = AppBarTheme.of(context);
-    final mediaQuery = MediaQuery.of(context);
     return Padding(
       padding: EdgeInsets.only(
         bottom: widget.persistentFooterButtons.isNotEmpty
@@ -133,7 +130,6 @@ class ContentScreenState extends ConsumerState<ContentScreen>
         persistentFooterButtons:
             widget.persistentFooterButtons.toList(growable: false),
         body: CustomScrollView(
-          primary: false,
           slivers: <Widget>[
             /// Carousel with indicator and actions
             SliverAppBar(
@@ -145,20 +141,20 @@ class ContentScreenState extends ConsumerState<ContentScreen>
               leading: FontIconBackButton(
                 onPressed: widget.onBackButtonPressed,
               ),
-              actions: <Widget>[
-                FontIconButton(
-                  FontIcon(
-                    FontIconData(
-                      IconsCG.share,
-                      color: appBarTheme.foregroundColor,
-                      height: 28,
-                      width: 28,
-                    ),
-                  ),
-                  tooltip: TR.tooltipsShare.tr(),
-                  // onPressed: () => Share.share(),
-                )
-              ],
+              // actions: <Widget>[
+              //   FontIconButton(
+              //     FontIcon(
+              //       FontIconData(
+              //         IconsCG.share,
+              //         color: appBarTheme.foregroundColor,
+              //         height: 28,
+              //         width: 28,
+              //       ),
+              //     ),
+              //     tooltip: TR.tooltipsShare.tr(),
+              //     // onPressed: () => Share.share(),
+              //   )
+              // ],
               foregroundColor: Colors.white,
               flexibleSpace: FlexibleSpaceBar(
                 background: widget.carousel is CarouselSlider

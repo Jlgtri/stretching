@@ -23,5 +23,5 @@ const int pinCodeLength = 4;
 /// The time filter to use for [ActivityTime].
 const TimeOfDay filterTime = TimeOfDay(hour: 16, minute: 45);
 
-/// The longest time that user can wait before booking
+/// The longest time that user can wait when booking.
 const Duration bookTimeout = Duration(minutes: 20);

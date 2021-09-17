@@ -1,11 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
 
+import 'package:async/async.dart';
 import 'package:darq/darq.dart';
 import 'package:dio/dio.dart';
-import 'package:dio/native_imp.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meta/meta.dart';
 import 'package:stretching/api_smstretching.dart';
@@ -30,6 +29,7 @@ import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/secrets.dart';
 import 'package:stretching/utils/json_converters.dart';
 import 'package:stretching/utils/logger.dart';
+import 'package:stretching/widgets/error_screen.dart';
 
 /// The url to the YClients Assets.
 const String yClientsAssetsUrl = 'https://assets.yclients.com';
@@ -38,30 +38,34 @@ const String yClientsAssetsUrl = 'https://assets.yclients.com';
 const String yClientsUrl = 'https://api.yclients.com/api/v1';
 
 /// The base class for contacting with YClients API.
-class YClientsAPI extends DioForNative {
+class YClientsAPI {
   /// The base class for contacting with YClients API.
-  YClientsAPI._([final String? userToken])
-      : super(
-          BaseOptions(
-            responseType: ResponseType.plain,
-            headers: <String, String>{
-              HttpHeaders.contentTypeHeader: 'application/json',
-              HttpHeaders.acceptHeader: 'application/vnd.yclients.v2+json',
-              HttpHeaders.authorizationHeader: 'Bearer $yClientsToken, '
-                  'User ${userToken ?? yClientsAdminToken}',
-            },
-            extra: const YClientsRequestExtra().toMap(),
-          ),
-        ) {
-    interceptors.add(YClientsInterceptor());
+  YClientsAPI._([final String? userToken]) {
+    _dio = Dio(
+      BaseOptions(
+        responseType: ResponseType.plain,
+        headers: <String, String>{
+          HttpHeaders.contentTypeHeader: 'application/json',
+          HttpHeaders.acceptHeader: 'application/vnd.yclients.v2+json',
+          HttpHeaders.authorizationHeader: 'Bearer $yClientsToken, '
+              'User ${userToken ?? yClientsAdminToken}',
+        },
+        extra: const YClientsRequestExtra().toMap(),
+      ),
+    );
+    _dio.interceptors
+      ..add(ConnectionInterceptor())
+      ..add(YClientsInterceptor());
   }
+
+  late final Dio _dio;
 
   /// Send the phone confirmation sms code in the YClients API.
   Future<Response<YClientsResponse>> sendCode(
     final String phone,
     final int studioId,
   ) {
-    return post<YClientsResponse>(
+    return _dio.post<YClientsResponse>(
       '$yClientsUrl/book_code/$studioId',
       data: <String, Object?>{'phone': phone},
     );
@@ -72,7 +76,7 @@ class YClientsAPI extends DioForNative {
     final String phone,
     final String code,
   ) {
-    return post<YClientsResponse>(
+    return _dio.post<YClientsResponse>(
       '$yClientsUrl/user/auth',
       data: <String, Object?>{'phone': phone, 'code': code},
       options: Options(
@@ -85,22 +89,20 @@ class YClientsAPI extends DioForNative {
     );
   }
 
-  /// Creates a record for the specified [user] and [activityId].
+  /// Creates a record for the specified user and [activityId].
   Future<Tuple2<int, String>> bookActivity({
-    required final UserModel user,
+    required final String userName,
+    required final String userPhone,
+    required final String userEmail,
     required final int companyId,
     required final int activityId,
   }) async {
-    final response = await post<YClientsResponse>(
+    final response = await _dio.post<YClientsResponse>(
       '$yClientsUrl/activity/$companyId/$activityId/book',
       data: <String, Object?>{
-        'fullname': user.name.isNotEmpty ? user.name : user.phone,
-        'phone': user.phone,
-        'email': user.email,
-        'code': '',
-        'comment': '',
-        'notify_by_sms': 0,
-        'notify_by_email': 0,
+        'fullname': userName,
+        'phone': userPhone,
+        'email': userEmail,
         'type': 'mobile'
       },
     );
@@ -109,11 +111,13 @@ class YClientsAPI extends DioForNative {
   }
 
   /// Get a record for the specified [recordId] and [companyId].
+  ///
+  /// See: https://api.yclients.com/api/v1/record/{company_id}/{record_id}
   Future<RecordModel> getRecord({
     required final int companyId,
     required final int recordId,
   }) async {
-    final response = await get<YClientsResponse>(
+    final response = await _dio.get<YClientsResponse>(
       '$yClientsUrl/record/$companyId/$recordId',
       options: Options(
         extra: const YClientsRequestExtra<Map<String, Object?>>(
@@ -126,17 +130,14 @@ class YClientsAPI extends DioForNative {
 
   /// Update the record for the specified [activityId].
   ///
-  /// - [recordClientPhone] is equal to [RecordModel.client]'s phone.
-  ///
   /// See: https://api.yclients.com/api/v1/record/{company_id}/{record_id}
   Future<RecordModel> updateRecord({
     required final int companyId,
     required final int recordId,
     required final int activityId,
-    required final String recordClientPhone,
     required final Map<String, Object?> data,
   }) async {
-    final response = await put<YClientsResponse>(
+    final response = await _dio.put<YClientsResponse>(
       '$yClientsUrl/record/$companyId/$recordId',
       options: Options(
         extra: const YClientsRequestExtra<Map<String, Object?>>(
@@ -145,10 +146,10 @@ class YClientsAPI extends DioForNative {
       ),
       data: <String, Object?>{
         ...data,
-        'client': {'phone': recordClientPhone},
-        'activity_id': activityId.toString(),
+        'activity_id': activityId,
       },
     );
+    logger.i(response, response.data?.toJson());
     return RecordModel.fromMap(response.data!.data! as Map<String, Object?>);
   }
 
@@ -161,10 +162,12 @@ class YClientsAPI extends DioForNative {
     final int recordId, [
     final String? recordHash,
   ]) async {
-    final response = await delete<YClientsResponse>(
+    final response = await _dio.delete<YClientsResponse>(
       '$yClientsUrl/user/records/$recordId/${recordHash ?? ''}',
       options: Options(
-        extra: const YClientsRequestExtra(validate: false).toMap(),
+        extra: const YClientsRequestExtra(
+          validate: false,
+        ).toMap(),
       ),
     );
     return response.statusCode == 200;
@@ -178,7 +181,7 @@ class YClientsAPI extends DioForNative {
   Future getTransactions(
     final UserRecordModel record,
   ) async {
-    final response = await get<YClientsResponse>(
+    final response = await _dio.get<YClientsResponse>(
       '$yClientsUrl/timetable/transactions/${record.company.id}',
       queryParameters: <String, Object?>{'record_id': record.id},
       options: Options(
@@ -196,10 +199,10 @@ class YClientsAPI extends DioForNative {
   /// See: https://api.yclients.com/api/v1/company/{company_id}/sale/{document_id}/payment
   Future<TransactionModel> _sale(
     final int companyId,
-    final int documentId,
-    final Map<String, Object?> data,
-  ) async {
-    final response = await post<YClientsResponse>(
+    final int documentId, {
+    required final Map<String, Object?> data,
+  }) async {
+    final response = await _dio.post<YClientsResponse>(
       '$yClientsUrl/company/$companyId/sale/$documentId/payment',
       options: Options(
         extra: const YClientsRequestExtra<Map<String, Object?>>(
@@ -208,6 +211,7 @@ class YClientsAPI extends DioForNative {
       ),
       data: data,
     );
+    logger.i(response, response.data?.toJson());
     return TransactionModel.fromMap(
       response.data!.data! as Map<String, Object?>,
     );
@@ -229,7 +233,7 @@ class YClientsAPI extends DioForNative {
     return _sale(
       companyId,
       documentId,
-      <String, Object?>{
+      data: <String, Object?>{
         'payment': <String, Object?>{
           'method': <String, Object?>{
             'slug': 'account',
@@ -257,7 +261,7 @@ class YClientsAPI extends DioForNative {
     return _sale(
       companyId,
       documentId,
-      <String, Object?>{
+      data: <String, Object?>{
         'payment': <String, Object?>{
           'method': <String, Object?>{
             'slug': 'loyalty_abonement',
@@ -267,6 +271,43 @@ class YClientsAPI extends DioForNative {
         }
       },
     );
+  }
+
+  /// Changes the visit in the YClients API.
+  ///
+  /// - [recordId] equals [RecordModel.id].
+  /// - [visitId] equals [RecordModel.visitId].
+  /// - [serviceId] equals [RecordServiceModel.id].
+  ///
+  /// See: https://api.yclients.com/api/v1/visits/{visit_id}/{record_id}
+  Future<bool> changeVisit({
+    required final int recordId,
+    required final int visitId,
+    required final int serviceId,
+    required final int regularCost,
+    required final int ySaleCost,
+    final int attendance = 0,
+  }) async {
+    final response = await _dio.put<YClientsResponse>(
+      '$yClientsUrl/visits/$visitId/$recordId',
+      options: Options(
+        extra: const YClientsRequestExtra(devToken: true).toMap(),
+      ),
+      data: <String, Object?>{
+        'attendance': attendance,
+        'comment': 'mobile',
+        'services': <Map<String, Object?>>[
+          <String, Object?>{
+            'id': serviceId,
+            'cost': ySaleCost,
+            'first_cost': regularCost,
+            'record_id': recordId,
+          }
+        ],
+      },
+    );
+    logger.i(response, response.data?.toJson());
+    return response.data?.success ?? false;
   }
 
   /// Create a storage operation in the YClients API.
@@ -289,7 +330,7 @@ class YClientsAPI extends DioForNative {
     required final String goodSpecialNumber,
     required final DateTime serverTime,
   }) async {
-    final response = await post<YClientsResponse>(
+    final response = await _dio.post<YClientsResponse>(
       '$yClientsUrl/storage_operations/operation/$companyId',
       options: Options(
         extra: const YClientsRequestExtra<Map<String, Object?>>(
@@ -329,7 +370,7 @@ class YClientsAPI extends DioForNative {
     required final int companyId,
     required final String userPhone,
   }) async {
-    final response = await post<YClientsResponse>(
+    final response = await _dio.post<YClientsResponse>(
       '$yClientsUrl/company/$companyId/clients/search',
       options: Options(
         extra: const YClientsRequestExtra<Map<String, Object?>>(
@@ -370,7 +411,7 @@ class YClientsAPI extends DioForNative {
     final String name = '',
     final String email = '',
   }) async {
-    final response = await post<YClientsResponse>(
+    final response = await _dio.post<YClientsResponse>(
       '$yClientsUrl/clients/$companyId',
       data: <String, Object?>{
         'phone': userPhone,
@@ -398,7 +439,7 @@ class YClientsAPI extends DioForNative {
     required final String name,
     final String email = '',
   }) async {
-    final response = await put<YClientsResponse>(
+    final response = await _dio.put<YClientsResponse>(
       '$yClientsUrl/client/$companyId/$clientId',
       data: <String, Object?>{
         'phone': '+$phone',
@@ -435,7 +476,7 @@ class YClientsAPI extends DioForNative {
     required final String goodSpecialNumber,
     required final int documentId,
   }) async {
-    final response = await post<YClientsResponse>(
+    final response = await _dio.post<YClientsResponse>(
       '$yClientsUrl/storage_operations/goods_transactions/$companyId',
       options: Options(
         extra: const YClientsRequestExtra<Map<String, Object?>>(
@@ -462,44 +503,6 @@ class YClientsAPI extends DioForNative {
 
   /// Returns the iterable data from YClients API.
   ///
-  /// Maps the data from [mapData] and aggregates results in the single result.
-  ///
-  /// - [url] to get the data from.
-  /// - [queryParameters] to pass with the url.
-  /// - [options] to pass with the url.
-  /// - [onPrevious] sets the breakpoint for the data.
-  Stream<T> mapIterableData<T extends Object, S extends Object>({
-    required final Iterable<S> mapData,
-    required final JsonConverter<Iterable<T>, Iterable<Map<String, Object?>>>
-        jsonConverter,
-    required final String Function(S) url,
-    final Map<String, Object?>? Function(S)? queryParameters,
-    final Options? Function(S)? options,
-    final YClientsRequestExtra<Iterable<T>>? Function(S)? extra,
-    final bool Function(Iterable<T>)? onPrevious,
-    final FutureOr<void> Function(DioError, S)? onError,
-  }) async* {
-    for (final data in mapData) {
-      final previousData = <T>[];
-      await for (final iterableData in getIterableData(
-        jsonConverter: jsonConverter,
-        url: url(data),
-        options: options?.call(data),
-        extra: extra?.call(data),
-        queryParameters: queryParameters?.call(data),
-        onError: onError != null ? (final error) => onError(error, data) : null,
-      )) {
-        previousData.add(iterableData);
-        yield iterableData;
-      }
-      if (onPrevious?.call(previousData) ?? false) {
-        break;
-      }
-    }
-  }
-
-  /// Returns the iterable data from YClients API.
-  ///
   /// - [url] to get the data from.
   /// - [queryParameters] to pass with the url.
   /// - [options] to pass with the url.
@@ -515,7 +518,7 @@ class YClientsAPI extends DioForNative {
     try {
       final _options = options ?? Options();
       final _extra = extra ?? YClientsRequestExtra<Iterable<T>>();
-      final response = await get<YClientsResponse>(
+      final response = await _dio.get<YClientsResponse>(
         url,
         queryParameters: queryParameters,
         options: _options.copyWith(
@@ -532,7 +535,7 @@ class YClientsAPI extends DioForNative {
         yield data! as T;
       }
     } on DioError catch (e) {
-      debugger(message: e.toString());
+      // debugger(message: e.toString());
       if (onError != null) {
         await onError(e);
       } else {
@@ -561,7 +564,7 @@ class YClientsAPI extends DioForNative {
       try {
         final _options = options?.call(data) ?? Options();
         final _extra = extra?.call(data) ?? YClientsRequestExtra<T>();
-        final response = await get<YClientsResponse>(
+        final response = await _dio.get<YClientsResponse>(
           url(data),
           queryParameters: queryParameters?.call(data),
           options: _options.copyWith(
@@ -585,7 +588,7 @@ class YClientsAPI extends DioForNative {
         );
         yield response.data!.data! as T;
       } on DioError catch (e) {
-        debugger(message: e.toString());
+        // debugger(message: e.toString());
         if (onError != null) {
           await onError(e, data);
         } else {
@@ -635,17 +638,20 @@ final StateNotifierProvider<ContentNotifier<StudioModel>, Iterable<StudioModel>>
     hive: ref.watch(hiveProvider),
     saveName: 'studios',
     converter: companyConverter,
-    refreshState: (final notifier) async => (ref.read(yClientsProvider))
-        .mapData<StudioModel, SMStudioOptionsModel>(
-          mapData: ref.read(smStudiosOptionsProvider),
-          jsonConverter: companyConverter,
-          url: (final studio) => '$yClientsUrl/company/${studio.studioId}',
-          onError: (final error, final studio) async {
-            debugger(message: error.message);
-            logger.e(error.message, error, error.stackTrace);
-          },
-        )
-        .toList(),
+    refreshState: (final notifier) async {
+      final studios = await (ref.read(yClientsProvider))
+          .mapData<StudioModel, SMStudioOptionsModel>(
+            mapData: ref.read(smStudiosOptionsProvider),
+            jsonConverter: companyConverter,
+            url: (final studio) => '$yClientsUrl/company/${studio.studioId}',
+            onError: (final error, final studio) async {
+              // debugger(message: error.message);
+              logger.e(error.message, error, error.stackTrace);
+            },
+          )
+          .toList();
+      return studios.isEmpty ? null : studios;
+    },
   );
 });
 
@@ -666,19 +672,22 @@ final StateNotifierProvider<ContentNotifier<TrainerModel>,
     hive: ref.watch(hiveProvider),
     saveName: 'trainers',
     converter: trainerConverter,
-    refreshState: (final notifier) => (ref.read(yClientsProvider))
-        .mapIterableData<TrainerModel, SMStudioOptionsModel>(
-          mapData: ref.read(smStudiosOptionsProvider),
-          jsonConverter: const IterableConverter(trainerConverter),
-          url: (final studio) =>
-              '$yClientsUrl/company/${studio.studioId}/staff',
-          extra: (final studio) => const YClientsRequestExtra(devToken: true),
-          onError: (final error, final data) async {
-            debugger(message: error.message);
-            logger.e(error.message, error, error.stackTrace);
-          },
-        )
-        .toList(),
+    refreshState: (final notifier) async {
+      final getData = ref.read(yClientsProvider).getIterableData;
+      final trainers = await StreamGroup.merge(<Stream<TrainerModel>>[
+        for (final studio in ref.read(smStudiosOptionsProvider))
+          getData(
+            jsonConverter: const IterableConverter(trainerConverter),
+            url: '$yClientsUrl/company/${studio.studioId}/staff',
+            extra: const YClientsRequestExtra(devToken: true),
+            onError: (final error) async {
+              // debugger(message: error.message);
+              logger.e(error.message, error, error.stackTrace);
+            },
+          )
+      ]).toList();
+      return trainers.isEmpty ? null : trainers;
+    },
   );
 });
 
@@ -725,19 +734,22 @@ final StateNotifierProvider<ContentNotifier<ActivityModel>,
     saveName: 'activities',
     converter: activityConverter,
     refreshInterval: const Duration(minutes: 10),
-    refreshState: (final notifier) => (ref.read(yClientsProvider))
-        .mapIterableData<ActivityModel, SMStudioOptionsModel>(
-          mapData: ref.read(smStudiosOptionsProvider),
-          jsonConverter: const IterableConverter(activityConverter),
-          url: (final studio) =>
-              '$yClientsUrl/activity/${studio.studioId}/search',
-          queryParameters: (final studio) => <String, Object?>{'count': 300},
-          onError: (final error, final data) async {
-            debugger(message: error.message);
-            logger.e(error.message, error, error.stackTrace);
-          },
-        )
-        .toList(),
+    refreshState: (final notifier) async {
+      final getData = ref.read(yClientsProvider).getIterableData;
+      final activities = await StreamGroup.merge(<Stream<ActivityModel>>[
+        for (final studio in ref.read(smStudiosOptionsProvider))
+          getData(
+            jsonConverter: const IterableConverter(activityConverter),
+            url: '$yClientsUrl/activity/${studio.studioId}/search',
+            queryParameters: <String, Object?>{'count': 300},
+            onError: (final error) async {
+              // debugger(message: error.message);
+              logger.e(error.message, error, error.stackTrace);
+            },
+          )
+      ]).toList();
+      return activities.isEmpty ? null : activities;
+    },
   );
 });
 
@@ -753,31 +765,39 @@ final StateNotifierProvider<ContentNotifier<GoodModel>, Iterable<GoodModel>>
     saveName: 'goods',
     converter: goodConverter,
     refreshState: (final notifier) async {
-      final notifierData = <GoodModel>[];
-      for (final studio in ref.read(smStudiosOptionsProvider)) {
-        await (ref.read(yClientsProvider))
-            .mapIterableData<GoodModel, int>(
-              mapData: Iterable<int>.generate(99),
-              jsonConverter: const IterableConverter(goodConverter),
-              url: (final index) => '$yClientsUrl/goods/${studio.studioId}',
-              queryParameters: (final index) => <String, Object?>{
-                'page': index + 1,
-                'count': 100,
-                'category_id': studio.categoryAbId,
-              },
-              onPrevious: (final data) => data.isEmpty,
-              extra: (final index) =>
-                  const YClientsRequestExtra<Iterable<GoodModel>>(
-                devToken: true,
-              ),
-              onError: (final error, final data) async {
-                debugger(message: error.message);
-                logger.e(error.message, error, error.stackTrace);
-              },
-            )
-            .forEach(notifierData.add);
+      Stream<GoodModel> getGoods(final SMStudioOptionsModel studio) async* {
+        for (var index = 1; index < double.infinity; index++) {
+          var areGoodsPresent = false;
+          await for (final good
+              in ref.read(yClientsProvider).getIterableData<GoodModel>(
+                    jsonConverter: const IterableConverter(goodConverter),
+                    url: '$yClientsUrl/goods/${studio.studioId}',
+                    queryParameters: <String, Object?>{
+                      'page': index,
+                      'count': 100,
+                      'category_id': studio.categoryAbId,
+                    },
+                    extra: const YClientsRequestExtra<Iterable<GoodModel>>(
+                      devToken: true,
+                    ),
+                    onError: (final error) async {
+                      // debugger(message: error.message);
+                      logger.e(error.message, error, error.stackTrace);
+                    },
+                  )) {
+            areGoodsPresent = true;
+            yield good;
+          }
+
+          if (!areGoodsPresent) {
+            return;
+          }
+        }
       }
-      return notifierData;
+
+      final studios = ref.read(smStudiosOptionsProvider);
+      final goods = await StreamGroup.merge(studios.map(getGoods)).toList();
+      return goods.isEmpty ? null : goods;
     },
   );
 });
@@ -789,26 +809,31 @@ final StateNotifierProvider<ContentNotifier<UserAbonementModel>,
         Iterable<UserAbonementModel>> userAbonementsProvider =
     StateNotifierProvider<ContentNotifier<UserAbonementModel>,
         Iterable<UserAbonementModel>>((final ref) {
-  return ContentNotifier<UserAbonementModel>(
+  final notifier = ContentNotifier<UserAbonementModel>(
     hive: ref.watch(hiveProvider),
     saveName: 'userAbonements',
     converter: abonementConverter,
-    refreshState: (final notifier) => (ref.read(yClientsProvider))
-        .mapIterableData<UserAbonementModel, SMStudioOptionsModel>(
-          mapData: ref.read(smStudiosOptionsProvider),
-          jsonConverter: const IterableConverter(abonementConverter),
-          url: (final studio) => '$yClientsUrl/user/loyalty/abonements',
-          queryParameters: (final studio) =>
-              <String, Object?>{'company_id': studio.studioId},
-          onError: (final error, final data) async {
-            debugger(message: error.message);
-            logger.e(error.message, error, error.stackTrace);
-          },
-        )
-        .toList(),
+    refreshState: (final notifier) async {
+      if (ref.read(unauthorizedProvider)) {
+        return const Iterable<UserAbonementModel>.empty();
+      }
+      final userAbonements = await (ref.read(yClientsProvider))
+          .getIterableData(
+            jsonConverter: const IterableConverter(abonementConverter),
+            url: '$yClientsUrl/user/loyalty/abonements',
+            onError: (final error) async {
+              // debugger(message: error.message);
+              logger.e(error.message, error, error.stackTrace);
+            },
+          )
+          .toList();
+      return userAbonements.isEmpty ? null : userAbonements;
+    },
   );
-
-  // await ref.read(hiveProvider).delete('abonements');
+  ref.listen<bool>(unauthorizedProvider, (final unauthorized) async {
+    unauthorized ? await notifier.clear() : await notifier.refresh();
+  });
+  return notifier;
 });
 
 /// The user recordrs provider for YClients API.
@@ -818,21 +843,31 @@ final StateNotifierProvider<ContentNotifier<UserRecordModel>,
         Iterable<UserRecordModel>> userRecordsProvider =
     StateNotifierProvider<ContentNotifier<UserRecordModel>,
         Iterable<UserRecordModel>>((final ref) {
-  return ContentNotifier<UserRecordModel>(
+  final notifier = ContentNotifier<UserRecordModel>(
     hive: ref.watch(hiveProvider),
     saveName: 'userRecords',
     converter: recordConverter,
-    refreshState: (final notifier) => (ref.read(yClientsProvider))
-        .getIterableData<UserRecordModel>(
-          jsonConverter: const IterableConverter(recordConverter),
-          url: '$yClientsUrl/user/records',
-          onError: (final error) async {
-            debugger(message: error.message);
-            logger.e(error.message, error, error.stackTrace);
-          },
-        )
-        .toList(),
+    refreshState: (final notifier) async {
+      if (ref.read(unauthorizedProvider)) {
+        return const Iterable<UserRecordModel>.empty();
+      }
+      final userRecords = await (ref.read(yClientsProvider))
+          .getIterableData<UserRecordModel>(
+            jsonConverter: const IterableConverter(recordConverter),
+            url: '$yClientsUrl/user/records',
+            onError: (final error) async {
+              // debugger(message: error.message);
+              logger.e(error.message, error, error.stackTrace);
+            },
+          )
+          .toList();
+      return userRecords.isEmpty ? null : userRecords;
+    },
   );
+  ref.listen<bool>(unauthorizedProvider, (final unauthorized) async {
+    unauthorized ? await notifier.clear() : await notifier.refresh();
+  });
+  return notifier;
 });
 
 /// The provider of whether to provide a discount to a user.
@@ -911,17 +946,19 @@ class YClientsInterceptor extends Interceptor {
     final RequestOptions options,
     final RequestInterceptorHandler handler,
   ) {
+    if (options.data != null) {
+      logger.i(options.data, options.path);
+    }
     final requestOptions = YClientsRequestExtra.fromMap(options.extra);
     handler.next(
-      requestOptions.devToken
-          ? options.copyWith(
-              headers: <String, Object?>{
-                ...options.headers,
-                HttpHeaders.authorizationHeader:
-                    'Bearer $yClientsToken, User $yClientsAdminToken',
-              },
-            )
-          : options,
+      options.copyWith(
+        headers: <String, Object?>{
+          ...options.headers,
+          if (requestOptions.devToken)
+            HttpHeaders.authorizationHeader:
+                'Bearer $yClientsToken, User $yClientsAdminToken',
+        },
+      ),
     );
   }
 
@@ -930,6 +967,7 @@ class YClientsInterceptor extends Interceptor {
     final Response response,
     final ResponseInterceptorHandler handler,
   ) {
+    // logger.i(response.data, response.realUri);
     handler.resolve(_getCustomResponse(response));
   }
 
@@ -941,17 +979,18 @@ class YClientsInterceptor extends Interceptor {
     final response = err.response;
     if (response != null) {
       final customResponse = _getCustomResponse(response, validate: false);
-      handler.reject(
-        DioError(
-          response: customResponse,
-          requestOptions: err.requestOptions,
-          error: YClientsException(customResponse),
-          type: err.type,
-        ),
-      );
-    } else {
-      handler.next(err);
+      if (err.error is! SocketException) {
+        return handler.reject(
+          DioError(
+            response: customResponse,
+            requestOptions: err.requestOptions,
+            error: YClientsException(customResponse),
+            type: err.type,
+          ),
+        );
+      }
     }
+    handler.next(err);
   }
 }
 

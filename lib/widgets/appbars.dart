@@ -51,6 +51,7 @@ AppBar cancelAppBar(
   );
 }
 
+/// The main app bar with the [IconsCG.logo].
 AppBar mainAppBar(final ThemeData theme, {final Widget? leading}) {
   return AppBar(
     centerTitle: true,

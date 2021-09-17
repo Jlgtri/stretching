@@ -34,7 +34,6 @@ abstract class TR {
   static const String miscFilterTitle = 'misc.filter.title';
   static const String miscFilterReset = 'misc.filter.reset';
   static const String miscFilterApply = 'misc.filter.apply';
-  static const String miscFilterAllStudios = 'misc.filter.all_studios';
   static const String miscFilterStudio = 'misc.filter.studio';
   static const String miscFilterClass = 'misc.filter.class';
   static const String miscFilterTime = 'misc.filter.time';
@@ -47,6 +46,7 @@ abstract class TR {
   static const String miscPullToRefreshRelease = 'misc.pull_to_refresh.release';
   static const String miscPullToRefreshRefreshing = 'misc.pull_to_refresh.refreshing';
   static const String miscPullToRefreshComplete = 'misc.pull_to_refresh.complete';
+  static const String miscPullToRefreshCompleteInternetError = 'misc.pull_to_refresh.complete_internet_error';
   static const String miscPullToRefresh = 'misc.pull_to_refresh';
   static const String misc = 'misc';
 
@@ -75,8 +75,21 @@ abstract class TR {
   static const String auth = 'auth';
 
   static const String homeRegister = 'home.register';
+  static const String homeClasses = 'home.classes';
+  static const String homeClassesToday = 'home.classes_today';
+  static const String homeClassesEmpty = 'home.classes_empty';
+  static const String homeClassesOnline = 'home.classes_online';
+  static const String homeApply = 'home.apply';
+
+  static const String homeStoriesDiscount = 'home.stories.discount';
+  static const String homeStoriesWishlist = 'home.stories.wishlist';
+  static const String homeStoriesSupport = 'home.stories.support';
+  static const String homeStoriesFreeActivity = 'home.stories.free_activity';
+  static const String homeStories = 'home.stories';
   static const String home = 'home';
 
+  static const String activitiesAllStudios = 'activities.all_studios';
+  static const String activitiesFewStudios = 'activities.few_studios';
   static const String activitiesSearch = 'activities.search';
   static const String activities12h = 'activities.12h';
 
@@ -265,4 +278,12 @@ abstract class TR {
   static const String wishlistErrorButton = 'wishlist.error.button';
   static const String wishlistError = 'wishlist.error';
   static const String wishlist = 'wishlist';
+
+  static const String ratingTitle = 'rating.title';
+  static const String ratingDescription = 'rating.description';
+  static const String ratingComment = 'rating.comment';
+  static const String ratingConfirm = 'rating.confirm';
+  static const String ratingDone = 'rating.done';
+  static const String ratingDoneDescription = 'rating.done_description';
+  static const String rating = 'rating';
 }

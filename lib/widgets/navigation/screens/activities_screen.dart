@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:animations/animations.dart';
@@ -5,6 +6,7 @@ import 'package:badges/badges.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:darq/darq.dart';
+import 'package:dropdown_below/dropdown_below.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -58,12 +60,11 @@ class StudioIdConverter implements JsonConverter<CombinedStudioModel?, int> {
 
   @override
   CombinedStudioModel? fromJson(final int id) {
-    final nullableCombinedStudios =
-        _ref.read(combinedStudiosProvider).cast<CombinedStudioModel?>();
-    return nullableCombinedStudios.firstWhere(
-      (final studio) => studio!.item0.id == id,
-      orElse: () => null,
-    );
+    for (final studio in _ref.read(combinedStudiosProvider)) {
+      if (studio.item0.id == id) {
+        return studio;
+      }
+    }
   }
 
   @override
@@ -231,7 +232,7 @@ final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
                   return category.classesYId == activity.item0.service.id;
                 })) &&
             (time.isEmpty ||
-                time.all((final time) => time.isWithin(activity.item0.date)));
+                time.any((final time) => time.isWithin(activity.item0.date)));
       }).toList(growable: false)
         ..sort((final activityA, final activityB) {
           return activityA.item0.compareTo(activityB.item0);
@@ -251,25 +252,42 @@ class ActivitiesScreen extends HookConsumerWidget {
 
     final dayController = useScrollController();
     final refreshController = useMemoized(() => RefreshController());
-    final tempNow = DateTime.now();
-    final firstNow = useRef(tempNow);
-    final now = useMemoized(() => firstNow.value = DateTime.now(), <Object>[
-      tempNow.year != firstNow.value.year ||
-          tempNow.month != firstNow.value.month ||
-          tempNow.day != firstNow.value.day
-    ]);
 
-    final categories = ref.watch(activitiesCategoriesFilterProvider);
     final filtersCount = ref.watch(activitiesFiltersCountProvider);
     final activities = ref.watch(filteredActivitiesProvider);
+    final selectedStudios = ref.watch(activitiesStudiosFilterProvider);
+    final studios = ref.watch(combinedStudiosProvider);
     final day = ref.watch(activitiesDayProvider).state;
-    final activeDayKey = useMemoized(() => GlobalKey(), [day]);
-    ref.watch(widgetsBindingProvider).addPostFrameCallback((final _) async {
-      final context = activeDayKey.currentContext;
-      if (context != null) {
-        await Scrollable.ensureVisible(context);
+    final tempNowStream = useStream(
+      Stream.periodic(
+        const Duration(seconds: 10),
+        (final index) => DateTime.now(),
+      ),
+    );
+    final tempNow = tempNowStream.data ?? DateTime.now();
+    final firstNow = useRef(tempNow);
+    final now = useMemoized(() {
+      if (day == firstNow.value) {
+        ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
+          ref.read(activitiesDayProvider).state = tempNow;
+        });
       }
-    });
+      return firstNow.value = tempNow;
+    }, <Object>[
+      tempNow.year != firstNow.value.year ||
+          tempNow.month != firstNow.value.month ||
+          tempNow.day != firstNow.value.day,
+      activities.where((final activity) {
+        return activity.item0.date.difference(tempNow).inHours > 12;
+      })
+    ]);
+    // final activeDayKey = useMemoized(() => GlobalKey(), [day]);
+    // ref.read(widgetsBindingProvider).addPostFrameCallback((final _) async {
+    //   final context = activeDayKey.currentContext;
+    //   if (context != null) {
+    //     await Scrollable.ensureVisible(context);
+    //   }
+    // });
     final areActivitiesPresent = ref.watch(
       scheduleProvider.select((final activities) {
         final todayActivities = activities.where((final activity) {
@@ -283,257 +301,464 @@ class ActivitiesScreen extends HookConsumerWidget {
             });
       }),
     );
+    // CustomDraggableScrollBar(
+    //   itemsCount: activities.length,
+    //   visible: activities.length > 4,
+    //   resetScrollbarPosition: true,
+    //   leadingChildHeight:
+    //       InputDecorationStyle.search.toolbarHeight + categoriesHeight + 44,
+    //   labelTextBuilder: (final index) {
+    //     final activity = activities.elementAt(index);
+    //     return Text(
+    //       <Object>[
+    //         activity.item0.date.hour,
+    //         activity.item0.date.minute.toString().padLeft(2, '0')
+    //       ].join(':'),
+    //       style: theme.textTheme.subtitle2
+    //           ?.copyWith(color: theme.colorScheme.surface),
+    //     );
+    //   },
+    //   builder: (final context, final scrollController, final resetPosition) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        // /// Dropdown
+        // Container(
+        //   color: theme.appBarTheme.backgroundColor,
+        //   width: double.infinity,
+        //   alignment: Alignment.center,
+        //   padding: const EdgeInsets.only(bottom: 14),
+        //   child: FittedBox(
+        //     fit: BoxFit.fitHeight,
+        //     child: DropdownButtonHideUnderline(
+        //       child: ButtonTheme(
+        //         alignedDropdown: true,
+        //         child: DropdownButton<CombinedStudioModel?>(
+        //           isDense: true,
+        //           icon: Padding(
+        //             padding: const EdgeInsets.only(left: 6),
+        //             child: FontIcon(
+        //               FontIconData(
+        //                 IconsCG.angleDown,
+        //                 height: 10,
+        //                 color: theme.hintColor,
+        //               ),
+        //             ),
+        //           ),
+        //           style: theme.textTheme.bodyText1,
+        //           value: selectedStudios.length == 1
+        //               ? selectedStudios.single
+        //               : null,
+        //           underline: const SizedBox.shrink(),
+        //           borderRadius: const BorderRadius.all(Radius.circular(8)),
+        //           selectedItemBuilder: (final context) => <Widget>[
+        //             Text(
+        //               selectedStudios.isNotEmpty &&
+        //                       selectedStudios.length < studios.length
+        //                   ? TR.activitiesFewStudios.tr()
+        //                   : TR.activitiesAllStudios.tr(),
+        //               style: theme.textTheme.bodyText1?.copyWith(
+        //                 color: theme.appBarTheme.foregroundColor,
+        //               ),
+        //               maxLines: 1,
+        //               overflow: TextOverflow.ellipsis,
+        //             ),
+        //             for (final studio in studios)
+        //               Text(
+        //                 studio.item1.studioName,
+        //                 style: theme.textTheme.bodyText1?.copyWith(
+        //                   color: theme.appBarTheme.foregroundColor,
+        //                 ),
+        //                 maxLines: 1,
+        //                 overflow: TextOverflow.ellipsis,
+        //               ),
+        //           ],
+        //           items: <DropdownMenuItem<CombinedStudioModel?>>[
+        //             DropdownMenuItem<CombinedStudioModel?>(
+        //               child: Text(
+        //                 TR.activitiesAllStudios.tr(),
+        //                 style: theme.textTheme.bodyText1?.copyWith(
+        //                   color: theme.appBarTheme.backgroundColor,
+        //                 ),
+        //                 maxLines: 1,
+        //                 overflow: TextOverflow.ellipsis,
+        //               ),
+        //             ),
+        //             for (final studio in studios)
+        //               DropdownMenuItem<CombinedStudioModel>(
+        //                 value: studio,
+        //                 child: Text(
+        //                   studio.item1.studioName,
+        //                   maxLines: 1,
+        //                   overflow: TextOverflow.ellipsis,
+        //                 ),
+        //               ),
+        //           ],
+        //           onChanged: (final value) async {
+        //             final filteredStudiosNotifier =
+        //                 ref.read(activitiesStudiosFilterProvider.notifier);
+        //             if (value != null) {
+        //               await filteredStudiosNotifier.setStateAsync([value]);
+        //             } else {
+        //               await filteredStudiosNotifier.clear();
+        //             }
+        //           },
+        //         ),
+        //       ),
+        //     ),
+        //   ),
+        // ),
 
-    final refresh = useFuture(
-      useMemoized(() async {
-        await Future.wait(<Future<void>>[
-          ref.read(scheduleProvider.notifier).refresh(),
-          ref.read(smClassesGalleryProvider.notifier).refresh(),
-          ref.read(userRecordsProvider.notifier).refresh(),
-        ]);
-      }),
-    );
-    return
-        // CustomDraggableScrollBar(
-        //   itemsCount: activities.length,
-        //   visible: activities.length > 4,
-        //   resetScrollbarPosition: true,
-        //   leadingChildHeight:
-        //       InputDecorationStyle.search.toolbarHeight + categoriesHeight + 44,
-        //   labelTextBuilder: (final index) {
-        //     final activity = activities.elementAt(index);
-        //     return Text(
-        //       <Object>[
-        //         activity.item0.date.hour,
-        //         activity.item0.date.minute.toString().padLeft(2, '0')
-        //       ].join(':'),
-        //       style: theme.textTheme.subtitle2
-        //           ?.copyWith(color: theme.colorScheme.surface),
-        //     );
-        //   },
-        //   builder: (final context, final scrollController, final resetPosition) {
-
-        SmartRefresher(
-      controller: refreshController,
-      onLoading: refreshController.loadComplete,
-      onRefresh: () async {
-        await Future.wait(<Future<void>>[
-          ref.read(scheduleProvider.notifier).refresh(),
-          ref.read(smClassesGalleryProvider.notifier).refresh(),
-          ref.read(userRecordsProvider.notifier).refresh(),
-        ]);
-        refreshController.refreshCompleted();
-      },
-      child: CustomScrollView(
-        primary: false,
-        slivers: <Widget>[
-          /// A search field, categories and dates.
-          SliverAppBar(
-            primary: false,
-            floating: activities.isEmpty,
-            backgroundColor: Colors.transparent,
-            toolbarHeight: InputDecorationStyle.search.toolbarHeight + 52,
-            titleSpacing: 0,
-            title: Material(
-              color: theme.scaffoldBackgroundColor,
-              borderRadius: BorderRadius.circular(10),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            readOnly: true,
-                            onTap: () =>
-                                Navigator.of(context, rootNavigator: true)
-                                    .push<void>(
-                              MaterialPageRoute(
-                                builder: (final context) =>
-                                    const ActivitiesSearch(),
-                              ),
-                            ),
-                            onChanged: (final value) =>
-                                (ref.read(activitiesSearchProvider)).state =
-                                    value,
-                            decoration: InputDecorationStyle.search
-                                .fromTheme(
-                                  theme,
-                                  hintText: TR.activitiesSearch.tr(),
-                                )
-                                .copyWith(
-                                  prefixIconConstraints: const BoxConstraints(
-                                    maxHeight: 24,
-                                    maxWidth: 36,
-                                  ),
-                                ),
-                          ),
-                        ),
-                        Badge(
-                          padding: const EdgeInsets.all(4),
-                          animationType: BadgeAnimationType.scale,
-                          animationDuration: const Duration(milliseconds: 300),
-                          position: filtersCount >= 10
-                              ? const BadgePosition(end: 4, top: 4)
-                              : const BadgePosition(end: 8, top: 6),
-                          badgeContent: Text(
-                            filtersCount.toString(),
-                            style: theme.textTheme.caption?.copyWith(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.surface,
-                            ),
-                          ),
-                          ignorePointer: true,
-                          showBadge: filtersCount > 0,
-                          badgeColor: theme.colorScheme.onSurface,
-                          child: IconButton(
-                            onPressed: () async {
-                              await showActivitiesFiltersBottomSheet(
-                                context,
-                                onResetPressed: () => resetFilters(ref),
-                              );
-                            },
-                            splashRadius: 20,
-                            tooltip: TR.miscFilterTitle.tr(),
-                            icon: FontIcon(
-                              FontIconData(
-                                IconsCG.filter,
-                                color: theme.colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                  Consumer(
-                    builder: (final context, final ref, final child) {
-                      return getSelectorWidget<SMClassesGalleryModel>(
-                        theme: theme,
-                        text: (final smClassGallery) =>
-                            smClassGallery.classesName,
-                        selected: (final value) => ref
-                            .read(activitiesCategoriesFilterProvider)
-                            .contains(value),
-                        values: ref.watch(smClassesGalleryProvider),
-                        onSelected: (final category, final value) {
-                          final categoriesNotifier = ref.read(
-                            activitiesCategoriesFilterProvider.notifier,
-                          );
-                          value
-                              ? categoriesNotifier.add(category)
-                              : categoriesNotifier.remove(category);
-                        },
-                        padding: const EdgeInsets.only(top: 16),
-                      );
-                    },
-                  )
-                ],
+        /// Dropdown
+        Container(
+          color: theme.appBarTheme.backgroundColor,
+          width: double.infinity,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.only(bottom: 4),
+          child: DropdownBelow<CombinedStudioModel?>(
+            isDense: true,
+            elevation: 12,
+            boxHeight: 30,
+            boxWidth: 160,
+            itemWidth: 160,
+            icon: FontIcon(
+              FontIconData(
+                IconsCG.angleDown,
+                height: 10,
+                color: theme.hintColor,
               ),
             ),
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(44 + 16),
-              child: Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: SizedBox(
-                  height: 44,
-                  child: ListView.builder(
-                    controller: dayController,
-                    primary: false,
-                    shrinkWrap: true,
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    itemCount: DateTime.daysPerWeek * 2,
-                    itemExtent: 56,
-                    itemBuilder: (final context, final index) {
-                      final date = now.add(Duration(days: index));
-                      return ActivitiesDateFilterCard(
-                        date,
-                        selected: day.year == date.year &&
-                            day.month == date.month &&
-                            day.day == date.day,
-                        onSelected: () {
-                          ref.read(activitiesDayProvider).state = date;
-                        },
-                      );
-                    },
+            boxPadding: const EdgeInsets.only(bottom: 8),
+            boxDecoration: const BoxDecoration(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
+            itemTextstyle: theme.textTheme.bodyText1,
+            boxTextstyle: theme.textTheme.bodyText1?.copyWith(
+              color: theme.appBarTheme.foregroundColor,
+            ),
+            value: selectedStudios.length == 1 ? selectedStudios.single : null,
+            items: <DropdownMenuItem<CombinedStudioModel?>>[
+              DropdownMenuItem<CombinedStudioModel?>(
+                child: Align(
+                  child: Text(
+                    TR.activitiesAllStudios.tr(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
+              for (final studio in studios)
+                DropdownMenuItem<CombinedStudioModel>(
+                  value: studio,
+                  child: Align(
+                    child: Text(
+                      studio.item1.studioName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ),
+            ],
+            onChanged: (final value) async {
+              final filteredStudiosNotifier =
+                  ref.read(activitiesStudiosFilterProvider.notifier);
+              if (value != null) {
+                await filteredStudiosNotifier.setStateAsync([value]);
+              } else {
+                await filteredStudiosNotifier.clear();
+              }
+            },
+          ),
+        ),
+
+        /// Body
+        Expanded(
+          child: SmartRefresher(
+            controller: refreshController,
+            onLoading: refreshController.loadComplete,
+            onRefresh: () async {
+              try {
+                while (ref.read(connectionErrorProvider).state) {
+                  await Future<void>.delayed(const Duration(seconds: 1));
+                }
+                await Future.wait(<Future<void>>[
+                  ref.read(scheduleProvider.notifier).refresh(),
+                  ref.read(smClassesGalleryProvider.notifier).refresh(),
+                  ref.read(userRecordsProvider.notifier).refresh(),
+                ]);
+              } finally {
+                refreshController.refreshCompleted();
+              }
+            },
+            child: CustomScrollView(
+              primary: false,
+              slivers: <Widget>[
+                /// A search field, categories and dates.
+                SliverAppBar(
+                  primary: false,
+                  floating: activities.isEmpty,
+                  backgroundColor: Colors.transparent,
+                  toolbarHeight: InputDecorationStyle.search.toolbarHeight + 84,
+                  titleSpacing: 0,
+                  title: Material(
+                    color: theme.scaffoldBackgroundColor,
+                    borderRadius: const BorderRadius.all(Radius.circular(10)),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    readOnly: true,
+                                    onTap: () => Navigator.of(context,
+                                            rootNavigator: true)
+                                        .push<void>(
+                                      MaterialPageRoute(
+                                        builder: (final context) =>
+                                            const ActivitiesSearch(),
+                                      ),
+                                    ),
+                                    onChanged: (final value) =>
+                                        (ref.read(activitiesSearchProvider))
+                                            .state = value,
+                                    decoration: InputDecorationStyle.search
+                                        .fromTheme(
+                                          theme,
+                                          hintText: TR.activitiesSearch.tr(),
+                                          prefixPadding:
+                                              const EdgeInsets.only(bottom: 4),
+                                        )
+                                        .copyWith(
+                                          border: const OutlineInputBorder(
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          errorBorder: const OutlineInputBorder(
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          enabledBorder:
+                                              const OutlineInputBorder(
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          focusedBorder:
+                                              const OutlineInputBorder(
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          disabledBorder:
+                                              const OutlineInputBorder(
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          focusedErrorBorder:
+                                              const OutlineInputBorder(
+                                            borderSide: BorderSide.none,
+                                          ),
+                                          isDense: true,
+                                          filled: true,
+                                          fillColor: theme.colorScheme.surface,
+                                          contentPadding:
+                                              const EdgeInsets.all(8),
+                                          prefixIconConstraints:
+                                              const BoxConstraints(
+                                            maxHeight: 32,
+                                            maxWidth: 48,
+                                          ),
+                                        ),
+                                  ),
+                                ),
+                                Badge(
+                                  padding: const EdgeInsets.all(4),
+                                  animationType: BadgeAnimationType.scale,
+                                  animationDuration:
+                                      const Duration(milliseconds: 300),
+                                  position: filtersCount >= 10
+                                      ? const BadgePosition(end: 4, top: 4)
+                                      : const BadgePosition(end: 8, top: 6),
+                                  badgeContent: Text(
+                                    filtersCount.toString(),
+                                    style: theme.textTheme.caption?.copyWith(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.surface,
+                                    ),
+                                  ),
+                                  ignorePointer: true,
+                                  showBadge: filtersCount > 0,
+                                  badgeColor: theme.colorScheme.onSurface,
+                                  child: IconButton(
+                                    onPressed: () async {
+                                      await showActivitiesFiltersBottomSheet(
+                                        context,
+                                        onResetPressed: () => resetFilters(ref),
+                                      );
+                                    },
+                                    splashRadius: 20,
+                                    tooltip: TR.miscFilterTitle.tr(),
+                                    icon: FontIcon(
+                                      FontIconData(
+                                        IconsCG.filter,
+                                        color: theme.colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 16),
+                            child: Consumer(
+                              builder: (final context, final ref, final child) {
+                                return getSelectorWidget<SMClassesGalleryModel>(
+                                  theme: theme,
+                                  text: (final smClassGallery) =>
+                                      smClassGallery.classesName,
+                                  selected: (final value) => ref
+                                      .read(activitiesCategoriesFilterProvider)
+                                      .contains(value),
+                                  values: ref.watch(smClassesGalleryProvider),
+                                  onSelected: (final category, final value) {
+                                    final categoriesNotifier = ref.read(
+                                      activitiesCategoriesFilterProvider
+                                          .notifier,
+                                    );
+                                    value
+                                        ? categoriesNotifier.add(category)
+                                        : categoriesNotifier.remove(category);
+                                  },
+                                  padding: const EdgeInsets.only(top: 16),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  bottom: PreferredSize(
+                    preferredSize: const Size.fromHeight(60),
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: SizedBox(
+                        height: 44,
+                        child: ListView.builder(
+                          controller: dayController,
+                          primary: false,
+                          shrinkWrap: true,
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                          itemCount: DateTime.daysPerWeek * 2,
+                          itemExtent: 56,
+                          itemBuilder: (final context, final index) {
+                            final date = now.add(Duration(days: index));
+                            return ActivitiesDateFilterCard(
+                              date,
+                              selected: day.year == date.year &&
+                                  day.month == date.month &&
+                                  day.day == date.day,
+                              onSelected: () {
+                                ref.read(activitiesDayProvider).state = date;
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                if (activities.isNotEmpty)
+                  SliverPadding(
+                    padding: const EdgeInsets.only(top: 20),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (final context, final index) {
+                          final activity = activities.elementAt(index);
+                          return ActivityCardContainer(
+                            activity,
+                            timeLeftBeforeStart:
+                                activity.item0.date.difference(now),
+                          );
+                        },
+                        childCount: activities.length,
+                      ),
+                    ),
+                  )
+                // SliverFillRemaining(
+                //   child: ListView.builder(
+                //     shrinkWrap: true,
+                //     primary: false,
+                //     itemCount: activities.length,
+                //     itemBuilder: (final context, final index) {
+                //       final activity = activities.elementAt(index);
+                //       return ActivityCardContainer(
+                //         activity,
+                //         timeLeftBeforeStart: activity.item0.date.difference(now),
+                //       );
+                //     },
+                //   ),
+                // )
+                else if (areActivitiesPresent)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        const SizedBox(height: 32),
+                        EmojiText('😣', style: const TextStyle(fontSize: 30)),
+                        const SizedBox(height: 16),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 284),
+                          child: Text(
+                            TR.activitiesEmptyFilter.tr(),
+                            style: theme.textTheme.subtitle2,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 75),
+                          child: TextButton(
+                            style: TextButtonStyle.light.fromTheme(theme),
+                            onPressed: () async {
+                              await resetFilters(ref);
+                              dayController.jumpTo(0);
+                              ref.refresh(activitiesDayProvider);
+                            },
+                            child: Text(TR.activitiesEmptyFilterReset.tr()),
+                          ),
+                        ),
+                        const SizedBox(height: 100),
+                      ],
+                    ),
+                  )
+                else
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Column(
+                      children: <Widget>[
+                        const SizedBox(height: 75),
+                        EmojiText('😣', style: const TextStyle(fontSize: 30)),
+                        const SizedBox(height: 16),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 262),
+                          child: Text(
+                            TR.activitiesEmpty.tr(),
+                            style: theme.textTheme.subtitle2,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
             ),
           ),
-
-          if (activities.isNotEmpty)
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (final context, final index) {
-                  final activity = activities.elementAt(index);
-                  return ActivityCardContainer(
-                    activity,
-                    timeLeftBeforeStart: activity.item0.date.difference(now),
-                  );
-                },
-                childCount: activities.length,
-              ),
-            )
-          else if (areActivitiesPresent)
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  const SizedBox(height: 32),
-                  EmojiText('😣', style: const TextStyle(fontSize: 30)),
-                  const SizedBox(height: 16),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 284),
-                    child: Text(
-                      TR.activitiesEmptyFilter.tr(),
-                      style: theme.textTheme.subtitle2,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 75),
-                    child: TextButton(
-                      style: TextButtonStyle.light.fromTheme(theme),
-                      onPressed: () async {
-                        await resetFilters(ref);
-                        dayController.jumpTo(0);
-                        ref.refresh(activitiesDayProvider);
-                      },
-                      child: Text(TR.activitiesEmptyFilterReset.tr()),
-                    ),
-                  ),
-                  const SizedBox(height: 100),
-                ],
-              ),
-            )
-          else
-            SliverFillRemaining(
-              hasScrollBody: false,
-              child: Column(
-                children: <Widget>[
-                  const SizedBox(height: 75),
-                  EmojiText('😣', style: const TextStyle(fontSize: 30)),
-                  const SizedBox(height: 16),
-                  ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 262),
-                    child: Text(
-                      TR.activitiesEmpty.tr(),
-                      style: theme.textTheme.subtitle2,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -544,6 +769,7 @@ class ActivityCardContainer extends HookConsumerWidget {
   const ActivityCardContainer(
     final this.activity, {
     required final this.timeLeftBeforeStart,
+    final this.onMain = false,
     final Key? key,
   }) : super(key: key);
 
@@ -553,20 +779,26 @@ class ActivityCardContainer extends HookConsumerWidget {
   /// The amount of time left before this [activity] is starting.
   final Duration timeLeftBeforeStart;
 
+  /// If this card is placed on main.
+  final bool onMain;
+
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
     final navigator = Navigator.of(context, rootNavigator: true);
     final isLoading = useRef<bool>(false);
+    final isMounted = useIsMounted();
 
     Future<void> cancelBook(final UserRecordModel appliedRecord) async {
       isLoading.value = true;
       try {
         final smRecord = await (ref.read(businessLogicProvider)).cancelBook(
-          user: ref.read(userProvider)!,
-          userRecord: appliedRecord,
+          recordId: appliedRecord.id,
+          recordDate: appliedRecord.date,
+          userPhone: ref.read(userProvider)!.phone,
           discount: ref.read(discountProvider),
         );
+        await ref.read(userRecordsProvider.notifier).refresh();
         if (smRecord != null) {
           Widget refundedBody(final String body, final String button) {
             return Padding(
@@ -595,8 +827,8 @@ class ActivityCardContainer extends HookConsumerWidget {
           switch (smRecord.payment) {
             case ActivityPaidBy.deposit:
             case ActivityPaidBy.regular:
-              ref.refresh(userDepositProvider);
-              await ref.read(userDepositProvider.future);
+              ref.refresh(smUserDepositProvider);
+              await ref.read(smUserDepositProvider.future);
               await showRefundedModalBottomSheet(
                 context: context,
                 title: TR.cancelBookDepositTitle.tr(),
@@ -618,7 +850,6 @@ class ActivityCardContainer extends HookConsumerWidget {
               break;
             case ActivityPaidBy.none:
           }
-          await ref.read(userRecordsProvider.notifier).refresh();
         }
       } on CancelBookException catch (exception) {
         logger.e(exception.type, exception);
@@ -629,7 +860,9 @@ class ActivityCardContainer extends HookConsumerWidget {
           case CancelBookExceptionType.timeHacking:
         }
       } finally {
-        isLoading.value = false;
+        if (isMounted()) {
+          isLoading.value = false;
+        }
       }
     }
 
@@ -660,18 +893,10 @@ class ActivityCardContainer extends HookConsumerWidget {
           },
         );
         logger.i(result.item1);
-        // switch (result.item1) {
-        //   case BookResult.depositRegular:
-        //   case BookResult.depositDiscount:
-        //   case BookResult.abonement:
-        //   case BookResult.newAbonement:
-        //   case BookResult.regular:
-        //   case BookResult.discount:
-        // }
         if (result.item1 == BookResult.depositRegular ||
             result.item1 == BookResult.depositDiscount) {
-          ref.refresh(userDepositProvider);
-          await ref.read(userDepositProvider.future);
+          ref.refresh(smUserDepositProvider);
+          await ref.read(smUserDepositProvider.future);
         }
         await ref.read(userRecordsProvider.notifier).refresh();
         await navigator.push<void>(
@@ -702,7 +927,9 @@ class ActivityCardContainer extends HookConsumerWidget {
           ]);
         }
       } finally {
-        isLoading.value = false;
+        if (isMounted()) {
+          isLoading.value = false;
+        }
       }
     }
 
@@ -746,7 +973,9 @@ class ActivityCardContainer extends HookConsumerWidget {
       } on Exception catch (e) {
         logger.e(e);
       } finally {
-        isLoading.value = false;
+        if (isMounted()) {
+          isLoading.value = false;
+        }
       }
     }
 
@@ -758,31 +987,31 @@ class ActivityCardContainer extends HookConsumerWidget {
       closedColor: Colors.transparent,
       middleColor: Colors.transparent,
       transitionDuration: const Duration(milliseconds: 650),
-      closedBuilder: (final context, final action) => MaterialButton(
-        onPressed: action,
-        child: ActivityCard(
-          activity,
-          timeLeftBeforeStart: timeLeftBeforeStart,
-          onPressed: (final appliedRecord) => !isLoading.value
-              ? ref.watch(unauthorizedProvider)
-                  ? () => Navigator.of(context, rootNavigator: true)
-                      .pushNamed(Routes.auth.name)
-                  : appliedRecord != null
-                      ? timeLeftBeforeStart.inHours < 12
-                          ? null
-                          : () => cancelBook(appliedRecord)
-                      : activity.item0.recordsLeft <= 0
-                          ? addToWishList
-                          : book
-              : null,
-        ),
+      closedBuilder: (final context, final action) => ActivityCard(
+        activity,
+        onMain: onMain,
+        onOpenButtonPressed: action,
+        timeLeftBeforeStart: timeLeftBeforeStart,
+        onPressed: (final appliedRecord) => !isLoading.value
+            ? ref.read(unauthorizedProvider)
+                ? () => Navigator.of(context, rootNavigator: true)
+                    .pushNamed(Routes.auth.name)
+                : appliedRecord != null
+                    ? timeLeftBeforeStart.inHours < 12
+                        ? null
+                        : () => cancelBook(appliedRecord)
+                    : activity.item0.recordsLeft <= 0
+                        ? addToWishList
+                        : book
+            : null,
       ),
       openBuilder: (final context, final action) => ActivityScreenCard(
         activity,
+        onMain: onMain,
         onBackButtonPressed: action,
         timeLeftBeforeStart: timeLeftBeforeStart,
-        onPressed: (final appliedRecord) => !isLoading.value
-            ? ref.watch(unauthorizedProvider)
+        onPressed: (final appliedRecord) => isMounted() && !isLoading.value
+            ? ref.read(unauthorizedProvider)
                 ? () => Navigator.of(context, rootNavigator: true)
                     .pushNamed(Routes.auth.name)
                 : appliedRecord != null
@@ -807,7 +1036,8 @@ class ActivityCardContainer extends HookConsumerWidget {
             'timeLeftBeforeStart',
             timeLeftBeforeStart,
           ),
-        ),
+        )
+        ..add(DiagnosticsProperty<bool>('onMain', onMain)),
     );
   }
 }
@@ -819,6 +1049,8 @@ class ActivityCard extends ConsumerWidget {
     final this.activity, {
     required final this.timeLeftBeforeStart,
     required final this.onPressed,
+    required final this.onOpenButtonPressed,
+    final this.onMain = false,
     final Key? key,
   }) : super(key: key);
 
@@ -830,6 +1062,12 @@ class ActivityCard extends ConsumerWidget {
 
   /// The callback with found record that returns a callback on this card.
   final void Function()? Function(UserRecordModel? appliedRecord) onPressed;
+
+  /// The callback on the back button of this card.
+  final void Function() onOpenButtonPressed;
+
+  /// If this card is gonna be put on main screen.
+  final bool onMain;
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
@@ -846,167 +1084,268 @@ class ActivityCard extends ConsumerWidget {
       }),
     );
 
-    return Container(
+    return SizedBox(
       height: 124,
-      padding: const EdgeInsets.all(16),
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                /// Time
-                Text(
-                  <Object>[
-                    activity.item0.date.hour,
-                    activity.item0.date.minute.toString().padLeft(2, '0')
-                  ].join(':'),
-                  style: theme.textTheme.bodyText1,
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: Material(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.all(Radius.circular(4)),
+          child: InkWell(
+            onTap: onOpenButtonPressed,
+            borderRadius: const BorderRadius.all(Radius.circular(4)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        /// Time
+                        Text(
+                          <Object>[
+                            activity.item0.date.hour,
+                            activity.item0.date.minute
+                                .toString()
+                                .padLeft(2, '0')
+                          ].join(':'),
+                          style: theme.textTheme.bodyText1,
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
 
-                /// Duration
-                Text(
-                  activity.item0.length.inMinutes < 60
-                      ? TR.activitiesDurationMinuteShort.tr(
-                          args: <String>[
-                            activity.item0.length.inMinutes.toString()
-                          ],
+                        /// Duration
+                        Text(
+                          activity.item0.length.inMinutes < 60
+                              ? TR.activitiesDurationMinuteShort.tr(
+                                  args: <String>[
+                                    activity.item0.length.inMinutes.toString()
+                                  ],
+                                )
+                              : TR.activitiesDurationHour.plural(
+                                  activity.item0.length.inHours,
+                                  args: <String>[
+                                    activity.item0.length.inHours.toString()
+                                  ],
+                                ),
+                          style:
+                              theme.textTheme.headline6?.copyWith(color: grey),
+                          textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+
+                        const SizedBox(height: 4),
+
+                        /// Trainer Avatar
+                        Flexible(
+                          child: CachedNetworkImage(
+                            imageUrl: activity.item2.item0.avatar,
+                            cacheKey: 'x40_${activity.item2.item0.avatar}',
+                            height: 40,
+                            width: 40,
+                            memCacheWidth: 40,
+                            memCacheHeight: 40,
+                            fadeInDuration: Duration.zero,
+                            fadeOutDuration: Duration.zero,
+                            imageBuilder: (final context, final imageProvider) {
+                              return CircleAvatar(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.transparent,
+                                radius: 16,
+                                foregroundImage: imageProvider,
+                              );
+                            },
+                          ),
                         )
-                      : TR.activitiesDurationHour.plural(
-                          activity.item0.length.inHours,
-                          args: <String>[
-                            activity.item0.length.inHours.toString()
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    flex: 2,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            /// Class Name
+                            Text(
+                              activity.item0.service.title,
+                              style: theme.textTheme.bodyText1,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+
+                            /// Trainer Name
+                            Text(
+                              activity.item2.item1.trainerName,
+                              style: theme.textTheme.caption
+                                  ?.copyWith(color: grey),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+
+                            /// Studio Name
+                            EmojiText(
+                              // appliedRecord?.online != null
+                              //     ? '🔗 ${TR.homeClassesOnline.tr()}'
+                              //     :
+                              activity.item1.item1.studioName,
+                              style: theme.textTheme.caption
+                                  ?.copyWith(color: grey),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ],
                         ),
-                  style: theme.textTheme.headline6?.copyWith(color: grey),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-
-                const SizedBox(height: 4),
-
-                /// Trainer Avatar
-                Flexible(
-                  child: CachedNetworkImage(
-                    imageUrl: activity.item2.item0.avatar,
-                    cacheKey: 'x40_${activity.item2.item0.avatar}',
-                    height: 40,
-                    width: 40,
-                    memCacheWidth: 40,
-                    memCacheHeight: 40,
-                    fadeInDuration: Duration.zero,
-                    fadeOutDuration: Duration.zero,
-                    imageBuilder: (final context, final imageProvider) {
-                      return CircleAvatar(
-                        backgroundColor: Colors.transparent,
-                        foregroundColor: Colors.transparent,
-                        radius: 16,
-                        foregroundImage: imageProvider,
-                      );
-                    },
-                  ),
-                )
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 2,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    /// Class Name
-                    Text(
-                      activity.item0.service.title,
-                      style: theme.textTheme.bodyText1,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    /// Trainer Name
-                    Text(
-                      activity.item2.item1.trainerName,
-                      style: theme.textTheme.caption?.copyWith(color: grey),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    /// Studio Name
-                    Text(
-                      activity.item1.item1.studioName,
-                      style: theme.textTheme.caption?.copyWith(color: grey),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-                Flexible(
-                  child: SizedBox(
-                    height: 24,
-                    child: TextButton(
-                      style: (TextButtonStyle.light.fromTheme(theme)).copyWith(
-                        padding: MaterialStateProperty.all(
-                          const EdgeInsets.symmetric(vertical: 4),
-                        ),
-                        shape: MaterialStateProperty.all(
-                          RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(2),
+                        Flexible(
+                          child: Opacity(
+                            opacity: appliedRecord != null &&
+                                    timeLeftBeforeStart.inHours < 12
+                                ? 1 / 2
+                                : 1,
+                            child: SizedBox(
+                              height: 24,
+                              width: onMain ? 120 : null,
+                              child: TextButton(
+                                style: (TextButtonStyle.light.fromTheme(theme))
+                                    .copyWith(
+                                  padding: MaterialStateProperty.all(
+                                    const EdgeInsets.symmetric(vertical: 4),
+                                  ),
+                                  shape: MaterialStateProperty.all(
+                                    const RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.all(Radius.circular(2)),
+                                    ),
+                                  ),
+                                  textStyle: MaterialStateProperty.all(
+                                    theme.textTheme.caption,
+                                  ),
+                                  tapTargetSize: MaterialTapTargetSize.padded,
+                                ),
+                                onPressed: onPressed(appliedRecord),
+                                child: Text(
+                                  appliedRecord != null
+                                      ? TR.activitiesCancel.tr()
+                                      : activity.item0.recordsLeft > 0
+                                          ? TR.activitiesApply.tr()
+                                          : TR.activitiesWaitingList.tr(),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                        textStyle: MaterialStateProperty.all(
-                          theme.textTheme.caption,
-                        ),
-                      ),
-                      onPressed: onPressed(appliedRecord),
-                      child: Text(
-                        activity.item0.recordsLeft > 0
-                            ? appliedRecord != null
-                                ? TR.activitiesCancel.tr()
-                                : TR.activitiesApply.tr()
-                            : TR.activitiesWaitingList.tr(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                      ],
                     ),
                   ),
-                )
-              ],
-            ),
-          ),
-          Expanded(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  if (appliedRecord != null &&
-                      timeLeftBeforeStart.inHours < 12) ...[
-                    EmojiText('⏱'),
-                    Text(
-                      TR.activities12h.tr(),
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.overline,
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: onMain
+                          ? MainAxisAlignment.spaceBetween
+                          : MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: <Widget>[
+                        /// Extra Data on Main
+                        if (onMain)
+                          Consumer(
+                            builder: (final context, final ref, final child) {
+                              final locale = ref.watch(localeProvider);
+                              final serverTime =
+                                  ref.watch(smServerTimeProvider);
+                              final isToday =
+                                  activity.item0.date.year == serverTime.year &&
+                                      activity.item0.date.month ==
+                                          serverTime.month &&
+                                      activity.item0.date.day == serverTime.day;
+                              final weekDay = DateFormat.EEEE(locale.toString())
+                                  .format(activity.item0.date);
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  /// Activity Date
+                                  Container(
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isToday
+                                          ? theme.colorScheme.onSurface
+                                          : theme.colorScheme.primary,
+                                      borderRadius: const BorderRadius.all(
+                                        Radius.circular(4),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      isToday
+                                          ? TR.homeClassesToday.tr()
+                                          : DateFormat.MMMMd(locale.toString())
+                                              .format(activity.item0.date),
+                                      style: theme.textTheme.overline?.copyWith(
+                                        color: theme.colorScheme.surface,
+                                      ),
+                                      maxLines: 1,
+                                      textScaleFactor: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+
+                                  /// Activity Weekday
+                                  if (!isToday)
+                                    Text(
+                                      weekDay.isNotEmpty
+                                          ? weekDay
+                                                  .substring(0, 1)
+                                                  .toUpperCase() +
+                                              weekDay.substring(1).toLowerCase()
+                                          : '',
+                                      style: theme.textTheme.overline,
+                                      maxLines: 1,
+                                      textScaleFactor: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    )
+                                ],
+                              );
+                            },
+                          ),
+
+                        /// If it is too late too cancel the activity.
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            if (appliedRecord != null &&
+                                timeLeftBeforeStart.inHours < 12) ...[
+                              EmojiText('⏱'),
+                              Text(
+                                TR.activities12h.tr(),
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.overline,
+                              ),
+                            ] else if (!onMain)
+                              ActivityCardRecordsCount(
+                                activity.item0.recordsLeft,
+                                showDefault: false,
+                              ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ] else
-                    ActivityCardRecordsCount(
-                      activity.item0.recordsLeft,
-                      showDefault: false,
-                    ),
+                  ),
                 ],
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -1027,7 +1366,14 @@ class ActivityCard extends ConsumerWidget {
             'onPressed',
             onPressed,
           ),
-        ),
+        )
+        ..add(
+          ObjectFlagProperty<void Function()>.has(
+            'onOpenButtonPressed',
+            onOpenButtonPressed,
+          ),
+        )
+        ..add(DiagnosticsProperty<bool>('onMain', onMain)),
     );
   }
 }
@@ -1090,6 +1436,7 @@ class ActivityScreenCard extends ConsumerWidget {
     required final this.timeLeftBeforeStart,
     required final this.onPressed,
     required final this.onBackButtonPressed,
+    final this.onMain = false,
     final Key? key,
   }) : super(key: key);
 
@@ -1104,6 +1451,9 @@ class ActivityScreenCard extends ConsumerWidget {
 
   /// The callback on the back button of this card.
   final void Function() onBackButtonPressed;
+
+  /// If this card is gonna be put on main screen.
+  final bool onMain;
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
@@ -1134,7 +1484,7 @@ class ActivityScreenCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final images = activity.item3.gallery.split(',');
     return ContentScreen(
-      type: NavigationScreen.schedule,
+      type: onMain ? NavigationScreen.home : NavigationScreen.schedule,
       onBackButtonPressed: onBackButtonPressed,
       title: activity.item3.classesName,
       subtitle: formatSubTitle(),
@@ -1147,9 +1497,6 @@ class ActivityScreenCard extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
         ],
-        // width: 54,
-        // height: 48,
-        // child: ,
       ),
       carousel: CarouselSlider.builder(
         options: CarouselOptions(
@@ -1241,8 +1588,8 @@ class ActivityScreenCard extends ConsumerWidget {
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   tileColor: theme.colorScheme.surface,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
                   ),
                   minVerticalPadding: 0,
                   leading: CachedNetworkImage(
@@ -1258,7 +1605,8 @@ class ActivityScreenCard extends ConsumerWidget {
                       );
                     },
                     placeholder: (final context, final url) => const Center(
-                        child: CircularProgressIndicator.adaptive()),
+                      child: CircularProgressIndicator.adaptive(),
+                    ),
                     errorWidget:
                         (final context, final url, final dynamic error) =>
                             const FontIcon(FontIconData(IconsCG.logo)),
@@ -1318,7 +1666,8 @@ class ActivityScreenCard extends ConsumerWidget {
             'onBackButtonPressed',
             onBackButtonPressed,
           ),
-        ),
+        )
+        ..add(DiagnosticsProperty<bool>('onMain', onMain)),
     );
   }
 }
@@ -1351,8 +1700,8 @@ class ActivitiesDateFilterCard extends ConsumerWidget {
         width: 40,
         child: MaterialButton(
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8)),
           ),
           disabledColor: theme.colorScheme.onSurface,
           onPressed: !selected ? onSelected : null,
@@ -1411,68 +1760,61 @@ Future<void> showActivitiesFiltersBottomSheet(
     useRootNavigator: true,
     backgroundColor: Colors.transparent,
     builder: (final context) {
-      return SafeArea(
-        child: Material(
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(14),
-              topRight: Radius.circular(14),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              AppBar(
-                primary: false,
-                toolbarHeight: 40,
-                centerTitle: true,
-                title: Text(
-                  TR.miscFilterTitle.tr(),
-                  style: theme.textTheme.headline3,
-                ),
-                backgroundColor: Colors.transparent,
-                leading: IconButton(
-                  iconSize: 16,
-                  splashRadius: 16,
-                  tooltip: TR.tooltipsClose.tr(),
-                  color: theme.colorScheme.onSurface,
-                  icon: const Icon(IconsCG.closeSlim),
-                  onPressed: Navigator.maybeOf(context)?.maybePop,
-                ),
-                actions: <Widget>[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: MaterialButton(
-                      visualDensity: VisualDensity.comfortable,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      onPressed: onResetPressed,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: Text(
-                          TR.miscFilterReset.tr(),
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurface,
-                            fontWeight: FontWeight.w500,
-                          ),
+      return BottomSheetBase(
+        borderRadius: 14,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            AppBar(
+              primary: false,
+              toolbarHeight: 40,
+              centerTitle: true,
+              title: Text(
+                TR.miscFilterTitle.tr(),
+                style: theme.textTheme.headline3,
+              ),
+              backgroundColor: Colors.transparent,
+              leading: IconButton(
+                iconSize: 16,
+                splashRadius: 16,
+                tooltip: TR.tooltipsClose.tr(),
+                color: theme.colorScheme.onSurface,
+                icon: const Icon(IconsCG.closeSlim),
+                onPressed: Navigator.maybeOf(context)?.maybePop,
+              ),
+              actions: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: MaterialButton(
+                    visualDensity: VisualDensity.comfortable,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(4)),
+                    ),
+                    onPressed: onResetPressed,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        TR.miscFilterReset.tr(),
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                ],
-              ),
-              Flexible(
-                child: SingleChildScrollView(
-                  primary: false,
-                  controller: ModalScrollController.of(context),
-                  padding: const EdgeInsets.all(16),
-                  child: const FiltersScreen(),
                 ),
+                const SizedBox(width: 8),
+              ],
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                primary: false,
+                controller: ModalScrollController.of(context),
+                padding: const EdgeInsets.all(16),
+                child: const FiltersScreen(),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     },
@@ -1491,53 +1833,54 @@ class FiltersScreen extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        /// Studio Filter
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text(TR.miscFilterStudio.tr(), style: theme.textTheme.bodyText1),
-            Flexible(
-              child: Consumer(
-                builder: (final context, final ref, final child) {
-                  final studios = ref.watch(combinedStudiosProvider);
-                  return Wrap(
-                    runSpacing: -4,
-                    spacing: 16,
-                    children: <Widget>[
-                      for (final studio in studios)
-                        Consumer(
-                          builder: (final context, final ref, final child) {
-                            return FilterButton(
-                              text: studio.item1.studioName,
-                              avatarUrl: studio.avatarUrl,
-                              borderColor: Colors.grey.shade300,
-                              margin: const EdgeInsets.symmetric(vertical: 6),
-                              selected: ref.watch(
-                                activitiesStudiosFilterProvider
-                                    .select((final selectedStudios) {
-                                  return selectedStudios.contains(studio);
-                                }),
-                              ),
-                              onSelected: (final value) {
-                                final studiosNotifier = ref.read(
-                                  activitiesStudiosFilterProvider.notifier,
-                                );
-                                value
-                                    ? studiosNotifier.add(studio)
-                                    : studiosNotifier.remove(studio);
-                              },
-                            );
-                          },
-                        )
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
+        // /// Studio Filter
+        // Column(
+        //   mainAxisSize: MainAxisSize.min,
+        //   crossAxisAlignment: CrossAxisAlignment.stretch,
+        //   children: <Widget>[
+        //     Text(TR.miscFilterStudio.tr(), style: theme.textTheme.bodyText1),
+        //     Flexible(
+        //       child: Consumer(
+        //         builder: (final context, final ref, final child) {
+        //           final studios = ref.watch(combinedStudiosProvider);
+        //           return Wrap(
+        //             runSpacing: -4,
+        //             spacing: 16,
+        //             children: <Widget>[
+        //               for (final studio in studios)
+        //                 Consumer(
+        //                   builder: (final context, final ref, final child) {
+        //                     return FilterButton(
+        //                       text: studio.item1.studioName,
+        //                       avatarUrl: studio.avatarUrl,
+        //                       borderColor: Colors.grey.shade300,
+        //                       backgroundColor: theme.colorScheme.surface,
+        //                       margin: const EdgeInsets.symmetric(vertical: 6),
+        //                       selected: ref.watch(
+        //                         activitiesStudiosFilterProvider
+        //                             .select((final selectedStudios) {
+        //                           return selectedStudios.contains(studio);
+        //                         }),
+        //                       ),
+        //                       onSelected: (final value) {
+        //                         final studiosNotifier = ref.read(
+        //                           activitiesStudiosFilterProvider.notifier,
+        //                         );
+        //                         value
+        //                             ? studiosNotifier.add(studio)
+        //                             : studiosNotifier.remove(studio);
+        //                       },
+        //                     );
+        //                   },
+        //                 )
+        //             ],
+        //           );
+        //         },
+        //       ),
+        //     ),
+        //   ],
+        // ),
+        // const SizedBox(height: 8),
 
         /// Categories Filter
         Column(
@@ -1556,6 +1899,7 @@ class FiltersScreen extends ConsumerWidget {
                         return FilterButton(
                           text: category.classesName,
                           borderColor: Colors.grey.shade300,
+                          backgroundColor: theme.colorScheme.surface,
                           margin: const EdgeInsets.symmetric(vertical: 4),
                           selected: ref.watch(
                             activitiesCategoriesFilterProvider
@@ -1599,6 +1943,7 @@ class FiltersScreen extends ConsumerWidget {
                         return FilterButton(
                           text: time.translate(),
                           borderColor: Colors.grey.shade300,
+                          backgroundColor: theme.colorScheme.surface,
                           margin: const EdgeInsets.symmetric(vertical: 4),
                           selected: ref.watch(
                             activitiesTimeFilterProvider
@@ -1645,6 +1990,7 @@ class FiltersScreen extends ConsumerWidget {
                             text: trainer.trainerName,
                             avatarUrl: trainer.trainerPhoto,
                             borderColor: Colors.grey.shade300,
+                            backgroundColor: theme.colorScheme.surface,
                             margin: const EdgeInsets.symmetric(vertical: 4),
                             selected: ref.watch(
                               activitiesTrainersFilterProvider
@@ -1707,6 +2053,7 @@ class ActivitiesSearch extends HookConsumerWidget {
     final searchKey = useMemoized(() => GlobalKey());
 
     return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         leadingWidth: 0,
@@ -1731,6 +2078,8 @@ class ActivitiesSearch extends HookConsumerWidget {
           decoration: InputDecorationStyle.search
               .fromTheme(theme, hintText: TR.activitiesSearch.tr())
               .copyWith(
+                filled: true,
+                fillColor: theme.colorScheme.surface,
                 prefixIcon: const SizedBox.shrink(),
                 prefixIconConstraints:
                     const BoxConstraints(maxWidth: 0, maxHeight: 0),
@@ -1747,8 +2096,8 @@ class ActivitiesSearch extends HookConsumerWidget {
               },
               visualDensity: VisualDensity.compact,
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(4)),
               ),
               child: Text(
                 TR.tooltipsCancel.tr(),
@@ -1833,15 +2182,15 @@ class ActivitiesSearchResults extends ConsumerWidget {
           minVerticalPadding: 0,
           horizontalTitleGap: 16,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8)),
           ),
           leading: imageUrl != null
               ? Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: const BorderRadius.all(Radius.circular(6)),
                       child: CachedNetworkImage(
                         cacheKey: 'h32w50_$imageUrl',
                         alignment: Alignment.topCenter,

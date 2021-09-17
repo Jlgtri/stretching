@@ -30,7 +30,9 @@ class ContactScreen extends StatelessWidget {
     ) {
       return MaterialButton(
         onPressed: () => launch(url),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(4)),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
@@ -39,7 +41,7 @@ class ContactScreen extends StatelessWidget {
               width: 50,
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: const BorderRadius.all(Radius.circular(4)),
                 border: Border.all(color: theme.hintColor),
               ),
               alignment: Alignment.center,

@@ -72,11 +72,10 @@ Future<void> showPaymentPickerBottomSheet(
                     )
                   : null,
               titleTextStyle: theme.textTheme.headline2?.copyWith(height: 2.5),
-              // backgroundColor: Colors.transparent,
+              backgroundColor: Colors.transparent,
               automaticallyImplyLeading: false,
               leadingWidth: 0,
               leading: const SizedBox.shrink(),
-              backgroundColor: theme.backgroundColor,
               actions: <Widget>[
                 Align(
                   alignment: Alignment.topRight,
@@ -287,8 +286,8 @@ class PaymentPickerScreen extends HookConsumerWidget {
                         ),
                         minLeadingWidth: 16,
                         onTap: () => pickedAllStudios.value = true,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(4)),
                         ),
                         title: Padding(
                           padding: const EdgeInsets.only(right: 48),
@@ -324,8 +323,8 @@ class PaymentPickerScreen extends HookConsumerWidget {
                           ),
                           minLeadingWidth: 16,
                           onTap: () => pickedAllStudios.value = false,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(4)),
                           ),
                           title: Padding(
                             padding: const EdgeInsets.only(right: 32),
@@ -450,28 +449,20 @@ class PaymentPickerScreen extends HookConsumerWidget {
                     filled: true,
                     fillColor: Colors.grey.shade200,
                     focusColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(4),
+                    border: const OutlineInputBorder(
                       borderSide: BorderSide.none,
                     ),
-                    errorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(4),
+                    errorBorder: const OutlineInputBorder(
                       borderSide: BorderSide.none,
                     ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(4),
+                    enabledBorder: const OutlineInputBorder(
                       borderSide: BorderSide.none,
                     ),
-                    disabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(4),
+                    disabledBorder: const OutlineInputBorder(
                       borderSide: BorderSide.none,
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    focusedErrorBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(4),
-                    ),
+                    focusedBorder: const OutlineInputBorder(),
+                    focusedErrorBorder: const OutlineInputBorder(),
                     suffix: emailShowSuffix.value
                         ? IconButton(
                             padding: EdgeInsets.zero,
@@ -523,12 +514,12 @@ class PaymentPickerScreen extends HookConsumerWidget {
               /// Application Button
               BottomButtons<dynamic>(
                 key: buttonKey,
-                firstText: payment != null
+                firstText: payment != null || abonement == null
                     ? TR.paymentPickerPaymentRegular.tr()
                     : TR.paymentPickerPaymentAbonement.tr(
                         args: <String>[
                           TR.miscCurrency.tr(
-                            args: <String>[abonement!.cost.toStringAsFixed(0)],
+                            args: <String>[abonement.cost.toStringAsFixed(0)],
                           )
                         ],
                       ),
@@ -661,18 +652,10 @@ class AbonementCategoryPicker<T extends Object> extends StatelessWidget {
             color: theme.colorScheme.onSurface,
           ),
           value: selected.isNotEmpty ? selected.first : null,
-          borderRadius: BorderRadius.circular(8),
-          selectedItemBuilder: (final context) {
-            return <Widget>[
-              for (final value in values) builder(context, value)
-            ];
-          },
+          borderRadius: const BorderRadius.all(Radius.circular(8)),
           items: <DropdownMenuItem<T>>[
             for (final value in values)
-              DropdownMenuItem<T>(
-                value: value,
-                child: builder(context, value),
-              )
+              DropdownMenuItem<T>(value: value, child: builder(context, value))
           ],
           onChanged: (final value) {
             if (value != null) {
@@ -690,59 +673,66 @@ class AbonementCategoryPicker<T extends Object> extends StatelessWidget {
         children: <Widget>[
           Text(category, style: theme.textTheme.subtitle1),
           const SizedBox(height: 12),
-          if (dropdown)
-            dropdownBuilder?.call(context, _dropdown) ?? _dropdown
-          else
-            Align(
-              alignment: Alignment.centerLeft,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth * values.length),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: Table(
-                    border:
-                        TableBorder.all(borderRadius: BorderRadius.circular(4)),
-                    children: <TableRow>[
-                      TableRow(
-                        children: <Widget>[
-                          for (final value in values)
-                            TableCell(
-                              verticalAlignment:
-                                  TableCellVerticalAlignment.middle,
-                              child: TextButton(
-                                style: (selected.contains(value)
-                                        ? TextButtonStyle.dark
-                                        : TextButtonStyle.light)
-                                    .fromTheme(
-                                  theme,
-                                  ButtonStyle(
-                                    textStyle: MaterialStateProperty.all(
-                                      theme.textTheme.bodyText1,
-                                    ),
-                                    shape: MaterialStateProperty.all(
-                                      const RoundedRectangleBorder(),
-                                    ),
-                                    side: MaterialStateProperty.all(
-                                      BorderSide.none,
+          if (values.isNotEmpty)
+            if (dropdown)
+              dropdownBuilder?.call(context, _dropdown) ?? _dropdown
+            else
+              Align(
+                alignment: Alignment.centerLeft,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: values.isNotEmpty
+                        ? maxWidth * values.length
+                        : double.infinity,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.all(Radius.circular(4)),
+                    child: Table(
+                      border: TableBorder.all(
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(4)),
+                      ),
+                      children: <TableRow>[
+                        TableRow(
+                          children: <Widget>[
+                            for (final value in values)
+                              TableCell(
+                                verticalAlignment:
+                                    TableCellVerticalAlignment.middle,
+                                child: TextButton(
+                                  style: (selected.contains(value)
+                                          ? TextButtonStyle.dark
+                                          : TextButtonStyle.light)
+                                      .fromTheme(
+                                    theme,
+                                    ButtonStyle(
+                                      textStyle: MaterialStateProperty.all(
+                                        theme.textTheme.bodyText1,
+                                      ),
+                                      shape: MaterialStateProperty.all(
+                                        const RoundedRectangleBorder(),
+                                      ),
+                                      side: MaterialStateProperty.all(
+                                        BorderSide.none,
+                                      ),
                                     ),
                                   ),
+                                  onPressed: onSelected != null
+                                      ? () => onSelected!(
+                                            value,
+                                            !selected.contains(value),
+                                          )
+                                      : null,
+                                  child: builder(context, value),
                                 ),
-                                onPressed: onSelected != null
-                                    ? () => onSelected!(
-                                          value,
-                                          !selected.contains(value),
-                                        )
-                                    : null,
-                                child: builder(context, value),
                               ),
-                            ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
         ],
       ),
     );

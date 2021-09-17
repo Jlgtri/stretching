@@ -180,8 +180,8 @@ class NavigationNotifier
       await Future<void>.delayed(NavigationRoot.transitionDuration);
       ref.read(navigationTransitioningProvider).state = false;
     });
-    ref.listen<bool>(unauthorizedProvider, (final userIsNull) {
-      if (userIsNull &&
+    ref.listen<bool>(unauthorizedProvider, (final unauthorized) {
+      if (unauthorized &&
           notifier.state.index == NavigationScreen.profile.index) {
         if (notifier.previousScreenIndex == NavigationScreen.profile.index) {
           notifier.state.index = NavigationScreen.home.index;
@@ -289,6 +289,7 @@ class NavigationRoot extends HookConsumerWidget {
             curve: Curves.easeInOut,
             duration: transitionDuration,
           ),
+          backgroundColor: theme.colorScheme.surface,
           onWillPop: (final _) async {
             return (await showMaterialModalBottomSheet<bool?>(
                   context: context,
@@ -344,11 +345,6 @@ class NavigationRoot extends HookConsumerWidget {
           items: <PersistentBottomNavBarItem>[
             for (final screen in NavigationScreen.values) screen.navBarItem(ref)
           ],
-          selectedTabScreenContext: (final context) {
-            if (context == null) {
-              return;
-            }
-          },
           screens: <Widget>[
             for (final screen in NavigationScreen.values)
               KeyboardVisibilityBuilder(

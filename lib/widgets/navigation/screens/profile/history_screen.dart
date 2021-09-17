@@ -4,6 +4,8 @@ import 'package:darq/darq.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:native_device_orientation/native_device_orientation.dart';
 import 'package:stretching/api_yclients.dart';
@@ -12,7 +14,6 @@ import 'package:stretching/main.dart';
 import 'package:stretching/models_yclients/user_record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/other_providers.dart';
-import 'package:stretching/widgets/appbars.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/navigation/components/bottom_sheet.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
@@ -32,11 +33,13 @@ class HistoryScreen extends HookConsumerWidget {
     final theme = Theme.of(context);
     final now = DateTime.now();
 
-    final locale = ref.watch(localeProvider);
-    final monthFormat = DateFormat('LLLL', locale.toString());
-    final monthAndYearFormat = DateFormat('LLLL yyyy', locale.toString());
-    final dateFormat = DateFormat('dd.MM.yy', locale.toString());
-    final timeFormat = DateFormat.Hm(locale.toString());
+    final locale = ref.watch(localeProvider).toString();
+    final monthFormat = useMemoized(() => DateFormat('LLLL', locale), [locale]);
+    final monthAndYearFormat =
+        useMemoized(() => DateFormat('LLLL yyyy', locale), [locale]);
+    final dateFormat =
+        useMemoized(() => DateFormat('dd.MM.yy', locale), [locale]);
+    final timeFormat = useMemoized(() => DateFormat.Hm(locale), [locale]);
 
     final userYearAndMonthRecords = ref.watch(
       userRecordsProvider.select((final userRecords) {
@@ -50,14 +53,13 @@ class HistoryScreen extends HookConsumerWidget {
           ..sort((final userRecordA, final userRecordB) {
             return userRecordB.date.compareTo(userRecordA.date);
           })) {
-          if (userRecord.date.isAfter(now) ||
-              userRecord.deleted ||
-              !companyIds.contains(userRecord.company.id)) {
-            continue;
+          if (!userRecord.deleted &&
+              userRecord.date.add(userRecord.length).isBefore(now) &&
+              companyIds.contains(userRecord.company.id)) {
+            final key = Tuple2(userRecord.date.year, userRecord.date.month);
+            data.putIfAbsent(key, () => <UserRecordModel>[]);
+            data[key]!.add(userRecord);
           }
-          final key = Tuple2(userRecord.date.year, userRecord.date.month);
-          data.putIfAbsent(key, () => <UserRecordModel>[]);
-          data[key]!.add(userRecord);
         }
         return data;
       }),
@@ -67,6 +69,10 @@ class HistoryScreen extends HookConsumerWidget {
       return Padding(
         padding: const EdgeInsets.only(top: 8),
         child: ListTile(
+          tileColor: theme.colorScheme.surface,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(4)),
+          ),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           leading: Column(
@@ -129,7 +135,8 @@ class HistoryScreen extends HookConsumerWidget {
               .format(date);
 
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16)
+            .copyWith(top: 0),
         child: Column(
           children: <Widget>[
             Text(
@@ -153,9 +160,23 @@ class HistoryScreen extends HookConsumerWidget {
       },
       child: Scaffold(
         resizeToAvoidBottomInset: true,
-        appBar: cancelAppBar(
-          theme,
-          title: ProfileNavigationScreen.history.translation,
+        appBar: AppBar(
+          toolbarHeight: 50,
+          backgroundColor: theme.backgroundColor,
+          systemOverlayStyle: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarBrightness: theme.brightness,
+            statusBarIconBrightness: theme.brightness == Brightness.light
+                ? Brightness.dark
+                : Brightness.light,
+          ),
+          centerTitle: true,
+          title: Text(
+            ProfileNavigationScreen.history.translation,
+            style: theme.textTheme.headline3,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
           leading: FontIconBackButton(
             color: theme.colorScheme.onSurface,
             onPressed: onBackButton,
@@ -211,8 +232,8 @@ class HistoryScreen extends HookConsumerWidget {
               )
             : ListView(
                 primary: false,
-                children: userYearAndMonthRecords.entries
-                    .map(recordGroup)
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                children: (userYearAndMonthRecords.entries.map(recordGroup))
                     .toList(growable: false),
               ),
       ),
@@ -223,8 +244,12 @@ class HistoryScreen extends HookConsumerWidget {
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(
       properties
-        ..add(ObjectFlagProperty<void Function()>.has(
-            'onBackButton', onBackButton)),
+        ..add(
+          ObjectFlagProperty<void Function()>.has(
+            'onBackButton',
+            onBackButton,
+          ),
+        ),
     );
   }
 }

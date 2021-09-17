@@ -102,8 +102,9 @@ class AuthorizationScreen extends HookConsumerWidget {
               final user = response.data?.data as UserModel?;
               if (user != null) {
                 await smStretching.addUser(
-                  user,
-                  ref.read(smServerTimeProvider),
+                  userPhone: user.phone,
+                  userEmail: user.email,
+                serverTime:  ref.read(smServerTimeProvider),
                 );
                 ref.read(userProvider.notifier).state = user;
                 (ref.read(navigationProvider))

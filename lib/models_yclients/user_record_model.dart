@@ -28,7 +28,7 @@ class RecordConverter
 ///
 /// See: https://developers.yclients.com/ru/#operation/Получить%20записи%20пользователя
 @immutable
-class UserRecordModel {
+class UserRecordModel implements Comparable<UserRecordModel> {
   /// The user record for YClients API.
   ///
   /// The variation of the [ActivityModel] for the user.
@@ -62,7 +62,7 @@ class UserRecordModel {
   final int id;
 
   /// The services provided for this record.
-  final Iterable<RecordServiceModel> services;
+  final Iterable<UserRecordServiceModel> services;
 
   /// The company organizer of this record.
   final RecordCompanyModel company;
@@ -96,8 +96,8 @@ class UserRecordModel {
   /// * -1: client missed to the record.
   final int attendance;
 
-  /// The duration of this event (in seconds).
-  final int length;
+  /// The duration of this event.
+  final Duration length;
 
   /// The number of hours to notify a user by sms before the [datetime].
   final int notifyBySms;
@@ -129,7 +129,7 @@ class UserRecordModel {
   /// Return the copy of this model.
   UserRecordModel copyWith({
     final int? id,
-    final List<RecordServiceModel>? services,
+    final List<UserRecordServiceModel>? services,
     final RecordCompanyModel? company,
     final RecordStaffModel? staff,
     final int? clientsCount,
@@ -139,7 +139,7 @@ class UserRecordModel {
     final String? comment,
     final bool? deleted,
     final int? attendance,
-    final int? length,
+    final Duration? length,
     final int? notifyBySms,
     final int? notifyByEmail,
     final bool? masterRequested,
@@ -191,7 +191,7 @@ class UserRecordModel {
       'comment': comment,
       'deleted': deleted,
       'attendance': attendance,
-      'length': length,
+      'length': length.inSeconds,
       'notify_by_sms': notifyBySms,
       'notify_by_email': notifyByEmail,
       'master_requested': masterRequested,
@@ -208,9 +208,9 @@ class UserRecordModel {
   factory UserRecordModel.fromMap(final Map<String, Object?> map) {
     return UserRecordModel(
       id: map['id']! as int,
-      services: <RecordServiceModel>[
+      services: <UserRecordServiceModel>[
         for (final map in map['services']! as Iterable<Object?>)
-          RecordServiceModel.fromMap(map! as Map<String, Object?>)
+          UserRecordServiceModel.fromMap(map! as Map<String, Object?>)
       ],
       company: RecordCompanyModel.fromMap(
         map['company']! as Map<String, Object?>,
@@ -223,7 +223,7 @@ class UserRecordModel {
       comment: map['comment']! as String,
       deleted: map['deleted']! as bool,
       attendance: map['attendance']! as int,
-      length: map['length']! as int,
+      length: Duration(seconds: map['length']! as int),
       notifyBySms: map['notify_by_sms']! as int,
       notifyByEmail: map['notify_by_email']! as int,
       masterRequested: map['master_requested']! as bool,
@@ -243,6 +243,9 @@ class UserRecordModel {
   /// Convert the json string to this model.
   factory UserRecordModel.fromJson(final String source) =>
       UserRecordModel.fromMap(json.decode(source) as Map<String, Object?>);
+
+  @override
+  int compareTo(final UserRecordModel other) => date.compareTo(other.date);
 
   @override
   bool operator ==(final Object other) {
@@ -550,9 +553,9 @@ class RecordCompanyModel {
 
 /// The service provided for the [UserRecordModel].
 @immutable
-class RecordServiceModel {
+class UserRecordServiceModel {
   /// The service provided for the [UserRecordModel].
-  const RecordServiceModel({
+  const UserRecordServiceModel({
     required final this.id,
     required final this.title,
     required final this.cost,
@@ -592,7 +595,7 @@ class RecordServiceModel {
   final String apiId;
 
   /// Return the copy of this model.
-  RecordServiceModel copyWith({
+  UserRecordServiceModel copyWith({
     final int? id,
     final String? title,
     final double? cost,
@@ -603,7 +606,7 @@ class RecordServiceModel {
     final int? seanceLength,
     final String? apiId,
   }) {
-    return RecordServiceModel(
+    return UserRecordServiceModel(
       id: id ?? this.id,
       title: title ?? this.title,
       cost: cost ?? this.cost,
@@ -632,8 +635,8 @@ class RecordServiceModel {
   }
 
   /// Convert the map with string keys to this model.
-  factory RecordServiceModel.fromMap(final Map<String, Object?> map) {
-    return RecordServiceModel(
+  factory UserRecordServiceModel.fromMap(final Map<String, Object?> map) {
+    return UserRecordServiceModel(
       id: map['id']! as int,
       title: map['title']! as String,
       cost: (map['cost']! as num).toDouble(),
@@ -650,13 +653,15 @@ class RecordServiceModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory RecordServiceModel.fromJson(final String source) =>
-      RecordServiceModel.fromMap(json.decode(source) as Map<String, Object?>);
+  factory UserRecordServiceModel.fromJson(final String source) =>
+      UserRecordServiceModel.fromMap(
+        json.decode(source) as Map<String, Object?>,
+      );
 
   @override
   bool operator ==(final Object other) {
     return identical(this, other) ||
-        other is RecordServiceModel &&
+        other is UserRecordServiceModel &&
             other.id == id &&
             other.title == title &&
             other.cost == cost &&
@@ -683,7 +688,7 @@ class RecordServiceModel {
 
   @override
   String toString() {
-    return 'RecordServiceModel(id: $id, title: $title, cost: $cost, '
+    return 'UserRecordServiceModel(id: $id, title: $title, cost: $cost, '
         'priceMin: $priceMin, priceMax: $priceMax, discount: $discount, '
         'amount: $amount, seanceLength: $seanceLength, apiId: $apiId)';
   }

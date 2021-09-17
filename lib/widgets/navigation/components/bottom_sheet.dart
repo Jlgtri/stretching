@@ -179,7 +179,7 @@ class BottomSheetBase extends StatelessWidget {
           topRight: Radius.circular(borderRadius),
         ),
         child: Material(
-          color: Theme.of(context).backgroundColor,
+          color: Theme.of(context).colorScheme.surface,
           child: Padding(
             padding: EdgeInsets.only(bottom: padding.bottom),
             child: child,
@@ -270,8 +270,8 @@ class BottomButtons<T> extends StatelessWidget {
               style: (!inverse ? darkStyle : lightStyle).copyWith(
                 shape: firstTitleText.isNotEmpty
                     ? MaterialStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
+                        const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(4)),
                         ),
                       )
                     : null,
@@ -348,8 +348,8 @@ class BottomButtons<T> extends StatelessWidget {
               style: (!inverse ? lightStyle : darkStyle).copyWith(
                 shape: secondTitleText.isNotEmpty
                     ? MaterialStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
+                        const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(4)),
                         ),
                       )
                     : null,

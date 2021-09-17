@@ -15,6 +15,7 @@ import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/disposable_change_notifier_hook.dart';
+import 'package:stretching/main.dart';
 import 'package:stretching/models_smstretching/sm_trainer_model.dart';
 import 'package:stretching/models_yclients/trainer_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
@@ -123,11 +124,17 @@ class TrainersScreen extends HookConsumerWidget {
         controller: refreshController,
         onLoading: refreshController.loadComplete,
         onRefresh: () async {
-          await Future.wait(<Future<void>>[
-            ref.read(trainersProvider.notifier).refresh(),
-            ref.read(smTrainersProvider.notifier).refresh()
-          ]);
-          refreshController.refreshCompleted();
+          try {
+            while (ref.read(connectionErrorProvider).state) {
+              await Future<void>.delayed(const Duration(seconds: 1));
+            }
+            await Future.wait(<Future<void>>[
+              ref.read(trainersProvider.notifier).refresh(),
+              ref.read(smTrainersProvider.notifier).refresh()
+            ]);
+          } finally {
+            refreshController.refreshCompleted();
+          }
         },
         child: CustomScrollView(
           shrinkWrap: true,
@@ -142,27 +149,48 @@ class TrainersScreen extends HookConsumerWidget {
               primary: false,
               backgroundColor: Colors.transparent,
               toolbarHeight: InputDecorationStyle.search.toolbarHeight,
-              titleSpacing: 12,
-              title: Material(
-                color: theme.colorScheme.surface,
-                borderRadius: BorderRadius.circular(10),
-                child: TextField(
-                  key: searchKey,
-                  cursorColor: theme.hintColor,
-                  style: theme.textTheme.bodyText2,
-                  controller: searchController,
-                  focusNode: searchFocusNode,
-                  onChanged: (final value) =>
-                      ref.read(searchTrainersProvider).state = value,
-                  decoration: InputDecorationStyle.search.fromTheme(
-                    theme,
-                    hintText: TR.trainersSearch.tr(),
-                    onSuffix: () {
-                      ref.read(searchTrainersProvider).state = '';
-                      searchController.clear();
-                      searchFocusNode.unfocus();
-                    },
+              titleSpacing: 16,
+              title: TextField(
+                key: searchKey,
+                cursorColor: theme.hintColor,
+                style: theme.textTheme.bodyText2,
+                controller: searchController,
+                focusNode: searchFocusNode,
+                onChanged: (final value) =>
+                    ref.read(searchTrainersProvider).state = value,
+                decoration: InputDecorationStyle.search.fromTheme(
+                  theme,
+                  hintText: TR.trainersSearch.tr(),
+                  prefixPadding: const EdgeInsets.only(top: 4),
+                  onSuffix: () {
+                    ref.read(searchTrainersProvider).state = '';
+                    searchController.clear();
+                    searchFocusNode.unfocus();
+                  },
+                ).copyWith(
+                  isDense: true,
+                  filled: true,
+                  fillColor: theme.colorScheme.surface,
+                  border: const OutlineInputBorder(
+                    borderSide: BorderSide.none,
                   ),
+                  errorBorder: const OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: const OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                  ),
+                  disabledBorder: const OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedErrorBorder: const OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                  ),
+                  prefixIconConstraints:
+                      const BoxConstraints(maxWidth: 45, maxHeight: 24),
                 ),
               ),
               bottom: getSelectorWidget<ClassCategory>(
@@ -268,6 +296,10 @@ class TrainerCard extends StatelessWidget {
             children: <Widget>[
               CachedNetworkImage(
                 imageUrl: trainer.item1.trainerPhoto,
+                height: 160,
+                width: 160,
+                placeholder: (final context, final url) =>
+                    const SizedBox.expand(),
                 imageBuilder: (final context, final imageProvider) {
                   return CircleAvatar(
                     radius: 80,

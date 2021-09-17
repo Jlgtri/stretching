@@ -18,6 +18,7 @@ import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/main.dart';
 import 'package:stretching/models/map_info_windows_options.dart';
 import 'package:stretching/models_smstretching/sm_studio_model.dart';
 import 'package:stretching/models_yclients/company_model.dart';
@@ -228,8 +229,8 @@ class StudiosScreen extends HookConsumerWidget {
                           MaterialStateProperty.all(theme.textTheme.headline5),
                       visualDensity: VisualDensity.compact,
                       shape: MaterialStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
+                        const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(4)),
                         ),
                       ),
                     ),
@@ -249,8 +250,8 @@ class StudiosScreen extends HookConsumerWidget {
                           MaterialStateProperty.all(theme.textTheme.headline5),
                       visualDensity: VisualDensity.compact,
                       shape: MaterialStateProperty.all(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4),
+                        const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(4)),
                         ),
                       ),
                     ),
@@ -285,12 +286,18 @@ class StudiosScreen extends HookConsumerWidget {
                   controller: refreshController,
                   onLoading: refreshController.loadComplete,
                   onRefresh: () async {
-                    await Future.wait(<Future<void>>[
-                      ref.read(studiosProvider.notifier).refresh(),
-                      ref.read(smStudiosProvider.notifier).refresh(),
-                      ref.read(smStudiosOptionsProvider.notifier).refresh(),
-                    ]);
-                    refreshController.refreshCompleted();
+                    try {
+                      while (ref.read(connectionErrorProvider).state) {
+                        await Future<void>.delayed(const Duration(seconds: 1));
+                      }
+                      await Future.wait(<Future<void>>[
+                        ref.read(studiosProvider.notifier).refresh(),
+                        ref.read(smStudiosProvider.notifier).refresh(),
+                        ref.read(smStudiosOptionsProvider.notifier).refresh(),
+                      ]);
+                    } finally {
+                      refreshController.refreshCompleted();
+                    }
                   },
                   child: ListView.builder(
                     controller: scrollController,
@@ -372,8 +379,6 @@ class StudioScreenCard extends ConsumerWidget {
                         body: WebView(
                           initialUrl:
                               smStretchingUrl + studio.item1.studioUrlAbout,
-                          initialMediaPlaybackPolicy:
-                              AutoMediaPlaybackPolicy.always_allow,
                           javascriptMode: JavascriptMode.unrestricted,
                           navigationDelegate: (final navigation) {
                             return navigation.url.startsWith(smStretchingUrl)
@@ -466,7 +471,7 @@ class StudioCard extends HookConsumerWidget {
     final currentLocation = ref.watch(locationProvider);
     return Material(
       elevation: onMap ? 10 : 0,
-      borderRadius: BorderRadius.circular(onMap ? 4 : 8),
+      borderRadius: BorderRadius.all(Radius.circular(onMap ? 4 : 8)),
       child: ListTile(
         onTap: () => onTap?.call(studio),
         dense: onMap,
@@ -474,7 +479,7 @@ class StudioCard extends HookConsumerWidget {
         contentPadding: EdgeInsets.symmetric(horizontal: onMap ? 8 : 16),
         visualDensity: onMap ? VisualDensity.compact : null,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(onMap ? 4 : 8),
+          borderRadius: BorderRadius.all(Radius.circular(onMap ? 4 : 8)),
           side: onMap ? const BorderSide() : BorderSide.none,
         ),
         tileColor: theme.colorScheme.surface,

@@ -199,10 +199,12 @@ class Options {
       sourceDir: Directory(results['source-dir']! as String),
       outputFile: File(results['output-file']! as String),
       className: results['class-name']! as String,
-      exclude: RegExp(<String>[
-        ...(results['exclude'] as Iterable<String>),
-        if (!(results['add-hidden'] as bool)) r'^\.'
-      ].join('|')),
+      exclude: RegExp(
+        <String>[
+          ...results['exclude'] as Iterable<String>,
+          if (!(results['add-hidden'] as bool)) r'^\.'
+        ].join('|'),
+      ),
       importComments: results['import-comments']! as bool,
     );
   }

@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:catcher/catcher.dart';
+import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -11,27 +13,30 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:stretching/api_smstretching.dart';
-import 'package:stretching/api_yclients.dart';
+import 'package:stretching/business_logic.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/assets.g.dart';
+import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
-import 'package:stretching/providers/connection_provider.dart';
+import 'package:stretching/models_smstretching/sm_activity_price_model.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/logger.dart';
 import 'package:stretching/widgets/authorization_screen.dart';
+import 'package:stretching/widgets/components/animated_background.dart';
 import 'package:stretching/widgets/components/emoji_text.dart';
+import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/error_screen.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-/// TODO: client id buy abonement (create user for each studio)
 Future<void> main() async {
   await Hive.initFlutter();
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   Catcher(
     debugConfig: CatcherOptions(
-      SilentReportMode(),
+      ErrorPageReportMode(),
       <ReportHandler>[ConsoleHandler()],
       logger: ChangedCatcherLogger(),
     ),
@@ -43,14 +48,11 @@ Future<void> main() async {
       fallbackLocale: defaultLocale,
       child: ProviderScope(
         overrides: <Override>[
-          hiveProvider.overrideWithValue(
-            await Hive.openBox<String>('storage'),
-          ),
-          smServerTimeProvider.overrideWithValue(
-            ServerTimeNotifier((await smStretching.getServerTime())!),
-          ),
+          hiveProvider.overrideWithValue(await Hive.openBox<String>('storage')),
+          smServerTimeProvider
+              .overrideWithValue(ServerTimeNotifier(DateTime.now())),
           smActivityPriceProvider
-              .overrideWithValue((await smStretching.getActivityPrice())!)
+              .overrideWithValue(const SMActivityPriceModel.zero())
         ],
         child: const RootScreen(),
       ),
@@ -61,6 +63,20 @@ Future<void> main() async {
   }
 }
 
+/// Returns the current visibility of the splash.
+final StateProvider<bool> splashProvider =
+    StateProvider<bool>((final ref) => true);
+
+/// Returns true if the app was successfully inited.
+final Provider<bool> initedProvider = Provider<bool>((final ref) {
+  return ref.watch(smActivityPriceProvider) !=
+      const SMActivityPriceModel.zero();
+});
+
+/// If the [RefreshConfiguration] header should display a connection error.
+final StateProvider<bool> connectionErrorProvider =
+    StateProvider<bool>((final ref) => false);
+
 /// The root widget of the app.
 class RootScreen extends HookConsumerWidget {
   /// The root widget of the app.
@@ -69,52 +85,152 @@ class RootScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final ez = EasyLocalization.of(context)!;
-    final snapshot = useFuture(
+    final splash = ref.watch(splashProvider);
+    final widgetsBinding = ref.read(widgetsBindingProvider);
+    useMemoized(() {
+      widgetsBinding.addObserver(ReviewRecordsEventHandler(context, ref));
+    });
+    useFuture(
       useMemoized(() async {
-        // await ref.read(hiveProvider).clear();
-        await ref.read(smStudiosOptionsProvider.notifier).refresh();
-        await Future.wait(<Future<Object?>>[
-          SystemChannels.textInput.invokeMethod<void>('TextInput.hide'),
-          ez.delegate.load(ez.currentLocale!),
-
-          /// Advertiments
-          ref.read(smAdvertismentsProvider.notifier).refresh(),
-
-          /// Abonements
-          ref.read(smUserAbonementsProvider.notifier).refresh(),
-
-          /// Activities
-          ref.read(smClassesGalleryProvider.notifier).refresh(),
-
-          /// Studios
-          ref.read(studiosProvider.notifier).refresh(),
-          ref.read(smStudiosProvider.notifier).refresh(),
-
-          /// Trainers
-          ref.read(trainersProvider.notifier).refresh(),
-          ref.read(smTrainersProvider.notifier).refresh(),
-
-          /// User
-          ref.read(userDepositProvider.future),
-          ref.read(userAbonementsProvider.notifier).refresh(),
-          ref.read(userRecordsProvider.notifier).refresh(),
-
-          /// Other
-          ref.read(connectionProvider.notifier).updateConnection(),
-          ref.read(locationProvider.last),
-          ref.read(orientationProvider.last),
-        ]);
-        final currentLocale = ez.currentLocale;
-        if (currentLocale != null) {
-          ref.read(localeProvider.notifier).state = currentLocale;
+        splash.state = true;
+        try {
+          // await ref.read(hiveProvider).clear();
+          await Future.wait(<Future<void>>[
+            SystemChannels.textInput.invokeMethod<void>('TextInput.hide'),
+            ez.delegate.load(ez.currentLocale!),
+            ref.read(locationProvider.last),
+            ref.read(orientationProvider.last),
+            // Future.delayed(const Duration(seconds: 15)),
+          ]);
+          final currentLocale = ez.currentLocale;
+          if (currentLocale != null) {
+            ref.read(localeProvider.notifier).state = currentLocale;
+          }
+        } finally {
+          try {
+            await refreshAllProviders(ProviderScope.containerOf(context));
+          } finally {
+            widgetsBinding
+                .addPostFrameCallback((final _) => splash.state = false);
+          }
         }
       }),
+      preserveState: false,
+    );
+    return Directionality(
+      textDirection: ui.TextDirection.ltr,
+      child: AnimatedCrossFade(
+        duration: const Duration(seconds: 2),
+        reverseDuration: Duration.zero,
+        sizeCurve: const Interval(0, 1 / 2, curve: Curves.ease),
+        firstCurve: const Interval(0, 1 / 2, curve: Curves.easeOutQuad),
+        secondCurve: const Interval(0, 1 / 2, curve: Curves.easeInQuad),
+        crossFadeState:
+            splash.state ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+        firstChild: LimitedBox(
+          maxHeight: widgetsBinding.window.physicalSize.height,
+          maxWidth: widgetsBinding.window.physicalSize.width,
+          child: Stack(
+            alignment: Alignment.center,
+            children: <Widget>[
+              AnimatedBackground(
+                curve: Curves.ease,
+                duration: const Duration(seconds: 2),
+                colors: const <Color>[Color(0xFFD775AB), Color(0xFF7450E0)],
+                animateAlignments: false,
+                alignments: const <AlignmentGeometry>[
+                  Alignment.bottomLeft,
+                  Alignment.topRight
+                ],
+              ),
+              const FontIcon(
+                FontIconData(IconsCG.logo, color: Colors.white, width: 250),
+              )
+            ],
+          ),
+        ),
+        secondChild: LimitedBox(
+          maxHeight: widgetsBinding.window.physicalSize.height,
+          maxWidth: widgetsBinding.window.physicalSize.width,
+          child: MaterialApp(
+            title: 'SMSTRETCHING DEV',
+            restorationScopeId: 'stretching',
+            locale: ez.locale,
+            localizationsDelegates: ez.delegates
+              ..add(RefreshLocalizations.delegate),
+            debugShowCheckedModeBanner: false,
+            supportedLocales: ez.supportedLocales,
+            themeMode: ref.watch(themeProvider),
+            theme: lightTheme,
+            darkTheme: darkTheme,
+            initialRoute: Routes.root.name,
+            navigatorKey: Catcher.navigatorKey,
+            routes: <String, Widget Function(BuildContext)>{
+              for (final route in Routes.values)
+                if (route.builder != null) route.name: route.builder!
+            },
+            builder: (final context, final child) {
+              final theme = Theme.of(context);
+              final textStyle =
+                  theme.textTheme.bodyText2!.copyWith(color: theme.hintColor);
+              final emojiStyle =
+                  TextStyle(fontSize: textStyle.fontSize! * 5 / 4);
+              return RefreshConfiguration(
+                // Header height is 60, header trigger height is 80,
+                // so max overscroll extent should be 20
+                maxOverScrollExtent: 20,
+                headerBuilder: () => Consumer(
+                  builder: (final context, final ref, final child) {
+                    final connectionError =
+                        ref.watch(connectionErrorProvider).state;
+                    return ClassicHeader(
+                      completeDuration:
+                          const Duration(seconds: 1, milliseconds: 500),
+                      textStyle: textStyle,
+                      idleText: TR.miscPullToRefreshIdle.tr(),
+                      releaseText: TR.miscPullToRefreshRelease.tr(),
+                      refreshingText: TR.miscPullToRefreshRefreshing.tr(),
+                      completeText: connectionError
+                          ? TR.miscPullToRefreshCompleteInternetError.tr()
+                          : TR.miscPullToRefreshComplete.tr(),
+                      idleIcon: EmojiText('😉', style: emojiStyle),
+                      releaseIcon: EmojiText('🔥', style: emojiStyle),
+                      // refreshingIcon: EmojiText('🤘', style: emojiStyle),
+                      completeIcon: connectionError
+                          ? const FontIcon(FontIconData(IconsCG.globe))
+                          : EmojiText('❤', style: emojiStyle),
+                    );
+                  },
+                ),
+                child: child!,
+              );
+            },
+          ),
+        ),
+      ),
     );
 
-    if (snapshot.connectionState != ConnectionState.done) {
-      return const SizedBox.shrink();
-    }
-
+    // onGenerateRoute: (final settings) {
+    //   return <String, Route<Object?>? Function(Object?)>{
+    //     for (final route in Routes.values)
+    //       if (route.onGenerateRoute != null)
+    //         route.name: route.onGenerateRoute!
+    //   }[settings.name]
+    //       ?.call(settings.arguments);
+    // },
+    // builder: (final context, final child) {
+    //   final mediaQuery = MediaQuery.of(context);
+    //   return AnnotatedRegion<SystemUiOverlayStyle>(
+    //     value: themeMode == ThemeMode.light
+    //         ? lightSystemUiOverlayStyle
+    //         : themeMode == ThemeMode.dark
+    //             ? darkSystemUiOverlayStyle
+    //             : mediaQuery.platformBrightness == Brightness.light
+    //                 ? lightSystemUiOverlayStyle
+    //                 : darkSystemUiOverlayStyle,
+    //     child: child!,
+    //   );
+    // },
     // Widget buildError(final Object error, final StackTrace? stackTrace) {
     //   return !(ref.watch(connectionProvider) ?? false)
     //       ? const ConnectionErrorScreen()
@@ -122,70 +238,6 @@ class RootScreen extends HookConsumerWidget {
     //           ? DebugErrorScreen(error, stackTrace)
     //           : const ErrorScreen();
     // }
-
-    final themeMode = ref.watch(themeProvider);
-    return MaterialApp(
-      title: 'SMSTRETCHING DEV',
-      restorationScopeId: 'stretching',
-      locale: ez.locale,
-      localizationsDelegates: ez.delegates..add(RefreshLocalizations.delegate),
-      debugShowCheckedModeBanner: false,
-      supportedLocales: ez.supportedLocales,
-      themeMode: themeMode,
-      theme: lightTheme,
-      darkTheme: darkTheme,
-      initialRoute: Routes.root.name,
-      navigatorKey: Catcher.navigatorKey,
-      routes: <String, Widget Function(BuildContext)>{
-        for (final route in Routes.values)
-          if (route.builder != null) route.name: route.builder!
-      },
-      // onGenerateRoute: (final settings) {
-      //   return <String, Route<Object?>? Function(Object?)>{
-      //     for (final route in Routes.values)
-      //       if (route.onGenerateRoute != null)
-      //         route.name: route.onGenerateRoute!
-      //   }[settings.name]
-      //       ?.call(settings.arguments);
-      // },
-      builder: (final context, final child) {
-        final theme = Theme.of(context);
-        final textStyle =
-            theme.textTheme.bodyText2!.copyWith(color: theme.hintColor);
-        final emojiStyle = TextStyle(fontSize: textStyle.fontSize! * 1.25);
-        return RefreshConfiguration(
-          topHitBoundary: 150,
-          maxOverScrollExtent: 0,
-          maxUnderScrollExtent: 0,
-          headerBuilder: () => ClassicHeader(
-            height: 80,
-            textStyle: textStyle,
-            idleText: TR.miscPullToRefreshIdle.tr(),
-            releaseText: TR.miscPullToRefreshRelease.tr(),
-            refreshingText: TR.miscPullToRefreshRefreshing.tr(),
-            completeText: TR.miscPullToRefreshComplete.tr(),
-            idleIcon: EmojiText('😉', style: emojiStyle),
-            releaseIcon: EmojiText('🔥', style: emojiStyle),
-            // refreshingIcon: EmojiText('🤘', style: emojiStyle),
-            completeIcon: EmojiText('❤', style: emojiStyle),
-          ),
-          child: child!,
-        );
-      },
-      // builder: (final context, final child) {
-      //   final mediaQuery = MediaQuery.of(context);
-      //   return AnnotatedRegion<SystemUiOverlayStyle>(
-      //     value: themeMode == ThemeMode.light
-      //         ? lightSystemUiOverlayStyle
-      //         : themeMode == ThemeMode.dark
-      //             ? darkSystemUiOverlayStyle
-      //             : mediaQuery.platformBrightness == Brightness.light
-      //                 ? lightSystemUiOverlayStyle
-      //                 : darkSystemUiOverlayStyle,
-      //     child: child!,
-      //   );
-      // },
-    );
   }
 }
 
@@ -221,17 +273,40 @@ extension RoutesData on Routes {
             builder: (final context, final ref, final child) {
               final error = ref.watch(errorProvider).state;
               if (error != null) {
-                (ref.read(widgetsBindingProvider))
-                    .addPostFrameCallback((final _) {
-                  Navigator.of(context).popUntil(ModalRoute.withName(name));
-                });
-                if (!(ref.read(connectionProvider) ?? false)) {
-                  ref.read(errorProvider).state = null;
-                  return const ConnectionErrorScreen();
+                final dynamic exception = error.item1.error;
+                if (exception is DioError) {
+                  final dynamic dioError = exception.error;
+                  if (dioError is SocketException) {
+                    if (!ref.watch(initedProvider)) {
+                      return const ConnectionErrorScreen();
+                    } else {
+                      final connectionError = ref.read(connectionErrorProvider);
+                      if (!connectionError.state) {
+                        (ref.read(widgetsBindingProvider))
+                            .addPostFrameCallback((final _) async {
+                          connectionError.state = true;
+                          await Future<void>.delayed(
+                            const Duration(seconds: 5),
+                          );
+                          connectionError.state = false;
+                        });
+                      }
+                    }
+                  } else {
+                    (ref.read(widgetsBindingProvider))
+                        .addPostFrameCallback((final _) {
+                      Navigator.of(context, rootNavigator: true)
+                          .popUntil(ModalRoute.withName(name));
+                    });
+                  }
                 }
-                return ErrorScreen(error.item0, error.item1);
+                if (!ref.watch(initedProvider)) {
+                  return ErrorScreen(error.item0, error.item1);
+                }
               }
-              return const NavigationRoot();
+              return ref.watch(splashProvider).state
+                  ? const SizedBox.shrink()
+                  : const NavigationRoot();
             },
           );
         };
@@ -272,3 +347,55 @@ extension RoutesData on Routes {
   //   }
   // }
 }
+
+// /// The screen that pops up on error and handles connection errors.
+// class ErrorHandlerScreen extends HookConsumerWidget {
+//   /// The screen that pops up on error and handles connection errors.
+//   const ErrorHandlerScreen({final Key? key}) : super(key: key);
+
+//   @override
+//   Widget build(final BuildContext context, final WidgetRef ref) {
+//     final error = ref.watch(errorProvider).state;
+//     useMemoized(
+//       () {
+//         if (error != null) {
+//           (ref.read(widgetsBindingProvider))
+//               .addPostFrameCallback((final _) async {
+//             final dynamic exception = error.item1.error;
+//             if (exception is DioError) {
+//               final dynamic dioError = exception.error;
+//               if (dioError is SocketException && ref.read(initedProvider)) {
+//                 final connectionError = ref.read(connectionErrorProvider);
+//                 if (!connectionError.state) {
+//                   connectionError.state = true;
+//                   await Future<void>.delayed(const Duration(seconds: 3));
+//                   connectionError.state = false;
+//                 }
+//               } else {
+//                 Navigator.of(context, rootNavigator: true)
+//                     .popUntil(ModalRoute.withName(Routes.root.name));
+//               }
+//             }
+//           });
+//         }
+//       },
+//       [error?.item1.dateTime],
+//     );
+//     if (error != null) {
+//       final inited = ref.watch(initedProvider);
+//       final dynamic exception = error.item1.error;
+//       if (exception is DioError) {
+//         final dynamic dioError = exception.error;
+//         if (dioError is SocketException && !inited) {
+//           return const ConnectionErrorScreen();
+//         }
+//       }
+//       if (!inited) {
+//         return ErrorScreen(error.item0, error.item1);
+//       }
+//     }
+//     return ref.watch(splashProvider).state
+//         ? const SizedBox.shrink()
+//         : const NavigationRoot();
+//   }
+// }

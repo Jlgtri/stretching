@@ -96,9 +96,9 @@ class ServerTimeNotifier extends StateNotifier<DateTime> {
   /// The notifier of the current server time.
   ServerTimeNotifier(final DateTime initialServerTime)
       : super(initialServerTime) {
-    _timer = Stopwatch()..start();
+    _timer.start();
   }
-  late final Stopwatch _timer;
+  final Stopwatch _timer = Stopwatch();
 
   /// Returns the current server time.
   @override

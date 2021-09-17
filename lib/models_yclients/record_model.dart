@@ -163,7 +163,7 @@ class RecordModel {
   final bool deleted;
 
   /// If this record is paid fully.
-  final bool paidFull;
+  final int paidFull;
 
   /// If the online payment is available.
   final bool prepaid;
@@ -233,7 +233,7 @@ class RecordModel {
     final int? visitId,
     final int? createdUserId,
     final bool? deleted,
-    final bool? paidFull,
+    final int? paidFull,
     final bool? prepaid,
     final bool? prepaidConfirmed,
     final DateTime? lastChangeDate,
@@ -311,7 +311,7 @@ class RecordModel {
       'clients_count': clientsCount,
       'date': date.toString(),
       'datetime': datetime.toIso8601String(),
-      'create_date': createDate,
+      'create_date': createDate.toIso8601String(),
       'comment': comment,
       'online': online,
       'visit_attendance': visitAttendance,
@@ -331,7 +331,7 @@ class RecordModel {
       'visit_id': visitId,
       'created_user_id': createdUserId,
       'deleted': deleted,
-      'paid_full': boolToIntConverter.toJson(paidFull),
+      'paid_full': paidFull,
       'prepaid': prepaid,
       'prepaid_confirmed': prepaidConfirmed,
       'last_change_date': lastChangeDate.toIso8601String(),
@@ -390,7 +390,7 @@ class RecordModel {
       visitId: map['visit_id']! as int,
       createdUserId: map['created_user_id']! as int,
       deleted: map['deleted']! as bool,
-      paidFull: boolToIntConverter.fromJson(map['paid_full']! as int),
+      paidFull: map['paid_full']! as int,
       prepaid: map['prepaid']! as bool,
       prepaidConfirmed: map['prepaid_confirmed']! as bool,
       lastChangeDate: DateTime.parse(map['last_change_date']! as String),

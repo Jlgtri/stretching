@@ -13,6 +13,7 @@ environment:
 dependencies:
   add_2_calendar: ^2.1.1
   animations: ^2.0.1
+  async: ^2.8.2
   auto_size_text: ^3.0.0-nullsafety.0
   badges: ^2.0.1
   cached_network_image: ^3.1.0
@@ -24,6 +25,7 @@ dependencies:
   darq: ^1.1.1
   dio: ^4.0.0
   draggable_scrollbar: ^0.1.0
+  dropdown_below: ^1.0.0
   easy_localization: ^3.0.0
   expandable_text: ^2.2.0
   flutter:
@@ -53,6 +55,7 @@ dependencies:
   riverpod: ^1.0.0-dev.7
   share: ^2.0.4
   smooth_page_indicator: ^1.0.0+2
+  story_view: ^0.13.1
   tcard: ^1.3.5
   tinkoff_acquiring: ^3.0.4
   url_launcher: ^6.0.10
@@ -71,8 +74,10 @@ dev_dependencies:
 flutter:
   assets:
     - assets/google_map_style.json
+    - assets/logo.gif
     - assets/emoji/10084.png
     - assets/emoji/1f499.png
+    - assets/emoji/1f517.png
     - assets/emoji/1f525.png
     - assets/emoji/1f609.png
     - assets/emoji/1f60d.png
@@ -114,10 +119,9 @@ flutter_icons:
   # image_path_ios: 'assets/icon/icon_ios.png'
 
 flutter_native_splash:
-  color: '#ffffff'
-  image: icon.png
-  color_dark: '#222222'
-  image_dark: icon.png
+  # color: '#ffffff'
+  image: assets/splash/logo.png
+  background_image: assets/splash/background.png
   fullscreen: true
   # android_gravity: center
   # ios_content_mode: center

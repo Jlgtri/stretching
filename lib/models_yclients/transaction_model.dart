@@ -890,10 +890,10 @@ class TransactionStatePaymentTransactionModel {
   final int documentId;
 
   /// The id of the sale item of this payment transaction in the YClients API.
-  final int saleItemId;
+  final int? saleItemId;
 
   /// The type of the sale item of this payment transaction.
-  final String saleItemType;
+  final String? saleItemType;
 
   /// The expense id of this payment transaction.
   final int expenseId;
@@ -963,8 +963,8 @@ class TransactionStatePaymentTransactionModel {
     return TransactionStatePaymentTransactionModel(
       id: map['id']! as int,
       documentId: map['document_id']! as int,
-      saleItemId: map['sale_item_id']! as int,
-      saleItemType: map['sale_item_type']! as String,
+      saleItemId: map['sale_item_id'] as int?,
+      saleItemType: map['sale_item_type'] as String?,
       expenseId: map['expense_id']! as int,
       accountId: map['account_id']! as int,
       amount: map['amount']! as int,

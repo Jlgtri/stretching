@@ -3,7 +3,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:stretching/generated/localization.g.dart';
-import 'package:stretching/models_smstretching/sm_gallery_model.dart';
 import 'package:stretching/models_smstretching/sm_studio_model.dart';
 import 'package:stretching/models_smstretching/sm_trainer_model.dart';
 import 'package:stretching/utils/enum_to_string.dart';
@@ -102,6 +101,7 @@ class FilterButton extends StatelessWidget {
     final this.text = '',
     final this.avatarUrl,
     final this.borderColor,
+    final this.backgroundColor = Colors.transparent,
     final this.margin = EdgeInsets.zero,
     final this.onSelected,
     final Key? key,
@@ -119,6 +119,9 @@ class FilterButton extends StatelessWidget {
 
   /// The border color of this widget.
   final Color? borderColor;
+
+  /// The color of the background of this widget.
+  final Color backgroundColor;
 
   /// The margin for this button.
   final EdgeInsetsGeometry margin;
@@ -166,11 +169,11 @@ class FilterButton extends StatelessWidget {
                 },
               )
             : null,
-        backgroundColor: Colors.transparent,
+        backgroundColor: backgroundColor,
         shadowColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           side: BorderSide(color: borderColor ?? theme.colorScheme.onSurface),
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: const BorderRadius.all(Radius.circular(30)),
         ),
         onSelected: onSelected?.call,
       ),
@@ -185,6 +188,7 @@ class FilterButton extends StatelessWidget {
         ..add(StringProperty('text', text))
         ..add(StringProperty('avatarUrl', avatarUrl))
         ..add(ColorProperty('borderColor', borderColor))
+        ..add(ColorProperty('backgroundColor', backgroundColor))
         ..add(DiagnosticsProperty<EdgeInsetsGeometry>('margin', margin))
         ..add(
           ObjectFlagProperty<void Function(bool value)>.has(
