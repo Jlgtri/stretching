@@ -188,7 +188,7 @@ TextTheme get _textTheme {
       fontWeight: FontWeight.w500,
     ),
   ).apply(
-    fontFamily: 'SF',
+    fontFamily: 'SFUIDisplay',
     displayColor: Colors.black,
     bodyColor: Colors.black,
     decorationColor: Colors.black,

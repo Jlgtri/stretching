@@ -3,6 +3,9 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:stretching/widgets/navigation/screens/activities_screen.dart';
 
+/// The current app's version.
+const String currentVersion = '2.0.0';
+
 /// The default [Locale] of this app.
 const Locale defaultLocale = Locale('ru', 'RU');
 
@@ -15,7 +18,7 @@ const List<Locale> supportedLocales = <Locale>[defaultLocale];
 const String smstretchingCity = 'Москва';
 
 /// The country code of the desired phone number.
-const int phoneCountryCode = 7;
+const int phoneCountryCode = 38;
 
 /// The length of the sms pin code for phone number authentication.
 const int pinCodeLength = 4;
@@ -25,3 +28,6 @@ const TimeOfDay filterTime = TimeOfDay(hour: 16, minute: 45);
 
 /// The longest time that user can wait when booking.
 const Duration bookTimeout = Duration(minutes: 20);
+
+/// The maximum time the user has after the record is over to rate it.
+const Duration maxReviewTimeout = Duration(days: 1);

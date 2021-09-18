@@ -23,6 +23,7 @@ import 'package:stretching/models/map_info_windows_options.dart';
 import 'package:stretching/models_smstretching/sm_studio_model.dart';
 import 'package:stretching/models_yclients/company_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
+import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/widgets/appbars.dart';
@@ -102,6 +103,13 @@ class StudiosScreen extends HookConsumerWidget {
       await mapController.value
           ?.showMarkerInfoWindow(MarkerId(studio.id.toString()));
       await moveToStudioOnMap(studio);
+      await analytics.logEvent(
+        name: FAKeys.studioOnMap,
+        parameters: <String, String>{
+          'type': 'map',
+          'studio': translit(studio.title),
+        },
+      );
     }
 
     return PageTransitionSwitcher(
@@ -310,8 +318,16 @@ class StudiosScreen extends HookConsumerWidget {
                         padding: const EdgeInsets.only(bottom: 8),
                         child: StudioScreenCard(
                           studios.elementAt(index),
-                          onNonMapTap: (final studio) =>
-                              onMainStudioCardTap(studio.item0),
+                          onNonMapTap: (final studio) async {
+                            await onMainStudioCardTap(studio.item0);
+                            await analytics.logEvent(
+                              name: FAKeys.studioOnMap,
+                              parameters: <String, String>{
+                                'type': 'list',
+                                'studio': translit(studio.item1.studioName),
+                              },
+                            );
+                          },
                         ),
                       );
                     },
@@ -421,12 +437,25 @@ class StudioScreenCard extends ConsumerWidget {
         );
       },
       closedBuilder: (final context, final action) {
+        Future<void> actionWithAnalytics() async {
+          action();
+          await analytics.logEvent(
+            name: FAKeys.studioScreen,
+            parameters: <String, String>{
+              'studio': translit(studio.item1.studioName)
+            },
+          );
+        }
+
         return StudioCard(
           studio,
           onMap: onNonMapTap == null,
-          onTap: (final studio) =>
-              onNonMapTap == null ? action() : onNonMapTap?.call(studio),
-          onAvatarTap: onNonMapTap != null ? (final studio) => action() : null,
+          onTap: (final studio) => onNonMapTap == null
+              ? actionWithAnalytics()
+              : onNonMapTap?.call(studio),
+          onAvatarTap: onNonMapTap != null
+              ? (final studio) => actionWithAnalytics()
+              : null,
         );
       },
     );

@@ -16,7 +16,7 @@ import 'package:stretching/const.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/models/yclients_response.dart';
 import 'package:stretching/models_yclients/user_model.dart';
-import 'package:stretching/providers/other_providers.dart';
+import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/logger.dart';
@@ -100,17 +100,16 @@ class AuthorizationScreen extends HookConsumerWidget {
               );
               final user = response.data?.data as UserModel?;
               if (user != null) {
+                ref.read(userProvider.notifier).state = user;
+                (ref.read(navigationProvider))
+                    .jumpToTab(NavigationScreen.profile.index);
+
+                await analytics.logEvent(name: FAKeys.login);
                 await smStretching.addUser(
                   userPhone: user.phone,
                   userEmail: user.email,
                   serverTime: ref.read(smServerTimeProvider),
                 );
-                ref.read(userProvider.notifier).state = user;
-                (ref.read(widgetsBindingProvider))
-                    .addPostFrameCallback((final _) async {
-                  (ref.read(navigationProvider))
-                      .jumpToTab(NavigationScreen.profile.index);
-                });
                 await navigator.maybePop();
               }
             }
@@ -120,11 +119,13 @@ class AuthorizationScreen extends HookConsumerWidget {
         final dynamic error = e.error;
         if (error is YClientsException) {
           logger.e(error, 'Phone: ${enteringPhone.value}');
-          if (enteringPhone.value) {
-            phoneError.value = error.response.data?.meta?.message;
-          } else {
-            codeError.value = error.response.data?.meta?.message;
-            codeErrorController.add(ErrorAnimationType.shake);
+          if (isMounted()) {
+            if (enteringPhone.value) {
+              phoneError.value = error.response.data?.meta?.message;
+            } else {
+              codeError.value = error.response.data?.meta?.message;
+              codeErrorController.add(ErrorAnimationType.shake);
+            }
           }
         } else {
           rethrow;

@@ -15,6 +15,7 @@ import 'package:stretching/main.dart';
 import 'package:stretching/models_smstretching/sm_story_model.dart';
 import 'package:stretching/models_yclients/user_record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
+import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/style.dart';
@@ -273,6 +274,8 @@ class HomeScreen extends HookConsumerWidget {
                   childCount: userRecords.length,
                 ),
               ),
+
+            /// Sign Up For Training Button
             SliverPadding(
               padding: const EdgeInsets.all(16),
               sliver: SliverToBoxAdapter(
@@ -282,9 +285,12 @@ class HomeScreen extends HookConsumerWidget {
                       Colors.transparent,
                     ),
                   ),
-                  onPressed: () => (ref.read(navigationProvider)).jumpToTab(
-                    NavigationScreen.schedule.index,
-                  ),
+                  onPressed: () async {
+                    (ref.read(navigationProvider)).jumpToTab(
+                      NavigationScreen.schedule.index,
+                    );
+                    await analytics.logEvent(name: FAKeys.homeGoToSchedule);
+                  },
                   child: EmojiText(
                     '⚡️  ${TR.homeApply.tr()}',
                     style: theme.textTheme.button?.copyWith(
@@ -375,7 +381,15 @@ class StoryCardScreen extends HookConsumerWidget {
           borderRadius: const BorderRadius.all(Radius.circular(18)),
         ),
         child: ElevatedButton(
-          onPressed: action,
+          onPressed: () async {
+            action();
+            await analytics.logEvent(
+              name: FAKeys.stories,
+              parameters: <String, String>{
+                'content_title': translit(story.textPreview)
+              },
+            );
+          },
           style: ButtonStyle(
             padding: MaterialStateProperty.all(EdgeInsets.zero),
             backgroundColor: MaterialStateProperty.all(Colors.transparent),

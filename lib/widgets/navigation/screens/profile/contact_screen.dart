@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:native_device_orientation/native_device_orientation.dart';
+import 'package:stretching/const.dart';
 import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/widgets/appbars.dart';
@@ -144,10 +145,22 @@ class ContactScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 64),
+                  const SizedBox(height: 120),
                 ],
               ),
             ),
+          ),
+        ),
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.only(bottom: 18),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text(
+                TR.miscVersion.tr(args: <String>[currentVersion]),
+                style: theme.textTheme.headline6,
+              ),
+            ],
           ),
         ),
       ),

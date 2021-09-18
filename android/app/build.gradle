@@ -5,14 +5,18 @@ file('key.properties').withReader('UTF-8'), loadProperties
 
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.crashlytics'
 apply from: "${properties['flutter.sdk']}/packages/flutter_tools/gradle/flutter.gradle"
+
 
 android {
     compileSdkVersion 30
 
     defaultConfig {
+        multiDexEnabled true
         resConfigs 'en', 'ru'
-        applicationId 'com.fluttercrew.stretching'
+        applicationId 'ru.smstretching.appstudio'
         minSdkVersion 20
         targetSdkVersion 30
         versionCode properties['flutter.versionCode']?.toInteger() ?: 1
@@ -64,4 +68,8 @@ flutter { source '../..' }
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation platform('com.google.firebase:firebase-bom:28.4.1')
+    implementation 'com.google.firebase:firebase-analytics-ktx'
+    implementation 'com.google.firebase:firebase-crashlytics-ktx'
 }

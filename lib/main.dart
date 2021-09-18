@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:catcher/catcher.dart';
 import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -19,9 +20,11 @@ import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/models_smstretching/sm_activity_price_model.dart';
+import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/style.dart';
+import 'package:stretching/utils/crashlytics_handler.dart';
 import 'package:stretching/utils/logger.dart';
 import 'package:stretching/widgets/authorization_screen.dart';
 import 'package:stretching/widgets/components/animated_background.dart';
@@ -33,14 +36,18 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 Future<void> main() async {
   await Hive.initFlutter();
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  await Firebase.initializeApp();
   Catcher(
     debugConfig: CatcherOptions(
       ErrorPageReportMode(),
       <ReportHandler>[ConsoleHandler()],
       logger: ChangedCatcherLogger(),
     ),
-    releaseConfig: CatcherOptions(ErrorPageReportMode(), <ReportHandler>[]),
+    releaseConfig: CatcherOptions(
+      ErrorPageReportMode(),
+      <ReportHandler>[CrashlyticsHandler()],
+      logger: ChangedCatcherLogger(),
+    ),
     rootWidget: EasyLocalization(
       supportedLocales: supportedLocales,
       path: AssetsCG.translations,
@@ -86,20 +93,21 @@ class RootScreen extends HookConsumerWidget {
   Widget build(final BuildContext context, final WidgetRef ref) {
     final ez = EasyLocalization.of(context)!;
     final splash = ref.watch(splashProvider);
-    final widgetsBinding = ref.read(widgetsBindingProvider);
-    useMemoized(() {
-      widgetsBinding.addObserver(ReviewRecordsEventHandler(context, ref));
-    });
+    final widgetsBinding = ref.watch(widgetsBindingProvider);
     useFuture(
       useMemoized(() async {
         splash.state = true;
         try {
           // await ref.read(hiveProvider).clear();
           await Future.wait(<Future<void>>[
+            SystemChrome.setPreferredOrientations(
+              [DeviceOrientation.portraitUp],
+            ),
             SystemChannels.textInput.invokeMethod<void>('TextInput.hide'),
             ez.delegate.load(ez.currentLocale!),
             ref.read(locationProvider.last),
             ref.read(orientationProvider.last),
+            ref.read(messagingProvider.future),
             // Future.delayed(const Duration(seconds: 15)),
           ]);
           final currentLocale = ez.currentLocale;
@@ -266,7 +274,10 @@ extension RoutesData on Routes {
   Widget Function(BuildContext context)? get builder {
     switch (this) {
       case Routes.auth:
-        return (final context) => const AuthorizationScreen();
+        return (final context) {
+          analytics.logEvent(name: FAKeys.loginButton);
+          return const AuthorizationScreen();
+        };
       case Routes.root:
         return (final context) {
           return Consumer(

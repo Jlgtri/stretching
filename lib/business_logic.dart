@@ -26,6 +26,7 @@ import 'package:stretching/models_yclients/transaction_model.dart';
 import 'package:stretching/models_yclients/user_abonement_model.dart';
 import 'package:stretching/models_yclients/user_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
+import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/utils/enum_to_string.dart';
 import 'package:stretching/utils/logger.dart';
@@ -460,6 +461,19 @@ class BusinessLogic {
       final result = await navigator.push(
         MaterialPageRoute<BookResult>(
           builder: (final context) {
+            Future<void> pickedAnalytics({required final bool abonement}) {
+              return analytics.logEvent(
+                name: FAKeys.abonementPicked,
+                parameters: <String, String>{
+                  'studio': translit(activity.item1.item1.studioName),
+                  'class': translit(activity.item0.service.title),
+                  'trainer': translit(activity.item2.item1.trainerName),
+                  'date_time': faTime(serverTime),
+                  'type': abonement ? 'training_pass' : 'single_training',
+                },
+              );
+            }
+
             return WillPopScope(
               onWillPop: () async =>
                   !successBook ? dismiss = true : successBook,
@@ -468,116 +482,141 @@ class BusinessLogic {
                 ySalePrice: ySalePrice,
                 abonementPrice: possibleAbonements.keys.first.cost,
                 discount: useDiscount,
-                // abonementNonMatchReason: abonementNonMatchReason,
+                abonementNonMatchReason: abonementNonMatchReason,
                 onAbonement: (final context) async {
-                  await showPaymentPickerBottomSheet(
-                    context,
-                    PaymentPickerScreen(
-                      allStudios: false,
-                      smAbonements: possibleAbonements.keys,
-                      onPayment: (final email, final abonement) async {
-                        final good = possibleAbonements[abonement];
-                        final options = _smStudiosOptions[good?.salonId];
-                        if (abonement == null ||
-                            good == null ||
-                            options == null) {
-                          return;
-                        }
+                  await Future.wait(<Future<void>>[
+                    pickedAnalytics(abonement: true),
+                    showPaymentPickerBottomSheet(
+                      context,
+                      PaymentPickerScreen(
+                        allStudios: false,
+                        smAbonements: possibleAbonements.keys,
+                        onPayment:
+                            (final email, final abonement, final studio) async {
+                          final good = possibleAbonements[abonement];
+                          final options = _smStudiosOptions[good?.salonId];
+                          if (abonement == null ||
+                              good == null ||
+                              options == null) {
+                            return;
+                          }
 
-                        final payment = await payTinkoff(
-                          email: email,
-                          navigator: navigator,
-                          companyId: good.salonId,
-                          userPhone: user.phone,
-                          cost: good.cost,
-                          terminalKey: options.key,
-                          terminalPass: options.pass,
-                          canContinue: () => timer.isActive,
-                        );
-
-                        if (!payment.item0 || payment.item1 == null) {
-                          await cancel();
-                          throw BookException(
-                            BookExceptionType.payment,
-                            record,
+                          await analytics.logEvent(
+                            name: FAKeys.abonementPicked,
+                            parameters: <String, String>{
+                              'price': abonement.cost.toString(),
+                              'currency': 'RUB',
+                              'train_qnt': abonement.count.toString(),
+                              'class_start':
+                                  abonement.time ? 'till_16.45' : 'any',
+                              'studio':
+                                  abonement.service != null && studio != null
+                                      ? translit(studio.item1.studioName)
+                                      : 'all',
+                              'payment_method_type': 'credit_card',
+                            },
                           );
-                        }
 
-                        final result = await createAbonement(
-                          abonement: abonement,
-                          good: good,
-                          options: options,
-                          userPhone: user.phone,
-                        );
+                          final payment = await payTinkoff(
+                            email: email,
+                            navigator: navigator,
+                            companyId: good.salonId,
+                            userPhone: user.phone,
+                            cost: good.cost,
+                            terminalKey: options.key,
+                            terminalPass: options.pass,
+                            canContinue: () => timer.isActive,
+                          );
 
-                        await _smStretching.editPayment(
-                          acquiring: payment.item1!,
-                          serverTime: serverTime,
-                          documentId: result.item0.documentId,
-                          isAbonement: true,
-                        );
+                          if (!payment.item0 || payment.item1 == null) {
+                            await cancel();
+                            throw BookException(
+                              BookExceptionType.payment,
+                              record,
+                            );
+                          }
 
-                        successBook = true;
-
-                        /// Close the prompt screen and pay by freshly created
-                        /// abonement.
-                        await navigator.maybePop();
-                      },
-                    ),
-                  );
-                },
-                onRegular: (final context) async {
-                  await showPaymentPickerBottomSheet(
-                    context,
-                    PaymentPickerScreen(
-                      payment: useDiscount ? ySalePrice : regularPrice,
-                      onPayment: (final email, final abonement) async {
-                        final payment = await payTinkoff(
-                          cost: useDiscount ? ySalePrice : regularPrice,
-                          email: email,
-                          navigator: navigator,
-                          companyId: activity.item0.companyId,
-                          terminalKey: activity.item1.item2.key,
-                          terminalPass: activity.item1.item2.pass,
-                          userPhone: user.phone,
-                          canContinue: () => timer.isActive,
-                          recordId: record.id,
-                        );
-                        if (!payment.item0 || payment.item1 == null) {
-                          await cancelBook(
-                            discount: useDiscount,
-                            recordDate: record.date,
-                            recordId: record.id,
+                          final result = await createAbonement(
+                            abonement: abonement,
+                            good: good,
+                            options: options,
                             userPhone: user.phone,
                           );
-                          throw BookException(
-                            BookExceptionType.payment,
-                            record,
+
+                          await _smStretching.editPayment(
+                            acquiring: payment.item1!,
+                            serverTime: serverTime,
+                            documentId: result.item0.documentId,
+                            isAbonement: true,
                           );
-                        }
 
-                        await _smStretching.editPayment(
-                          acquiring: payment.item1!,
-                          serverTime: serverTime,
-                          documentId: record.documents.first.id,
-                          isAbonement: false,
-                        );
-
-                        if (await update(
-                          ActivityPaidBy.regular,
-                          orderId:
-                              int.tryParse(payment.item1?.item0.orderId ?? ''),
-                        )) {
                           successBook = true;
-                          await navigator.maybePop(
-                            useDiscount
-                                ? BookResult.discount
-                                : BookResult.regular,
-                          );
-                        }
-                      },
+
+                          /// Close the prompt screen and pay by freshly created
+                          /// abonement.
+                          await navigator.maybePop();
+                        },
+                      ),
                     ),
-                  );
+                  ]);
+                },
+                onRegular: (final context) async {
+                  await Future.wait(<Future<void>>[
+                    pickedAnalytics(abonement: false),
+                    showPaymentPickerBottomSheet(
+                      context,
+                      PaymentPickerScreen(
+                        payment: useDiscount ? ySalePrice : regularPrice,
+                        onPayment:
+                            (final email, final abonement, final studio) async {
+                          final payment = await payTinkoff(
+                            cost: useDiscount ? ySalePrice : regularPrice,
+                            email: email,
+                            navigator: navigator,
+                            companyId: activity.item0.companyId,
+                            terminalKey: activity.item1.item2.key,
+                            terminalPass: activity.item1.item2.pass,
+                            userPhone: user.phone,
+                            canContinue: () => timer.isActive,
+                            recordId: record.id,
+                          );
+                          if (!payment.item0 || payment.item1 == null) {
+                            await cancelBook(
+                              discount: useDiscount,
+                              recordDate: record.date,
+                              recordId: record.id,
+                              userPhone: user.phone,
+                            );
+                            throw BookException(
+                              BookExceptionType.payment,
+                              record,
+                            );
+                          }
+
+                          await _smStretching.editPayment(
+                            acquiring: payment.item1!,
+                            serverTime: serverTime,
+                            documentId: record.documents.first.id,
+                            isAbonement: false,
+                          );
+
+                          if (await update(
+                            ActivityPaidBy.regular,
+                            orderId: int.tryParse(
+                              payment.item1?.item0.orderId ?? '',
+                            ),
+                          )) {
+                            successBook = true;
+                            await navigator.maybePop(
+                              useDiscount
+                                  ? BookResult.discount
+                                  : BookResult.regular,
+                            );
+                          }
+                        },
+                      ),
+                    ),
+                  ]);
                 },
               ),
             );
@@ -864,6 +903,16 @@ class BusinessLogic {
           retry = _retry ?? false;
         }
       }
+    }
+    if (acquiring?.item0.amount != null && (returnValue ?? false)) {
+      await analytics.logEvent(
+        name: FAKeys.purchase,
+        parameters: <String, String>{
+          'value': (acquiring!.item0.amount! ~/ 100).toString(),
+          'currency': 'RUB',
+          'TRANSACTION_ID': acquiring.item0.orderId,
+        },
+      );
     }
     return Tuple2(returnValue ?? false, acquiring);
   }

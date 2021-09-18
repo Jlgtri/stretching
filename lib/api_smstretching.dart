@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stretching/api_yclients.dart';
+import 'package:stretching/const.dart';
 import 'package:stretching/models_smstretching/sm_abonement_model.dart';
 import 'package:stretching/models_smstretching/sm_activity_price_model.dart';
 import 'package:stretching/models_smstretching/sm_advertisment_model.dart';
@@ -693,7 +694,7 @@ class ReviewRecordsEventHandler extends WidgetsBindingObserver {
       final recordTime = userRecord.date.add(userRecord.length);
       if (!userRecord.deleted &&
           currentTime.isAfter(recordTime) &&
-          currentTime.difference(recordTime) < const Duration(days: 1) &&
+          currentTime.difference(recordTime) < maxReviewTimeout &&
           !pushedRecordsNotifier.state.contains(userRecord)) {
         await pushedRecordsNotifier.add(userRecord);
         final records = await smStretching.getRecords(

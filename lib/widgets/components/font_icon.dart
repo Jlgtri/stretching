@@ -354,6 +354,7 @@ class FontIconBackButton extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 4),
         ),
       ),
+      splashMultiplier: 3 / 5,
       color: color,
       tooltip: MaterialLocalizations.of(context).backButtonTooltip,
       onPressed: onPressed ?? Navigator.of(context).maybePop,

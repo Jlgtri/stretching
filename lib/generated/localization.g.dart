@@ -28,6 +28,7 @@ abstract class TR {
   static const String tooltips = 'tooltips';
 
   static const String miscCurrency = 'misc.currency';
+  static const String miscVersion = 'misc.version';
   static const String miscEmpty = 'misc.empty';
   static const String miscExtend = 'misc.extend';
 

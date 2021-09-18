@@ -132,6 +132,7 @@ class ProfileScreen extends HookConsumerWidget {
     Future<void> buyAbonement(
       final String email,
       final SMAbonementModel? abonement,
+      final CombinedStudioModel? studio,
     ) async {
       if (abonement == null) {
         return;
@@ -300,12 +301,15 @@ class ProfileScreen extends HookConsumerWidget {
                       ),
                     ),
                   ] else
-                    BuyAbonementCard(
-                      onPressed: () => showPaymentPickerBottomSheet(
-                        context,
-                        PaymentPickerScreen(
-                          onPayment: buyAbonement,
-                          smAbonements: possibleAbonements.keys,
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: BuyAbonementCard(
+                        onPressed: () => showPaymentPickerBottomSheet(
+                          context,
+                          PaymentPickerScreen(
+                            onPayment: buyAbonement,
+                            smAbonements: possibleAbonements.keys,
+                          ),
                         ),
                       ),
                     ),

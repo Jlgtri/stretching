@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "469216172742",
+    "project_id": "smstretching-studios",
+    "storage_bucket": "smstretching-studios.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:469216172742:android:dcb5beced23017bb44d5c7",
+        "android_client_info": {
+          "package_name": "ru.smstretching.appstudio"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "469216172742-uu2cv183nlr5558dbmhqfm1mbnpn0tf4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCeML3Xtcykph1IDFJkeSUSR9bfo_B4n5U"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "469216172742-uu2cv183nlr5558dbmhqfm1mbnpn0tf4.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "469216172742-s5b5op0enc37huptih27h5cep9njnh9v.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.itrack.smstretching499566",
+                "app_store_id": "1392690370"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

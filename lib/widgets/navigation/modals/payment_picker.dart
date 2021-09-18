@@ -11,6 +11,7 @@ import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/models_smstretching/sm_abonement_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
+import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/json_converters.dart';
@@ -37,6 +38,7 @@ final StateNotifierProvider<SaveToHiveNotifier<String, String>, String>
 typedef OnPayment = FutureOr<void> Function(
   String email,
   SMAbonementModel? abonement,
+  CombinedStudioModel? studio,
 );
 
 /// Shows a bottom sheet for picking a payment.
@@ -222,6 +224,31 @@ class PaymentPickerScreen extends HookConsumerWidget {
       },
       orElse: () => null,
     );
+
+    useFuture(
+      useMemoized(
+        () async {
+          if (abonement != null) {
+            await analytics.logEvent(
+              name: FAKeys.abonementSelect,
+              parameters: <String, String>{
+                'price': abonement.cost.toString(),
+                'currency': 'RUB',
+                'train_qnt': abonement.count.toString(),
+                'class_start': abonement.time ? 'till_16.45' : 'any',
+                'studio':
+                    abonement.service != null && pickedStudio.value != null
+                        ? translit(pickedStudio.value!.item1.studioName)
+                        : 'all',
+                'payment_method_type': 'credit_card',
+              },
+            );
+          }
+        },
+        [abonement],
+      ),
+    );
+
     return FocusWrapper(
       unfocus: false,
       unfocussableKeys: <GlobalKey>[emailKey, buttonKey],
@@ -533,6 +560,7 @@ class PaymentPickerScreen extends HookConsumerWidget {
                         await onPayment(
                           emailController.text,
                           payment == null ? abonement : null,
+                          pickedStudio.value,
                         );
                         if (isMounted()) {
                           isLoading.value = false;

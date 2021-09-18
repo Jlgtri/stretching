@@ -1,3 +1,4 @@
+import 'package:animations/animations.dart';
 import 'package:catcher/catcher.dart';
 import 'package:catcher/model/platform_type.dart';
 import 'package:darq/darq.dart';
@@ -13,6 +14,7 @@ import 'package:stretching/style.dart';
 import 'package:stretching/widgets/appbars.dart';
 import 'package:stretching/widgets/components/emoji_text.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
+import 'package:stretching/widgets/navigation/screens/profile/contact_screen.dart';
 
 /// The interceptor that completes with internet connection if any.
 class ConnectionInterceptor extends Interceptor {
@@ -71,43 +73,56 @@ class ErrorScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    return Scaffold(
-      body: Align(
-        child: SingleChildScrollView(
-          primary: true,
-          padding: const EdgeInsets.symmetric(horizontal: 45),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              EmojiText('😣', style: const TextStyle(fontSize: 32)),
-              const SizedBox(height: 14),
-              Text(TR.errorTitle.tr(), style: theme.textTheme.headline2),
-              const SizedBox(height: 40),
-              Text.rich(
-                TextSpan(
-                  text: TR.errorDescription.tr(),
-                  children: <InlineSpan>[
+    return OpenContainer<void>(
+      tappable: false,
+      openElevation: 0,
+      closedElevation: 0,
+      openColor: Colors.transparent,
+      closedColor: Colors.transparent,
+      middleColor: Colors.transparent,
+      transitionDuration: const Duration(milliseconds: 500),
+      openBuilder: (final context, final action) =>
+          ContactScreen(onBackButton: action),
+      closedBuilder: (final context, final action) {
+        return Scaffold(
+          body: Align(
+            child: SingleChildScrollView(
+              primary: true,
+              padding: const EdgeInsets.symmetric(horizontal: 45),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  EmojiText('😣', style: const TextStyle(fontSize: 32)),
+                  const SizedBox(height: 14),
+                  Text(TR.errorTitle.tr(), style: theme.textTheme.headline2),
+                  const SizedBox(height: 40),
+                  Text.rich(
                     TextSpan(
-                      text: TR.errorDescriptionBold.tr(),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    )
-                  ],
-                ),
-                textAlign: TextAlign.center,
+                      text: TR.errorDescription.tr(),
+                      children: <InlineSpan>[
+                        TextSpan(
+                          text: TR.errorDescriptionBold.tr(),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        )
+                      ],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 50),
+                  SizedBox(
+                    width: 200,
+                    child: TextButton(
+                      style: TextButtonStyle.light.fromTheme(theme),
+                      onPressed: action,
+                      child: Text(TR.errorButton.tr()),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 50),
-              SizedBox(
-                width: 200,
-                child: TextButton(
-                  style: TextButtonStyle.light.fromTheme(theme),
-                  onPressed: null, //() => reportMode.onActionConfirmed(report),
-                  child: Text(TR.errorButton.tr()),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

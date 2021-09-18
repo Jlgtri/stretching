@@ -33,6 +33,7 @@ import 'package:stretching/models_yclients/activity_model.dart';
 import 'package:stretching/models_yclients/company_model.dart';
 import 'package:stretching/models_yclients/user_record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
+import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/providers/user_provider.dart';
@@ -301,6 +302,17 @@ class ActivitiesScreen extends HookConsumerWidget {
             });
       }),
     );
+    final activitiesDays = ref.watch(
+      scheduleProvider.select(
+        (final activities) {
+          return (activities.map((final activity) => activity.date))
+              .distinct((final date) => date.day)
+              .where((final date) {
+            return date.difference(now).inDays < DateTime.daysPerWeek * 2;
+          }).toSet();
+        },
+      ),
+    );
     // CustomDraggableScrollBar(
     //   itemsCount: activities.length,
     //   visible: activities.length > 4,
@@ -522,9 +534,10 @@ class ActivitiesScreen extends HookConsumerWidget {
                                 Expanded(
                                   child: TextField(
                                     readOnly: true,
-                                    onTap: () => Navigator.of(context,
-                                            rootNavigator: true)
-                                        .push<void>(
+                                    onTap: () => Navigator.of(
+                                      context,
+                                      rootNavigator: true,
+                                    ).push<void>(
                                       MaterialPageRoute(
                                         builder: (final context) =>
                                             const ActivitiesSearch(),
@@ -657,10 +670,10 @@ class ActivitiesScreen extends HookConsumerWidget {
                           shrinkWrap: true,
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 8),
-                          itemCount: DateTime.daysPerWeek * 2,
+                          itemCount: activitiesDays.length,
                           itemExtent: 56,
                           itemBuilder: (final context, final index) {
-                            final date = now.add(Duration(days: index));
+                            final date = activitiesDays.elementAt(index);
                             return ActivitiesDateFilterCard(
                               date,
                               selected: day.year == date.year &&
@@ -796,9 +809,27 @@ class ActivityCardContainer extends HookConsumerWidget {
     final isLoading = useRef<bool>(false);
     final isMounted = useIsMounted();
 
-    Future<void> cancelBook(final UserRecordModel appliedRecord) async {
+    Future<void> logFirebase(final String name) {
+      return analytics.logEvent(
+        name: name,
+        parameters: <String, String>{
+          'studio': translit(activity.item1.item1.studioName),
+          'class': activity.item0.service.title,
+          'trainer': translit(activity.item2.item1.trainerName),
+          'date_time': faTime(ref.read(smServerTimeProvider)),
+        },
+      );
+    }
+
+    Future<void> cancelBook(
+      final UserRecordModel appliedRecord, {
+      required final bool fullscreen,
+    }) async {
       isLoading.value = true;
       try {
+        await logFirebase(
+          fullscreen ? FAKeys.cancelBookScreen : FAKeys.cancelBook,
+        );
         final smRecord = await (ref.read(businessLogicProvider)).cancelBook(
           recordId: appliedRecord.id,
           recordDate: appliedRecord.date,
@@ -873,9 +904,10 @@ class ActivityCardContainer extends HookConsumerWidget {
       }
     }
 
-    Future<void> book() async {
+    Future<void> book({required final bool fullscreen}) async {
       isLoading.value = true;
       try {
+        await logFirebase(fullscreen ? FAKeys.bookScreen : FAKeys.book);
         final businessLogic = ref.read(businessLogicProvider);
         final result = await businessLogic.book(
           timeout: bookTimeout,
@@ -940,9 +972,10 @@ class ActivityCardContainer extends HookConsumerWidget {
       }
     }
 
-    Future<void> addToWishList() async {
+    Future<void> addToWishList({required final bool fullscreen}) async {
       isLoading.value = true;
       try {
+        await logFirebase(fullscreen ? FAKeys.wishlistScreen : FAKeys.wishlist);
         final user = ref.read(userProvider)!;
         final userWishlist = await smStretching.getWishlist(user.phone);
         final alreadyApplied = userWishlist.any((final userWishlist) {
@@ -959,6 +992,7 @@ class ActivityCardContainer extends HookConsumerWidget {
             ),
           );
         }
+
         await navigator.push(
           MaterialPageRoute<void>(
             builder: (final context) => ResultBookScreen(
@@ -1006,10 +1040,10 @@ class ActivityCardContainer extends HookConsumerWidget {
                 : appliedRecord != null
                     ? timeLeftBeforeStart.inHours < 12
                         ? null
-                        : () => cancelBook(appliedRecord)
+                        : () => cancelBook(appliedRecord, fullscreen: false)
                     : activity.item0.recordsLeft <= 0
-                        ? addToWishList
-                        : book
+                        ? () => addToWishList(fullscreen: false)
+                        : () => book(fullscreen: false)
             : null,
       ),
       openBuilder: (final context, final action) => ActivityScreenCard(
@@ -1024,10 +1058,10 @@ class ActivityCardContainer extends HookConsumerWidget {
                 : appliedRecord != null
                     ? timeLeftBeforeStart.inHours < 12
                         ? null
-                        : () => cancelBook(appliedRecord)
+                        : () => cancelBook(appliedRecord, fullscreen: true)
                     : activity.item0.recordsLeft <= 0
-                        ? addToWishList
-                        : book
+                        ? () => addToWishList(fullscreen: true)
+                        : () => book(fullscreen: true)
             : null,
       ),
     );
@@ -1099,7 +1133,18 @@ class ActivityCard extends ConsumerWidget {
           color: theme.colorScheme.surface,
           borderRadius: const BorderRadius.all(Radius.circular(4)),
           child: InkWell(
-            onTap: onOpenButtonPressed,
+            onTap: () async {
+              onOpenButtonPressed();
+              await analytics.logEvent(
+                name: onMain ? FAKeys.upcomingRecordClick : FAKeys.activity,
+                parameters: <String, String>{
+                  'trainer': translit(activity.item2.item1.trainerName),
+                  'studio': translit(activity.item1.item1.studioName),
+                  'class': activity.item0.service.title,
+                  'date_time': faTime(activity.item0.date),
+                },
+              );
+            },
             borderRadius: const BorderRadius.all(Radius.circular(4)),
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -1107,6 +1152,7 @@ class ActivityCard extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
                   Expanded(
+                    flex: onMain ? 2 : 2,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -1172,7 +1218,7 @@ class ActivityCard extends ConsumerWidget {
                     ),
                   ),
                   Expanded(
-                    flex: 2,
+                    flex: onMain ? 5 : 5,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1255,6 +1301,7 @@ class ActivityCard extends ConsumerWidget {
                     ),
                   ),
                   Expanded(
+                    flex: onMain ? 3 : 3,
                     child: Column(
                       mainAxisAlignment: onMain
                           ? MainAxisAlignment.spaceBetween
@@ -1280,7 +1327,8 @@ class ActivityCard extends ConsumerWidget {
                                 children: <Widget>[
                                   /// Activity Date
                                   Container(
-                                    width: 90,
+                                    width: isToday ? 70 : 90,
+                                    alignment: Alignment.center,
                                     margin: const EdgeInsets.only(bottom: 10),
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 6,
@@ -1328,24 +1376,34 @@ class ActivityCard extends ConsumerWidget {
                           ),
 
                         /// If it is too late too cancel the activity.
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            if (appliedRecord != null &&
-                                timeLeftBeforeStart.inHours < 12) ...[
-                              EmojiText('⏱'),
+                        if (appliedRecord != null &&
+                            timeLeftBeforeStart.inHours < 12)
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              if (!onMain)
+                                EmojiText(
+                                  '⏱',
+                                  style: TextStyle(color: theme.hintColor),
+                                ),
                               Text(
                                 TR.activities12h.tr(),
                                 textAlign: TextAlign.center,
                                 style: theme.textTheme.overline,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textScaleFactor: 1,
                               ),
-                            ] else if (!onMain)
-                              ActivityCardRecordsCount(
-                                activity.item0.recordsLeft,
-                                showDefault: false,
-                              ),
-                          ],
-                        ),
+                            ],
+                          )
+                        else if (!onMain)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 32),
+                            child: ActivityCardRecordsCount(
+                              activity.item0.recordsLeft,
+                              showDefault: false,
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -1498,7 +1556,7 @@ class ActivityScreenCard extends ConsumerWidget {
       subtitle: formatSubTitle(),
       secondSubtitle: activity.item1.item1.studioAddress,
       trailing: Column(
-        children: [
+        children: <Widget>[
           ConstrainedBox(
             constraints: const BoxConstraints.tightFor(width: 54),
             child: ActivityCardRecordsCount(activity.item0.recordsLeft),
@@ -1721,7 +1779,6 @@ class ActivitiesDateFilterCard extends ConsumerWidget {
                 DateFormat.E(ref.watch(localeProvider).toString()).format(date),
                 style: theme.textTheme.overline?.copyWith(
                   color: selected ? theme.colorScheme.surface : theme.hintColor,
-                  letterSpacing: 1,
                 ),
               ),
 
@@ -1839,7 +1896,7 @@ class FiltersScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         // /// Studio Filter
         // Column(
@@ -1847,6 +1904,7 @@ class FiltersScreen extends ConsumerWidget {
         //   crossAxisAlignment: CrossAxisAlignment.stretch,
         //   children: <Widget>[
         //     Text(TR.miscFilterStudio.tr(), style: theme.textTheme.bodyText1),
+        //     const SizedBox(height: 8),
         //     Flexible(
         //       child: Consumer(
         //         builder: (final context, final ref, final child) {
@@ -1890,48 +1948,49 @@ class FiltersScreen extends ConsumerWidget {
         // ),
         // const SizedBox(height: 8),
 
-        /// Categories Filter
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(TR.miscFilterClass.tr(), style: theme.textTheme.bodyText1),
-            Flexible(
-              child: Wrap(
-                runSpacing: -4,
-                spacing: 16,
-                children: <Widget>[
-                  for (final category in ref.watch(smClassesGalleryProvider))
-                    Consumer(
-                      builder: (final context, final ref, final child) {
-                        return FilterButton(
-                          text: category.classesName,
-                          borderColor: Colors.grey.shade300,
-                          backgroundColor: theme.colorScheme.surface,
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          selected: ref.watch(
-                            activitiesCategoriesFilterProvider
-                                .select((final selectedCategories) {
-                              return selectedCategories.contains(category);
-                            }),
-                          ),
-                          onSelected: (final value) {
-                            final categoriesNotifier = ref.read(
-                              activitiesCategoriesFilterProvider.notifier,
-                            );
-                            value
-                                ? categoriesNotifier.add(category)
-                                : categoriesNotifier.remove(category);
-                          },
-                        );
-                      },
-                    )
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
+        // /// Categories Filter
+        // Column(
+        //   mainAxisSize: MainAxisSize.min,
+        //   crossAxisAlignment: CrossAxisAlignment.start,
+        //   children: <Widget>[
+        //     Text(TR.miscFilterClass.tr(), style: theme.textTheme.bodyText1),
+        //     const SizedBox(height: 8),
+        //     Flexible(
+        //       child: Wrap(
+        //         runSpacing: -4,
+        //         spacing: 16,
+        //         children: <Widget>[
+        //           for (final category in ref.watch(smClassesGalleryProvider))
+        //             Consumer(
+        //               builder: (final context, final ref, final child) {
+        //                 return FilterButton(
+        //                   text: category.classesName,
+        //                   borderColor: Colors.grey.shade300,
+        //                   backgroundColor: theme.colorScheme.surface,
+        //                   margin: const EdgeInsets.symmetric(vertical: 4),
+        //                   selected: ref.watch(
+        //                     activitiesCategoriesFilterProvider
+        //                         .select((final selectedCategories) {
+        //                       return selectedCategories.contains(category);
+        //                     }),
+        //                   ),
+        //                   onSelected: (final value) {
+        //                     final categoriesNotifier = ref.read(
+        //                       activitiesCategoriesFilterProvider.notifier,
+        //                     );
+        //                     value
+        //                         ? categoriesNotifier.add(category)
+        //                         : categoriesNotifier.remove(category);
+        //                   },
+        //                 );
+        //               },
+        //             )
+        //         ],
+        //       ),
+        //     ),
+        //   ],
+        // ),
+        // const SizedBox(height: 8),
 
         /// Time Filter
         Column(
@@ -1939,6 +1998,7 @@ class FiltersScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(TR.miscFilterTime.tr(), style: theme.textTheme.bodyText1),
+            const SizedBox(height: 8),
             Flexible(
               child: Wrap(
                 runSpacing: -4,
@@ -1983,6 +2043,7 @@ class FiltersScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(TR.miscFilterTrainer.tr(), style: theme.textTheme.bodyText1),
+            const SizedBox(height: 8),
             Flexible(
               child: Consumer(
                 builder: (final context, final ref, final child) {

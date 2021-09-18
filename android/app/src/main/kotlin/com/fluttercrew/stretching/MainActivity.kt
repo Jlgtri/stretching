@@ -1,4 +1,4 @@
-package com.fluttercrew.stretching
+package ru.smstretching.appstudio
 
 import io.flutter.embedding.android.FlutterActivity
 

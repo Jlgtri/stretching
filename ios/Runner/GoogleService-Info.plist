@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>469216172742-s5b5op0enc37huptih27h5cep9njnh9v.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.469216172742-s5b5op0enc37huptih27h5cep9njnh9v</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBabUCDEkLPVOAalmLcitJQ7l0aGTuGHLY</string>
+	<key>GCM_SENDER_ID</key>
+	<string>469216172742</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.itrack.smstretching499566</string>
+	<key>PROJECT_ID</key>
+	<string>smstretching-studios</string>
+	<key>STORAGE_BUCKET</key>
+	<string>smstretching-studios.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:469216172742:ios:6a6c15f02731f27944d5c7</string>
+</dict>
+</plist>
