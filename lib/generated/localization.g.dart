@@ -8,6 +8,12 @@ abstract class TR {
   static const String alertExitApprove = 'alert.exit.approve';
   static const String alertExitDeny = 'alert.exit.deny';
   static const String alertExit = 'alert.exit';
+
+  static const String alertPasteCodeTitle = 'alert.paste_code.title';
+  static const String alertPasteCodeBody = 'alert.paste_code.body';
+  static const String alertPasteCodeApprove = 'alert.paste_code.approve';
+  static const String alertPasteCodeDeny = 'alert.paste_code.deny';
+  static const String alertPasteCode = 'alert.paste_code';
   static const String alert = 'alert';
 
   static const String connectionErrorTitle = 'connection_error.title';

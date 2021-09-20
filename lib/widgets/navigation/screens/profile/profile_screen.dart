@@ -70,17 +70,19 @@ class ProfileScreen extends HookConsumerWidget {
         for (var index = 0; index < abonements.length; index++)
           AbonementCard(
             abonements.elementAt(index),
-            indicator: Align(
-              alignment: Alignment.bottomRight,
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 12, right: 24),
-                child: Text(
-                  '${index + 1} / ${abonements.length}',
-                  style: theme.textTheme.headline6
-                      ?.copyWith(color: theme.colorScheme.onPrimary),
-                ),
-              ),
-            ),
+            indicator: abonements.length > 1
+                ? Align(
+                    alignment: Alignment.bottomRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 12, right: 24),
+                      child: Text(
+                        '${index + 1} / ${abonements.length}',
+                        style: theme.textTheme.headline6
+                            ?.copyWith(color: theme.colorScheme.onPrimary),
+                      ),
+                    ),
+                  )
+                : null,
           )
       ];
     }
@@ -96,7 +98,7 @@ class ProfileScreen extends HookConsumerWidget {
           cardController.reset(cards: abonementsCards.value = createCards());
         }
       },
-      [abonements.length],
+      [abonements],
     );
 
     FutureOr<void> Function() action(final ProfileNavigationScreen screen) {
@@ -218,7 +220,6 @@ class ProfileScreen extends HookConsumerWidget {
                   await Future.wait(<Future<void>>[
                     ref.read(smUserDepositProvider.future),
                     ref.read(userAbonementsProvider.notifier).refresh(),
-                    ref.read(smAbonementsProvider.notifier).refresh(),
                     ref.read(smUserAbonementsProvider.notifier).refresh(),
                   ]);
                 } finally {
@@ -239,7 +240,7 @@ class ProfileScreen extends HookConsumerWidget {
                   if (abonementsCards.value.isNotEmpty) ...[
                     TCard(
                       lockYAxis: true,
-                      slideSpeed: 12,
+                      slideSpeed: abonementsCards.value.length == 1 ? 0 : 12,
                       size: const Size.fromHeight(100),
                       onEnd: () => cardController.forward(
                         direction: SwipDirection.Right,

@@ -109,13 +109,10 @@ class OptionalSaveToHiveNotifier<T extends Object?, S extends Object?>
 
   @override
   Future<void> save() async {
-    final state = this.state;
-    if (state != null) {
-      final savedData = converter.toJson(state);
-      if (savedData != null) {
-        await hive.put(saveName, savedData);
-      }
-    }
+    final savedData = converter.toJson(state);
+    savedData != null
+        ? await hive.put(saveName, savedData)
+        : await hive.delete(saveName);
   }
 
   @override

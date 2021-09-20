@@ -526,13 +526,13 @@ final StateNotifierProvider<ContentNotifier<SMUserAbonementModel>,
     saveName: 'smUserAbonements',
     converter: smUserAbonementConverter,
     refreshState: (final notifier) async {
-      final user = ref.read(userProvider);
-      if (user == null) {
+      final userPhone = ref.read(userProvider)?.phone;
+      if (userPhone == null) {
         return const Iterable<SMUserAbonementModel>.empty();
       }
       final response = await smStretching._dio.post<String>(
         '$smStretchingApiUrl/goods/$smStretchingUrlToken/get_all_user',
-        data: <String, Object?>{'user_phone': user.phone},
+        data: <String, Object?>{'user_phone': userPhone},
       );
       final dynamic data = json.decode(response.data!);
       if (data is! Iterable) {
@@ -543,7 +543,8 @@ final StateNotifierProvider<ContentNotifier<SMUserAbonementModel>,
           .map((final map) => SMUserAbonementModel.fromMap(map));
     },
   );
-  ref.listen<bool>(unauthorizedProvider, (final unauthorized) async {
+  ref.listen<bool>(userProvider.select((final user) => user == null),
+      (final unauthorized) async {
     unauthorized ? await notifier.clear() : await notifier.refresh();
   });
   return notifier;

@@ -72,7 +72,8 @@ class HomeScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final unauthorized = ref.watch(unauthorizedProvider);
+    final unauthorized =
+        ref.watch(userProvider.select((final user) => user == null));
 
     final smAds = ref.watch(smAdvertismentsProvider);
     final smStories = ref.watch(smStoriesProvider).toList();
@@ -134,76 +135,76 @@ class HomeScreen extends HookConsumerWidget {
             SliverPadding(
               padding: const EdgeInsets.all(16).copyWith(bottom: 0),
               sliver: SliverToBoxAdapter(
-                child: OpenContainer<void>(
-                  tappable: false,
-                  openElevation: 0,
-                  closedElevation: 0,
-                  openColor: Colors.transparent,
-                  closedColor: Colors.transparent,
-                  middleColor: Colors.transparent,
-                  useRootNavigator: true,
-                  transitionDuration: const Duration(milliseconds: 500),
-                  openBuilder: (final context, final action) {
-                    return Scaffold(
-                      extendBodyBehindAppBar: true,
-                      appBar: mainAppBar(
-                        Theme.of(context),
-                        leading: const FontIconBackButton(),
+                child: Container(
+                  decoration: const BoxDecoration(
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        offset: Offset(0, 4),
+                        blurRadius: 13,
+                        color: Colors.black12,
                       ),
-                      body: WebView(
-                        initialUrl: smAds.last.advLink,
-                        javascriptMode: JavascriptMode.unrestricted,
-                        navigationDelegate: (final navigation) {
-                          return navigation.url.startsWith(smStretchingUrl)
-                              ? NavigationDecision.navigate
-                              : NavigationDecision.prevent;
-                        },
-                      ),
-                    );
-                  },
-                  closedBuilder: (final context, final action) {
-                    return ClipRRect(
-                      borderRadius: const BorderRadius.all(Radius.circular(12)),
-                      child: CachedNetworkImage(
-                        fit: BoxFit.fitWidth,
-                        imageUrl: smAds.last.advImage,
-                        imageBuilder: (final context, final imageProvider) {
-                          return ElevatedButton(
-                            style: ButtonStyle(
-                              padding:
-                                  MaterialStateProperty.all(EdgeInsets.zero),
-                              backgroundColor:
-                                  MaterialStateProperty.all(Colors.transparent),
-                              shape: MaterialStateProperty.all(
-                                const RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.all(
-                                    Radius.circular(16),
+                    ],
+                  ),
+                  child: OpenContainer<void>(
+                    tappable: false,
+                    openElevation: 0,
+                    closedElevation: 0,
+                    openColor: Colors.transparent,
+                    closedColor: Colors.transparent,
+                    middleColor: Colors.transparent,
+                    useRootNavigator: true,
+                    transitionDuration: const Duration(milliseconds: 500),
+                    openBuilder: (final context, final action) {
+                      return Scaffold(
+                        extendBodyBehindAppBar: true,
+                        appBar: mainAppBar(
+                          Theme.of(context),
+                          leading: const FontIconBackButton(),
+                        ),
+                        body: WebView(
+                          initialUrl: smAds.last.advLink,
+                          javascriptMode: JavascriptMode.unrestricted,
+                          navigationDelegate: (final navigation) {
+                            return navigation.url.startsWith(smStretchingUrl)
+                                ? NavigationDecision.navigate
+                                : NavigationDecision.prevent;
+                          },
+                        ),
+                      );
+                    },
+                    closedBuilder: (final context, final action) {
+                      return ClipRRect(
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(12)),
+                        child: InkWell(
+                          overlayColor:
+                              MaterialStateProperty.all(Colors.black12),
+                          highlightColor: Colors.black12,
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(12)),
+                          onTap: action,
+                          child: CachedNetworkImage(
+                            height: 100,
+                            fit: BoxFit.fitWidth,
+                            imageUrl: smAds.last.advImage,
+                            imageBuilder: (final context, final imageProvider) {
+                              return Ink(
+                                decoration: BoxDecoration(
+                                  borderRadius: const BorderRadius.all(
+                                    Radius.circular(12),
+                                  ),
+                                  image: DecorationImage(
+                                    fit: BoxFit.fitWidth,
+                                    image: imageProvider,
                                   ),
                                 ),
-                              ),
-                              overlayColor: MaterialStateProperty.all(
-                                Colors.black.withOpacity(1 / 10),
-                              ),
-                              elevation: MaterialStateProperty.all(8),
-                              shadowColor: MaterialStateProperty.all(
-                                Colors.black.withOpacity(1 / 2),
-                              ),
-                            ),
-                            onPressed: action,
-                            child: Ink(
-                              height: 100,
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                  fit: BoxFit.fitWidth,
-                                  image: imageProvider,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  },
+                              );
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
@@ -398,7 +399,7 @@ class StoryCardScreen extends HookConsumerWidget {
                 borderRadius: BorderRadius.all(Radius.circular(16)),
               ),
             ),
-            elevation: MaterialStateProperty.all(4),
+            elevation: MaterialStateProperty.all(2.5),
           ),
           child: Ink(
             decoration: BoxDecoration(

@@ -397,7 +397,7 @@ class YClientsAPI {
         ]
       },
     );
-    return (response.data!.data! as Iterable)
+    return (response.data!.data as Iterable? ?? const Iterable<Object>.empty())
         .cast<Map<String, Object?>>()
         .map((final map) => ClientModel.fromMap(map));
   }
@@ -415,7 +415,7 @@ class YClientsAPI {
       '$yClientsUrl/clients/$companyId',
       data: <String, Object?>{
         'phone': userPhone,
-        if (name.isNotEmpty) 'name': name,
+        'name': name.isNotEmpty ? name : userPhone,
         if (email.isNotEmpty) 'email': email,
       },
       options: Options(
@@ -814,7 +814,7 @@ final StateNotifierProvider<ContentNotifier<UserAbonementModel>,
     saveName: 'userAbonements',
     converter: abonementConverter,
     refreshState: (final notifier) async {
-      if (ref.read(unauthorizedProvider)) {
+      if (ref.read(userProvider) == null) {
         return const Iterable<UserAbonementModel>.empty();
       }
       final userAbonements = await (ref.read(yClientsProvider))
@@ -830,7 +830,8 @@ final StateNotifierProvider<ContentNotifier<UserAbonementModel>,
       return userAbonements.isEmpty ? null : userAbonements;
     },
   );
-  ref.listen<bool>(unauthorizedProvider, (final unauthorized) async {
+  ref.listen<bool>(userProvider.select((final user) => user == null),
+      (final unauthorized) async {
     unauthorized ? await notifier.clear() : await notifier.refresh();
   });
   return notifier;
@@ -848,7 +849,7 @@ final StateNotifierProvider<ContentNotifier<UserRecordModel>,
     saveName: 'userRecords',
     converter: recordConverter,
     refreshState: (final notifier) async {
-      if (ref.read(unauthorizedProvider)) {
+      if (ref.read(userProvider) == null) {
         return const Iterable<UserRecordModel>.empty();
       }
       final userRecords = await (ref.read(yClientsProvider))
@@ -864,7 +865,8 @@ final StateNotifierProvider<ContentNotifier<UserRecordModel>,
       return userRecords.isEmpty ? null : userRecords;
     },
   );
-  ref.listen<bool>(unauthorizedProvider, (final unauthorized) async {
+  ref.listen<bool>(userProvider.select((final user) => user == null),
+      (final unauthorized) async {
     unauthorized ? await notifier.clear() : await notifier.refresh();
   });
   return notifier;

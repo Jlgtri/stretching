@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui';
 
 import 'package:animations/animations.dart';
 import 'package:badges/badges.dart';
@@ -21,6 +22,7 @@ import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/business_logic.dart';
 import 'package:stretching/const.dart';
+import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/main.dart';
@@ -182,7 +184,18 @@ final StateNotifierProvider<SaveToHiveIterableNotifier<ActivityTime, String>,
 
 /// The current selected day of activities.
 final StateProvider<DateTime> activitiesDayProvider =
-    StateProvider<DateTime>((final ref) => DateTime.now());
+    StateProvider<DateTime>((final ref) {
+  final now = ref.read(currentTimeProvider).when(
+        data: (final currentTime) => currentTime,
+        loading: () => DateTime.now(),
+        error: (final e, final st) => DateTime.now(),
+      );
+  final activities =
+      ref.read(combinedActivitiesProvider).where((final activity) {
+    return activity.item0.date.isAfter(now);
+  });
+  return activities.isNotEmpty ? activities.first.item0.date : DateTime.now();
+});
 
 /// The provider of search query on [ActivitiesScreen].
 final StateProvider<String> activitiesSearchProvider =
@@ -216,7 +229,15 @@ final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
   final categories = ref.watch(activitiesCategoriesFilterProvider);
   final studios = ref.watch(activitiesStudiosFilterProvider);
   final trainers = ref.watch(activitiesTrainersFilterProvider);
-  final now = DateTime.now();
+  final now = ref.watch(
+    currentTimeProvider.select((final currentTime) {
+      return currentTime.when(
+        data: (final currentTime) => currentTime,
+        loading: () => DateTime.now(),
+        error: (final e, final st) => DateTime.now(),
+      );
+    }),
+  );
   return ref.watch(
     /// First of all, checks if any activities are present.
     /// Then, applies time, studios, trainers and classes filters.
@@ -242,6 +263,59 @@ final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
   );
 });
 
+/// Periodic provider of the current time.
+final StreamProvider<DateTime> currentTimeProvider =
+    StreamProvider<DateTime>((final ref) {
+  return Stream.periodic(
+    const Duration(seconds: 10),
+    (final index) => DateTime.now(),
+  );
+});
+
+/// The provider of the current days of the [scheduleProvider].
+final Provider<Iterable<DateTime>> activitiesDaysProvider =
+    Provider<Iterable<DateTime>>((final ref) {
+  Iterable<DateTime> result([final DateTime? now]) {
+    return ref.watch(
+      scheduleProvider.select(
+        (final activities) {
+          return (activities.map((final activity) => activity.date))
+              .distinct((final date) => date.day)
+              .where((final date) {
+            return date.difference(now ?? DateTime.now()).inDays <
+                DateTime.daysPerWeek * 2;
+          }).toSet();
+        },
+      ),
+    );
+  }
+
+  return (ref.watch(currentTimeProvider)).when(
+    data: result,
+    loading: result,
+    error: (final e, final st) => result(),
+  );
+});
+
+/// If the activities are present for the current selected day.
+final Provider<bool> areActivitiesPresentProvider = Provider<bool>((final ref) {
+  final day = ref.watch(activitiesDayProvider).state;
+  return ref.watch(
+    scheduleProvider.select((final activities) {
+      final todayActivities = activities.where((final activity) {
+        return activity.date.year == day.year &&
+            activity.date.month == day.month &&
+            activity.date.day == day.day;
+      });
+      return todayActivities.isNotEmpty;
+      //  &&
+      //     todayActivities.any((final activity) {
+      //       return activity.date.isAfter(now);
+      //     });
+    }),
+  );
+});
+
 /// The screen for the [NavigationScreen.trainers].
 class ActivitiesScreen extends HookConsumerWidget {
   /// The screen for the [NavigationScreen.trainers].
@@ -250,69 +324,15 @@ class ActivitiesScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-
     final dayController = useScrollController();
     final refreshController = useMemoized(() => RefreshController());
-
-    final filtersCount = ref.watch(activitiesFiltersCountProvider);
     final activities = ref.watch(filteredActivitiesProvider);
-    final selectedStudios = ref.watch(activitiesStudiosFilterProvider);
-    final studios = ref.watch(combinedStudiosProvider);
-    final day = ref.watch(activitiesDayProvider).state;
-    final tempNowStream = useStream(
-      Stream.periodic(
-        const Duration(seconds: 10),
-        (final index) => DateTime.now(),
-      ),
-    );
-    final tempNow = tempNowStream.data ?? DateTime.now();
-    final firstNow = useRef(tempNow);
-    final now = useMemoized(() {
-      if (day == firstNow.value) {
-        ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
-          ref.read(activitiesDayProvider).state = tempNow;
-        });
-      }
-      return firstNow.value = tempNow;
-    }, <Object>[
-      tempNow.year != firstNow.value.year ||
-          tempNow.month != firstNow.value.month ||
-          tempNow.day != firstNow.value.day,
-      activities.where((final activity) {
-        return activity.item0.date.difference(tempNow).inHours > 12;
-      })
-    ]);
-    // final activeDayKey = useMemoized(() => GlobalKey(), [day]);
-    // ref.read(widgetsBindingProvider).addPostFrameCallback((final _) async {
-    //   final context = activeDayKey.currentContext;
-    //   if (context != null) {
-    //     await Scrollable.ensureVisible(context);
-    //   }
-    // });
-    final areActivitiesPresent = ref.watch(
-      scheduleProvider.select((final activities) {
-        final todayActivities = activities.where((final activity) {
-          return activity.date.year == day.year &&
-              activity.date.month == day.month &&
-              activity.date.day == day.day;
-        });
-        return todayActivities.isNotEmpty &&
-            todayActivities.any((final activity) {
-              return activity.date.isAfter(now);
-            });
-      }),
-    );
-    final activitiesDays = ref.watch(
-      scheduleProvider.select(
-        (final activities) {
-          return (activities.map((final activity) => activity.date))
-              .distinct((final date) => date.day)
-              .where((final date) {
-            return date.difference(now).inDays < DateTime.daysPerWeek * 2;
-          }).toSet();
-        },
-      ),
-    );
+
+    useMemoized(() {
+      ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
+        ref.read(activitiesDayProvider).state = activities.first.item0.date;
+      });
+    });
     // CustomDraggableScrollBar(
     //   itemsCount: activities.length,
     //   visible: activities.length > 4,
@@ -334,161 +354,8 @@ class ActivitiesScreen extends HookConsumerWidget {
     return Column(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: <Widget>[
-        // /// Dropdown
-        // Container(
-        //   color: theme.appBarTheme.backgroundColor,
-        //   width: double.infinity,
-        //   alignment: Alignment.center,
-        //   padding: const EdgeInsets.only(bottom: 14),
-        //   child: FittedBox(
-        //     fit: BoxFit.fitHeight,
-        //     child: DropdownButtonHideUnderline(
-        //       child: ButtonTheme(
-        //         alignedDropdown: true,
-        //         child: DropdownButton<CombinedStudioModel?>(
-        //           isDense: true,
-        //           icon: Padding(
-        //             padding: const EdgeInsets.only(left: 6),
-        //             child: FontIcon(
-        //               FontIconData(
-        //                 IconsCG.angleDown,
-        //                 height: 10,
-        //                 color: theme.hintColor,
-        //               ),
-        //             ),
-        //           ),
-        //           style: theme.textTheme.bodyText1,
-        //           value: selectedStudios.length == 1
-        //               ? selectedStudios.single
-        //               : null,
-        //           underline: const SizedBox.shrink(),
-        //           borderRadius: const BorderRadius.all(Radius.circular(8)),
-        //           selectedItemBuilder: (final context) => <Widget>[
-        //             Text(
-        //               selectedStudios.isNotEmpty &&
-        //                       selectedStudios.length < studios.length
-        //                   ? TR.activitiesFewStudios.tr()
-        //                   : TR.activitiesAllStudios.tr(),
-        //               style: theme.textTheme.bodyText1?.copyWith(
-        //                 color: theme.appBarTheme.foregroundColor,
-        //               ),
-        //               maxLines: 1,
-        //               overflow: TextOverflow.ellipsis,
-        //             ),
-        //             for (final studio in studios)
-        //               Text(
-        //                 studio.item1.studioName,
-        //                 style: theme.textTheme.bodyText1?.copyWith(
-        //                   color: theme.appBarTheme.foregroundColor,
-        //                 ),
-        //                 maxLines: 1,
-        //                 overflow: TextOverflow.ellipsis,
-        //               ),
-        //           ],
-        //           items: <DropdownMenuItem<CombinedStudioModel?>>[
-        //             DropdownMenuItem<CombinedStudioModel?>(
-        //               child: Text(
-        //                 TR.activitiesAllStudios.tr(),
-        //                 style: theme.textTheme.bodyText1?.copyWith(
-        //                   color: theme.appBarTheme.backgroundColor,
-        //                 ),
-        //                 maxLines: 1,
-        //                 overflow: TextOverflow.ellipsis,
-        //               ),
-        //             ),
-        //             for (final studio in studios)
-        //               DropdownMenuItem<CombinedStudioModel>(
-        //                 value: studio,
-        //                 child: Text(
-        //                   studio.item1.studioName,
-        //                   maxLines: 1,
-        //                   overflow: TextOverflow.ellipsis,
-        //                 ),
-        //               ),
-        //           ],
-        //           onChanged: (final value) async {
-        //             final filteredStudiosNotifier =
-        //                 ref.read(activitiesStudiosFilterProvider.notifier);
-        //             if (value != null) {
-        //               await filteredStudiosNotifier.setStateAsync([value]);
-        //             } else {
-        //               await filteredStudiosNotifier.clear();
-        //             }
-        //           },
-        //         ),
-        //       ),
-        //     ),
-        //   ),
-        // ),
-
         /// Dropdown
-        Container(
-          color: theme.appBarTheme.backgroundColor,
-          width: double.infinity,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.only(bottom: 4),
-          child: DropdownBelow<CombinedStudioModel?>(
-            isDense: true,
-            elevation: 12,
-            boxHeight: 30,
-            boxWidth: 160,
-            itemWidth: 160,
-            icon: FontIcon(
-              FontIconData(
-                IconsCG.angleDown,
-                height: 10,
-                color: theme.hintColor,
-              ),
-            ),
-            boxPadding: const EdgeInsets.only(bottom: 8),
-            boxDecoration: const BoxDecoration(
-              borderRadius: BorderRadius.all(Radius.circular(8)),
-            ),
-            itemTextstyle: theme.textTheme.bodyText1,
-            boxTextstyle: theme.textTheme.bodyText1?.copyWith(
-              color: theme.appBarTheme.foregroundColor,
-            ),
-            hint: Align(
-              child: Text(
-                TR.activitiesAllStudios.tr(),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            value: selectedStudios.length == 1 ? selectedStudios.single : null,
-            items: <DropdownMenuItem<CombinedStudioModel?>>[
-              DropdownMenuItem<CombinedStudioModel?>(
-                child: Align(
-                  child: Text(
-                    TR.activitiesAllStudios.tr(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ),
-              for (final studio in studios)
-                DropdownMenuItem<CombinedStudioModel>(
-                  value: studio,
-                  child: Align(
-                    child: Text(
-                      studio.item1.studioName,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-            ],
-            onChanged: (final value) async {
-              final filteredStudiosNotifier =
-                  ref.read(activitiesStudiosFilterProvider.notifier);
-              if (value != null) {
-                await filteredStudiosNotifier.setStateAsync([value]);
-              } else {
-                await filteredStudiosNotifier.clear();
-              }
-            },
-          ),
-        ),
+        const ActivitiesStudiosPickerDropdown(),
 
         /// Body
         Expanded(
@@ -589,41 +456,50 @@ class ActivitiesScreen extends HookConsumerWidget {
                                         ),
                                   ),
                                 ),
-                                Badge(
-                                  padding: const EdgeInsets.all(4),
-                                  animationType: BadgeAnimationType.scale,
-                                  animationDuration:
-                                      const Duration(milliseconds: 300),
-                                  position: filtersCount >= 10
-                                      ? const BadgePosition(end: 4, top: 4)
-                                      : const BadgePosition(end: 8, top: 6),
-                                  badgeContent: Text(
-                                    filtersCount.toString(),
-                                    style: theme.textTheme.caption?.copyWith(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: theme.colorScheme.surface,
-                                    ),
-                                  ),
-                                  ignorePointer: true,
-                                  showBadge: filtersCount > 0,
-                                  badgeColor: theme.colorScheme.onSurface,
-                                  child: IconButton(
-                                    onPressed: () async {
-                                      await showActivitiesFiltersBottomSheet(
-                                        context,
-                                        onResetPressed: () => resetFilters(ref),
-                                      );
-                                    },
-                                    splashRadius: 20,
-                                    tooltip: TR.miscFilterTitle.tr(),
-                                    icon: FontIcon(
-                                      FontIconData(
-                                        IconsCG.filter,
-                                        color: theme.colorScheme.onSurface,
+                                Consumer(
+                                  builder:
+                                      (final context, final ref, final child) {
+                                    final filtersCount = ref
+                                        .watch(activitiesFiltersCountProvider);
+                                    return Badge(
+                                      padding: const EdgeInsets.all(4),
+                                      animationType: BadgeAnimationType.scale,
+                                      animationDuration:
+                                          const Duration(milliseconds: 300),
+                                      position: filtersCount >= 10
+                                          ? const BadgePosition(end: 4, top: 4)
+                                          : const BadgePosition(end: 8, top: 6),
+                                      badgeContent: Text(
+                                        filtersCount.toString(),
+                                        style:
+                                            theme.textTheme.caption?.copyWith(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: theme.colorScheme.surface,
+                                        ),
                                       ),
-                                    ),
-                                  ),
+                                      ignorePointer: true,
+                                      showBadge: filtersCount > 0,
+                                      badgeColor: theme.colorScheme.onSurface,
+                                      child: IconButton(
+                                        onPressed: () async {
+                                          await showActivitiesFiltersBottomSheet(
+                                            context,
+                                            onResetPressed: () =>
+                                                resetFilters(ref),
+                                          );
+                                        },
+                                        splashRadius: 20,
+                                        tooltip: TR.miscFilterTitle.tr(),
+                                        icon: FontIcon(
+                                          FontIconData(
+                                            IconsCG.filter,
+                                            color: theme.colorScheme.onSurface,
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 )
                               ],
                             ),
@@ -664,23 +540,32 @@ class ActivitiesScreen extends HookConsumerWidget {
                       padding: const EdgeInsets.only(top: 16),
                       child: SizedBox(
                         height: 44,
-                        child: ListView.builder(
-                          controller: dayController,
-                          primary: false,
-                          shrinkWrap: true,
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          itemCount: activitiesDays.length,
-                          itemExtent: 56,
-                          itemBuilder: (final context, final index) {
-                            final date = activitiesDays.elementAt(index);
-                            return ActivitiesDateFilterCard(
-                              date,
-                              selected: day.year == date.year &&
-                                  day.month == date.month &&
-                                  day.day == date.day,
-                              onSelected: () {
-                                ref.read(activitiesDayProvider).state = date;
+                        child: Consumer(
+                          builder: (final context, final ref, final child) {
+                            final day = ref.watch(activitiesDayProvider).state;
+                            final activitiesDays =
+                                ref.watch(activitiesDaysProvider);
+                            return ListView.builder(
+                              controller: dayController,
+                              primary: false,
+                              shrinkWrap: true,
+                              scrollDirection: Axis.horizontal,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 8),
+                              itemCount: activitiesDays.length,
+                              itemExtent: 56,
+                              itemBuilder: (final context, final index) {
+                                final date = activitiesDays.elementAt(index);
+                                return ActivitiesDateFilterCard(
+                                  date,
+                                  selected: day.year == date.year &&
+                                      day.month == date.month &&
+                                      day.day == date.day,
+                                  onSelected: () {
+                                    ref.read(activitiesDayProvider).state =
+                                        date;
+                                  },
+                                );
                               },
                             );
                           },
@@ -699,8 +584,18 @@ class ActivitiesScreen extends HookConsumerWidget {
                           final activity = activities.elementAt(index);
                           return ActivityCardContainer(
                             activity,
-                            timeLeftBeforeStart:
-                                activity.item0.date.difference(now),
+                            timeLeftBeforeStart: ref.watch(
+                              currentTimeProvider.select((final tempNow) {
+                                return activity.item0.date.difference(
+                                  tempNow.when(
+                                    data: (final tempNow) => tempNow,
+                                    loading: () => DateTime.now(),
+                                    error: (final e, final st) =>
+                                        DateTime.now(),
+                                  ),
+                                );
+                              }),
+                            ),
                           );
                         },
                         childCount: activities.length,
@@ -721,7 +616,7 @@ class ActivitiesScreen extends HookConsumerWidget {
                 //     },
                 //   ),
                 // )
-                else if (areActivitiesPresent)
+                else if (ref.watch(areActivitiesPresentProvider))
                   SliverFillRemaining(
                     hasScrollBody: false,
                     child: Column(
@@ -783,6 +678,92 @@ class ActivitiesScreen extends HookConsumerWidget {
   }
 }
 
+/// The [CombinedStudioModel] picker on the [ActivitiesScreen].
+class ActivitiesStudiosPickerDropdown extends HookConsumerWidget {
+  /// The [CombinedStudioModel] picker on the [ActivitiesScreen].
+  const ActivitiesStudiosPickerDropdown({final Key? key}) : super(key: key);
+
+  @override
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final theme = Theme.of(context);
+    final selectedStudios = ref.watch(activitiesStudiosFilterProvider);
+    return Container(
+      color: theme.appBarTheme.backgroundColor,
+      width: double.infinity,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.only(bottom: 4),
+      child: DropdownBelow<CombinedStudioModel?>(
+        isDense: true,
+        elevation: 12,
+        boxHeight: 30,
+        boxWidth: 160,
+        itemWidth: 160,
+        icon: FontIcon(
+          FontIconData(
+            IconsCG.angleDown,
+            height: 10,
+            color: theme.hintColor,
+          ),
+        ),
+        boxPadding: const EdgeInsets.only(bottom: 8),
+        boxDecoration: const BoxDecoration(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
+        itemTextstyle: theme.textTheme.bodyText1,
+        boxTextstyle: theme.textTheme.bodyText1?.copyWith(
+          color: theme.appBarTheme.foregroundColor,
+        ),
+        hint: Align(
+          child: Text(
+            TR.activitiesAllStudios.tr(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        value: selectedStudios.length == 1 ? selectedStudios.single : null,
+        items: <DropdownMenuItem<CombinedStudioModel?>>[
+          DropdownMenuItem<CombinedStudioModel?>(
+            child: Align(
+              child: Text(
+                TR.activitiesAllStudios.tr(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+          for (final studio in ref.watch(combinedStudiosProvider))
+            DropdownMenuItem<CombinedStudioModel>(
+              value: studio,
+              child: Align(
+                child: Text(
+                  studio.item1.studioName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+        ],
+        onChanged: (final value) async {
+          final filteredStudiosNotifier =
+              ref.read(activitiesStudiosFilterProvider.notifier);
+          if (value != null) {
+            await filteredStudiosNotifier.setStateAsync([value]);
+          } else {
+            await filteredStudiosNotifier.clear();
+          }
+        },
+      ),
+    );
+  }
+}
+
+/// The loader of the [ActivityCardContainer] for the each
+/// [ActivityCardContainer.activity].
+final StateProviderFamily<bool, ActivityModel> activityCardLoadingProvider =
+    StateProvider.family<bool, ActivityModel>((final ref, final activity) {
+  return false;
+});
+
 /// The transition between [ActivityCard] and [ActivityScreenCard].
 class ActivityCardContainer extends HookConsumerWidget {
   /// The transition between [ActivityCard] and [ActivityScreenCard].
@@ -806,7 +787,7 @@ class ActivityCardContainer extends HookConsumerWidget {
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
     final navigator = Navigator.of(context, rootNavigator: true);
-    final isLoading = useRef<bool>(false);
+    final isLoading = ref.watch(activityCardLoadingProvider(activity.item0));
     final isMounted = useIsMounted();
 
     Future<void> logFirebase(final String name) {
@@ -821,11 +802,11 @@ class ActivityCardContainer extends HookConsumerWidget {
       );
     }
 
-    Future<void> cancelBook(
+    Future<bool> cancelBook(
       final UserRecordModel appliedRecord, {
       required final bool fullscreen,
     }) async {
-      isLoading.value = true;
+      isLoading.state = true;
       try {
         await logFirebase(
           fullscreen ? FAKeys.cancelBookScreen : FAKeys.cancelBook,
@@ -836,7 +817,6 @@ class ActivityCardContainer extends HookConsumerWidget {
           userPhone: ref.read(userProvider)!.phone,
           discount: ref.read(discountProvider),
         );
-        await ref.read(userRecordsProvider.notifier).refresh();
         if (smRecord != null) {
           Widget refundedBody(final String body, final String button) {
             return Padding(
@@ -875,8 +855,9 @@ class ActivityCardContainer extends HookConsumerWidget {
                   TR.cancelBookDepositButton.tr(),
                 ),
               );
-              break;
+              continue all;
             case ActivityPaidBy.abonement:
+              await ref.read(userAbonementsProvider.notifier).refresh();
               await showRefundedModalBottomSheet(
                 context: context,
                 title: TR.cancelBookAbonementTitle.tr(),
@@ -885,9 +866,12 @@ class ActivityCardContainer extends HookConsumerWidget {
                   TR.cancelBookAbonementButton.tr(),
                 ),
               );
-              break;
+              continue all;
+            all:
             case ActivityPaidBy.none:
+              await ref.read(userRecordsProvider.notifier).refresh();
           }
+          return true;
         }
       } on CancelBookException catch (exception) {
         logger.e(exception.type, exception);
@@ -899,13 +883,14 @@ class ActivityCardContainer extends HookConsumerWidget {
         }
       } finally {
         if (isMounted()) {
-          isLoading.value = false;
+          isLoading.state = false;
         }
       }
+      return false;
     }
 
-    Future<void> book({required final bool fullscreen}) async {
-      isLoading.value = true;
+    Future<bool> book({required final bool fullscreen}) async {
+      isLoading.state = true;
       try {
         await logFirebase(fullscreen ? FAKeys.bookScreen : FAKeys.book);
         final businessLogic = ref.read(businessLogicProvider);
@@ -932,21 +917,34 @@ class ActivityCardContainer extends HookConsumerWidget {
           },
         );
         logger.i(result.item1);
-        if (result.item1 == BookResult.depositRegular ||
-            result.item1 == BookResult.depositDiscount) {
-          ref.refresh(smUserDepositProvider);
-          await ref.read(smUserDepositProvider.future);
+        switch (result.item1) {
+          case BookResult.depositDiscount:
+          case BookResult.depositRegular:
+            ref.refresh(smUserDepositProvider);
+            await ref.read(smUserDepositProvider.future);
+            continue all;
+          case BookResult.newAbonement:
+            await ref.read(smUserAbonementsProvider.notifier).refresh();
+            continue abonement;
+          abonement:
+          case BookResult.abonement:
+            await ref.read(userAbonementsProvider.notifier).refresh();
+            continue all;
+          all:
+          case BookResult.discount:
+          case BookResult.regular:
+            await ref.read(userRecordsProvider.notifier).refresh();
+            await navigator.push<void>(
+              MaterialPageRoute(
+                builder: (final context) => SuccessfulBookScreen(
+                  activity: activity,
+                  record: result.item0,
+                  abonement: result.item1 == BookResult.newAbonement,
+                ),
+              ),
+            );
         }
-        await ref.read(userRecordsProvider.notifier).refresh();
-        await navigator.push<void>(
-          MaterialPageRoute(
-            builder: (final context) => SuccessfulBookScreen(
-              activity: activity,
-              record: result.item0,
-              abonement: result.item1 == BookResult.newAbonement,
-            ),
-          ),
-        );
+        return true;
       } on BookException catch (exception) {
         logger.e(exception.type, exception);
         if (exception.type != BookExceptionType.dismiss) {
@@ -967,13 +965,14 @@ class ActivityCardContainer extends HookConsumerWidget {
         }
       } finally {
         if (isMounted()) {
-          isLoading.value = false;
+          isLoading.state = false;
         }
       }
+      return false;
     }
 
     Future<void> addToWishList({required final bool fullscreen}) async {
-      isLoading.value = true;
+      isLoading.state = true;
       try {
         await logFirebase(fullscreen ? FAKeys.wishlistScreen : FAKeys.wishlist);
         final user = ref.read(userProvider)!;
@@ -1011,11 +1010,9 @@ class ActivityCardContainer extends HookConsumerWidget {
             ),
           ),
         );
-      } on Exception catch (e) {
-        logger.e(e);
       } finally {
         if (isMounted()) {
-          isLoading.value = false;
+          isLoading.state = false;
         }
       }
     }
@@ -1028,41 +1025,98 @@ class ActivityCardContainer extends HookConsumerWidget {
       closedColor: Colors.transparent,
       middleColor: Colors.transparent,
       transitionDuration: const Duration(milliseconds: 650),
-      closedBuilder: (final context, final action) => ActivityCard(
-        activity,
-        onMain: onMain,
-        onOpenButtonPressed: action,
-        timeLeftBeforeStart: timeLeftBeforeStart,
-        onPressed: (final appliedRecord) => !isLoading.value
-            ? ref.read(unauthorizedProvider)
-                ? () => Navigator.of(context, rootNavigator: true)
-                    .pushNamed(Routes.auth.name)
-                : appliedRecord != null
-                    ? timeLeftBeforeStart.inHours < 12
-                        ? null
-                        : () => cancelBook(appliedRecord, fullscreen: false)
-                    : activity.item0.recordsLeft <= 0
-                        ? () => addToWishList(fullscreen: false)
-                        : () => book(fullscreen: false)
-            : null,
-      ),
-      openBuilder: (final context, final action) => ActivityScreenCard(
-        activity,
-        onMain: onMain,
-        onBackButtonPressed: action,
-        timeLeftBeforeStart: timeLeftBeforeStart,
-        onPressed: (final appliedRecord) => isMounted() && !isLoading.value
-            ? ref.read(unauthorizedProvider)
-                ? () => Navigator.of(context, rootNavigator: true)
-                    .pushNamed(Routes.auth.name)
-                : appliedRecord != null
-                    ? timeLeftBeforeStart.inHours < 12
-                        ? null
-                        : () => cancelBook(appliedRecord, fullscreen: true)
-                    : activity.item0.recordsLeft <= 0
-                        ? () => addToWishList(fullscreen: true)
-                        : () => book(fullscreen: true)
-            : null,
+      closedBuilder: (final context, final action) {
+        return AbsorbPointer(
+          absorbing: isLoading.state,
+          child: Stack(
+            children: <Widget>[
+              ActivityCard(
+                activity,
+                onMain: onMain,
+                onOpenButtonPressed: action,
+                timeLeftBeforeStart: timeLeftBeforeStart,
+                onPressed: (final appliedRecord) => !isLoading.state
+                    ? ref.read(userProvider) == null
+                        ? () => Navigator.of(context, rootNavigator: true)
+                            .pushNamed(Routes.auth.name)
+                        : appliedRecord != null
+                            ? timeLeftBeforeStart.inHours < 12
+                                ? null
+                                : () =>
+                                    cancelBook(appliedRecord, fullscreen: false)
+                            : activity.item0.recordsLeft <= 0
+                                ? () => addToWishList(fullscreen: false)
+                                : () => book(fullscreen: false)
+                    : null,
+              ),
+              if (isLoading.state)
+                BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                  child: Center(
+                    child: Image.asset(
+                      AssetsCG.logo,
+                      width: 330,
+                      height: 100,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+      openBuilder: (final context, final action) => Consumer(
+        builder: (final context, final ref, final child) {
+          final isLoading =
+              ref.watch(activityCardLoadingProvider(activity.item0));
+          return WillPopScope(
+            onWillPop: () => Future.value(!isLoading.state),
+            child: AbsorbPointer(
+              absorbing: isLoading.state,
+              child: Stack(
+                children: <Widget>[
+                  ActivityScreenCard(
+                    activity,
+                    onMain: onMain,
+                    onBackButtonPressed: action,
+                    timeLeftBeforeStart: timeLeftBeforeStart,
+                    onPressed: (final appliedRecord) => isMounted() &&
+                            !isLoading.state
+                        ? ref.read(userProvider) == null
+                            ? () => Navigator.of(context, rootNavigator: true)
+                                .pushNamed(Routes.auth.name)
+                            : appliedRecord != null
+                                ? timeLeftBeforeStart.inHours < 12
+                                    ? null
+                                    : () async {
+                                        if (onMain &&
+                                            await cancelBook(
+                                              appliedRecord,
+                                              fullscreen: true,
+                                            )) {
+                                          await navigator.maybePop();
+                                        }
+                                      }
+                                : activity.item0.recordsLeft <= 0
+                                    ? () => addToWishList(fullscreen: true)
+                                    : () => book(fullscreen: true)
+                        : null,
+                  ),
+                  if (isLoading.state)
+                    BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+                      child: Center(
+                        child: Image.asset(
+                          AssetsCG.logo,
+                          width: 330,
+                          height: 100,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -1125,291 +1179,280 @@ class ActivityCard extends ConsumerWidget {
       }),
     );
 
-    return SizedBox(
+    return Container(
       height: 124,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        child: Material(
-          color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.all(Radius.circular(4)),
-          child: InkWell(
-            onTap: () async {
-              onOpenButtonPressed();
-              await analytics.logEvent(
-                name: onMain ? FAKeys.upcomingRecordClick : FAKeys.activity,
-                parameters: <String, String>{
-                  'trainer': translit(activity.item2.item1.trainerName),
-                  'studio': translit(activity.item1.item1.studioName),
-                  'class': activity.item0.service.title,
-                  'date_time': faTime(activity.item0.date),
-                },
-              );
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.all(Radius.circular(4)),
+      ),
+      child: InkWell(
+        onTap: () async {
+          onOpenButtonPressed();
+          await analytics.logEvent(
+            name: onMain ? FAKeys.upcomingRecordClick : FAKeys.activity,
+            parameters: <String, String>{
+              'trainer': translit(activity.item2.item1.trainerName),
+              'studio': translit(activity.item1.item1.studioName),
+              'class': activity.item0.service.title,
+              'date_time': faTime(activity.item0.date),
             },
-            borderRadius: const BorderRadius.all(Radius.circular(4)),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Expanded(
-                    flex: onMain ? 2 : 2,
-                    child: Column(
+          );
+        },
+        borderRadius: const BorderRadius.all(Radius.circular(4)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(
+                flex: onMain ? 2 : 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    /// Time
+                    Text(
+                      <Object>[
+                        activity.item0.date.hour,
+                        activity.item0.date.minute.toString().padLeft(2, '0')
+                      ].join(':'),
+                      style: theme.textTheme.bodyText1,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    /// Duration
+                    Text(
+                      activity.item0.length.inMinutes < 60
+                          ? TR.activitiesDurationMinuteShort.tr(
+                              args: <String>[
+                                activity.item0.length.inMinutes.toString()
+                              ],
+                            )
+                          : TR.activitiesDurationHour.plural(
+                              activity.item0.length.inHours,
+                              args: <String>[
+                                activity.item0.length.inHours.toString()
+                              ],
+                            ),
+                      style: theme.textTheme.headline6?.copyWith(color: grey),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    const SizedBox(height: 4),
+
+                    /// Trainer Avatar
+                    Flexible(
+                      child: CachedNetworkImage(
+                        imageUrl: activity.item2.item0.avatar,
+                        cacheKey: 'x40_${activity.item2.item0.avatar}',
+                        height: 40,
+                        width: 40,
+                        memCacheWidth: 40,
+                        memCacheHeight: 40,
+                        fadeInDuration: Duration.zero,
+                        fadeOutDuration: Duration.zero,
+                        imageBuilder: (final context, final imageProvider) {
+                          return CircleAvatar(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.transparent,
+                            radius: 16,
+                            foregroundImage: imageProvider,
+                          );
+                        },
+                      ),
+                    )
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: onMain ? 5 : 5,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        /// Time
+                        /// Class Name
                         Text(
-                          <Object>[
-                            activity.item0.date.hour,
-                            activity.item0.date.minute
-                                .toString()
-                                .padLeft(2, '0')
-                          ].join(':'),
+                          activity.item0.service.title,
                           style: theme.textTheme.bodyText1,
-                          textAlign: TextAlign.center,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
 
-                        /// Duration
+                        /// Trainer Name
                         Text(
-                          activity.item0.length.inMinutes < 60
-                              ? TR.activitiesDurationMinuteShort.tr(
-                                  args: <String>[
-                                    activity.item0.length.inMinutes.toString()
-                                  ],
-                                )
-                              : TR.activitiesDurationHour.plural(
-                                  activity.item0.length.inHours,
-                                  args: <String>[
-                                    activity.item0.length.inHours.toString()
-                                  ],
-                                ),
-                          style:
-                              theme.textTheme.headline6?.copyWith(color: grey),
-                          textAlign: TextAlign.center,
+                          activity.item2.item1.trainerName,
+                          style: theme.textTheme.caption?.copyWith(color: grey),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
 
-                        const SizedBox(height: 4),
-
-                        /// Trainer Avatar
-                        Flexible(
-                          child: CachedNetworkImage(
-                            imageUrl: activity.item2.item0.avatar,
-                            cacheKey: 'x40_${activity.item2.item0.avatar}',
-                            height: 40,
-                            width: 40,
-                            memCacheWidth: 40,
-                            memCacheHeight: 40,
-                            fadeInDuration: Duration.zero,
-                            fadeOutDuration: Duration.zero,
-                            imageBuilder: (final context, final imageProvider) {
-                              return CircleAvatar(
-                                backgroundColor: Colors.transparent,
-                                foregroundColor: Colors.transparent,
-                                radius: 16,
-                                foregroundImage: imageProvider,
-                              );
-                            },
-                          ),
-                        )
+                        /// Studio Name
+                        EmojiText(
+                          // appliedRecord?.online != null
+                          //     ? '🔗 ${TR.homeClassesOnline.tr()}'
+                          //     :
+                          activity.item1.item1.studioName,
+                          style: theme.textTheme.caption?.copyWith(color: grey),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ],
                     ),
-                  ),
-                  Expanded(
-                    flex: onMain ? 5 : 5,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            /// Class Name
-                            Text(
-                              activity.item0.service.title,
-                              style: theme.textTheme.bodyText1,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-
-                            /// Trainer Name
-                            Text(
-                              activity.item2.item1.trainerName,
-                              style: theme.textTheme.caption
-                                  ?.copyWith(color: grey),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-
-                            /// Studio Name
-                            EmojiText(
-                              // appliedRecord?.online != null
-                              //     ? '🔗 ${TR.homeClassesOnline.tr()}'
-                              //     :
-                              activity.item1.item1.studioName,
-                              style: theme.textTheme.caption
-                                  ?.copyWith(color: grey),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                        Flexible(
-                          child: Opacity(
-                            opacity: appliedRecord != null &&
-                                    timeLeftBeforeStart.inHours < 12
-                                ? 1 / 2
-                                : 1,
-                            child: SizedBox(
-                              height: 24,
-                              width: onMain ? 120 : null,
-                              child: TextButton(
-                                style: (TextButtonStyle.light.fromTheme(theme))
-                                    .copyWith(
-                                  padding: MaterialStateProperty.all(
-                                    const EdgeInsets.symmetric(vertical: 4),
-                                  ),
-                                  shape: MaterialStateProperty.all(
-                                    const RoundedRectangleBorder(
-                                      borderRadius:
-                                          BorderRadius.all(Radius.circular(2)),
-                                    ),
-                                  ),
-                                  textStyle: MaterialStateProperty.all(
-                                    theme.textTheme.caption,
-                                  ),
-                                  tapTargetSize: MaterialTapTargetSize.padded,
+                    Flexible(
+                      child: Opacity(
+                        opacity: appliedRecord != null &&
+                                timeLeftBeforeStart.inHours < 12
+                            ? 1 / 2
+                            : 1,
+                        child: SizedBox(
+                          height: 24,
+                          width: onMain ? 120 : null,
+                          child: TextButton(
+                            style: (TextButtonStyle.light.fromTheme(theme))
+                                .copyWith(
+                              padding: MaterialStateProperty.all(
+                                const EdgeInsets.symmetric(vertical: 4),
+                              ),
+                              shape: MaterialStateProperty.all(
+                                const RoundedRectangleBorder(
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(2)),
                                 ),
-                                onPressed: onPressed(appliedRecord),
+                              ),
+                              textStyle: MaterialStateProperty.all(
+                                theme.textTheme.caption,
+                              ),
+                              tapTargetSize: MaterialTapTargetSize.padded,
+                            ),
+                            onPressed: onPressed(appliedRecord),
+                            child: Text(
+                              appliedRecord != null
+                                  ? TR.activitiesCancel.tr()
+                                  : activity.item0.recordsLeft > 0
+                                      ? TR.activitiesApply.tr()
+                                      : TR.activitiesWaitingList.tr(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: onMain ? 3 : 3,
+                child: Column(
+                  mainAxisAlignment: onMain
+                      ? MainAxisAlignment.spaceBetween
+                      : MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: <Widget>[
+                    /// Extra Data on Main
+                    if (onMain)
+                      Consumer(
+                        builder: (final context, final ref, final child) {
+                          final locale = ref.watch(localeProvider);
+                          final serverTime = ref.watch(smServerTimeProvider);
+                          final isToday = activity.item0.date.year ==
+                                  serverTime.year &&
+                              activity.item0.date.month == serverTime.month &&
+                              activity.item0.date.day == serverTime.day;
+                          final weekDay = DateFormat.EEEE(locale.toString())
+                              .format(activity.item0.date);
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              /// Activity Date
+                              Container(
+                                width: isToday ? 70 : 90,
+                                alignment: Alignment.center,
+                                margin: const EdgeInsets.only(bottom: 10),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isToday
+                                      ? theme.colorScheme.onSurface
+                                      : theme.colorScheme.primary,
+                                  borderRadius: const BorderRadius.all(
+                                    Radius.circular(4),
+                                  ),
+                                ),
                                 child: Text(
-                                  appliedRecord != null
-                                      ? TR.activitiesCancel.tr()
-                                      : activity.item0.recordsLeft > 0
-                                          ? TR.activitiesApply.tr()
-                                          : TR.activitiesWaitingList.tr(),
+                                  isToday
+                                      ? TR.homeClassesToday.tr()
+                                      : DateFormat.MMMMd(locale.toString())
+                                          .format(activity.item0.date),
+                                  style: theme.textTheme.overline?.copyWith(
+                                    color: theme.colorScheme.surface,
+                                  ),
                                   maxLines: 1,
+                                  textScaleFactor: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    flex: onMain ? 3 : 3,
-                    child: Column(
-                      mainAxisAlignment: onMain
-                          ? MainAxisAlignment.spaceBetween
-                          : MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: <Widget>[
-                        /// Extra Data on Main
-                        if (onMain)
-                          Consumer(
-                            builder: (final context, final ref, final child) {
-                              final locale = ref.watch(localeProvider);
-                              final serverTime =
-                                  ref.watch(smServerTimeProvider);
-                              final isToday =
-                                  activity.item0.date.year == serverTime.year &&
-                                      activity.item0.date.month ==
-                                          serverTime.month &&
-                                      activity.item0.date.day == serverTime.day;
-                              final weekDay = DateFormat.EEEE(locale.toString())
-                                  .format(activity.item0.date);
-                              return Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: <Widget>[
-                                  /// Activity Date
-                                  Container(
-                                    width: isToday ? 70 : 90,
-                                    alignment: Alignment.center,
-                                    margin: const EdgeInsets.only(bottom: 10),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isToday
-                                          ? theme.colorScheme.onSurface
-                                          : theme.colorScheme.primary,
-                                      borderRadius: const BorderRadius.all(
-                                        Radius.circular(4),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      isToday
-                                          ? TR.homeClassesToday.tr()
-                                          : DateFormat.MMMMd(locale.toString())
-                                              .format(activity.item0.date),
-                                      style: theme.textTheme.overline?.copyWith(
-                                        color: theme.colorScheme.surface,
-                                      ),
-                                      maxLines: 1,
-                                      textScaleFactor: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
 
-                                  /// Activity Weekday
-                                  if (!isToday)
-                                    Text(
-                                      weekDay.isNotEmpty
-                                          ? weekDay
-                                                  .substring(0, 1)
-                                                  .toUpperCase() +
-                                              weekDay.substring(1).toLowerCase()
-                                          : '',
-                                      style: theme.textTheme.overline,
-                                      maxLines: 1,
-                                      textScaleFactor: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    )
-                                ],
-                              );
-                            },
-                          ),
-
-                        /// If it is too late too cancel the activity.
-                        if (appliedRecord != null &&
-                            timeLeftBeforeStart.inHours < 12)
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              if (!onMain)
-                                EmojiText(
-                                  '⏱',
-                                  style: TextStyle(color: theme.hintColor),
-                                ),
-                              Text(
-                                TR.activities12h.tr(),
-                                textAlign: TextAlign.center,
-                                style: theme.textTheme.overline,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                textScaleFactor: 1,
-                              ),
+                              /// Activity Weekday
+                              if (!isToday)
+                                Text(
+                                  weekDay.isNotEmpty
+                                      ? weekDay.substring(0, 1).toUpperCase() +
+                                          weekDay.substring(1).toLowerCase()
+                                      : '',
+                                  style: theme.textTheme.overline,
+                                  maxLines: 1,
+                                  textScaleFactor: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                )
                             ],
-                          )
-                        else if (!onMain)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 32),
-                            child: ActivityCardRecordsCount(
-                              activity.item0.recordsLeft,
-                              showDefault: false,
+                          );
+                        },
+                      ),
+
+                    /// If it is too late too cancel the activity.
+                    if (appliedRecord != null &&
+                        timeLeftBeforeStart.inHours < 12)
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          if (!onMain)
+                            EmojiText(
+                              '⏱',
+                              style: TextStyle(color: theme.hintColor),
                             ),
+                          Text(
+                            TR.activities12h.tr(),
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.overline,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textScaleFactor: 1,
                           ),
-                      ],
-                    ),
-                  ),
-                ],
+                        ],
+                      )
+                    else if (!onMain)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 32),
+                        child: ActivityCardRecordsCount(
+                          activity.item0.recordsLeft,
+                          showDefault: false,
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),

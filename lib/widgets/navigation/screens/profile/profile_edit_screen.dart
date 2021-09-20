@@ -10,6 +10,7 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/business_logic.dart';
+import 'package:stretching/const.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/providers/user_provider.dart';
@@ -135,7 +136,8 @@ class ProfileEditScreen extends HookConsumerWidget {
                   fieldKey: phoneKey,
                   initialValue: MaskTextInputFormatter(
                     initialText: user.phone,
-                    mask: '+# ### ### ## ##',
+                    mask: '+${'#' * phoneCountryCode.toString().length} '
+                        '### ### ## ##',
                     filter: {'#': RegExp(r'\d')},
                   ).maskText(user.phone),
                   label: TR.profileEditPhone.tr(),

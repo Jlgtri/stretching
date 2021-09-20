@@ -31,6 +31,11 @@ ThemeData get _mainTheme {
     textButtonTheme: _textButtonTheme,
     inputDecorationTheme: _inputDecorationTheme,
     textSelectionTheme: _textSelectionTheme,
+    dialogTheme: _dialogTheme,
+    buttonBarTheme: ButtonBarThemeData(
+      buttonTextTheme: ButtonTextTheme.primary,
+      // _textTheme.button?.copyWith(color: _colorScheme.onSurface),
+    ),
   );
 }
 
@@ -47,10 +52,7 @@ ColorScheme get _colorScheme {
   return const ColorScheme.light(
     error: Color(0xFFF64A4A),
     primary: Color(0xFFB9506E),
-    // primaryVariant: Color(0xFF303030),
     secondary: Color(0xFF5709FF),
-    // secondaryVariant: Color(0xFF424242),
-    // surface: ,
     background: Color(0xFFF5F5F5),
   );
 }
@@ -80,7 +82,9 @@ TextButtonThemeData get _textButtonTheme {
       animationDuration: const Duration(milliseconds: 500),
       visualDensity: VisualDensity.comfortable,
       mouseCursor: MaterialStateProperty.all(SystemMouseCursors.click),
-      textStyle: MaterialStateProperty.all(_textTheme.button),
+      textStyle: MaterialStateProperty.all(
+        _textTheme.button?.copyWith(color: _colorScheme.onSurface),
+      ),
       shape: MaterialStateProperty.all(
         const RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(8)),
@@ -235,6 +239,15 @@ TextSelectionThemeData get _textSelectionTheme {
   );
 }
 
+DialogTheme get _dialogTheme {
+  return DialogTheme(
+    titleTextStyle: _textTheme.headline3,
+    contentTextStyle: _textTheme.bodyText2?.copyWith(
+      color: _colorScheme.onSurface,
+    ),
+  );
+}
+
 /// The custom styles for the [TextButton].
 enum TextButtonStyle {
   /// The light style for the [TextButton].
@@ -327,8 +340,8 @@ extension InputDecorationStyleData on InputDecorationStyle {
                   onPressed: onSuffix,
                   visualDensity: VisualDensity.compact,
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  shape:const RoundedRectangleBorder(
-                    borderRadius:  BorderRadius.all(Radius.circular(4)),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(4)),
                   ),
                   child: Text(
                     TR.tooltipsCancel.tr(),

@@ -112,7 +112,9 @@ class RootScreen extends HookConsumerWidget {
           ]);
           final currentLocale = ez.currentLocale;
           if (currentLocale != null) {
-            ref.read(localeProvider.notifier).state = currentLocale;
+            await ref
+                .read(localeProvider.notifier)
+                .setStateAsync(currentLocale);
           }
         } finally {
           try {
@@ -303,13 +305,14 @@ extension RoutesData on Routes {
                         });
                       }
                     }
-                  } else {
-                    (ref.read(widgetsBindingProvider))
-                        .addPostFrameCallback((final _) {
-                      Navigator.of(context, rootNavigator: true)
-                          .popUntil(ModalRoute.withName(name));
-                    });
                   }
+                  // else {
+                  //   (ref.read(widgetsBindingProvider))
+                  //       .addPostFrameCallback((final _) {
+                  //     Navigator.of(context, rootNavigator: true)
+                  //         .popUntil(ModalRoute.withName(name));
+                  //   });
+                  // }
                 }
                 if (!ref.watch(initedProvider)) {
                   return ErrorScreen(error.item0, error.item1);

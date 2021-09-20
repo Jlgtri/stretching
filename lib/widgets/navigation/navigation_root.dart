@@ -151,88 +151,14 @@ extension NavigationScreenData on NavigationScreen {
   }
 }
 
-/// The provider to hide the [PersistentTabView] on [NavigationScreen].
-final StateProvider<bool> hideNavigationProvider =
-    StateProvider<bool>((final ref) => false);
-
-final StateProvider<bool> navigationTransitioningProvider =
-    StateProvider<bool>((final ref) => false);
-
-final StateProvider<int> currentNavigationProvider =
-    StateProvider<int>((final ref) => 0);
-
-/// The provider of the [NavigationScreen].
-final StateNotifierProvider<NavigationNotifier, PersistentTabController>
-    navigationProvider =
-    StateNotifierProvider<NavigationNotifier, PersistentTabController>(
-        (final ref) {
-  return NavigationNotifier(ref);
-});
-
-/// The notifier that contains the main app's navigation features.
-class NavigationNotifier
-    extends SaveToHiveNotifier<PersistentTabController, String>
-// with ModalBottomSheets {
-{
-  /// The notifier that contains the main app's navigation features.
-  factory NavigationNotifier(final ProviderRefBase ref) {
-    final notifier = NavigationNotifier._(ref);
-    notifier.state.addListener(() async {
-      ref.read(currentNavigationProvider).state = notifier.state.index;
-      ref.read(navigationTransitioningProvider).state = true;
-      await Future<void>.delayed(NavigationRoot.transitionDuration);
-      ref.read(navigationTransitioningProvider).state = false;
-    });
-    ref.listen<bool>(unauthorizedProvider, (final unauthorized) {
-      if (unauthorized &&
-          notifier.state.index == NavigationScreen.profile.index) {
-        if (notifier.previousScreenIndex == NavigationScreen.profile.index) {
-          notifier.state.index = NavigationScreen.home.index;
-        } else {
-          notifier.state.index = notifier.previousScreenIndex;
-        }
-      }
-    });
-    return notifier;
-  }
-
-  NavigationNotifier._(final ProviderRefBase ref)
-      : super(
-          hive: ref.watch(hiveProvider),
-          saveName: 'navigation',
-          converter: const PersistentTabControllerConverter(
-            EnumConverter(NavigationScreen.values),
-          ),
-          defaultValue: PersistentTabController(),
-        );
-
-  int _previousScreenIndex = 0;
-
-  /// The index of the previous [NavigationScreen].
-  int get previousScreenIndex => _previousScreenIndex;
-
-  /// Sets the index of the previous [NavigationScreen].
-  set previousScreenIndex(final int value) {
-    if (0 <= value && value <= NavigationScreen.values.length) {
-      _previousScreenIndex = value;
-    }
-  }
-}
-
 /// The converter of the [PersistentTabController].
 class PersistentTabControllerConverter<T extends Enum>
     implements JsonConverter<PersistentTabController, String> {
   /// The converter of the [PersistentTabController].
-  const PersistentTabControllerConverter(
-    final this.converter, {
-    final this.onControllerCreated,
-  });
+  const PersistentTabControllerConverter(final this.converter);
 
   /// The converter for the children.
   final EnumConverter<T> converter;
-
-  /// The callback on a converted controller.
-  final void Function(PersistentTabController)? onControllerCreated;
 
   @override
   PersistentTabController fromJson(final Object? data) {
@@ -246,13 +172,69 @@ class PersistentTabControllerConverter<T extends Enum>
         initialIndex: converter.fromJson(data).index,
       );
     }
-    onControllerCreated?.call(controller);
     return controller;
   }
 
   @override
   String toJson(final PersistentTabController value) =>
       converter.toJson(converter.fromJson(value.index));
+}
+
+/// The provider of the current transitioning state of the [navigationProvider].
+final StateProvider<bool> navigationTransitioningProvider =
+    StateProvider<bool>((final ref) => false);
+
+/// The provider of the current state's index of the [navigationProvider].
+final StateProvider<int> currentNavigationProvider =
+    StateProvider<int>((final ref) => 0);
+
+/// The provider of the [NavigationScreen].
+final StateNotifierProvider<NavigationNotifier, PersistentTabController>
+    navigationProvider =
+    StateNotifierProvider<NavigationNotifier, PersistentTabController>(
+        (final ref) {
+  return NavigationNotifier(ref);
+});
+
+/// The notifier that contains the main app's navigation features.
+class NavigationNotifier
+    extends SaveToHiveNotifier<PersistentTabController, String> {
+  /// The notifier that contains the main app's navigation features.
+  NavigationNotifier(final ProviderRefBase ref)
+      : super(
+          hive: ref.watch(hiveProvider),
+          saveName: 'navigation',
+          converter: const PersistentTabControllerConverter(
+            EnumConverter(NavigationScreen.values),
+          ),
+          defaultValue: PersistentTabController(),
+        ) {
+    state.addListener(() async {
+      if (ref.read(userProvider) == null &&
+          state.index == NavigationScreen.profile.index) {
+        state.index = previousScreenIndex == NavigationScreen.profile.index
+            ? NavigationScreen.home.index
+            : previousScreenIndex;
+      }
+      ref.read(currentNavigationProvider).state = state.index;
+      final navigationTransitioning = ref.read(navigationTransitioningProvider)
+        ..state = true;
+      await Future<void>.delayed(NavigationRoot.transitionDuration);
+      navigationTransitioning.state = false;
+    });
+  }
+
+  int _previousScreenIndex = 0;
+
+  /// The index of the previous [NavigationScreen].
+  int get previousScreenIndex => _previousScreenIndex;
+
+  /// Sets the index of the previous [NavigationScreen].
+  set previousScreenIndex(final int value) {
+    if (0 <= value && value <= NavigationScreen.values.length) {
+      _previousScreenIndex = value;
+    }
+  }
 }
 
 /// The screen that provides the basic navigation.
@@ -336,7 +318,7 @@ class NavigationRoot extends HookConsumerWidget {
           onItemSelected: (final index) async {
             final navigation = ref.read(navigationProvider.notifier);
             if (index == NavigationScreen.profile.index &&
-                ref.read(unauthorizedProvider)) {
+                ref.read(userProvider) == null) {
               if (navigation.previousScreenIndex ==
                   NavigationScreen.profile.index) {
                 navigation.state.index = NavigationScreen.home.index;

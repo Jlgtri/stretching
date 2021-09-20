@@ -10,6 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:pin_code_fields/pin_code_fields.dart';
+// ignore: implementation_imports
+import 'package:pin_code_fields/src/models/platform.dart';
 import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/const.dart';
@@ -70,12 +72,16 @@ class AuthorizationScreen extends HookConsumerWidget {
     /// sms code and login the user.
     /// * If step is [AuthorizationScreenStep.done], logout the user.
     Future<void> updateAuthStep({final bool reset = false}) async {
+      if (isLoading.value) {
+        return;
+      }
+
       isLoading.value = true;
       phoneError.value = codeError.value = null;
       if (reset) {
         enteringPhone.value = false;
-        ref.read(userProvider.notifier).state = null;
         phoneFormatter.clear();
+        await ref.read(userProvider.notifier).setStateAsync(null);
       }
 
       Response<YClientsResponse>? response;
@@ -100,17 +106,19 @@ class AuthorizationScreen extends HookConsumerWidget {
               );
               final user = response.data?.data as UserModel?;
               if (user != null) {
-                ref.read(userProvider.notifier).state = user;
-                (ref.read(navigationProvider))
-                    .jumpToTab(NavigationScreen.profile.index);
-
-                await analytics.logEvent(name: FAKeys.login);
-                await smStretching.addUser(
-                  userPhone: user.phone,
-                  userEmail: user.email,
-                  serverTime: ref.read(smServerTimeProvider),
-                );
-                await navigator.maybePop();
+                try {
+                  await analytics.logEvent(name: FAKeys.login);
+                  await smStretching.addUser(
+                    userPhone: user.phone,
+                    userEmail: user.email,
+                    serverTime: ref.read(smServerTimeProvider),
+                  );
+                } finally {
+                  await ref.read(userProvider.notifier).setStateAsync(user);
+                  (ref.read(navigationProvider))
+                      .jumpToTab(NavigationScreen.profile.index);
+                  await navigator.maybePop();
+                }
               }
             }
           }
@@ -131,13 +139,13 @@ class AuthorizationScreen extends HookConsumerWidget {
           rethrow;
         }
       } finally {
-        if (isMounted()) {
-          isLoading.value = false;
-        }
         logger.i(
           response ?? 'Phone: ${enteringPhone.value}',
           response != null ? 'Phone: ${enteringPhone.value}' : response,
         );
+        if (isMounted()) {
+          isLoading.value = false;
+        }
       }
     }
 
@@ -236,7 +244,15 @@ class AuthorizationScreen extends HookConsumerWidget {
                         appContext: context,
                         length: pinCodeLength,
                         animationType: AnimationType.fade,
-                        enablePinAutofill: false,
+                        dialogConfig: DialogConfig(
+                          dialogTitle: TR.alertPasteCodeTitle.tr(),
+                          dialogContent: TR.alertPasteCodeBody.tr(),
+                          affirmativeText: TR.alertPasteCodeApprove.tr(),
+                          negativeText: TR.alertPasteCodeDeny.tr(),
+                          platform: theme.platform == TargetPlatform.iOS
+                              ? Platform.iOS
+                              : Platform.other,
+                        ),
                         pinTheme: PinTheme(
                           shape: PinCodeFieldShape.underline,
                           activeFillColor: theme.colorScheme.onSurface,
@@ -265,6 +281,7 @@ class AuthorizationScreen extends HookConsumerWidget {
                           FilteringTextInputFormatter.digitsOnly
                         ],
                         onChanged: (final value) {},
+
                         beforeTextPaste: (final text) {
                           return text != null &&
                               text.length == pinCodeLength &&

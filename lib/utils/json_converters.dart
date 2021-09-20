@@ -308,7 +308,7 @@ class StringToIterableConverter<T extends Object, S extends Object>
 }
 
 /// The custom converter to convert to String.
-class OptionalStringConverter<T extends Object>
+class OptionalStringConverter<T extends Object?>
     implements JsonConverter<T?, String?> {
   /// The custom converter to convert to String.
   const OptionalStringConverter(this.converter);

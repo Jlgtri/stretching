@@ -3,71 +3,68 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/style.dart';
-import 'package:stretching/widgets/components/custom_draggable_bottom_sheet.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
-import 'package:stretching/widgets/navigation/navigation_root.dart';
 
-/// The mixin that provides modal bottom sheets for regular usage.
-mixin ModalBottomSheets {
-  /// The reference to other providers.
-  ProviderRefBase get ref;
+// /// The mixin that provides modal bottom sheets for regular usage.
+// mixin ModalBottomSheets {
+//   /// The reference to other providers.
+//   ProviderRefBase get ref;
 
-  /// Show the custom modal bottom sheet and hide the navigation bar.
-  Future<T?> showAlertBottomSheet<T extends Object?>({
-    required final BuildContext context,
-    required final ScrollablePhysicsWidgetBuilder builder,
-    final String title = '',
-    final Widget? trailing,
-    final double borderRadius = 24,
-  }) async {
-    final result = await showCustomModalBottomSheet<T>(
-      context: context,
-      borderRadius: borderRadius,
-      builder: (final _) {
-        return CustomDraggableBottomSheet(
-          mainContext: context,
-          builder: (final controller, final physics) {
-            return BottomSheetHeader(
-              title: title,
-              trailing: trailing,
-              // child: builder(controller, physics),
-            );
-          },
-        );
-      },
-    );
-    return result;
-  }
+//   /// Show the custom modal bottom sheet and hide the navigation bar.
+//   Future<T?> showAlertBottomSheet<T extends Object?>({
+//     required final BuildContext context,
+//     required final ScrollablePhysicsWidgetBuilder builder,
+//     final String title = '',
+//     final Widget? trailing,
+//     final double borderRadius = 24,
+//   }) async {
+//     final result = await showCustomModalBottomSheet<T>(
+//       context: context,
+//       borderRadius: borderRadius,
+//       builder: (final _) {
+//         return CustomDraggableBottomSheet(
+//           mainContext: context,
+//           builder: (final controller, final physics) {
+//             return BottomSheetHeader(
+//               title: title,
+//               trailing: trailing,
+//               // child: builder(controller, physics),
+//             );
+//           },
+//         );
+//       },
+//     );
+//     return result;
+//   }
 
-  /// Show the custom modal bottom sheet and hide the navigation bar.
-  Future<T?> showCustomModalBottomSheet<T>({
-    required final BuildContext context,
-    required final WidgetBuilder builder,
-    final double borderRadius = 24,
-  }) async {
-    final hideNavigation = ref.read(hideNavigationProvider)..state = true;
-    try {
-      return await showModalBottomSheet<T>(
-        context: context,
-        builder: builder,
-        useRootNavigator: true,
-        isScrollControlled: true,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(borderRadius),
-            topRight: Radius.circular(borderRadius),
-          ),
-        ),
-      );
-    } finally {
-      hideNavigation.state = false;
-    }
-  }
-}
+//   /// Show the custom modal bottom sheet and hide the navigation bar.
+//   Future<T?> showCustomModalBottomSheet<T>({
+//     required final BuildContext context,
+//     required final WidgetBuilder builder,
+//     final double borderRadius = 24,
+//   }) async {
+//     final hideNavigation = ref.read(hideNavigationProvider)..state = true;
+//     try {
+//       return await showModalBottomSheet<T>(
+//         context: context,
+//         builder: builder,
+//         useRootNavigator: true,
+//         isScrollControlled: true,
+//         shape: RoundedRectangleBorder(
+//           borderRadius: BorderRadius.only(
+//             topLeft: Radius.circular(borderRadius),
+//             topRight: Radius.circular(borderRadius),
+//           ),
+//         ),
+//       );
+//     } finally {
+//       hideNavigation.state = false;
+//     }
+//   }
+// }
 
 /// The header for the [showModalBottomSheet].
 class BottomSheetHeader extends StatelessWidget {
