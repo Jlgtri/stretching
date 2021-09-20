@@ -101,7 +101,7 @@ class RootScreen extends HookConsumerWidget {
           // await ref.read(hiveProvider).clear();
           await Future.wait(<Future<void>>[
             SystemChrome.setPreferredOrientations(
-              [DeviceOrientation.portraitUp],
+              <DeviceOrientation>[DeviceOrientation.portraitUp],
             ),
             SystemChannels.textInput.invokeMethod<void>('TextInput.hide'),
             ez.delegate.load(ez.currentLocale!),
