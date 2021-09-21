@@ -48,7 +48,7 @@ Future<void> showPaymentPickerBottomSheet(
   final BuildContext context,
   final PaymentPickerScreen screen,
 ) async {
-  return showMaterialModalBottomSheet(
+  await showMaterialModalBottomSheet<void>(
     context: context,
     useRootNavigator: true,
     backgroundColor: Colors.transparent,
@@ -555,15 +555,18 @@ class PaymentPickerScreen extends HookConsumerWidget {
                         !isLoading.value
                     ? (final context) async {
                         isLoading.value = true;
-                        await (ref.read(paymentEmailProvider.notifier))
-                            .setStateAsync(emailController.text);
-                        await onPayment(
-                          emailController.text,
-                          payment == null ? abonement : null,
-                          pickedStudio.value,
-                        );
-                        if (isMounted()) {
-                          isLoading.value = false;
+                        try {
+                          await (ref.read(paymentEmailProvider.notifier))
+                              .setStateAsync(emailController.text);
+                          await onPayment(
+                            emailController.text,
+                            payment == null ? abonement : null,
+                            pickedStudio.value,
+                          );
+                        } finally {
+                          if (isMounted()) {
+                            isLoading.value = false;
+                          }
                         }
                       }
                     : null,

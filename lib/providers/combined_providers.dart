@@ -6,7 +6,7 @@ import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/models_smstretching/sm_abonement_model.dart';
-import 'package:stretching/models_smstretching/sm_gallery_model.dart';
+import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
 import 'package:stretching/models_smstretching/sm_studio_model.dart';
 import 'package:stretching/models_smstretching/sm_studio_options_model.dart';
 import 'package:stretching/models_smstretching/sm_trainer_model.dart';
@@ -16,6 +16,27 @@ import 'package:stretching/models_yclients/company_model.dart';
 import 'package:stretching/models_yclients/trainer_model.dart';
 import 'package:stretching/models_yclients/user_abonement_model.dart';
 import 'package:stretching/utils/json_converters.dart';
+
+/// The pair of [ClassCategory] and [SMClassesGalleryModel].
+typedef CombinedClassesModel = Tuple2<ClassCategory, SMClassesGalleryModel>;
+
+/// The provider of [ClassCategory] and [SMClassesGalleryModel] pairs.
+final Provider<Iterable<CombinedClassesModel>> combinedClassesProvider =
+    Provider<Iterable<CombinedClassesModel>>((final ref) {
+  final smClassesGallery = ref.watch(
+    smClassesGalleryProvider.select((final smClassesGallery) {
+      return <int, SMClassesGalleryModel>{
+        for (final smClassGallery in smClassesGallery)
+          smClassGallery.classesYId: smClassGallery
+      };
+    }),
+  );
+  return <CombinedClassesModel>[
+    for (final classes in ClassCategory.values)
+      if (smClassesGallery.keys.contains(classes.id))
+        Tuple2(classes, smClassesGallery[classes.id]!)
+  ];
+});
 
 /// The trio of [SMAbonementModel], [UserAbonementModel] and
 /// optional [SMUserAbonementModel].
@@ -130,28 +151,28 @@ class SMTrainerIdConverter implements JsonConverter<SMTrainerModel?, int> {
 }
 
 /// The id converter of the [TrainerModel] and [SMTrainerModel].
-final Provider<SMClassesGalleryIdConverter>
-    smClassesGalleryIdConverterProvider = Provider<SMClassesGalleryIdConverter>(
-  (final ref) => SMClassesGalleryIdConverter._(ref),
-);
+final Provider<CombinedClassesIdConverter> combinedClassesIdConverterProvider =
+    Provider<CombinedClassesIdConverter>((final ref) {
+  return CombinedClassesIdConverter._(ref);
+});
 
 /// The id converter of the [TrainerModel] and [SMTrainerModel].
-class SMClassesGalleryIdConverter
-    implements JsonConverter<SMClassesGalleryModel?, int> {
-  const SMClassesGalleryIdConverter._(final this._ref);
+class CombinedClassesIdConverter
+    implements JsonConverter<CombinedClassesModel?, int> {
+  const CombinedClassesIdConverter._(final this._ref);
   final ProviderRefBase _ref;
 
   @override
-  SMClassesGalleryModel? fromJson(final int id) {
-    for (final smGallery in _ref.read(smClassesGalleryProvider)) {
-      if (smGallery.id == id) {
+  CombinedClassesModel? fromJson(final int id) {
+    for (final smGallery in _ref.read(combinedClassesProvider)) {
+      if (smGallery.item0.id == id) {
         return smGallery;
       }
     }
   }
 
   @override
-  int toJson(final SMClassesGalleryModel? data) => data!.id;
+  int toJson(final CombinedClassesModel? data) => data!.item0.id;
 }
 
 /// The provider of [TrainerModel] and [SMTrainerModel] pairs.

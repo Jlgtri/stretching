@@ -16,6 +16,7 @@ import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/disposable_change_notifier_hook.dart';
 import 'package:stretching/main.dart';
+import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
 import 'package:stretching/models_smstretching/sm_trainer_model.dart';
 import 'package:stretching/models_yclients/trainer_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
@@ -37,7 +38,7 @@ final StateNotifierProvider<SaveToHiveIterableNotifier<ClassCategory, String>,
     hive: ref.watch(hiveProvider),
     saveName: 'trainers_categories',
     converter: const StringToIterableConverter(
-      IterableConverter(EnumConverter<ClassCategory>(ClassCategory.values)),
+      IterableConverter(EnumConverter(ClassCategory.values)),
     ),
     defaultValue: const Iterable<ClassCategory>.empty(),
   );
@@ -145,10 +146,9 @@ class TrainersScreen extends HookConsumerWidget {
 
             /// A search field and categories.
             SliverAppBar(
-              key: UniqueKey(),
               primary: false,
               backgroundColor: Colors.transparent,
-              toolbarHeight: InputDecorationStyle.search.toolbarHeight,
+              toolbarHeight: 40,
               titleSpacing: 16,
               title: TextField(
                 key: searchKey,
@@ -161,14 +161,12 @@ class TrainersScreen extends HookConsumerWidget {
                 decoration: InputDecorationStyle.search.fromTheme(
                   theme,
                   hintText: TR.trainersSearch.tr(),
-                  prefixPadding: const EdgeInsets.only(top: 4),
                   onSuffix: () {
                     ref.read(searchTrainersProvider).state = '';
                     searchController.clear();
                     searchFocusNode.unfocus();
                   },
                 ).copyWith(
-                  isDense: true,
                   filled: true,
                   fillColor: theme.colorScheme.surface,
                   border: const OutlineInputBorder(
@@ -212,17 +210,24 @@ class TrainersScreen extends HookConsumerWidget {
 
             /// The list of trainers.
             if (trainers.isNotEmpty)
-              SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 24,
-                  mainAxisSpacing: 24,
-                  mainAxisExtent: 210,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (final context, final index) =>
-                      TrainerCard(trainers.elementAt(index)),
-                  childCount: trainers.length,
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 24,
+                    mainAxisExtent: 224,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (final context, final index) => Align(
+                      alignment: index.isEven
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: TrainerCard(trainers.elementAt(index)),
+                    ),
+                    childCount: trainers.length,
+                  ),
                 ),
               )
             else
@@ -248,11 +253,7 @@ class TrainersScreen extends HookConsumerWidget {
                   ),
                 ),
               ),
-            SliverPadding(
-              padding: EdgeInsets.only(
-                top: InputDecorationStyle.search.toolbarHeight,
-              ),
-            ),
+            const SliverPadding(padding: EdgeInsets.only(top: 40)),
           ],
         ),
       ),
@@ -291,25 +292,31 @@ class TrainerCard extends StatelessWidget {
       closedBuilder: (final context, final action) {
         return MaterialButton(
           onPressed: action,
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: EdgeInsets.zero,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              CachedNetworkImage(
-                imageUrl: trainer.item1.trainerPhoto,
-                height: 160,
-                width: 160,
-                placeholder: (final context, final url) =>
-                    const SizedBox.expand(),
-                imageBuilder: (final context, final imageProvider) {
-                  return CircleAvatar(
-                    radius: 80,
-                    foregroundImage: imageProvider,
-                  );
-                },
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: CachedNetworkImage(
+                  imageUrl: trainer.item1.trainerPhoto,
+                  height: 160,
+                  width: 160,
+                  placeholder: (final context, final url) =>
+                      const SizedBox.expand(),
+                  imageBuilder: (final context, final imageProvider) {
+                    return CircleAvatar(
+                      radius: 80,
+                      foregroundImage: imageProvider,
+                    );
+                  },
+                ),
               ),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.all(8).copyWith(bottom: 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text(
                     trainer.item1.trainerName,
                     style: theme.textTheme.subtitle2,

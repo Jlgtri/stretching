@@ -3,7 +3,9 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
+import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
 import 'package:stretching/utils/json_converters.dart';
+import 'package:stretching/widgets/navigation/components/filters.dart';
 
 /// The converter of the [SMStudioModel].
 const SMStudioConverter smStudioConverter = SMStudioConverter._();
@@ -411,6 +413,22 @@ class SMStudioTagsModel {
 
   /// If Fit Boxing is in the studio tags.
   final bool fitBoxing;
+
+  /// Return the categories of this model.
+  Iterable<ClassCategory> toCategories({final bool onlyActive = true}) {
+    return <ClassCategory>[
+      if (!onlyActive || trx) ClassCategory.trx,
+      if (!onlyActive || stretching) ClassCategory.stretching,
+      if (!onlyActive || barreSignature) ClassCategory.barreSignature,
+      if (!onlyActive || pilates) ClassCategory.pilates,
+      if (!onlyActive || barre20) ClassCategory.barre20,
+      if (!onlyActive || hot36Stretching) ClassCategory.hotStretching,
+      if (!onlyActive || hot36Barre) ClassCategory.hotBarre,
+      if (!onlyActive || hot36Pilates) ClassCategory.hotPilates,
+      if (!onlyActive || danceWorkout) ClassCategory.danceWorkout,
+      if (!onlyActive || fitBoxing) ClassCategory.fitBoxing
+    ];
+  }
 
   /// Return the copy of this model.
   SMStudioTagsModel copyWith({

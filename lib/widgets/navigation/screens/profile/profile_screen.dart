@@ -62,6 +62,7 @@ class ProfileScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     final navigator = Navigator.of(context, rootNavigator: true);
 
     final abonements = ref.watch(combinedAbonementsProvider);
@@ -101,20 +102,53 @@ class ProfileScreen extends HookConsumerWidget {
       [abonements],
     );
 
-    FutureOr<void> Function() action(final ProfileNavigationScreen screen) {
-      return () async {
-        final isRoot = screen == ProfileNavigationScreen.root;
-        ref.read(hideAppBarProvider(NavigationScreen.profile)).state = !isRoot;
-        if (isRoot) {
-          await ref.read(userProvider.notifier).setStateAsync(null);
-          (ref.read(navigationProvider)).jumpToTab(NavigationScreen.home.index);
-        }
-      };
-    }
+    Future<void> action(final ProfileNavigationScreen screen) async {
+      final navigator = Navigator.of(context);
+      final appBarProvider =
+          ref.read(hideAppBarProvider(NavigationScreen.profile));
 
-    void reset() {
-      currentScreen.value = ProfileNavigationScreen.root;
-      ref.read(hideAppBarProvider(NavigationScreen.profile)).state = false;
+      final Widget pushScreen;
+      switch (screen) {
+        case ProfileNavigationScreen.profile:
+          pushScreen = const ProfileEditScreen();
+          break;
+        case ProfileNavigationScreen.history:
+          pushScreen = const HistoryScreen();
+          break;
+        case ProfileNavigationScreen.support:
+          pushScreen = const ContactScreen();
+          break;
+        case ProfileNavigationScreen.root:
+          await ref.read(userProvider.notifier).setStateAsync(null);
+          ref.read(navigationProvider).jumpToTab(NavigationScreen.home.index);
+          return;
+      }
+
+      appBarProvider.state = true;
+      await navigator.push(
+        PageRouteBuilder<void>(
+          transitionDuration: const Duration(milliseconds: 500),
+          pageBuilder: (
+            final context,
+            final animation,
+            final secondaryAnimation,
+          ) =>
+              pushScreen,
+          transitionsBuilder: (
+            final context,
+            final animation,
+            final secondaryAnimation,
+            final child,
+          ) {
+            return SharedAxisTransition(
+              animation: animation,
+              secondaryAnimation: secondaryAnimation,
+              transitionType: SharedAxisTransitionType.horizontal,
+              child: child,
+            );
+          },
+        ),
+      );
     }
 
     final _smStudiosOptions = <int, SMStudioOptionsModel>{
@@ -194,117 +228,70 @@ class ProfileScreen extends HookConsumerWidget {
       }
     }
 
-    Widget content() {
-      switch (currentScreen.value) {
-        case ProfileNavigationScreen.profile:
-          return ProfileEditScreen(onBackButton: reset);
-        case ProfileNavigationScreen.history:
-          return HistoryScreen(onBackButton: reset);
-        case ProfileNavigationScreen.support:
-          return ContactScreen(onBackButton: reset);
-        case ProfileNavigationScreen.root:
-          return Padding(
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).viewPadding.top +
-                  mainAppBar(theme).preferredSize.height,
+    return Padding(
+      padding: EdgeInsets.only(
+        top:
+            mediaQuery.viewPadding.top + mainAppBar(theme).preferredSize.height,
+      ),
+      child: SmartRefresher(
+        controller: refreshController,
+        onLoading: refreshController.loadComplete,
+        onRefresh: () async {
+          try {
+            while (ref.read(connectionErrorProvider).state) {
+              await Future<void>.delayed(const Duration(seconds: 1));
+            }
+            ref.refresh(smUserDepositProvider);
+            await Future.wait(<Future<void>>[
+              ref.read(smUserDepositProvider.future),
+              ref.read(userAbonementsProvider.notifier).refresh(),
+              ref.read(smUserAbonementsProvider.notifier).refresh(),
+            ]);
+          } finally {
+            refreshController.refreshCompleted();
+          }
+        },
+        child: ListView(
+          primary: false,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          children: <Widget>[
+            /// Deposit
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: DepositCard(),
             ),
-            child: SmartRefresher(
-              controller: refreshController,
-              onLoading: refreshController.loadComplete,
-              onRefresh: () async {
-                try {
-                  while (ref.read(connectionErrorProvider).state) {
-                    await Future<void>.delayed(const Duration(seconds: 1));
-                  }
-                  ref.refresh(smUserDepositProvider);
-                  await Future.wait(<Future<void>>[
-                    ref.read(smUserDepositProvider.future),
-                    ref.read(userAbonementsProvider.notifier).refresh(),
-                    ref.read(smUserAbonementsProvider.notifier).refresh(),
-                  ]);
-                } finally {
-                  refreshController.refreshCompleted();
-                }
-              },
-              child: ListView(
-                primary: false,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                children: <Widget>[
-                  /// Deposit
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: DepositCard(),
-                  ),
 
-                  /// Abonements
-                  if (abonementsCards.value.isNotEmpty) ...[
-                    TCard(
-                      lockYAxis: true,
-                      slideSpeed: abonementsCards.value.length == 1 ? 0 : 12,
-                      size: const Size.fromHeight(100),
-                      onEnd: () => cardController.forward(
-                        direction: SwipDirection.Right,
-                      ),
-                      onForward: (final direction, final info) =>
-                          // ignore: avoid_dynamic_calls
-                          cardController.reset(
-                        cards: abonementsCards.value = [
-                          ...abonementsCards.value.sublist(1),
-                          abonementsCards.value.first,
-                        ],
-                      ),
-                      controller: cardController,
-                      cards: abonementsCards.value,
-                    ),
+            /// Abonements
+            if (abonementsCards.value.isNotEmpty) ...[
+              TCard(
+                lockYAxis: true,
+                slideSpeed: abonementsCards.value.length == 1 ? 0 : 12,
+                size: const Size.fromHeight(100),
+                onEnd: () => cardController.forward(
+                  direction: SwipDirection.Right,
+                ),
+                onForward: (final direction, final info) =>
+                    // ignore: avoid_dynamic_calls
+                    cardController.reset(
+                  cards: abonementsCards.value = [
+                    ...abonementsCards.value.sublist(1),
+                    abonementsCards.value.first,
+                  ],
+                ),
+                controller: cardController,
+                cards: abonementsCards.value,
+              ),
 
-                    /// Buy One More Button
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ).copyWith(bottom: 0),
-                      child: Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: TextButton.icon(
-                              onPressed: () => showPaymentPickerBottomSheet(
-                                context,
-                                PaymentPickerScreen(
-                                  onPayment: buyAbonement,
-                                  smAbonements: possibleAbonements.keys,
-                                ),
-                              ),
-                              style: ButtonStyle(
-                                backgroundColor: MaterialStateProperty.all(
-                                  theme.colorScheme.surface,
-                                ),
-                                alignment: Alignment.centerLeft,
-                                minimumSize: MaterialStateProperty.all(
-                                  const Size.fromHeight(60),
-                                ),
-                              ),
-                              icon: FontIcon(
-                                FontIconData(
-                                  IconsCG.add,
-                                  color: theme.colorScheme.primary
-                                      .withOpacity(2 / 3),
-                                  height: 32,
-                                  alignment: Alignment.topRight,
-                                ),
-                              ),
-                              label: Text(
-                                TR.abonementBuyMoreButton.tr(),
-                                style: theme.textTheme.caption,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ] else
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: BuyAbonementCard(
+              /// Buy One More Button
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ).copyWith(bottom: 0),
+                child: Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: TextButton.icon(
                         onPressed: () => showPaymentPickerBottomSheet(
                           context,
                           PaymentPickerScreen(
@@ -312,64 +299,79 @@ class ProfileScreen extends HookConsumerWidget {
                             smAbonements: possibleAbonements.keys,
                           ),
                         ),
+                        style: ButtonStyle(
+                          backgroundColor: MaterialStateProperty.all(
+                            theme.colorScheme.surface,
+                          ),
+                          alignment: Alignment.centerLeft,
+                          minimumSize: MaterialStateProperty.all(
+                            const Size.fromHeight(60),
+                          ),
+                        ),
+                        icon: FontIcon(
+                          FontIconData(
+                            IconsCG.add,
+                            color: theme.colorScheme.primary.withOpacity(2 / 3),
+                            height: 32,
+                            alignment: Alignment.topRight,
+                          ),
+                        ),
+                        label: Text(
+                          TR.abonementBuyMoreButton.tr(),
+                          style: theme.textTheme.caption,
+                        ),
                       ),
                     ),
+                  ],
+                ),
+              ),
+            ] else
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: BuyAbonementCard(
+                  onPressed: () => showPaymentPickerBottomSheet(
+                    context,
+                    PaymentPickerScreen(
+                      onPayment: buyAbonement,
+                      smAbonements: possibleAbonements.keys,
+                    ),
+                  ),
+                ),
+              ),
 
-                  /// Menu
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 32,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        for (final screen in ProfileNavigationScreen.values)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: TextButton(
-                              onPressed: () =>
-                                  action(currentScreen.value = screen)(),
-                              style: ButtonStyle(
-                                textStyle: MaterialStateProperty.all(
-                                  theme.textTheme.headline3,
-                                ),
-                                foregroundColor: MaterialStateProperty.all(
-                                  currentScreen.value == screen
-                                      ? theme.hintColor
-                                      : theme.colorScheme.onSurface,
-                                ),
-                              ),
-                              child: Text(screen.translation),
-                            ),
+            /// Menu
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                vertical: 16,
+                horizontal: 32,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  for (final screen in ProfileNavigationScreen.values)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: TextButton(
+                        onPressed: () => action(currentScreen.value = screen),
+                        style: ButtonStyle(
+                          textStyle: MaterialStateProperty.all(
+                            theme.textTheme.headline3,
                           ),
-                      ],
+                          foregroundColor: MaterialStateProperty.all(
+                            screen == ProfileNavigationScreen.root
+                                ? theme.hintColor
+                                : theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        child: Text(screen.translation),
+                      ),
                     ),
-                  )
                 ],
               ),
-            ),
-          );
-      }
-    }
-
-    return PageTransitionSwitcher(
-      reverse: currentScreen.value == ProfileNavigationScreen.root,
-      duration: const Duration(milliseconds: 500),
-      layoutBuilder: (final entries) => Stack(children: entries),
-      child: content(),
-      transitionBuilder: (
-        final child,
-        final animation,
-        final secondaryAnimation,
-      ) {
-        return SharedAxisTransition(
-          animation: animation,
-          secondaryAnimation: secondaryAnimation,
-          transitionType: SharedAxisTransitionType.horizontal,
-          child: child,
-        );
-      },
+            )
+          ],
+        ),
+      ),
     );
   }
 }
@@ -424,6 +426,7 @@ class BuyAbonementCard extends ConsumerWidget {
               MaterialButton(
                 onPressed: onPressed,
                 visualDensity: VisualDensity.compact,
+                elevation: 0,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                 shape: const RoundedRectangleBorder(

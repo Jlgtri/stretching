@@ -3,6 +3,7 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
+import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
 import 'package:stretching/utils/json_converters.dart';
 import 'package:stretching/widgets/navigation/components/filters.dart';
 
@@ -259,38 +260,18 @@ class SMTrainerClassesModel {
 
   /// Return the categories of this model.
   Iterable<ClassCategory> toCategories({final bool onlyActive = true}) {
-    final categories = List<ClassCategory>.empty(growable: true);
-    if (!onlyActive || trx) {
-      categories.add(ClassCategory.trx);
-    }
-    if (!onlyActive || stretching) {
-      categories.add(ClassCategory.stretching);
-    }
-    if (!onlyActive || barreSignature) {
-      categories.add(ClassCategory.barreSignature);
-    }
-    if (!onlyActive || pilates) {
-      categories.add(ClassCategory.pilates);
-    }
-    if (!onlyActive || barre20) {
-      categories.add(ClassCategory.barre20);
-    }
-    if (!onlyActive || hotStretching) {
-      categories.add(ClassCategory.hotStretching);
-    }
-    if (!onlyActive || hotBarre) {
-      categories.add(ClassCategory.hotBarre);
-    }
-    if (!onlyActive || hotPilates) {
-      categories.add(ClassCategory.hotPilates);
-    }
-    if (!onlyActive || danceWorkout) {
-      categories.add(ClassCategory.danceWorkout);
-    }
-    if (!onlyActive || fitBoxing) {
-      categories.add(ClassCategory.fitBoxing);
-    }
-    return categories;
+    return <ClassCategory>[
+      if (!onlyActive || trx) ClassCategory.trx,
+      if (!onlyActive || stretching) ClassCategory.stretching,
+      if (!onlyActive || barreSignature) ClassCategory.barreSignature,
+      if (!onlyActive || pilates) ClassCategory.pilates,
+      if (!onlyActive || barre20) ClassCategory.barre20,
+      if (!onlyActive || hotStretching) ClassCategory.hotStretching,
+      if (!onlyActive || hotBarre) ClassCategory.hotBarre,
+      if (!onlyActive || hotPilates) ClassCategory.hotPilates,
+      if (!onlyActive || danceWorkout) ClassCategory.danceWorkout,
+      if (!onlyActive || fitBoxing) ClassCategory.fitBoxing
+    ];
   }
 
   /// Return the copy of this model.

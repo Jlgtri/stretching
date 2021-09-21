@@ -830,10 +830,12 @@ final StateNotifierProvider<ContentNotifier<UserAbonementModel>,
       return userAbonements.isEmpty ? null : userAbonements;
     },
   );
-  ref.listen<bool>(userProvider.select((final user) => user == null),
-      (final unauthorized) async {
-    unauthorized ? await notifier.clear() : await notifier.refresh();
-  });
+  ref.listen<bool>(
+    userProvider.select((final user) => user == null),
+    (final unauthorized) async =>
+        unauthorized ? await notifier.clear() : await notifier.refresh(),
+    fireImmediately: true,
+  );
   return notifier;
 });
 
@@ -852,7 +854,7 @@ final StateNotifierProvider<ContentNotifier<UserRecordModel>,
       if (ref.read(userProvider) == null) {
         return const Iterable<UserRecordModel>.empty();
       }
-      final userRecords = await (ref.read(yClientsProvider))
+      Iterable<UserRecordModel> userRecords = await (ref.read(yClientsProvider))
           .getIterableData<UserRecordModel>(
             jsonConverter: const IterableConverter(recordConverter),
             url: '$yClientsUrl/user/records',
@@ -862,13 +864,22 @@ final StateNotifierProvider<ContentNotifier<UserRecordModel>,
             },
           )
           .toList();
+      final studios = ref.read(studiosProvider);
+      userRecords = userRecords.where((final userRecord) {
+        return studios.any((final studio) {
+          return studio.id == userRecord.company.id;
+        });
+      });
       return userRecords.isEmpty ? null : userRecords;
     },
   );
-  ref.listen<bool>(userProvider.select((final user) => user == null),
-      (final unauthorized) async {
-    unauthorized ? await notifier.clear() : await notifier.refresh();
-  });
+  ref.listen<bool>(
+    userProvider.select((final user) => user == null),
+    (final unauthorized) async {
+      unauthorized ? await notifier.clear() : await notifier.refresh();
+    },
+    fireImmediately: true,
+  );
   return notifier;
 });
 

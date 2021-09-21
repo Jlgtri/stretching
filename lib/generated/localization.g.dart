@@ -98,6 +98,7 @@ abstract class TR {
   static const String activitiesAllStudios = 'activities.all_studios';
   static const String activitiesFewStudios = 'activities.few_studios';
   static const String activitiesSearch = 'activities.search';
+  static const String activitiesSearchCancel = 'activities.search_cancel';
   static const String activities12h = 'activities.12h';
 
   static const String activitiesDurationMinuteShort = 'activities.duration.minute_short';

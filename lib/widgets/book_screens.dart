@@ -1,13 +1,20 @@
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:darq/darq.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:native_device_orientation/native_device_orientation.dart';
+import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/main.dart';
 import 'package:stretching/models_smstretching/sm_abonement_model.dart';
 import 'package:stretching/models_yclients/activity_model.dart';
 import 'package:stretching/models_yclients/record_model.dart';
@@ -17,11 +24,85 @@ import 'package:stretching/widgets/appbars.dart';
 import 'package:stretching/widgets/components/emoji_text.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/navigation/components/bottom_sheet.dart';
-import 'package:tinkoff_acquiring/tinkoff_acquiring.dart';
+import 'package:stretching/widgets/navigation/navigation_root.dart';
+import 'package:tinkoff_acquiring/tinkoff_acquiring.dart' hide Route;
 import 'package:webview_flutter/webview_flutter.dart';
 
+/// The custom loader widget to put on top of the [child].
+class Loader extends StatelessWidget {
+  /// The custom loader widget to put on top of the [child].
+  const Loader({
+    required final this.isLoading,
+    required final this.child,
+    final this.falsePop = false,
+    final this.color = Colors.black,
+    final Key? key,
+  }) : super(key: key);
+
+  /// If this loader is currently active.
+  final bool isLoading;
+
+  /// The child of this loader.
+  final Widget child;
+
+  /// If the [Route.willPop] should return false if this loader [isLoading].
+  final bool falsePop;
+
+  /// The color of this loader's child.
+  final Color color;
+
+  @override
+  Widget build(final BuildContext context) {
+    final widget = AbsorbPointer(
+      absorbing: isLoading,
+      child: Stack(
+        children: <Widget>[
+          child,
+          if (isLoading)
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+              child: Center(
+                child: Image.asset(
+                  AssetsCG.logo,
+                  width: 330,
+                  height: 100,
+                  color: color,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+    return falsePop
+        ? WillPopScope(
+            onWillPop: () => Future.value(!isLoading),
+            child: widget,
+          )
+        : widget;
+  }
+
+  @override
+  void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(
+      properties
+        ..add(DiagnosticsProperty<bool>('isLoading', isLoading))
+        ..add(DiagnosticsProperty<Widget>('child', child))
+        ..add(DiagnosticsProperty<bool>('falsePop', falsePop))
+        ..add(ColorProperty('color', color)),
+    );
+  }
+}
+
+/// The callback to call when user picks a payment method.
+///
+/// When [finish] is called, the loader on [PromptBookScreen] is disabled.
+typedef OnBookPrompt = FutureOr<void> Function(
+  BuildContext context, {
+  required void Function() finish,
+});
+
 /// The screen that prompts user to pay regularly or buy an abonement.
-class PromptBookScreen extends StatelessWidget {
+class PromptBookScreen extends HookWidget {
   /// The screen that prompts user to pay regularly or buy an abonement.
   const PromptBookScreen({
     required final this.onRegular,
@@ -31,14 +112,15 @@ class PromptBookScreen extends StatelessWidget {
     required final this.abonementPrice,
     final this.abonementNonMatchReason = SMAbonementNonMatchReason.none,
     final this.discount = false,
+    final this.onlyFinish = false,
     final Key? key,
   }) : super(key: key);
 
   /// The callback on regular payment.
-  final OnBottomButton onRegular;
+  final OnBookPrompt onRegular;
 
   /// The callback on abonement payment.
-  final OnBottomButton onAbonement;
+  final OnBookPrompt onAbonement;
 
   /// The regular price of the [ActivityModel].
   final num regularPrice;
@@ -55,80 +137,123 @@ class PromptBookScreen extends StatelessWidget {
   /// If this screen should use discount.
   final bool discount;
 
+  /// If the loader should stop only after calling the finish callback.
+  final bool onlyFinish;
+
   @override
   Widget build(final BuildContext context) {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
-    return Scaffold(
-      appBar: cancelAppBar(
-        theme,
-        leading: const SizedBox.shrink(),
-        onPressed: Navigator.of(context).maybePop,
-      ),
-      body: NativeDeviceOrientationReader(
-        builder: (final context) => Align(
-          alignment: abonementNonMatchReason == SMAbonementNonMatchReason.none
-              ? Alignment.center
-              : Alignment.topCenter,
-          child: SingleChildScrollView(
-            key: UniqueKey(),
-            padding: const EdgeInsets.symmetric(horizontal: 16) +
-                EdgeInsets.only(
-                  top: abonementNonMatchReason != SMAbonementNonMatchReason.none
-                      ? mediaQuery.size.height / 8
-                      : 0,
-                  bottom: mediaQuery.size.height / 16,
-                ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                if (abonementNonMatchReason != SMAbonementNonMatchReason.none)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(50, 0, 50, 32),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        EmojiText('😬', style: const TextStyle(fontSize: 35)),
-                        const SizedBox(height: 16),
-                        Text(
-                          abonementNonMatchReason.translation,
-                          style: theme.textTheme.bodyText2,
-                          textAlign: TextAlign.center,
-                        ),
+    final isExtraLoading = useState<bool>(false);
+    final isLoading = useState<bool>(false);
+    final isMounted = useIsMounted();
+    void stopLoading() {
+      if (isMounted()) {
+        isExtraLoading.value = isLoading.value = false;
+      }
+    }
+
+    return Loader(
+      color:
+          isExtraLoading.value ? theme.colorScheme.surface : Colors.transparent,
+      isLoading: isLoading.value,
+      child: Scaffold(
+        appBar: cancelAppBar(
+          theme,
+          leading: const SizedBox.shrink(),
+          onPressed: Navigator.of(context).maybePop,
+        ),
+        body: NativeDeviceOrientationReader(
+          builder: (final context) => Align(
+            alignment: abonementNonMatchReason == SMAbonementNonMatchReason.none
+                ? Alignment.center
+                : Alignment.topCenter,
+            child: SingleChildScrollView(
+              key: UniqueKey(),
+              padding: const EdgeInsets.symmetric(horizontal: 16) +
+                  EdgeInsets.only(
+                    top: abonementNonMatchReason !=
+                            SMAbonementNonMatchReason.none
+                        ? mediaQuery.size.height / 8
+                        : 0,
+                    bottom: mediaQuery.size.height / 16,
+                  ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  if (abonementNonMatchReason != SMAbonementNonMatchReason.none)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(50, 0, 50, 32),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          EmojiText('😬', style: const TextStyle(fontSize: 35)),
+                          const SizedBox(height: 16),
+                          Text(
+                            abonementNonMatchReason.translation,
+                            style: theme.textTheme.bodyText2,
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  BottomButtons<dynamic>(
+                    inverse: true,
+                    firstTitleText: TR.promptBookRegular.tr(),
+                    firstStrikeText: discount
+                        ? TR.miscCurrency
+                            .tr(args: <String>[regularPrice.toString()])
+                        : '',
+                    firstText: TR.miscCurrency.tr(
+                      args: <String>[
+                        (discount ? ySalePrice : regularPrice).toString()
                       ],
                     ),
+                    secondTitleText: TR.promptBookAbonement.tr(),
+                    secondText: TR.promptBookAbonementPrice.tr(
+                      args: <String>[
+                        TR.miscCurrency.tr(
+                          args: <String>[abonementPrice.toStringAsFixed(0)],
+                        )
+                      ],
+                    ),
+                    onFirstPressed: (final context) async {
+                      isLoading.value = true;
+                      isExtraLoading.value = false;
+                      try {
+                        return await onRegular(context, finish: stopLoading);
+                      } finally {
+                        if (!onlyFinish) {
+                          stopLoading();
+                        } else if (isMounted()) {
+                          isExtraLoading.value = true;
+                        }
+                      }
+                    },
+                    onSecondPressed: (final context) async {
+                      isLoading.value = true;
+                      isExtraLoading.value = false;
+                      try {
+                        return await onAbonement(context, finish: stopLoading);
+                      } finally {
+                        if (!onlyFinish) {
+                          stopLoading();
+                        } else if (isMounted()) {
+                          isExtraLoading.value = true;
+                        }
+                      }
+                    },
                   ),
-                BottomButtons<dynamic>(
-                  inverse: true,
-                  firstTitleText: TR.promptBookRegular.tr(),
-                  firstStrikeText: discount
-                      ? TR.miscCurrency
-                          .tr(args: <String>[regularPrice.toString()])
-                      : '',
-                  firstText: TR.miscCurrency.tr(
-                    args: <String>[
-                      (discount ? ySalePrice : regularPrice).toString()
-                    ],
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(50, 12, 50, 0),
+                    child: Text(
+                      TR.promptBookAbonementAd.tr(),
+                      style: theme.textTheme.bodyText1,
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                  secondTitleText: TR.promptBookAbonement.tr(),
-                  secondText: TR.promptBookAbonementPrice.tr(
-                    args: <String>[
-                      TR.miscCurrency
-                          .tr(args: <String>[abonementPrice.toStringAsFixed(0)])
-                    ],
-                  ),
-                  onFirstPressed: onRegular,
-                  onSecondPressed: onAbonement,
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(50, 12, 50, 0),
-                  child: Text(
-                    TR.promptBookAbonementAd.tr(),
-                    style: theme.textTheme.bodyText1,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -140,13 +265,8 @@ class PromptBookScreen extends StatelessWidget {
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(
       properties
-        ..add(ObjectFlagProperty<OnBottomButton>.has('onRegular', onRegular))
-        ..add(
-          ObjectFlagProperty<OnBottomButton>.has(
-            'onAbonement',
-            onAbonement,
-          ),
-        )
+        ..add(ObjectFlagProperty<OnBookPrompt>.has('onRegular', onRegular))
+        ..add(ObjectFlagProperty<OnBookPrompt>.has('onAbonement', onAbonement))
         ..add(DiagnosticsProperty<num>('regularPrice', regularPrice))
         ..add(DiagnosticsProperty<num>('ySalePrice', ySalePrice))
         ..add(DiagnosticsProperty<num>('abonementPrice', abonementPrice))
@@ -156,13 +276,14 @@ class PromptBookScreen extends StatelessWidget {
             abonementNonMatchReason,
           ),
         )
-        ..add(DiagnosticsProperty<bool>('discount', discount)),
+        ..add(DiagnosticsProperty<bool>('discount', discount))
+        ..add(DiagnosticsProperty<bool>('onlyFinish', onlyFinish)),
     );
   }
 }
 
 /// The screen of the successful booking.
-class SuccessfulBookScreen extends StatelessWidget {
+class SuccessfulBookScreen extends ConsumerWidget {
   /// The screen of the successful booking.
   const SuccessfulBookScreen({
     required final this.activity,
@@ -182,7 +303,7 @@ class SuccessfulBookScreen extends StatelessWidget {
   final bool abonement;
 
   @override
-  Widget build(final BuildContext context) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
@@ -203,36 +324,49 @@ class SuccessfulBookScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                EmojiText('🤘😍', style: const TextStyle(fontSize: 45)),
+                EmojiText(
+                  '🤘😍',
+                  style: const TextStyle(fontSize: 45, letterSpacing: 3),
+                ),
                 const SizedBox(height: 16),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 100 * 2 / 3),
-                  child: Text(
-                    abonement
-                        ? TR.successfulBookAbonement.tr()
-                        : TR.successfulBookRegular.tr(),
-                    style: theme.textTheme.headline2,
-                    textAlign: TextAlign.center,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 240),
+                    child: Text(
+                      abonement
+                          ? TR.successfulBookAbonement.tr()
+                          : TR.successfulBookRegular.tr(),
+                      style: theme.textTheme.headline2,
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 45),
-                  child: Text(
-                    TR.successfulBookInfo.tr(),
-                    style: theme.textTheme.bodyText2,
-                    textAlign: TextAlign.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 285),
+                    child: Text(
+                      TR.successfulBookInfo.tr(),
+                      style: theme.textTheme.bodyText2,
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 30),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 55),
+                SizedBox(
+                  width: 260,
                   child: BottomButtons<dynamic>(
                     firstText: TR.successfulBookCalendar.tr(),
                     secondText: TR.successfulBookBackToMain.tr(),
                     onFirstPressed: (final context) => activity.addToCalendar(),
-                    onSecondPressed: (final context) =>
-                        Navigator.of(context).maybePop(),
+                    onSecondPressed: (final context) {
+                      (ref.read(navigationProvider))
+                          .jumpToTab(NavigationScreen.home.index);
+                      Navigator.of(context, rootNavigator: true)
+                          .popUntil(ModalRoute.withName(Routes.root.name));
+                    },
                   ),
                 ),
                 const SizedBox(height: 50),
@@ -256,13 +390,14 @@ class SuccessfulBookScreen extends StatelessWidget {
 }
 
 /// The result screen of the booking.
-class ResultBookScreen extends StatelessWidget {
+class ResultBookScreen extends ConsumerWidget {
   /// The result screen of the booking.
   const ResultBookScreen({
     final this.emoji = '😞',
     final this.title = '',
     final this.body = '',
     final this.button = '',
+    final this.onPressed,
     final this.showBackButton = false,
     final Key? key,
   }) : super(key: key);
@@ -279,11 +414,14 @@ class ResultBookScreen extends StatelessWidget {
   /// The button text of this screen.
   final String button;
 
+  /// The callback on the button on this screen.
+  final void Function()? onPressed;
+
   /// If the back button should be shown.
   final bool showBackButton;
 
   @override
-  Widget build(final BuildContext context) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: showBackButton
@@ -312,32 +450,39 @@ class ResultBookScreen extends StatelessWidget {
                 EmojiText(emoji, style: const TextStyle(fontSize: 45)),
                 const SizedBox(height: 12),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 65),
-                  child: Text(
-                    title,
-                    style: theme.textTheme.headline2,
-                    textAlign: TextAlign.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 45),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 295),
+                    child: Text(
+                      title,
+                      style: theme.textTheme.headline2,
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 60),
-                  child: Text(
-                    body,
-                    style: theme.textTheme.bodyText2,
-                    textAlign: TextAlign.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 270),
+                    child: Text(
+                      body,
+                      style: theme.textTheme.bodyText2,
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 30),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 75),
+                  padding: const EdgeInsets.symmetric(horizontal: 35),
                   child: TextButton(
                     style: (TextButtonStyle.light.fromTheme(theme)).copyWith(
                       backgroundColor: MaterialStateProperty.all(
                         Colors.transparent,
                       ),
                     ),
-                    onPressed: () => Navigator.of(context).maybePop(true),
+                    onPressed:
+                        onPressed ?? () => Navigator.of(context).maybePop(true),
                     child: Text(button),
                   ),
                 ),
@@ -358,6 +503,7 @@ class ResultBookScreen extends StatelessWidget {
         ..add(StringProperty('title', title))
         ..add(StringProperty('body', body))
         ..add(StringProperty('button', button))
+        ..add(ObjectFlagProperty<void Function()>.has('onPressed', onPressed))
         ..add(DiagnosticsProperty<bool>('showBackButton', showBackButton)),
     );
   }
@@ -439,7 +585,7 @@ class ResultBookScreen extends StatelessWidget {
 typedef WebViewAcquiring = Tuple2<InitRequest, InitResponse>;
 
 /// The screen that provides a payment for the user.
-class WebViewAcquiringScreen extends HookWidget {
+class WebViewAcquiringScreen extends HookConsumerWidget {
   /// The screen that provides a payment for the user.
   const WebViewAcquiringScreen(final this.acquiring, {final Key? key})
       : super(key: key);
@@ -448,7 +594,7 @@ class WebViewAcquiringScreen extends HookWidget {
   final WebViewAcquiring acquiring;
 
   @override
-  Widget build(final BuildContext context) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
     return Scaffold(
       appBar: mainAppBar(theme, leading: const FontIconBackButton()),

@@ -483,140 +483,166 @@ class BusinessLogic {
                 abonementPrice: possibleAbonements.keys.first.cost,
                 discount: useDiscount,
                 abonementNonMatchReason: abonementNonMatchReason,
-                onAbonement: (final context) async {
-                  await Future.wait(<Future<void>>[
-                    pickedAnalytics(abonement: true),
-                    showPaymentPickerBottomSheet(
-                      context,
-                      PaymentPickerScreen(
-                        allStudios: false,
-                        smAbonements: possibleAbonements.keys,
-                        onPayment:
-                            (final email, final abonement, final studio) async {
-                          final good = possibleAbonements[abonement];
-                          final options = _smStudiosOptions[good?.salonId];
-                          if (abonement == null ||
-                              good == null ||
-                              options == null) {
-                            return;
-                          }
+                onlyFinish: true,
+                onAbonement: (final context, {required final finish}) async {
+                  var blockFinish = false;
+                  try {
+                    await Future.wait(<Future<void>>[
+                      pickedAnalytics(abonement: true),
+                      showPaymentPickerBottomSheet(
+                        context,
+                        PaymentPickerScreen(
+                          allStudios: false,
+                          smAbonements: possibleAbonements.keys,
+                          onPayment: (final email, final abonement,
+                              final studio) async {
+                            final good = possibleAbonements[abonement];
+                            final options = _smStudiosOptions[good?.salonId];
+                            if (abonement == null ||
+                                good == null ||
+                                options == null) {
+                              return;
+                            }
+                            blockFinish = true;
 
-                          await analytics.logEvent(
-                            name: FAKeys.abonementPicked,
-                            parameters: <String, String>{
-                              'price': abonement.cost.toString(),
-                              'currency': 'RUB',
-                              'train_qnt': abonement.count.toString(),
-                              'class_start':
-                                  abonement.time ? 'till_16.45' : 'any',
-                              'studio':
-                                  abonement.service != null && studio != null
+                            try {
+                              await analytics.logEvent(
+                                name: FAKeys.abonementPicked,
+                                parameters: <String, String>{
+                                  'price': abonement.cost.toString(),
+                                  'currency': 'RUB',
+                                  'train_qnt': abonement.count.toString(),
+                                  'class_start':
+                                      abonement.time ? 'till_16.45' : 'any',
+                                  'studio': abonement.service != null &&
+                                          studio != null
                                       ? translit(studio.item1.studioName)
                                       : 'all',
-                              'payment_method_type': 'credit_card',
-                            },
-                          );
+                                  'payment_method_type': 'credit_card',
+                                },
+                              );
 
-                          final payment = await payTinkoff(
-                            email: email,
-                            navigator: navigator,
-                            companyId: good.salonId,
-                            userPhone: user.phone,
-                            cost: good.cost,
-                            terminalKey: options.key,
-                            terminalPass: options.pass,
-                            canContinue: () => timer.isActive,
-                          );
+                              final payment = await payTinkoff(
+                                email: email,
+                                navigator: navigator,
+                                companyId: good.salonId,
+                                userPhone: user.phone,
+                                cost: good.cost,
+                                terminalKey: options.key,
+                                terminalPass: options.pass,
+                                canContinue: () => timer.isActive,
+                              );
 
-                          if (!payment.item0 || payment.item1 == null) {
-                            await cancel();
-                            throw BookException(
-                              BookExceptionType.payment,
-                              record,
-                            );
-                          }
+                              if (!payment.item0 || payment.item1 == null) {
+                                await cancel();
+                                throw BookException(
+                                  BookExceptionType.payment,
+                                  record,
+                                );
+                              }
 
-                          final result = await createAbonement(
-                            abonement: abonement,
-                            good: good,
-                            options: options,
-                            userPhone: user.phone,
-                          );
+                              final result = await createAbonement(
+                                abonement: abonement,
+                                good: good,
+                                options: options,
+                                userPhone: user.phone,
+                              );
 
-                          await _smStretching.editPayment(
-                            acquiring: payment.item1!,
-                            serverTime: serverTime,
-                            documentId: result.item0.documentId,
-                            isAbonement: true,
-                          );
+                              await _smStretching.editPayment(
+                                acquiring: payment.item1!,
+                                serverTime: serverTime,
+                                documentId: result.item0.documentId,
+                                isAbonement: true,
+                              );
 
-                          successBook = true;
+                              successBook = true;
 
-                          /// Close the prompt screen and pay by freshly created
-                          /// abonement.
-                          await navigator.maybePop();
-                        },
+                              await navigator.maybePop();
+                            } finally {
+                              finish();
+                            }
+                          },
+                        ),
                       ),
-                    ),
-                  ]);
+                    ]);
+                  } finally {
+                    if (!blockFinish) {
+                      finish();
+                    }
+                  }
                 },
-                onRegular: (final context) async {
-                  await Future.wait(<Future<void>>[
-                    pickedAnalytics(abonement: false),
-                    showPaymentPickerBottomSheet(
-                      context,
-                      PaymentPickerScreen(
-                        payment: useDiscount ? ySalePrice : regularPrice,
-                        onPayment:
-                            (final email, final abonement, final studio) async {
-                          final payment = await payTinkoff(
-                            cost: useDiscount ? ySalePrice : regularPrice,
-                            email: email,
-                            navigator: navigator,
-                            companyId: activity.item0.companyId,
-                            terminalKey: activity.item1.item2.key,
-                            terminalPass: activity.item1.item2.pass,
-                            userPhone: user.phone,
-                            canContinue: () => timer.isActive,
-                            recordId: record.id,
-                          );
-                          if (!payment.item0 || payment.item1 == null) {
-                            await cancelBook(
-                              discount: useDiscount,
-                              recordDate: record.date,
-                              recordId: record.id,
-                              userPhone: user.phone,
-                            );
-                            throw BookException(
-                              BookExceptionType.payment,
-                              record,
-                            );
-                          }
+                onRegular: (final context, {required final finish}) async {
+                  var blockFinish = false;
+                  try {
+                    await Future.wait(<Future<void>>[
+                      pickedAnalytics(abonement: false),
+                      showPaymentPickerBottomSheet(
+                        context,
+                        PaymentPickerScreen(
+                          payment: useDiscount ? ySalePrice : regularPrice,
+                          onPayment: (
+                            final email,
+                            final abonement,
+                            final studio,
+                          ) async {
+                            try {
+                              blockFinish = true;
+                              final payment = await payTinkoff(
+                                cost: useDiscount ? ySalePrice : regularPrice,
+                                email: email,
+                                navigator: navigator,
+                                companyId: activity.item0.companyId,
+                                terminalKey: activity.item1.item2.key,
+                                terminalPass: activity.item1.item2.pass,
+                                userPhone: user.phone,
+                                canContinue: () => timer.isActive,
+                                recordId: record.id,
+                              );
+                              if (!payment.item0 || payment.item1 == null) {
+                                await cancelBook(
+                                  discount: useDiscount,
+                                  recordDate: record.date,
+                                  recordId: record.id,
+                                  userPhone: user.phone,
+                                );
+                                throw BookException(
+                                  BookExceptionType.payment,
+                                  record,
+                                );
+                              }
 
-                          await _smStretching.editPayment(
-                            acquiring: payment.item1!,
-                            serverTime: serverTime,
-                            documentId: record.documents.first.id,
-                            isAbonement: false,
-                          );
+                              await _smStretching.editPayment(
+                                acquiring: payment.item1!,
+                                serverTime: serverTime,
+                                documentId: record.documents.first.id,
+                                isAbonement: false,
+                              );
 
-                          if (await update(
-                            ActivityPaidBy.regular,
-                            orderId: int.tryParse(
-                              payment.item1?.item0.orderId ?? '',
-                            ),
-                          )) {
-                            successBook = true;
-                            await navigator.maybePop(
-                              useDiscount
-                                  ? BookResult.discount
-                                  : BookResult.regular,
-                            );
-                          }
-                        },
+                              if (await update(
+                                ActivityPaidBy.regular,
+                                orderId: int.tryParse(
+                                  payment.item1?.item0.orderId ?? '',
+                                ),
+                              )) {
+                                successBook = true;
+                                await navigator.maybePop(
+                                  useDiscount
+                                      ? BookResult.discount
+                                      : BookResult.regular,
+                                );
+                              }
+                            } finally {
+                              finish();
+                            }
+                          },
+                        ),
                       ),
-                    ),
-                  ]);
+                    ]);
+                  } finally {
+                    if (!blockFinish) {
+                      finish();
+                    }
+                  }
                 },
               ),
             );
@@ -872,7 +898,7 @@ class BusinessLogic {
         email: email,
         userPhone: userPhone,
         orderId: orderId.toString(),
-        amount: 1,
+        amount: cost,
         terminalKey: terminalKey,
         password: terminalPass,
       );
@@ -975,8 +1001,8 @@ Future<void> refreshAllProviders(final ProviderContainer container) async {
       container.read(trainersProvider.notifier).refresh(),
       container.read(scheduleProvider.notifier).refresh(),
       container.read(goodsProvider.notifier).refresh(),
-      container.read(userAbonementsProvider.notifier).refresh(),
-      container.read(userRecordsProvider.notifier).refresh(),
+      // container.read(userAbonementsProvider.notifier).refresh(),
+      // container.read(userRecordsProvider.notifier).refresh(),
 
       /// SMStretching API
       container.read(smAdvertismentsProvider.notifier).refresh(),
@@ -985,8 +1011,8 @@ Future<void> refreshAllProviders(final ProviderContainer container) async {
       container.read(smStudiosProvider.notifier).refresh(),
       container.read(smTrainersProvider.notifier).refresh(),
       container.read(smClassesGalleryProvider.notifier).refresh(),
-      container.read(smUserDepositProvider.future),
-      container.read(smUserAbonementsProvider.notifier).refresh(),
+      // container.read(smUserDepositProvider.future),
+      // container.read(smUserAbonementsProvider.notifier).refresh(),
     ]);
   } finally {
     container.read(splashProvider).state = false;

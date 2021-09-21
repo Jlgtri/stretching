@@ -112,8 +112,7 @@ class RootScreen extends HookConsumerWidget {
           ]);
           final currentLocale = ez.currentLocale;
           if (currentLocale != null) {
-            await ref
-                .read(localeProvider.notifier)
+            await (ref.read(localeProvider.notifier))
                 .setStateAsync(currentLocale);
           }
         } finally {

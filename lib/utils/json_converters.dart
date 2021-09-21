@@ -227,8 +227,8 @@ class OptionalIterableConverter<T extends Object?, S extends Object?>
   Iterable<T> fromJson(final Object? data) {
     if (data is Iterable<T?>) {
       return data.whereType<T>();
-    } else if (data is Iterable<Object?>) {
-      return data.whereType<S>().map(converter.fromJson).whereType<T>();
+    } else if (data is Iterable<dynamic>) {
+      return data.whereType<S?>().map(converter.fromJson).whereType<T>();
     } else {
       return Iterable<T>.empty();
     }
@@ -236,7 +236,7 @@ class OptionalIterableConverter<T extends Object?, S extends Object?>
 
   @override
   Iterable<S> toJson(final Iterable<Object?>? iterable) =>
-      iterable?.whereType<T>().map(converter.toJson).whereType<S>() ??
+      iterable?.whereType<T?>().map(converter.toJson).whereType<S>() ??
       Iterable<S>.empty();
 }
 
@@ -253,10 +253,10 @@ class IterableConverter<T extends Object, S extends Object>
   Iterable<T> fromJson(final Object? data) {
     return data is Iterable<T>
         ? data
-        : (data! as Iterable)
-            .whereType<S>()
+        : (data! as Iterable<dynamic>)
+            .cast<S>()
             .map(converter.fromJson)
-            .whereType<T>();
+            .cast<T>();
   }
 
   @override
@@ -298,7 +298,7 @@ class StringToIterableConverter<T extends Object, S extends Object>
     return data is Iterable<T>
         ? data
         : converter.fromJson(
-            (json.decode(data! as String) as List).cast<S>(),
+            (json.decode(data! as String) as Iterable<dynamic>).cast<S>(),
           );
   }
 

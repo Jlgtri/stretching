@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:darq/darq.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
@@ -10,9 +8,11 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:native_device_orientation/native_device_orientation.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/hooks/hook_consumer_stateful_widget.dart';
 import 'package:stretching/main.dart';
 import 'package:stretching/models_yclients/user_record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
+import 'package:stretching/providers/hide_appbar_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/navigation/components/bottom_sheet.dart';
@@ -20,16 +20,22 @@ import 'package:stretching/widgets/navigation/navigation_root.dart';
 import 'package:stretching/widgets/navigation/screens/profile/profile_screen.dart';
 
 /// The screen that shows a user his previous records.
-class HistoryScreen extends HookConsumerWidget {
+class HistoryScreen extends HookConsumerStatefulWidget {
   /// The screen that shows a user his previous records.
-  const HistoryScreen({required final this.onBackButton, final Key? key})
-      : super(key: key);
-
-  /// The callback to go back to previous screen.
-  final FutureOr<void> Function() onBackButton;
+  const HistoryScreen({final Key? key}) : super(key: key);
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  HistoryScreenState createState() => HistoryScreenState();
+}
+
+/// The screen that shows a user his previous records.
+class HistoryScreenState extends ConsumerState<HistoryScreen>
+    with HideAppBarRouteAware {
+  @override
+  NavigationScreen get screenType => NavigationScreen.profile;
+
+  @override
+  Widget build(final BuildContext context) {
     final theme = Theme.of(context);
     final now = DateTime.now();
 
@@ -153,11 +159,8 @@ class HistoryScreen extends HookConsumerWidget {
       );
     }
 
-    return WillPopScope(
-      onWillPop: () async {
-        await onBackButton();
-        return true;
-      },
+    return Padding(
+      padding: const EdgeInsets.only(bottom: NavigationRoot.navBarHeight),
       child: Scaffold(
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
@@ -179,7 +182,7 @@ class HistoryScreen extends HookConsumerWidget {
           ),
           leading: FontIconBackButton(
             color: theme.colorScheme.onSurface,
-            onPressed: onBackButton,
+            onPressed: Navigator.of(context).maybePop,
           ),
         ),
         body: userYearAndMonthRecords.isEmpty
@@ -232,24 +235,11 @@ class HistoryScreen extends HookConsumerWidget {
               )
             : ListView(
                 primary: false,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.only(top: 16),
                 children: (userYearAndMonthRecords.entries.map(recordGroup))
                     .toList(growable: false),
               ),
       ),
-    );
-  }
-
-  @override
-  void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(
-      properties
-        ..add(
-          ObjectFlagProperty<void Function()>.has(
-            'onBackButton',
-            onBackButton,
-          ),
-        ),
     );
   }
 }

@@ -13,25 +13,34 @@ import 'package:stretching/business_logic.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/hooks/hook_consumer_stateful_widget.dart';
+import 'package:stretching/providers/hide_appbar_provider.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/widgets/appbars.dart';
 import 'package:stretching/widgets/components/focus_wrapper.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/navigation/components/bottom_sheet.dart';
+import 'package:stretching/widgets/navigation/navigation_root.dart';
 import 'package:stretching/widgets/navigation/screens/profile/profile_screen.dart';
 import 'package:validators/validators.dart';
 
 /// The screen that allows user to edit his personal data.
-class ProfileEditScreen extends HookConsumerWidget {
+class ProfileEditScreen extends HookConsumerStatefulWidget {
   /// The screen that allows user to edit his personal data.
-  const ProfileEditScreen({required final this.onBackButton, final Key? key})
-      : super(key: key);
-
-  /// The callback to go back to previous screen.
-  final FutureOr<void> Function() onBackButton;
+  const ProfileEditScreen({final Key? key}) : super(key: key);
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
+  ProfileEditScreenState createState() => ProfileEditScreenState();
+}
+
+/// The screen that allows user to edit his personal data.
+class ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
+    with HideAppBarRouteAware {
+  @override
+  NavigationScreen get screenType => NavigationScreen.profile;
+
+  @override
+  Widget build(final BuildContext context) {
     final theme = Theme.of(context);
     final navigator = Navigator.of(context);
 
@@ -49,19 +58,16 @@ class ProfileEditScreen extends HookConsumerWidget {
     final surname = useRef('');
     final middleName = useRef('');
     final email = useRef('');
-    return WillPopScope(
-      onWillPop: () async {
-        await onBackButton();
-        return true;
-      },
-      child: FocusWrapper(
-        unfocussableKeys: <GlobalKey>[
-          firstNameKey,
-          surnameKey,
-          middleNameKey,
-          phoneKey,
-          emailKey
-        ],
+    return FocusWrapper(
+      unfocussableKeys: <GlobalKey>[
+        firstNameKey,
+        surnameKey,
+        middleNameKey,
+        phoneKey,
+        emailKey
+      ],
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: NavigationRoot.navBarHeight),
         child: Scaffold(
           resizeToAvoidBottomInset: true,
           appBar: cancelAppBar(
@@ -69,7 +75,7 @@ class ProfileEditScreen extends HookConsumerWidget {
             title: ProfileNavigationScreen.profile.translation,
             leading: FontIconBackButton(
               color: theme.colorScheme.onSurface,
-              onPressed: onBackButton,
+              onPressed: Navigator.of(context).maybePop,
             ),
           ),
           body: Form(
@@ -215,19 +221,6 @@ class ProfileEditScreen extends HookConsumerWidget {
           ),
         ),
       ),
-    );
-  }
-
-  @override
-  void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(
-      properties
-        ..add(
-          ObjectFlagProperty<void Function()>.has(
-            'onBackButton',
-            onBackButton,
-          ),
-        ),
     );
   }
 }

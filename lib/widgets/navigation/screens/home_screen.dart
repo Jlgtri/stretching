@@ -124,7 +124,7 @@ class HomeScreen extends HookConsumerWidget {
                       StoryCardScreen(smStory),
                       const SizedBox(width: 6)
                     ]
-                  ].sublist(0, smStories.length * 2 - 1),
+                  ]..removeLast(),
                 ),
               ),
             ),
@@ -327,6 +327,29 @@ class StoryCardScreen extends HookConsumerWidget {
         });
       }),
     );
+    final stories = useMemoized(() {
+      return <StoryItem>[
+        StoryItem.pageImage(
+          url: story.mediaLink,
+          controller: controller,
+          duration: const Duration(milliseconds: 2500),
+        ),
+        if (story.storiesImgV2 != null)
+          for (final img in story.storiesImgV2!)
+            if (img.url.endsWith('.mp4'))
+              StoryItem.pageVideo(
+                img.url,
+                controller: controller,
+                duration: const Duration(seconds: 10),
+              )
+            else
+              StoryItem.pageImage(
+                url: img.url,
+                controller: controller,
+                duration: const Duration(milliseconds: 2500),
+              )
+      ];
+    });
     return OpenContainer<void>(
       tappable: false,
       openElevation: 0,
@@ -344,27 +367,12 @@ class StoryCardScreen extends HookConsumerWidget {
             await ref.read(homeWatchedStoriesProvider.notifier).add(story);
           }
         },
-        storyItems: <StoryItem>[
-          StoryItem.pageImage(
-            url: story.mediaLink,
-            controller: controller,
-            duration: const Duration(milliseconds: 2500),
-          ),
-          if (story.storiesImgV2 != null)
-            for (final img in story.storiesImgV2!)
-              if (img.url.endsWith('.mp4'))
-                StoryItem.pageVideo(
-                  img.url,
-                  controller: controller,
-                  duration: const Duration(seconds: 10),
-                )
-              else
-                StoryItem.pageImage(
-                  url: img.url,
-                  controller: controller,
-                  duration: const Duration(milliseconds: 2500),
-                )
-        ],
+        onStoryShow: (final story) {
+          if (stories.length == 1) {
+            controller.next();
+          }
+        },
+        storyItems: stories,
         onVerticalSwipeComplete: (final direction) {
           if (direction == Direction.down) {
             action();

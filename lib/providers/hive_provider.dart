@@ -63,18 +63,24 @@ class SaveToHiveNotifier<T extends Object, S extends Object>
   Future<void> save() => hive.put(saveName, converter.toJson(state));
 
   @override
-  set state(final T value) {
-    super.state = value;
-    save();
+  set state(final T state) {
+    try {
+      super.state = state;
+    } finally {
+      save();
+    }
   }
 
   @override
   T get state => super.state;
 
   /// Updates the current [state] and saves it's value to the [hive] database.
-  Future<void> setStateAsync(final T value) async {
-    super.state = value;
-    await save();
+  Future<void> setStateAsync(final T state) async {
+    try {
+      super.state = state;
+    } finally {
+      await save();
+    }
   }
 }
 
@@ -116,18 +122,24 @@ class OptionalSaveToHiveNotifier<T extends Object?, S extends Object?>
   }
 
   @override
-  set state(final T? value) {
-    super.state = value;
-    save();
+  set state(final T? state) {
+    try {
+      super.state = state;
+    } finally {
+      save();
+    }
   }
 
   @override
   T? get state => super.state;
 
   /// Updates the current [state] and saves it's value to the [hive] database.
-  Future<void> setStateAsync(final T value) async {
-    super.state = value;
-    await save();
+  Future<void> setStateAsync(final T state) async {
+    try {
+      super.state = state;
+    } finally {
+      await save();
+    }
   }
 }
 
@@ -168,18 +180,21 @@ class SaveToHiveIterableNotifier<T extends Object, S extends Object>
   Future<void> save() => hive.put(saveName, converter.toJson(state));
 
   @override
-  set state(final Iterable<T> value) {
-    super.state = value;
-    save();
+  set state(final Iterable<T> state) {
+    try {
+      super.state = state;
+    } finally {
+      save();
+    }
   }
 
   @override
   Iterable<T> get state => super.state;
 
   /// Updates the current [state] and saves it's value to the [hive] database.
-  Future<Iterable<T>> setStateAsync(final Iterable<T> state) async {
+  Future<void> setStateAsync(final Iterable<T> state) async {
     try {
-      return this.state = state;
+      super.state = state;
     } finally {
       await save();
     }
@@ -204,7 +219,5 @@ class SaveToHiveIterableNotifier<T extends Object, S extends Object>
   }
 
   /// Remove everything from this notifier.
-  Future<void> clear() async {
-    await setStateAsync(Iterable<T>.empty());
-  }
+  Future<void> clear() => setStateAsync(Iterable<T>.empty());
 }

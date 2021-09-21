@@ -1,11 +1,6 @@
 # Stretching
 
-![Icon](./icon.png?raw=true 'Icon')
-
-## Versions
-
-- Android SDK: `16-30`
-- IOS: `10-14`
+## ![Icon](./icon.png?raw=true 'Icon')
 
 ### Build
 

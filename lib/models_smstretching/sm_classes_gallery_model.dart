@@ -2,8 +2,80 @@
 
 import 'dart:convert';
 
+import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
+import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/models_smstretching/sm_studio_model.dart';
+import 'package:stretching/models_smstretching/sm_trainer_model.dart';
+import 'package:stretching/utils/enum_to_string.dart';
 import 'package:stretching/utils/json_converters.dart';
+
+/// The categories of [SMTrainerModel] and [SMStudioModel].
+enum ClassCategory {
+  /// See: https://smstretching.ru/classes/trx/
+  trx,
+
+  /// See: https://smstretching.ru/classes/stretching/
+  stretching,
+
+  /// See: https://smstretching.ru/classes/barre-signature/
+  barreSignature,
+
+  /// See: https://smstretching.ru/classes/pilates/
+  pilates,
+
+  /// See: https://smstretching.ru/classes/barre-2-0/
+  barre20,
+
+  /// See: https://smstretching.ru/classes/hot-stretching/
+  hotStretching,
+
+  /// See: https://smstretching.ru/classes/hot-barre/
+  hotBarre,
+
+  /// See: https://smstretching.ru/classes/hot-pilates/
+  hotPilates,
+
+  /// See: https://smstretching.ru/classes/dance-workout/
+  danceWorkout,
+
+  /// See: https://smstretching.ru/classes/fitboxing/
+  fitBoxing
+}
+
+/// The extra data provided for [ClassCategory].
+extension ClassCategoryData on ClassCategory {
+  /// The translation of this category.
+  String get translation => '${TR.category}.${enumToString(this)}'.tr();
+
+  /// The id of this class in YClients API.
+  int get id {
+    switch (this) {
+      case ClassCategory.trx:
+        return 7209549;
+      case ClassCategory.stretching:
+        return 7209551;
+      case ClassCategory.barreSignature:
+        return 7209564;
+      case ClassCategory.pilates:
+        return 7145210;
+      case ClassCategory.barre20:
+        return 7140664;
+      case ClassCategory.hotStretching:
+        return 7209559;
+      case ClassCategory.hotBarre:
+        return 7209565;
+      case ClassCategory.hotPilates:
+        return 7209568;
+      case ClassCategory.danceWorkout:
+        return 7140661;
+      case ClassCategory.fitBoxing:
+        return 7140655;
+    }
+  }
+}
 
 /// The converter of the [SMClassesGalleryModel].
 const SMClassesGalleryConverter smClassesGalleryConverter =

@@ -13,7 +13,7 @@ import 'package:stretching/const.dart';
 import 'package:stretching/models_smstretching/sm_abonement_model.dart';
 import 'package:stretching/models_smstretching/sm_activity_price_model.dart';
 import 'package:stretching/models_smstretching/sm_advertisment_model.dart';
-import 'package:stretching/models_smstretching/sm_gallery_model.dart';
+import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
 import 'package:stretching/models_smstretching/sm_payment_model.dart';
 import 'package:stretching/models_smstretching/sm_record_model.dart';
 import 'package:stretching/models_smstretching/sm_story_model.dart';
@@ -543,10 +543,12 @@ final StateNotifierProvider<ContentNotifier<SMUserAbonementModel>,
           .map((final map) => SMUserAbonementModel.fromMap(map));
     },
   );
-  ref.listen<bool>(userProvider.select((final user) => user == null),
-      (final unauthorized) async {
-    unauthorized ? await notifier.clear() : await notifier.refresh();
-  });
+  ref.listen<bool>(
+    userProvider.select((final user) => user == null),
+    (final unauthorized) async =>
+        unauthorized ? await notifier.clear() : await notifier.refresh(),
+    fireImmediately: true,
+  );
   return notifier;
 });
 

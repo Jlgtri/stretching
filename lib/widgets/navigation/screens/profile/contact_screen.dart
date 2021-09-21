@@ -3,23 +3,49 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:native_device_orientation/native_device_orientation.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/providers/hide_appbar_provider.dart';
 import 'package:stretching/widgets/appbars.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
+import 'package:stretching/widgets/navigation/navigation_root.dart';
 import 'package:stretching/widgets/navigation/screens/profile/profile_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 /// The screen to contact support.
-class ContactScreen extends StatelessWidget {
+class ContactScreen extends ConsumerStatefulWidget {
   /// The screen to contact support.
-  const ContactScreen({required final this.onBackButton, final Key? key})
+  const ContactScreen({final this.onBackButton, final Key? key})
       : super(key: key);
 
   /// The function to be passed to appbar's back button.
-  final FutureOr<void> Function() onBackButton;
+  final FutureOr<void> Function()? onBackButton;
+
+  @override
+  ContactScreenState createState() => ContactScreenState();
+
+  @override
+  void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(
+      properties
+        ..add(
+          ObjectFlagProperty<FutureOr<void> Function()>.has(
+            'onBackButton',
+            onBackButton,
+          ),
+        ),
+    );
+  }
+}
+
+/// The screen to contact support.
+class ContactScreenState extends ConsumerState<ContactScreen>
+    with HideAppBarRouteAware {
+  @override
+  NavigationScreen get screenType => NavigationScreen.profile;
 
   @override
   Widget build(final BuildContext context) {
@@ -62,8 +88,8 @@ class ContactScreen extends StatelessWidget {
 
     return WillPopScope(
       onWillPop: () async {
-        await onBackButton();
-        return true;
+        await widget.onBackButton?.call();
+        return widget.onBackButton == null;
       },
       child: Scaffold(
         appBar: cancelAppBar(
@@ -71,7 +97,7 @@ class ContactScreen extends StatelessWidget {
           title: ProfileNavigationScreen.support.translation,
           leading: FontIconBackButton(
             color: theme.colorScheme.onSurface,
-            onPressed: onBackButton,
+            onPressed: widget.onBackButton,
           ),
         ),
         body: NativeDeviceOrientationReader(
@@ -85,7 +111,7 @@ class ContactScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 36)
                         .copyWith(top: 72),
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 300),
+                      constraints: const BoxConstraints(maxWidth: 305),
                       child: Text(
                         TR.supportTitle.tr(),
                         style: theme.textTheme.headline2,
@@ -135,7 +161,7 @@ class ContactScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 24),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 50),
+                    padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 270),
                       child: Text(
@@ -164,19 +190,6 @@ class ContactScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-
-  @override
-  void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(
-      properties
-        ..add(
-          ObjectFlagProperty<FutureOr<void> Function()>.has(
-            'onBackButton',
-            onBackButton,
-          ),
-        ),
     );
   }
 }

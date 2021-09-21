@@ -1,50 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:stretching/generated/localization.g.dart';
-import 'package:stretching/models_smstretching/sm_studio_model.dart';
-import 'package:stretching/models_smstretching/sm_trainer_model.dart';
-import 'package:stretching/utils/enum_to_string.dart';
-
-/// The categories of [SMTrainerModel] and [SMStudioModel].
-enum ClassCategory {
-  /// See: https://smstretching.ru/classes/trx/
-  trx,
-
-  /// See: https://smstretching.ru/classes/stretching/
-  stretching,
-
-  /// See: https://smstretching.ru/classes/barre-signature/
-  barreSignature,
-
-  /// See: https://smstretching.ru/classes/pilates/
-  pilates,
-
-  /// See: https://smstretching.ru/classes/barre-2-0/
-  barre20,
-
-  /// See: https://smstretching.ru/classes/hot-stretching/
-  hotStretching,
-
-  /// See: https://smstretching.ru/classes/hot-barre/
-  hotBarre,
-
-  /// See: https://smstretching.ru/classes/hot-pilates/
-  hotPilates,
-
-  /// See: https://smstretching.ru/classes/dance-workout/
-  danceWorkout,
-
-  /// See: https://smstretching.ru/classes/fitboxing/
-  fitBoxing
-}
-
-/// The extra data provided for [ClassCategory].
-extension CategoriesData on ClassCategory {
-  /// The translation of this category.
-  String get translation => '${TR.category}.${enumToString(this)}'.tr();
-}
+import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
 
 /// Returns the widget that provides functionality for selecting and
 /// deselecting a [ClassCategory].

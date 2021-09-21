@@ -302,14 +302,6 @@ enum InputDecorationStyle {
 
 /// The extra data provided for [InputDecorationStyle].
 extension InputDecorationStyleData on InputDecorationStyle {
-  /// Return this style's toolbar height.
-  double get toolbarHeight {
-    switch (this) {
-      case InputDecorationStyle.search:
-        return 40;
-    }
-  }
-
   /// Return this style from [theme].
   ///
   /// - [hintText] sets the hint text.
@@ -318,36 +310,35 @@ extension InputDecorationStyleData on InputDecorationStyle {
     final ThemeData theme, {
     final String? hintText,
     final void Function()? onSuffix,
-    final EdgeInsets prefixPadding = EdgeInsets.zero,
   }) {
     switch (this) {
       case InputDecorationStyle.search:
         return InputDecoration(
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-          prefixIcon: Padding(
-            padding: prefixPadding,
-            child: Center(
-              child: FontIcon(
-                FontIconData(IconsCG.search, color: theme.hintColor),
-              ),
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          prefixIcon: Center(
+            child: FontIcon(
+              FontIconData(IconsCG.search, color: theme.hintColor),
             ),
           ),
           prefixIconConstraints:
               const BoxConstraints(minWidth: 48, maxWidth: 48),
           suffix: onSuffix != null
-              ? MaterialButton(
-                  onPressed: onSuffix,
-                  visualDensity: VisualDensity.compact,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(4)),
-                  ),
-                  child: Text(
-                    TR.tooltipsCancel.tr(),
-                    style: TextStyle(
-                      color: theme.colorScheme.onSurface,
-                      fontWeight: FontWeight.w500,
+              ? Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onSuffix,
+                    borderRadius: const BorderRadius.all(Radius.circular(4)),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4)
+                          .copyWith(bottom: 2),
+                      child: Text(
+                        TR.tooltipsCancel.tr(),
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
                   ),
                 )

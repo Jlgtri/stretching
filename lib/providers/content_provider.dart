@@ -38,6 +38,9 @@ class ContentNotifier<T extends Object>
   /// Refresh this state with a callback.
   Future<Iterable<T>> refresh() async {
     final state = await refreshState(this);
-    return state is Iterable<T> ? await setStateAsync(state) : this.state;
+    if (state is Iterable<T>) {
+      await setStateAsync(state);
+    }
+    return this.state;
   }
 }

@@ -22,11 +22,10 @@ import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/business_logic.dart';
 import 'package:stretching/const.dart';
-import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/main.dart';
-import 'package:stretching/models_smstretching/sm_gallery_model.dart';
+import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
 import 'package:stretching/models_smstretching/sm_record_model.dart';
 import 'package:stretching/models_smstretching/sm_studio_model.dart';
 import 'package:stretching/models_smstretching/sm_trainer_model.dart';
@@ -93,18 +92,18 @@ final StateNotifierProvider<
 
 /// The provider of filters for [SMTrainerModel].
 final StateNotifierProvider<
-        SaveToHiveIterableNotifier<SMClassesGalleryModel, String>,
-        Iterable<SMClassesGalleryModel>> activitiesCategoriesFilterProvider =
+        SaveToHiveIterableNotifier<CombinedClassesModel, String>,
+        Iterable<CombinedClassesModel>> activitiesCategoriesFilterProvider =
     StateNotifierProvider<
-        SaveToHiveIterableNotifier<SMClassesGalleryModel, String>,
-        Iterable<SMClassesGalleryModel>>((final ref) {
-  return SaveToHiveIterableNotifier<SMClassesGalleryModel, String>(
+        SaveToHiveIterableNotifier<CombinedClassesModel, String>,
+        Iterable<CombinedClassesModel>>((final ref) {
+  return SaveToHiveIterableNotifier<CombinedClassesModel, String>(
     hive: ref.watch(hiveProvider),
     saveName: 'activities_categories',
     converter: StringToIterableConverter(
-      OptionalIterableConverter(ref.watch(smClassesGalleryIdConverterProvider)),
+      OptionalIterableConverter(ref.watch(combinedClassesIdConverterProvider)),
     ),
-    defaultValue: const Iterable<SMClassesGalleryModel>.empty(),
+    defaultValue: const Iterable<CombinedClassesModel>.empty(),
   );
 });
 
@@ -216,7 +215,7 @@ final Provider<int> activitiesFiltersCountProvider = Provider<int>((final ref) {
   int len(final Iterable<Object> iterable) => iterable.length;
   return (ref.watch(activitiesTimeFilterProvider.select(len)) +
           ref.watch(activitiesCategoriesFilterProvider.select(len)) +
-          ref.watch(activitiesStudiosFilterProvider.select(len)) +
+          // ref.watch(activitiesStudiosFilterProvider.select(len)) +
           ref.watch(activitiesTrainersFilterProvider.select(len)))
       .toInt();
 });
@@ -251,7 +250,7 @@ final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
             (trainers.isEmpty || trainers.contains(activity.item2.item1)) &&
             (categories.isEmpty ||
                 categories.any((final category) {
-                  return category.classesYId == activity.item0.service.id;
+                  return category.item0.id == activity.item0.service.id;
                 })) &&
             (time.isEmpty ||
                 time.any((final time) => time.isWithin(activity.item0.date)));
@@ -324,10 +323,8 @@ class ActivitiesScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final dayController = useScrollController();
     final refreshController = useMemoized(() => RefreshController());
     final activities = ref.watch(filteredActivitiesProvider);
-
     useMemoized(() {
       ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
         ref.read(activitiesDayProvider).state = activities.first.item0.date;
@@ -382,9 +379,8 @@ class ActivitiesScreen extends HookConsumerWidget {
                 /// A search field, categories and dates.
                 SliverAppBar(
                   primary: false,
-                  floating: activities.isEmpty,
                   backgroundColor: Colors.transparent,
-                  toolbarHeight: InputDecorationStyle.search.toolbarHeight + 86,
+                  toolbarHeight: 126,
                   titleSpacing: 0,
                   title: Material(
                     color: theme.scaffoldBackgroundColor,
@@ -417,8 +413,6 @@ class ActivitiesScreen extends HookConsumerWidget {
                                         .fromTheme(
                                           theme,
                                           hintText: TR.activitiesSearch.tr(),
-                                          prefixPadding:
-                                              const EdgeInsets.only(bottom: 4),
                                         )
                                         .copyWith(
                                           border: const OutlineInputBorder(
@@ -508,14 +502,29 @@ class ActivitiesScreen extends HookConsumerWidget {
                             padding: const EdgeInsets.only(top: 16),
                             child: Consumer(
                               builder: (final context, final ref, final child) {
-                                return getSelectorWidget<SMClassesGalleryModel>(
+                                final studios =
+                                    ref.watch(activitiesStudiosFilterProvider);
+                                final classes = ref.watch(
+                                  combinedClassesProvider
+                                      .select((final classes) {
+                                    return classes.where((final _class) {
+                                      return studios.isEmpty ||
+                                          studios.any((final studio) {
+                                            return studio.item1.studioTags
+                                                .toCategories()
+                                                .contains(_class.item0);
+                                          });
+                                    });
+                                  }),
+                                );
+                                return getSelectorWidget<CombinedClassesModel>(
                                   theme: theme,
                                   text: (final smClassGallery) =>
-                                      smClassGallery.classesName,
+                                      smClassGallery.item0.translation,
                                   selected: (final value) => ref
                                       .read(activitiesCategoriesFilterProvider)
                                       .contains(value),
-                                  values: ref.watch(smClassesGalleryProvider),
+                                  values: classes,
                                   onSelected: (final category, final value) {
                                     final categoriesNotifier = ref.read(
                                       activitiesCategoriesFilterProvider
@@ -534,74 +543,44 @@ class ActivitiesScreen extends HookConsumerWidget {
                       ),
                     ),
                   ),
-                  bottom: PreferredSize(
-                    preferredSize: const Size.fromHeight(60),
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: SizedBox(
-                        height: 44,
-                        child: Consumer(
-                          builder: (final context, final ref, final child) {
-                            final day = ref.watch(activitiesDayProvider).state;
-                            final activitiesDays =
-                                ref.watch(activitiesDaysProvider);
-                            return ListView.builder(
-                              controller: dayController,
-                              primary: false,
-                              shrinkWrap: true,
-                              scrollDirection: Axis.horizontal,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8),
-                              itemCount: activitiesDays.length,
-                              itemExtent: 56,
-                              itemBuilder: (final context, final index) {
-                                final date = activitiesDays.elementAt(index);
-                                return ActivitiesDateFilterCard(
-                                  date,
-                                  selected: day.year == date.year &&
-                                      day.month == date.month &&
-                                      day.day == date.day,
-                                  onSelected: () {
-                                    ref.read(activitiesDayProvider).state =
-                                        date;
-                                  },
-                                );
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ),
+                  // bottom: PreferredSize(
+                  //   preferredSize: const Size.fromHeight(60),
+                  //   child:
+                  // ),
+                ),
+                const SliverPadding(
+                  padding: EdgeInsets.only(top: 4, bottom: 12),
+                  sliver: SliverPersistentHeader(
+                    floating: true,
+                    pinned: true,
+                    delegate: ActivitiesScreenDayPicker(),
                   ),
                 ),
 
                 if (activities.isNotEmpty)
-                  SliverPadding(
-                    padding: const EdgeInsets.only(top: 20),
-                    sliver: SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (final context, final index) {
-                          final activity = activities.elementAt(index);
-                          return ActivityCardContainer(
-                            activity,
-                            timeLeftBeforeStart: ref.watch(
-                              currentTimeProvider.select((final tempNow) {
-                                return activity.item0.date.difference(
-                                  tempNow.when(
-                                    data: (final tempNow) => tempNow,
-                                    loading: () => DateTime.now(),
-                                    error: (final e, final st) =>
-                                        DateTime.now(),
-                                  ),
-                                );
-                              }),
-                            ),
-                          );
-                        },
-                        childCount: activities.length,
-                      ),
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (final context, final index) {
+                        final activity = activities.elementAt(index);
+                        return ActivityCardContainer(
+                          activity,
+                          timeLeftBeforeStart: ref.watch(
+                            currentTimeProvider.select((final tempNow) {
+                              return activity.item0.date.difference(
+                                tempNow.when(
+                                  data: (final tempNow) => tempNow,
+                                  loading: () => DateTime.now(),
+                                  error: (final e, final st) => DateTime.now(),
+                                ),
+                              );
+                            }),
+                          ),
+                        );
+                      },
+                      childCount: activities.length,
                     ),
                   )
+
                 // SliverFillRemaining(
                 //   child: ListView.builder(
                 //     shrinkWrap: true,
@@ -640,7 +619,7 @@ class ActivitiesScreen extends HookConsumerWidget {
                             style: TextButtonStyle.light.fromTheme(theme),
                             onPressed: () async {
                               await resetFilters(ref);
-                              dayController.jumpTo(0);
+                              // dayController.jumpTo(0);
                               ref.refresh(activitiesDayProvider);
                             },
                             child: Text(TR.activitiesEmptyFilterReset.tr()),
@@ -715,7 +694,9 @@ class ActivitiesStudiosPickerDropdown extends HookConsumerWidget {
         ),
         hint: Align(
           child: Text(
-            TR.activitiesAllStudios.tr(),
+            selectedStudios.isNotEmpty
+                ? selectedStudios.first.item1.studioName
+                : TR.activitiesAllStudios.tr(),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
@@ -958,6 +939,20 @@ class ActivityCardContainer extends HookConsumerWidget {
                   title: exception.type.title,
                   body: exception.type.info,
                   button: exception.type.button,
+                  onPressed: exception.type == BookExceptionType.general
+                      ? () {
+                          (ref.read(navigationProvider))
+                              .jumpToTab(NavigationScreen.home.index);
+                          Navigator.of(context, rootNavigator: true)
+                              .popUntil(ModalRoute.withName(Routes.root.name));
+                        }
+                      : exception.type == BookExceptionType.alreadyApplied ||
+                              exception.type == BookExceptionType.full
+                          ? () => Navigator.of(context, rootNavigator: true)
+                                  .popUntil(
+                                ModalRoute.withName(Routes.root.name),
+                              )
+                          : null,
                 ),
               ),
             )
@@ -1025,98 +1020,59 @@ class ActivityCardContainer extends HookConsumerWidget {
       closedColor: Colors.transparent,
       middleColor: Colors.transparent,
       transitionDuration: const Duration(milliseconds: 650),
-      closedBuilder: (final context, final action) {
-        return AbsorbPointer(
-          absorbing: isLoading.state,
-          child: Stack(
-            children: <Widget>[
-              ActivityCard(
-                activity,
-                onMain: onMain,
-                onOpenButtonPressed: action,
-                timeLeftBeforeStart: timeLeftBeforeStart,
-                onPressed: (final appliedRecord) => !isLoading.state
-                    ? ref.read(userProvider) == null
-                        ? () => Navigator.of(context, rootNavigator: true)
-                            .pushNamed(Routes.auth.name)
-                        : appliedRecord != null
-                            ? timeLeftBeforeStart.inHours < 12
-                                ? null
-                                : () =>
-                                    cancelBook(appliedRecord, fullscreen: false)
-                            : activity.item0.recordsLeft <= 0
-                                ? () => addToWishList(fullscreen: false)
-                                : () => book(fullscreen: false)
-                    : null,
-              ),
-              if (isLoading.state)
-                BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-                  child: Center(
-                    child: Image.asset(
-                      AssetsCG.logo,
-                      width: 330,
-                      height: 100,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        );
-      },
+      closedBuilder: (final context, final action) => Loader(
+        isLoading: isLoading.state,
+        child: ActivityCard(
+          activity,
+          onMain: onMain,
+          onOpenButtonPressed: action,
+          timeLeftBeforeStart: timeLeftBeforeStart,
+          onPressed: (final appliedRecord) => !isLoading.state
+              ? ref.read(userProvider) == null
+                  ? () => Navigator.of(context, rootNavigator: true)
+                      .pushNamed(Routes.auth.name)
+                  : appliedRecord != null
+                      ? timeLeftBeforeStart.inHours < 12
+                          ? null
+                          : () => cancelBook(appliedRecord, fullscreen: false)
+                      : activity.item0.recordsLeft <= 0
+                          ? () => addToWishList(fullscreen: false)
+                          : () => book(fullscreen: false)
+              : null,
+        ),
+      ),
       openBuilder: (final context, final action) => Consumer(
-        builder: (final context, final ref, final child) {
-          final isLoading =
-              ref.watch(activityCardLoadingProvider(activity.item0));
-          return WillPopScope(
-            onWillPop: () => Future.value(!isLoading.state),
-            child: AbsorbPointer(
-              absorbing: isLoading.state,
-              child: Stack(
-                children: <Widget>[
-                  ActivityScreenCard(
-                    activity,
-                    onMain: onMain,
-                    onBackButtonPressed: action,
-                    timeLeftBeforeStart: timeLeftBeforeStart,
-                    onPressed: (final appliedRecord) => isMounted() &&
-                            !isLoading.state
-                        ? ref.read(userProvider) == null
-                            ? () => Navigator.of(context, rootNavigator: true)
-                                .pushNamed(Routes.auth.name)
-                            : appliedRecord != null
-                                ? timeLeftBeforeStart.inHours < 12
-                                    ? null
-                                    : () async {
-                                        if (onMain &&
-                                            await cancelBook(
-                                              appliedRecord,
-                                              fullscreen: true,
-                                            )) {
-                                          await navigator.maybePop();
-                                        }
-                                      }
-                                : activity.item0.recordsLeft <= 0
-                                    ? () => addToWishList(fullscreen: true)
-                                    : () => book(fullscreen: true)
-                        : null,
-                  ),
-                  if (isLoading.state)
-                    BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
-                      child: Center(
-                        child: Image.asset(
-                          AssetsCG.logo,
-                          width: 330,
-                          height: 100,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          );
-        },
+        builder: (final context, final ref, final child) => Loader(
+          falsePop: true,
+          isLoading:
+              ref.watch(activityCardLoadingProvider(activity.item0)).state,
+          child: ActivityScreenCard(
+            activity,
+            onMain: onMain,
+            onBackButtonPressed: action,
+            timeLeftBeforeStart: timeLeftBeforeStart,
+            onPressed: (final appliedRecord) => isMounted() && !isLoading.state
+                ? ref.read(userProvider) == null
+                    ? () => Navigator.of(context, rootNavigator: true)
+                        .pushNamed(Routes.auth.name)
+                    : appliedRecord != null
+                        ? timeLeftBeforeStart.inHours < 12
+                            ? null
+                            : () async {
+                                if (onMain &&
+                                    await cancelBook(
+                                      appliedRecord,
+                                      fullscreen: true,
+                                    )) {
+                                  await navigator.maybePop();
+                                }
+                              }
+                        : activity.item0.recordsLeft <= 0
+                            ? () => addToWishList(fullscreen: true)
+                            : () => book(fullscreen: true)
+                : null,
+          ),
+        ),
       ),
     );
   }
@@ -1179,280 +1135,290 @@ class ActivityCard extends ConsumerWidget {
       }),
     );
 
-    return Container(
+    return SizedBox(
       height: 124,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.all(Radius.circular(4)),
-      ),
-      child: InkWell(
-        onTap: () async {
-          onOpenButtonPressed();
-          await analytics.logEvent(
-            name: onMain ? FAKeys.upcomingRecordClick : FAKeys.activity,
-            parameters: <String, String>{
-              'trainer': translit(activity.item2.item1.trainerName),
-              'studio': translit(activity.item1.item1.studioName),
-              'class': activity.item0.service.title,
-              'date_time': faTime(activity.item0.date),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: Material(
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.all(Radius.circular(4)),
+          child: InkWell(
+            onTap: () async {
+              onOpenButtonPressed();
+              await analytics.logEvent(
+                name: onMain ? FAKeys.upcomingRecordClick : FAKeys.activity,
+                parameters: <String, String>{
+                  'trainer': translit(activity.item2.item1.trainerName),
+                  'studio': translit(activity.item1.item1.studioName),
+                  'class': activity.item0.service.title,
+                  'date_time': faTime(activity.item0.date),
+                },
+              );
             },
-          );
-        },
-        borderRadius: const BorderRadius.all(Radius.circular(4)),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Expanded(
-                flex: onMain ? 2 : 2,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    /// Time
-                    Text(
-                      <Object>[
-                        activity.item0.date.hour,
-                        activity.item0.date.minute.toString().padLeft(2, '0')
-                      ].join(':'),
-                      style: theme.textTheme.bodyText1,
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    /// Duration
-                    Text(
-                      activity.item0.length.inMinutes < 60
-                          ? TR.activitiesDurationMinuteShort.tr(
-                              args: <String>[
-                                activity.item0.length.inMinutes.toString()
-                              ],
-                            )
-                          : TR.activitiesDurationHour.plural(
-                              activity.item0.length.inHours,
-                              args: <String>[
-                                activity.item0.length.inHours.toString()
-                              ],
-                            ),
-                      style: theme.textTheme.headline6?.copyWith(color: grey),
-                      textAlign: TextAlign.center,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    /// Trainer Avatar
-                    Flexible(
-                      child: CachedNetworkImage(
-                        imageUrl: activity.item2.item0.avatar,
-                        cacheKey: 'x40_${activity.item2.item0.avatar}',
-                        height: 40,
-                        width: 40,
-                        memCacheWidth: 40,
-                        memCacheHeight: 40,
-                        fadeInDuration: Duration.zero,
-                        fadeOutDuration: Duration.zero,
-                        imageBuilder: (final context, final imageProvider) {
-                          return CircleAvatar(
-                            backgroundColor: Colors.transparent,
-                            foregroundColor: Colors.transparent,
-                            radius: 16,
-                            foregroundImage: imageProvider,
-                          );
-                        },
-                      ),
-                    )
-                  ],
-                ),
-              ),
-              Expanded(
-                flex: onMain ? 5 : 5,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
+            borderRadius: const BorderRadius.all(Radius.circular(4)),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  SizedBox(
+                    width: 70,
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        /// Class Name
+                        /// Time
                         Text(
-                          activity.item0.service.title,
+                          <Object>[
+                            activity.item0.date.hour,
+                            activity.item0.date.minute
+                                .toString()
+                                .padLeft(2, '0')
+                          ].join(':'),
                           style: theme.textTheme.bodyText1,
+                          textAlign: TextAlign.center,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
 
-                        /// Trainer Name
+                        /// Duration
                         Text(
-                          activity.item2.item1.trainerName,
-                          style: theme.textTheme.caption?.copyWith(color: grey),
+                          activity.item0.length.inMinutes < 60
+                              ? TR.activitiesDurationMinuteShort.tr(
+                                  args: <String>[
+                                    activity.item0.length.inMinutes.toString()
+                                  ],
+                                )
+                              : TR.activitiesDurationHour.plural(
+                                  activity.item0.length.inHours,
+                                  args: <String>[
+                                    activity.item0.length.inHours.toString()
+                                  ],
+                                ),
+                          style:
+                              theme.textTheme.headline6?.copyWith(color: grey),
+                          textAlign: TextAlign.center,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
 
-                        /// Studio Name
-                        EmojiText(
-                          // appliedRecord?.online != null
-                          //     ? '🔗 ${TR.homeClassesOnline.tr()}'
-                          //     :
-                          activity.item1.item1.studioName,
-                          style: theme.textTheme.caption?.copyWith(color: grey),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        const SizedBox(height: 4),
+
+                        /// Trainer Avatar
+                        Flexible(
+                          child: CachedNetworkImage(
+                            imageUrl: activity.item2.item0.avatar,
+                            cacheKey: 'x40_${activity.item2.item0.avatar}',
+                            height: 40,
+                            width: 40,
+                            memCacheWidth: 40,
+                            memCacheHeight: 40,
+                            fadeInDuration: Duration.zero,
+                            fadeOutDuration: Duration.zero,
+                            imageBuilder: (final context, final imageProvider) {
+                              return CircleAvatar(
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.transparent,
+                                radius: 16,
+                                foregroundImage: imageProvider,
+                              );
+                            },
+                          ),
+                        )
                       ],
                     ),
-                    Flexible(
-                      child: Opacity(
-                        opacity: appliedRecord != null &&
-                                timeLeftBeforeStart.inHours < 12
-                            ? 1 / 2
-                            : 1,
-                        child: SizedBox(
-                          height: 24,
-                          width: onMain ? 120 : null,
-                          child: TextButton(
-                            style: (TextButtonStyle.light.fromTheme(theme))
-                                .copyWith(
-                              padding: MaterialStateProperty.all(
-                                const EdgeInsets.symmetric(vertical: 4),
-                              ),
-                              shape: MaterialStateProperty.all(
-                                const RoundedRectangleBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(2)),
-                                ),
-                              ),
-                              textStyle: MaterialStateProperty.all(
-                                theme.textTheme.caption,
-                              ),
-                              tapTargetSize: MaterialTapTargetSize.padded,
-                            ),
-                            onPressed: onPressed(appliedRecord),
-                            child: Text(
-                              appliedRecord != null
-                                  ? TR.activitiesCancel.tr()
-                                  : activity.item0.recordsLeft > 0
-                                      ? TR.activitiesApply.tr()
-                                      : TR.activitiesWaitingList.tr(),
+                  ),
+                  Expanded(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            /// Class Name
+                            Text(
+                              activity.item0.service.title,
+                              style: theme.textTheme.bodyText1,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
-                          ),
+
+                            /// Trainer Name
+                            Text(
+                              activity.item2.item1.trainerName,
+                              style: theme.textTheme.caption
+                                  ?.copyWith(color: grey),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+
+                            /// Studio Name
+                            EmojiText(
+                              // appliedRecord?.online != null
+                              //     ? '🔗 ${TR.homeClassesOnline.tr()}'
+                              //     :
+                              activity.item1.item1.studioName,
+                              style: theme.textTheme.caption
+                                  ?.copyWith(color: grey),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                flex: onMain ? 3 : 3,
-                child: Column(
-                  mainAxisAlignment: onMain
-                      ? MainAxisAlignment.spaceBetween
-                      : MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: <Widget>[
-                    /// Extra Data on Main
-                    if (onMain)
-                      Consumer(
-                        builder: (final context, final ref, final child) {
-                          final locale = ref.watch(localeProvider);
-                          final serverTime = ref.watch(smServerTimeProvider);
-                          final isToday = activity.item0.date.year ==
-                                  serverTime.year &&
-                              activity.item0.date.month == serverTime.month &&
-                              activity.item0.date.day == serverTime.day;
-                          final weekDay = DateFormat.EEEE(locale.toString())
-                              .format(activity.item0.date);
-                          return Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              /// Activity Date
-                              Container(
-                                width: isToday ? 70 : 90,
-                                alignment: Alignment.center,
-                                margin: const EdgeInsets.only(bottom: 10),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 6,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isToday
-                                      ? theme.colorScheme.onSurface
-                                      : theme.colorScheme.primary,
-                                  borderRadius: const BorderRadius.all(
-                                    Radius.circular(4),
+                        Flexible(
+                          child: Opacity(
+                            opacity: appliedRecord != null &&
+                                    timeLeftBeforeStart.inHours < 12
+                                ? 1 / 2
+                                : 1,
+                            child: SizedBox(
+                              height: 24,
+                              width: onMain ? 120 : null,
+                              child: TextButton(
+                                style: (TextButtonStyle.light.fromTheme(theme))
+                                    .copyWith(
+                                  padding: MaterialStateProperty.all(
+                                    const EdgeInsets.symmetric(vertical: 4),
                                   ),
+                                  shape: MaterialStateProperty.all(
+                                    const RoundedRectangleBorder(
+                                      borderRadius:
+                                          BorderRadius.all(Radius.circular(2)),
+                                    ),
+                                  ),
+                                  textStyle: MaterialStateProperty.all(
+                                    theme.textTheme.caption,
+                                  ),
+                                  tapTargetSize: MaterialTapTargetSize.padded,
                                 ),
+                                onPressed: onPressed(appliedRecord),
                                 child: Text(
-                                  isToday
-                                      ? TR.homeClassesToday.tr()
-                                      : DateFormat.MMMMd(locale.toString())
-                                          .format(activity.item0.date),
-                                  style: theme.textTheme.overline?.copyWith(
-                                    color: theme.colorScheme.surface,
-                                  ),
+                                  appliedRecord != null
+                                      ? TR.activitiesCancel.tr()
+                                      : activity.item0.recordsLeft > 0
+                                          ? TR.activitiesApply.tr()
+                                          : TR.activitiesWaitingList.tr(),
                                   maxLines: 1,
-                                  textScaleFactor: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-
-                              /// Activity Weekday
-                              if (!isToday)
-                                Text(
-                                  weekDay.isNotEmpty
-                                      ? weekDay.substring(0, 1).toUpperCase() +
-                                          weekDay.substring(1).toLowerCase()
-                                      : '',
-                                  style: theme.textTheme.overline,
-                                  maxLines: 1,
-                                  textScaleFactor: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                )
-                            ],
-                          );
-                        },
-                      ),
-
-                    /// If it is too late too cancel the activity.
-                    if (appliedRecord != null &&
-                        timeLeftBeforeStart.inHours < 12)
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: <Widget>[
-                          if (!onMain)
-                            EmojiText(
-                              '⏱',
-                              style: TextStyle(color: theme.hintColor),
                             ),
-                          Text(
-                            TR.activities12h.tr(),
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.overline,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            textScaleFactor: 1,
                           ),
-                        ],
-                      )
-                    else if (!onMain)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 32),
-                        child: ActivityCardRecordsCount(
-                          activity.item0.recordsLeft,
-                          showDefault: false,
                         ),
-                      ),
-                  ],
-                ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    width: 90,
+                    child: Column(
+                      mainAxisAlignment: onMain
+                          ? MainAxisAlignment.spaceBetween
+                          : MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: <Widget>[
+                        /// Extra Data on Main
+                        if (onMain)
+                          Consumer(
+                            builder: (final context, final ref, final child) {
+                              final locale = ref.watch(localeProvider);
+                              final serverTime =
+                                  ref.watch(smServerTimeProvider);
+                              final isToday =
+                                  activity.item0.date.year == serverTime.year &&
+                                      activity.item0.date.month ==
+                                          serverTime.month &&
+                                      activity.item0.date.day == serverTime.day;
+                              final weekDay = DateFormat.EEEE(locale.toString())
+                                  .format(activity.item0.date);
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  /// Activity Date
+                                  Container(
+                                    width: isToday ? 70 : 90,
+                                    alignment: Alignment.center,
+                                    margin: const EdgeInsets.only(bottom: 10),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: isToday
+                                          ? theme.colorScheme.onSurface
+                                          : theme.colorScheme.primary,
+                                      borderRadius: const BorderRadius.all(
+                                        Radius.circular(4),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      isToday
+                                          ? TR.homeClassesToday.tr()
+                                          : DateFormat.MMMMd(locale.toString())
+                                              .format(activity.item0.date),
+                                      style: theme.textTheme.overline?.copyWith(
+                                        color: theme.colorScheme.surface,
+                                      ),
+                                      maxLines: 1,
+                                      textScaleFactor: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+
+                                  /// Activity Weekday
+                                  if (!isToday)
+                                    Text(
+                                      weekDay.isNotEmpty
+                                          ? weekDay
+                                                  .substring(0, 1)
+                                                  .toUpperCase() +
+                                              weekDay.substring(1).toLowerCase()
+                                          : '',
+                                      style: theme.textTheme.overline,
+                                      maxLines: 1,
+                                      textScaleFactor: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    )
+                                ],
+                              );
+                            },
+                          ),
+
+                        /// If it is too late too cancel the activity.
+                        if (appliedRecord != null &&
+                            timeLeftBeforeStart.inHours < 12)
+                          Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              if (!onMain)
+                                EmojiText(
+                                  '⏱',
+                                  style: TextStyle(color: theme.hintColor),
+                                ),
+                              Text(
+                                TR.activities12h.tr(),
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.overline,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                textScaleFactor: 1,
+                              ),
+                            ],
+                          )
+                        else if (!onMain)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 32),
+                            child: ActivityCardRecordsCount(
+                              activity.item0.recordsLeft,
+                              showDefault: false,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -2212,7 +2178,7 @@ class ActivitiesSearch extends HookConsumerWidget {
                 borderRadius: BorderRadius.all(Radius.circular(4)),
               ),
               child: Text(
-                TR.tooltipsCancel.tr(),
+                TR.activitiesSearchCancel.tr(),
                 style: TextStyle(
                   color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.w500,
@@ -2244,13 +2210,11 @@ class ActivitiesSearchResults extends ConsumerWidget {
 
     final search = ref.watch(activitiesSearchProvider).state;
     final categories = ref.watch(
-      smClassesGalleryProvider.select((final smClassesGallery) {
-        if (search.isEmpty) {
-          return const Iterable<SMClassesGalleryModel>.empty();
-        }
-        return smClassesGallery.where((final smClassGallery) {
-          return (smClassGallery.classesName.toLowerCase())
-              .contains(search.toLowerCase());
+      combinedClassesProvider.select((final classes) {
+        return classes.where((final _class) {
+          return search.isEmpty ||
+              (_class.item0.translation.toLowerCase())
+                  .contains(search.toLowerCase());
         });
       }),
     );
@@ -2371,8 +2335,8 @@ class ActivitiesSearchResults extends ConsumerWidget {
             index - studios.length - trainers.length,
           );
           return searchResult(
-            imageUrl: category.gallery.split(',').first,
-            title: category.classesName,
+            imageUrl: category.item1.gallery.split(',').first,
+            title: category.item0.translation,
             onTap: () async {
               final notifier =
                   ref.read(activitiesCategoriesFilterProvider.notifier);
@@ -2387,4 +2351,63 @@ class ActivitiesSearchResults extends ConsumerWidget {
       },
     );
   }
+}
+
+/// The picker of the [activitiesDayProvider] current state.
+class ActivitiesScreenDayPicker extends SliverPersistentHeaderDelegate {
+  /// The picker of the [activitiesDayProvider] current state.
+  const ActivitiesScreenDayPicker();
+
+  @override
+  double get minExtent => 68;
+
+  @override
+  double get maxExtent => 68;
+
+  @override
+  Widget build(
+    final BuildContext context,
+    final double shrinkOffset,
+    final bool overlapsContent,
+  ) {
+    return Material(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: SizedBox(
+          height: 44,
+          child: Consumer(
+            builder: (final context, final ref, final child) {
+              final day = ref.watch(activitiesDayProvider).state;
+              final activitiesDays = ref.watch(activitiesDaysProvider);
+              return ListView.builder(
+                // controller: dayController,
+                primary: false,
+                shrinkWrap: true,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                itemCount: activitiesDays.length,
+                itemExtent: 56,
+                itemBuilder: (final context, final index) {
+                  final date = activitiesDays.elementAt(index);
+                  return ActivitiesDateFilterCard(
+                    date,
+                    selected: day.year == date.year &&
+                        day.month == date.month &&
+                        day.day == date.day,
+                    onSelected: () {
+                      ref.read(activitiesDayProvider).state = date;
+                    },
+                  );
+                },
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(final ActivitiesScreenDayPicker oldDelegate) => false;
 }
