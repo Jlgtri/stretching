@@ -135,7 +135,7 @@ class SMRecordModel implements Comparable<SMRecordModel> {
   final String serviceName;
 
   /// The name of the staff of this record.
-  final String trenerName;
+  final String? trenerName;
 
   /// If push notifications should be sent to a user before this record starts.
   final bool sendPush;
@@ -255,7 +255,7 @@ class SMRecordModel implements Comparable<SMRecordModel> {
       rating: int.parse(map['rating']! as String),
       serviceId: int.parse(map['service_id']! as String),
       serviceName: map['service_name']! as String,
-      trenerName: map['trener_name']! as String,
+      trenerName: map['trener_name'] as String?,
       sendPush:
           boolToIntConverter.fromJson(int.parse(map['send_push']! as String)),
       isAbonement: boolToIntConverter

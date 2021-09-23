@@ -9,7 +9,6 @@ import 'package:native_device_orientation/native_device_orientation.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/hook_consumer_stateful_widget.dart';
-import 'package:stretching/main.dart';
 import 'package:stretching/models_yclients/user_record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/hide_appbar_provider.dart';
@@ -217,13 +216,11 @@ class HistoryScreenState extends ConsumerState<HistoryScreen>
                           child: BottomButtons<dynamic>(
                             inverse: true,
                             firstText: TR.profileHistoryEmptyButton.tr(),
-                            onFirstPressed: (final context) {
-                              Navigator.of(context).popUntil(
-                                ModalRoute.withName(Routes.root.name),
-                              );
+                            onFirstPressed: (final context) async {
                               (ref.read(navigationProvider)).jumpToTab(
                                 NavigationScreen.schedule.index,
                               );
+                              await Navigator.of(context).maybePop();
                             },
                           ),
                         ),

@@ -832,8 +832,10 @@ final StateNotifierProvider<ContentNotifier<UserAbonementModel>,
   );
   ref.listen<bool>(
     userProvider.select((final user) => user == null),
-    (final unauthorized) async =>
-        unauthorized ? await notifier.clear() : await notifier.refresh(),
+    (final unauthorized) async {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      unauthorized ? await notifier.clear() : await notifier.refresh();
+    },
     fireImmediately: true,
   );
   return notifier;
@@ -869,13 +871,14 @@ final StateNotifierProvider<ContentNotifier<UserRecordModel>,
         return studios.any((final studio) {
           return studio.id == userRecord.company.id;
         });
-      });
+      }).toList();
       return userRecords.isEmpty ? null : userRecords;
     },
   );
   ref.listen<bool>(
     userProvider.select((final user) => user == null),
     (final unauthorized) async {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
       unauthorized ? await notifier.clear() : await notifier.refresh();
     },
     fireImmediately: true,

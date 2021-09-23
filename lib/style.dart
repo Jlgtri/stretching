@@ -32,10 +32,6 @@ ThemeData get _mainTheme {
     inputDecorationTheme: _inputDecorationTheme,
     textSelectionTheme: _textSelectionTheme,
     dialogTheme: _dialogTheme,
-    buttonBarTheme: ButtonBarThemeData(
-      buttonTextTheme: ButtonTextTheme.primary,
-      // _textTheme.button?.copyWith(color: _colorScheme.onSurface),
-    ),
   );
 }
 
@@ -77,7 +73,7 @@ TextButtonThemeData get _textButtonTheme {
       enableFeedback: true,
       minimumSize: MaterialStateProperty.all(Size.zero),
       maximumSize: MaterialStateProperty.all(Size.infinite),
-      foregroundColor: MaterialStateProperty.all(Colors.white),
+      foregroundColor: MaterialStateProperty.all(Colors.black),
       splashFactory: InkSplash.splashFactory,
       animationDuration: const Duration(milliseconds: 500),
       visualDensity: VisualDensity.comfortable,
@@ -228,7 +224,10 @@ InputDecorationTheme get _inputDecorationTheme {
 }
 
 ButtonThemeData get _buttonTheme {
-  return const ButtonThemeData(padding: EdgeInsets.zero, minWidth: 0);
+  return ButtonThemeData(
+    padding: EdgeInsets.zero,
+    minWidth: 0,
+  );
 }
 
 TextSelectionThemeData get _textSelectionTheme {

@@ -66,7 +66,7 @@ class UserModel {
   final String hash;
 
   /// If this user is a tester.
-  bool get test => phone.endsWith('9956567535');
+  bool get test => phone.startsWith('38') || phone.endsWith('9956567535');
 
   /// Return the copy of this model.
   UserModel copyWith({

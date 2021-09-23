@@ -23,7 +23,6 @@ import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/utils/enum_to_string.dart';
 import 'package:stretching/widgets/appbars.dart';
-import 'package:stretching/widgets/book_screens.dart';
 import 'package:stretching/widgets/components/emoji_text.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/navigation/modals/payment_picker.dart';
@@ -94,9 +93,10 @@ class ProfileScreen extends HookConsumerWidget {
     final currentScreen = useState(ProfileNavigationScreen.root);
     useMemoized<void>(
       () {
+        abonementsCards.value = createCards();
         if (cardController.state != null) {
           // ignore: avoid_dynamic_calls
-          cardController.reset(cards: abonementsCards.value = createCards());
+          cardController.reset(cards: abonementsCards.value);
         }
       },
       [abonements],
@@ -170,29 +170,27 @@ class ProfileScreen extends HookConsumerWidget {
       final SMAbonementModel? abonement,
       final CombinedStudioModel? studio,
     ) async {
-      if (abonement == null) {
+      final user = ref.read(userProvider);
+      if (abonement == null || user == null) {
         return;
       }
       final businessLogic = ref.read(businessLogicProvider);
       final smDefaultStudioId =
           await ref.read(smDefaultStudioIdProvider.future);
       final good = businessLogic.goods.firstWhere((final good) {
-        return abonement.service == null
-            ? good.salonId == smDefaultStudioId
-            : good.salonId == abonement.service;
+        return good.loyaltyAbonementTypeId == abonement.yId &&
+            _smStudiosOptions.keys.contains(good.salonId) &&
+            (abonement.service == null
+                ? good.salonId == smDefaultStudioId
+                : good.salonId == abonement.service);
       });
-      final options = _smStudiosOptions[good.salonId];
-      final user = ref.read(userProvider);
-      if (options == null || user == null) {
-        return;
-      }
-
+      final options = _smStudiosOptions[good.salonId]!;
       final payment = await businessLogic.payTinkoff(
         navigator: navigator,
         companyId: good.salonId,
         email: email,
         userPhone: user.phone,
-        cost: good.cost,
+        cost: user.test ? 1 : good.cost,
         terminalKey: options.key,
         terminalPass: options.pass,
       );
@@ -215,17 +213,18 @@ class ProfileScreen extends HookConsumerWidget {
           ref.read(userAbonementsProvider.notifier).refresh(),
           ref.read(smUserAbonementsProvider.notifier).refresh(),
         ]);
-      } else {
-        await navigator.push(
-          MaterialPageRoute<bool>(
-            builder: (final context) => ResultBookScreen(
-              title: BookExceptionType.general.title,
-              body: BookExceptionType.general.info,
-              button: BookExceptionType.general.button,
-            ),
-          ),
-        );
       }
+      // else {
+      //   await navigator.push(
+      //     MaterialPageRoute<bool>(
+      //       builder: (final context) => ResultBookScreen(
+      //         title: BookExceptionType.general.title,
+      //         body: BookExceptionType.general.info,
+      //         button: BookExceptionType.general.button,
+      //       ),
+      //     ),
+      //   );
+      // }
     }
 
     return Padding(
@@ -266,14 +265,15 @@ class ProfileScreen extends HookConsumerWidget {
               TCard(
                 lockYAxis: true,
                 slideSpeed: abonementsCards.value.length == 1 ? 0 : 12,
-                size: const Size.fromHeight(100),
+                size: const Size.fromHeight(114),
+                delaySlideFor: 150,
                 onEnd: () => cardController.forward(
                   direction: SwipDirection.Right,
                 ),
                 onForward: (final direction, final info) =>
                     // ignore: avoid_dynamic_calls
                     cardController.reset(
-                  cards: abonementsCards.value = [
+                  cards: abonementsCards.value = <Widget>[
                     ...abonementsCards.value.sublist(1),
                     abonementsCards.value.first,
                   ],
@@ -308,12 +308,27 @@ class ProfileScreen extends HookConsumerWidget {
                             const Size.fromHeight(60),
                           ),
                         ),
-                        icon: FontIcon(
-                          FontIconData(
-                            IconsCG.add,
-                            color: theme.colorScheme.primary.withOpacity(2 / 3),
-                            height: 32,
-                            alignment: Alignment.topRight,
+                        icon: Padding(
+                          padding: const EdgeInsets.only(right: 8, bottom: 5),
+                          child: ShaderMask(
+                            shaderCallback: (final rect) {
+                              return const LinearGradient(
+                                colors: <Color>[
+                                  Color(0xFFD0ACEA),
+                                  Color(0xFFE898E0)
+                                ],
+                                begin: Alignment.bottomLeft,
+                                end: Alignment.topRight,
+                              ).createShader(rect);
+                            },
+                            child: const FontIcon(
+                              FontIconData(
+                                IconsCG.add,
+                                color: Colors.white,
+                                height: 32,
+                                alignment: Alignment.topRight,
+                              ),
+                            ),
                           ),
                         ),
                         label: Text(
@@ -343,7 +358,7 @@ class ProfileScreen extends HookConsumerWidget {
             Padding(
               padding: const EdgeInsets.symmetric(
                 vertical: 16,
-                horizontal: 32,
+                horizontal: 24,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,6 +376,9 @@ class ProfileScreen extends HookConsumerWidget {
                             screen == ProfileNavigationScreen.root
                                 ? theme.hintColor
                                 : theme.colorScheme.onSurface,
+                          ),
+                          padding: MaterialStateProperty.all(
+                            const EdgeInsets.all(8),
                           ),
                         ),
                         child: Text(screen.translation),
@@ -485,89 +503,95 @@ class AbonementCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDeactivated = abonement.item1.expirationDate == null;
     final locale = ref.watch(localeProvider);
-    return Stack(
-      alignment: Alignment.bottomRight,
-      fit: StackFit.expand,
-      children: <Widget>[
-        Container(
-          decoration: BoxDecoration(
-            gradient: !isDeactivated
-                ? const LinearGradient(
-                    colors: <Color>[Color(0xFFD353F0), Color(0xFF18D1EE)],
-                    begin: Alignment.topRight,
-                    end: Alignment.bottomLeft,
-                  )
-                : null,
-            color: isDeactivated ? theme.hintColor.withOpacity(1) : null,
-            borderRadius: const BorderRadius.all(Radius.circular(12)),
-          ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              /// Title and Abonement
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  /// Title
-                  Text(
-                    TR.abonementTitle.tr(),
-                    style: theme.textTheme.subtitle2
-                        ?.copyWith(color: theme.colorScheme.onPrimary),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+    return SizedBox(
+      height: 100,
+      child: Stack(
+        alignment: Alignment.bottomRight,
+        fit: StackFit.expand,
+        children: <Widget>[
+          Container(
+            height: 100,
+            decoration: BoxDecoration(
+              gradient: !isDeactivated
+                  ? const LinearGradient(
+                      colors: <Color>[Color(0xFFD353F0), Color(0xFF18D1EE)],
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
+                    )
+                  : null,
+              color: isDeactivated ? theme.hintColor.withOpacity(1) : null,
+              borderRadius: const BorderRadius.all(Radius.circular(12)),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                /// Title and Abonement
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    /// Title
+                    Text(
+                      TR.abonementTitle.tr(),
+                      style: theme.textTheme.subtitle1
+                          ?.copyWith(color: theme.colorScheme.onPrimary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
 
-                  /// Abonement
-                  Text(
-                    abonement.item1.type.title,
-                    style: theme.textTheme.caption
-                        ?.copyWith(color: theme.colorScheme.onPrimary),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-              Text.rich(
-                TextSpan(
-                  text: isDeactivated ? TR.abonementDeactivated.tr() : null,
-                  children: <InlineSpan>[
-                    if (!isDeactivated) ...[
-                      TextSpan(
-                        text: TR.abonementLeftCount.plural(
-                          abonement.item1.unitedBalanceServicesCount,
-                          args: <String>[
-                            abonement.item1.unitedBalanceServicesCount
-                                .toString(),
-                            abonement.item1.type.unitedBalanceServicesCount
-                                .toString()
-                          ],
-                        ),
-                      ),
-                      const TextSpan(text: ' '),
-                      TextSpan(
-                        text: TR.abonementLeftDate.tr(
-                          args: <String>[
-                            DateFormat.MMMMd(locale.toString())
-                                .format(abonement.item1.expirationDate!)
-                          ],
-                        ),
-                        style: const TextStyle(fontWeight: FontWeight.normal),
-                      )
-                    ]
+                    /// Abonement
+                    Text(
+                      abonement.item1.type.title,
+                      style: theme.textTheme.caption
+                          ?.copyWith(color: theme.colorScheme.onPrimary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
-                style: theme.textTheme.overline?.copyWith(
-                  color: theme.colorScheme.onPrimary,
+                Text.rich(
+                  TextSpan(
+                    text: isDeactivated ? TR.abonementDeactivated.tr() : null,
+                    children: <InlineSpan>[
+                      if (!isDeactivated) ...[
+                        TextSpan(
+                          text: TR.abonementLeftCount.plural(
+                            abonement.item1.unitedBalanceServicesCount,
+                            args: <String>[
+                              abonement.item1.unitedBalanceServicesCount
+                                  .toString(),
+                              abonement.item1.type.unitedBalanceServicesCount
+                                  .toString()
+                            ],
+                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const TextSpan(text: ' '),
+                        TextSpan(
+                          text: TR.abonementLeftDate.tr(
+                            args: <String>[
+                              DateFormat.MMMMd(locale.toString())
+                                  .format(abonement.item1.expirationDate!)
+                            ],
+                          ),
+                          style: const TextStyle(fontWeight: FontWeight.normal),
+                        )
+                      ]
+                    ],
+                  ),
+                  style: theme.textTheme.overline?.copyWith(
+                    color: theme.colorScheme.onPrimary,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        if (indicator != null) indicator!,
-      ],
+          if (indicator != null) indicator!,
+        ],
+      ),
     );
   }
 
@@ -607,6 +631,7 @@ class DepositCard extends ConsumerWidget {
           return const SizedBox.shrink();
         }
         return Container(
+          height: 80,
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: <Color>[Color(0xFFC665F3), Color(0xFFE75566)],
@@ -621,9 +646,12 @@ class DepositCard extends ConsumerWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              SizedBox(
-                width: 36,
-                child: EmojiText('✌️', style: const TextStyle(fontSize: 22)),
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: SizedBox(
+                  width: 36,
+                  child: EmojiText('✌️', style: const TextStyle(fontSize: 22)),
+                ),
               ),
               Expanded(
                 child: Column(

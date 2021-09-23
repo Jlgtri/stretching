@@ -663,7 +663,7 @@ class UserRecordIdConverter implements JsonConverter<UserRecordModel?, int> {
 
 /// The provider of already pushed ids for [UserRecordModel].
 final StateNotifierProvider<SaveToHiveIterableNotifier<UserRecordModel, String>,
-        Iterable<UserRecordModel>> activitiesStudiosFilterProvider =
+        Iterable<UserRecordModel>> pushedRecordsProvider =
     StateNotifierProvider<SaveToHiveIterableNotifier<UserRecordModel, String>,
         Iterable<UserRecordModel>>((final ref) {
   return SaveToHiveIterableNotifier<UserRecordModel, String>(
@@ -691,14 +691,14 @@ class ReviewRecordsEventHandler extends WidgetsBindingObserver {
     }
     final navigator = Navigator.of(_context, rootNavigator: true);
     final currentTime = _ref.read(smServerTimeProvider);
-    final pushedRecordsNotifier =
-        _ref.read(activitiesStudiosFilterProvider.notifier);
+    final pushedRecordsNotifier = _ref.read(pushedRecordsProvider.notifier);
     for (final userRecord in _ref.read(userRecordsProvider)) {
       final recordTime = userRecord.date.add(userRecord.length);
       if (!userRecord.deleted &&
           currentTime.isAfter(recordTime) &&
           currentTime.difference(recordTime) < maxReviewTimeout &&
-          !pushedRecordsNotifier.state.contains(userRecord)) {
+          !pushedRecordsNotifier.state
+              .any((final record) => record.id == userRecord.id)) {
         await pushedRecordsNotifier.add(userRecord);
         final records = await smStretching.getRecords(
           userPhone: userPhone,

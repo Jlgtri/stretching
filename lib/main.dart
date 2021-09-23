@@ -98,7 +98,7 @@ class RootScreen extends HookConsumerWidget {
       useMemoized(() async {
         splash.state = true;
         try {
-          // await ref.read(hiveProvider).clear();
+          await ref.read(hiveProvider).clear();
           await Future.wait(<Future<void>>[
             SystemChrome.setPreferredOrientations(
               <DeviceOrientation>[DeviceOrientation.portraitUp],

@@ -494,8 +494,11 @@ class BusinessLogic {
                         PaymentPickerScreen(
                           allStudios: false,
                           smAbonements: possibleAbonements.keys,
-                          onPayment: (final email, final abonement,
-                              final studio) async {
+                          onPayment: (
+                            final email,
+                            final abonement,
+                            final studio,
+                          ) async {
                             final good = possibleAbonements[abonement];
                             final options = _smStudiosOptions[good?.salonId];
                             if (abonement == null ||
@@ -527,7 +530,7 @@ class BusinessLogic {
                                 navigator: navigator,
                                 companyId: good.salonId,
                                 userPhone: user.phone,
-                                cost: good.cost,
+                                cost: user.test ? 1 : good.cost,
                                 terminalKey: options.key,
                                 terminalPass: options.pass,
                                 canContinue: () => timer.isActive,
@@ -588,7 +591,11 @@ class BusinessLogic {
                             try {
                               blockFinish = true;
                               final payment = await payTinkoff(
-                                cost: useDiscount ? ySalePrice : regularPrice,
+                                cost: user.test
+                                    ? 1
+                                    : useDiscount
+                                        ? ySalePrice
+                                        : regularPrice,
                                 email: email,
                                 navigator: navigator,
                                 companyId: activity.item0.companyId,
@@ -598,6 +605,7 @@ class BusinessLogic {
                                 canContinue: () => timer.isActive,
                                 recordId: record.id,
                               );
+
                               if (!payment.item0 || payment.item1 == null) {
                                 await cancelBook(
                                   discount: useDiscount,

@@ -62,6 +62,10 @@ final Provider<Iterable<CombinedAbonementModel>> combinedAbonementsProvider =
       };
     }),
   );
+  final f = ref.watch(userAbonementsProvider).toList();
+  final ff = (ref.watch(userAbonementsProvider))
+      .distinct((final userAbonement) => userAbonement.id)
+      .toList();
 
   return <CombinedAbonementModel>[
     for (final userAbonement in (ref.watch(userAbonementsProvider))
