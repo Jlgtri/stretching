@@ -18,11 +18,13 @@ import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/hooks/refresh_content_hook.dart';
 import 'package:stretching/main.dart';
 import 'package:stretching/models/map_info_windows_options.dart';
 import 'package:stretching/models_smstretching/sm_studio_model.dart';
 import 'package:stretching/models_yclients/company_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
+import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/style.dart';
@@ -61,11 +63,23 @@ class StudiosScreen extends HookConsumerWidget {
         ),
       ),
     );
-    final refreshController = useMemoized(() => RefreshController());
+
     final mapController = useState<GoogleMapController?>(null);
     final infoWindowOptions = useState<InfoWindowOptions?>(null);
     final screenCoordinates = useState<ScreenCoordinate?>(null);
     final onMap = useState<bool>(false);
+    final refresh = useRefreshController(
+      extraRefresh: () async {
+        while (ref.read(connectionErrorProvider).state) {
+          await Future<void>.delayed(const Duration(seconds: 1));
+        }
+      },
+      notifiers: <ContentNotifier>[
+        ref.read(studiosProvider.notifier),
+        ref.read(smStudiosProvider.notifier),
+        ref.read(smStudiosOptionsProvider.notifier),
+      ],
+    );
 
     Future<void> moveToStudioOnMap(final StudioModel studio) async {
       final options = InfoWindowOptions(
@@ -291,22 +305,9 @@ class StudiosScreen extends HookConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.only(top: 80),
                 child: SmartRefresher(
-                  controller: refreshController,
-                  onLoading: refreshController.loadComplete,
-                  onRefresh: () async {
-                    try {
-                      while (ref.read(connectionErrorProvider).state) {
-                        await Future<void>.delayed(const Duration(seconds: 1));
-                      }
-                      await Future.wait(<Future<void>>[
-                        ref.read(studiosProvider.notifier).refresh(),
-                        ref.read(smStudiosProvider.notifier).refresh(),
-                        ref.read(smStudiosOptionsProvider.notifier).refresh(),
-                      ]);
-                    } finally {
-                      refreshController.refreshCompleted();
-                    }
-                  },
+                  controller: refresh.item0,
+                  onLoading: refresh.item0.loadComplete,
+                  onRefresh: refresh.item1,
                   child: ListView.builder(
                     controller: scrollController,
                     primary: false,

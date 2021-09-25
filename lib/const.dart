@@ -31,3 +31,6 @@ const Duration bookTimeout = Duration(minutes: 20);
 
 /// The maximum time the user has after the record is over to rate it.
 const Duration maxReviewTimeout = Duration(days: 1);
+
+/// The name of the created calendar for the SMStretching Events.
+const String calendarName = 'SMSTRETCHING';

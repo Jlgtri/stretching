@@ -15,11 +15,13 @@ import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/disposable_change_notifier_hook.dart';
+import 'package:stretching/hooks/refresh_content_hook.dart';
 import 'package:stretching/main.dart';
 import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
 import 'package:stretching/models_smstretching/sm_trainer_model.dart';
 import 'package:stretching/models_yclients/trainer_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
+import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/json_converters.dart';
@@ -88,10 +90,22 @@ class TrainersScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final refreshController = useMemoized(() => RefreshController());
+    final scrollController = ModalScrollController.of(context);
+
     final searchController = useTextEditingController();
     final searchFocusNode = useFocusNode();
     final searchKey = useMemoized(() => GlobalKey());
+    final refresh = useRefreshController(
+      extraRefresh: () async {
+        while (ref.read(connectionErrorProvider).state) {
+          await Future<void>.delayed(const Duration(seconds: 1));
+        }
+      },
+      notifiers: <ContentNotifier>[
+        ref.read(trainersProvider.notifier),
+        ref.read(smTrainersProvider.notifier),
+      ],
+    );
 
     final areTrainersPresent = ref.watch(
       combinedTrainersProvider.select((final trainers) => trainers.isNotEmpty),
@@ -122,25 +136,13 @@ class TrainersScreen extends HookConsumerWidget {
           //   builder: (final context, final scrollController, final resetPosition) {
           //     return
           SmartRefresher(
-        controller: refreshController,
-        onLoading: refreshController.loadComplete,
-        onRefresh: () async {
-          try {
-            while (ref.read(connectionErrorProvider).state) {
-              await Future<void>.delayed(const Duration(seconds: 1));
-            }
-            await Future.wait(<Future<void>>[
-              ref.read(trainersProvider.notifier).refresh(),
-              ref.read(smTrainersProvider.notifier).refresh()
-            ]);
-          } finally {
-            refreshController.refreshCompleted();
-          }
-        },
+        controller: refresh.item0,
+        onLoading: refresh.item0.loadComplete,
+        onRefresh: refresh.item1,
         child: CustomScrollView(
           shrinkWrap: true,
           cacheExtent: double.infinity,
-          controller: ModalScrollController.of(context),
+          controller: scrollController,
           slivers: <Widget>[
             const SliverPadding(padding: EdgeInsets.only(top: 20)),
 

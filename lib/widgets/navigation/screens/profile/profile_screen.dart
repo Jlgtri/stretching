@@ -13,11 +13,13 @@ import 'package:stretching/api_yclients.dart';
 import 'package:stretching/business_logic.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/hooks/refresh_content_hook.dart';
 import 'package:stretching/main.dart';
 import 'package:stretching/models_smstretching/sm_abonement_model.dart';
 import 'package:stretching/models_smstretching/sm_studio_options_model.dart';
 import 'package:stretching/models_yclients/good_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
+import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/hide_appbar_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/providers/user_provider.dart';
@@ -89,7 +91,20 @@ class ProfileScreen extends HookConsumerWidget {
 
     final abonementsCards = useRef(createCards());
     final cardController = useMemoized(() => TCardController());
-    final refreshController = useMemoized(() => RefreshController());
+    final refresh = useRefreshController(
+      extraRefresh: () async {
+        while (ref.read(connectionErrorProvider).state) {
+          await Future<void>.delayed(const Duration(seconds: 1));
+        }
+        ref.refresh(smUserDepositProvider);
+        await ref.read(smUserDepositProvider.future);
+      },
+      notifiers: <ContentNotifier>[
+        ref.read(userAbonementsProvider.notifier),
+        ref.read(smUserAbonementsProvider.notifier),
+      ],
+    );
+
     final currentScreen = useState(ProfileNavigationScreen.root);
     useMemoized<void>(
       () {
@@ -233,23 +248,9 @@ class ProfileScreen extends HookConsumerWidget {
             mediaQuery.viewPadding.top + mainAppBar(theme).preferredSize.height,
       ),
       child: SmartRefresher(
-        controller: refreshController,
-        onLoading: refreshController.loadComplete,
-        onRefresh: () async {
-          try {
-            while (ref.read(connectionErrorProvider).state) {
-              await Future<void>.delayed(const Duration(seconds: 1));
-            }
-            ref.refresh(smUserDepositProvider);
-            await Future.wait(<Future<void>>[
-              ref.read(smUserDepositProvider.future),
-              ref.read(userAbonementsProvider.notifier).refresh(),
-              ref.read(smUserAbonementsProvider.notifier).refresh(),
-            ]);
-          } finally {
-            refreshController.refreshCompleted();
-          }
-        },
+        controller: refresh.item0,
+        onLoading: refresh.item0.loadComplete,
+        onRefresh: refresh.item1,
         child: ListView(
           primary: false,
           padding: const EdgeInsets.symmetric(vertical: 16),

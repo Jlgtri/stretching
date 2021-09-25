@@ -11,10 +11,12 @@ import 'package:story_view/story_view.dart';
 import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/hooks/refresh_content_hook.dart';
 import 'package:stretching/main.dart';
 import 'package:stretching/models_smstretching/sm_story_model.dart';
 import 'package:stretching/models_yclients/user_record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
+import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/user_provider.dart';
@@ -86,25 +88,23 @@ class HomeScreen extends HookConsumerWidget {
             userRecord: activity
     };
     final serverTime = ref.watch(smServerTimeProvider);
-    final refreshController = useMemoized(() => RefreshController());
-
-    return SmartRefresher(
-      controller: refreshController,
-      onLoading: refreshController.loadComplete,
-      onRefresh: () async {
-        try {
-          while (ref.read(connectionErrorProvider).state) {
-            await Future<void>.delayed(const Duration(seconds: 1));
-          }
-          await Future.wait(<Future<void>>[
-            ref.read(smStoriesProvider.notifier).refresh(),
-            ref.read(smAdvertismentsProvider.notifier).refresh(),
-            ref.read(userRecordsProvider.notifier).refresh(),
-          ]);
-        } finally {
-          refreshController.refreshCompleted();
+    final refresh = useRefreshController(
+      extraRefresh: () async {
+        while (ref.read(connectionErrorProvider).state) {
+          await Future<void>.delayed(const Duration(seconds: 1));
         }
       },
+      notifiers: <ContentNotifier>[
+        ref.read(smStoriesProvider.notifier),
+        ref.read(smAdvertismentsProvider.notifier),
+        ref.read(userRecordsProvider.notifier),
+      ],
+    );
+
+    return SmartRefresher(
+      controller: refresh.item0,
+      onLoading: refresh.item0.loadComplete,
+      onRefresh: refresh.item1,
       child: CustomScrollView(
         primary: false,
         shrinkWrap: true,

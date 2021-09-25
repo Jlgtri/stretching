@@ -24,6 +24,7 @@ import 'package:stretching/business_logic.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/hooks/refresh_content_hook.dart';
 import 'package:stretching/main.dart';
 import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
 import 'package:stretching/models_smstretching/sm_record_model.dart';
@@ -34,6 +35,7 @@ import 'package:stretching/models_yclients/activity_model.dart';
 import 'package:stretching/models_yclients/company_model.dart';
 import 'package:stretching/models_yclients/user_record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
+import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
@@ -323,13 +325,25 @@ class ActivitiesScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final refreshController = useMemoized(() => RefreshController());
     final activities = ref.watch(filteredActivitiesProvider);
+    final refresh = useRefreshController(
+      extraRefresh: () async {
+        while (ref.read(connectionErrorProvider).state) {
+          await Future<void>.delayed(const Duration(seconds: 1));
+        }
+      },
+      notifiers: <ContentNotifier>[
+        ref.read(scheduleProvider.notifier),
+        ref.read(smClassesGalleryProvider.notifier),
+        ref.read(userRecordsProvider.notifier),
+      ],
+    );
     useMemoized(() {
       ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
         ref.read(activitiesDayProvider).state = activities.first.item0.date;
       });
     });
+
     // CustomDraggableScrollBar(
     //   itemsCount: activities.length,
     //   visible: activities.length > 4,
@@ -357,22 +371,9 @@ class ActivitiesScreen extends HookConsumerWidget {
         /// Body
         Expanded(
           child: SmartRefresher(
-            controller: refreshController,
-            onLoading: refreshController.loadComplete,
-            onRefresh: () async {
-              try {
-                while (ref.read(connectionErrorProvider).state) {
-                  await Future<void>.delayed(const Duration(seconds: 1));
-                }
-                await Future.wait(<Future<void>>[
-                  ref.read(scheduleProvider.notifier).refresh(),
-                  ref.read(smClassesGalleryProvider.notifier).refresh(),
-                  ref.read(userRecordsProvider.notifier).refresh(),
-                ]);
-              } finally {
-                refreshController.refreshCompleted();
-              }
-            },
+            controller: refresh.item0,
+            onLoading: refresh.item0.loadComplete,
+            onRefresh: refresh.item1,
             child: CustomScrollView(
               primary: false,
               slivers: <Widget>[
@@ -1557,11 +1558,11 @@ class ActivityScreenCard extends ConsumerWidget {
     );
 
     final theme = Theme.of(context);
-    final images = activity.item3.gallery.split(',');
+    final images = activity.item3.item1.gallery.split(',');
     return ContentScreen(
       type: onMain ? NavigationScreen.home : NavigationScreen.schedule,
       onBackButtonPressed: onBackButtonPressed,
-      title: activity.item3.classesName,
+      title: activity.item3.item0.translation,
       subtitle: formatSubTitle(),
       secondSubtitle: activity.item1.item1.studioAddress,
       trailing: Column(
@@ -1591,12 +1592,12 @@ class ActivityScreenCard extends ConsumerWidget {
         },
       ),
       paragraphs: <ContentParagraph>[
-        if (activity.item3.classInfo != null)
-          Tuple2(null, activity.item3.classInfo!),
-        if (activity.item3.takeThis != null)
+        if (activity.item3.item1.classInfo != null)
+          Tuple2(null, activity.item3.item1.classInfo!),
+        if (activity.item3.item1.takeThis != null)
           Tuple2(
             TR.activitiesActivityImportantInfo.tr(),
-            activity.item3.takeThis!,
+            activity.item3.item1.takeThis!,
           ),
       ],
       persistentFooterButtons: <Widget>[
