@@ -89,7 +89,7 @@ class HomeScreen extends HookConsumerWidget {
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
     final scrollController =
-        ref.watch(navigationScrollController(NavigationScreen.home));
+        ref.watch(navigationScrollControllerProvider(NavigationScreen.home));
     final storiesScrollController = ref.watch(storiesScrollControllerProvider);
     final unauthorized =
         ref.watch(userProvider.select((final user) => user == null));
@@ -146,7 +146,10 @@ class HomeScreen extends HookConsumerWidget {
                     padding: index == smStories.length - 1
                         ? EdgeInsets.zero
                         : const EdgeInsets.only(right: 6),
-                    child: StoryCardScreen(smStories.elementAt(index)),
+                    child: LimitedBox(
+                      maxWidth: 96,
+                      child: StoryCardScreen(smStories.elementAt(index)),
+                    ),
                   ),
                 ),
               ),
@@ -254,7 +257,7 @@ class HomeScreen extends HookConsumerWidget {
             )
 
           /// Empty state and nearest classes
-          else ...[
+          else ...<Widget>[
             SliverPadding(
               padding: const EdgeInsets.all(16).copyWith(top: 32),
               sliver: SliverToBoxAdapter(
@@ -271,14 +274,19 @@ class HomeScreen extends HookConsumerWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
                 sliver: SliverToBoxAdapter(
-                  child: Align(
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 240),
-                      child: Text(
-                        TR.homeClassesEmpty.tr(),
-                        style: theme.textTheme.bodyText2,
-                        textAlign: TextAlign.center,
-                      ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 240),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Flexible(
+                          child: Text(
+                            TR.homeClassesEmpty.tr(),
+                            style: theme.textTheme.bodyText2,
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),

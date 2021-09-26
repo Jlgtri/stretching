@@ -66,7 +66,7 @@ class ProfileScreen extends HookConsumerWidget {
     final mediaQuery = MediaQuery.of(context);
     final navigator = Navigator.of(context, rootNavigator: true);
     final scrollController =
-        ref.watch(navigationScrollController(NavigationScreen.profile));
+        ref.watch(navigationScrollControllerProvider(NavigationScreen.profile));
 
     final abonements = ref.watch(combinedAbonementsProvider);
     List<Widget> createCards() {

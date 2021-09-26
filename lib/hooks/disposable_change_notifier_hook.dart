@@ -10,14 +10,10 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 V? useDisposableChangeNotifier<V extends ChangeNotifier>(
   final FutureOr<V> initialValue,
 ) {
-  AsyncSnapshot<V>? createInitialValue;
-  if (initialValue is Future<V>) {
-    createInitialValue = useFuture<V>(initialValue);
-  } else if (initialValue is V) {
-    // Same mechanism for preserving the hooks order.
-    createInitialValue = useFuture<V>(null, initialData: initialValue);
-  }
-  return use(_DisposableChangeNotifierHook<V>(createInitialValue?.data));
+  final createInitialValue = initialValue is Future<V>
+      ? useFuture<V>(initialValue)
+      : useFuture<V>(null, initialData: initialValue);
+  return use(_DisposableChangeNotifierHook<V>(createInitialValue.data));
 }
 
 class _DisposableChangeNotifierHook<V extends ChangeNotifier> extends Hook<V?> {

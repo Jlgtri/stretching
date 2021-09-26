@@ -144,6 +144,8 @@ class SMClassesGalleryModel {
   /// The additional information about this gallery.
   final String? classInfo;
 
+  /// The information abount what to take when training at the [classesYId] of
+  /// this gallery.
   final String? takeThis;
 
   /// The type of this model in the SMStretching API.

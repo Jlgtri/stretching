@@ -5,7 +5,6 @@ import 'dart:convert';
 import 'package:meta/meta.dart';
 import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
 import 'package:stretching/utils/json_converters.dart';
-import 'package:stretching/widgets/navigation/components/filters.dart';
 
 /// The converter of the [SMTrainerModel].
 const SMStudioConverter smTrainerConverter = SMStudioConverter._();

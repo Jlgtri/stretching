@@ -210,7 +210,7 @@ class BusinessLogic {
   }) async {
     final timer = Timer(
       timeout ?? const Duration(days: 365),
-      () => navigator.popUntil(ModalRoute.withName(Routes.root.name)),
+      () => navigator.popUntil(Routes.root.withName),
     );
 
     final clients = await _yClients.getClients(

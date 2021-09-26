@@ -32,7 +32,7 @@
 //       case SMStudio.studiyaNaChistihPrudah:
 //         return 193064;
 //       case SMStudio.studiyaParkKultury:
-//         return 455924;
+//         return 455924
 //       case SMStudio.chehovskaya:
 //         return 456372;
 //       case SMStudio.prospektMira:

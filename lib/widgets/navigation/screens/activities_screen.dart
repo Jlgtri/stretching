@@ -328,8 +328,8 @@ class ActivitiesScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final scrollController =
-        ref.watch(navigationScrollController(NavigationScreen.schedule));
+    final scrollController = ref
+        .watch(navigationScrollControllerProvider(NavigationScreen.schedule));
 
     final activities = ref.watch(filteredActivitiesProvider);
     final refresh = useRefreshController(
@@ -822,7 +822,7 @@ class ActivityCardContainer extends HookConsumerWidget {
                   BottomButtons<dynamic>(
                     firstText: button,
                     onFirstPressed: (final context) {
-                      navigator.popUntil(ModalRoute.withName(Routes.root.name));
+                      navigator.popUntil(Routes.root.withName);
                       (ref.read(navigationProvider))
                           .jumpToTab(NavigationScreen.profile.index);
                     },
@@ -953,13 +953,13 @@ class ActivityCardContainer extends HookConsumerWidget {
                           (ref.read(navigationProvider))
                               .jumpToTab(NavigationScreen.home.index);
                           Navigator.of(context, rootNavigator: true)
-                              .popUntil(ModalRoute.withName(Routes.root.name));
+                              .popUntil(Routes.root.withName);
                         }
                       : exception.type == BookExceptionType.alreadyApplied ||
                               exception.type == BookExceptionType.full
                           ? () => Navigator.of(context, rootNavigator: true)
                                   .popUntil(
-                                ModalRoute.withName(Routes.root.name),
+                                Routes.root.withName,
                               )
                           : null,
                 ),

@@ -105,6 +105,7 @@ class GoodTransactionModel {
   /// The id of the supplier of this transaction in the YClients API.
   final int supplierId;
 
+  /// The unique number of this transaction.
   final String goodSpecialNumber;
 
   /// The id of the client of this transaction in the YClients API.
@@ -313,9 +314,11 @@ class GoodTransactionModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory GoodTransactionModel.fromJson(final String source) =>
-      GoodTransactionModel.fromMap(
-          json.decode(source)! as Map<String, Object?>);
+  factory GoodTransactionModel.fromJson(final String source) {
+    return GoodTransactionModel.fromMap(
+      json.decode(source)! as Map<String, Object?>,
+    );
+  }
 
   @override
   bool operator ==(final Object other) {

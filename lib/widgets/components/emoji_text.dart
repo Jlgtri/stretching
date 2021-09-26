@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:path/path.dart';
+import 'package:stretching/utils/logger.dart';
 
 /// A widget that extends [TextSpan] with custom emojis.
 class EmojiTextSpan extends TextSpan {
@@ -44,7 +45,7 @@ class EmojiTextSpan extends TextSpan {
                 join(emojiPath ?? join('assets', 'emoji'), '$unicode.png'),
                 height: emojiStyle.fontSize,
                 errorBuilder: (final context, final e, final st) {
-                  print('Emoji $emojiStr, $unicode not found');
+                  logger.w('Emoji $emojiStr, $unicode not found');
                   return Text(emojiStr, style: _style);
                 },
               ),

@@ -84,8 +84,9 @@ class UserAbonementModel implements Comparable<UserAbonementModel> {
 
   /// The status of this abonement.
   final UserAbonementStatusModel status;
-
+  
   final bool isUnitedBalance;
+  /// The count of services on this abonement that are left to consume.
   final int unitedBalanceServicesCount;
 
   /// The object that contains a list of

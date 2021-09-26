@@ -365,7 +365,7 @@ class SuccessfulBookScreen extends ConsumerWidget {
                       (ref.read(navigationProvider))
                           .jumpToTab(NavigationScreen.home.index);
                       Navigator.of(context, rootNavigator: true)
-                          .popUntil(ModalRoute.withName(Routes.root.name));
+                          .popUntil(Routes.root.withName);
                     },
                   ),
                 ),

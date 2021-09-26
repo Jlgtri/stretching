@@ -198,14 +198,15 @@ class ContactScreenState extends ConsumerState<ContactScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 180),
+                  const SizedBox(height: 120),
                 ],
               ),
             ),
           ),
         ),
         bottomNavigationBar: Padding(
-          padding: const EdgeInsets.only(bottom: 18),
+          padding:
+              const EdgeInsets.only(bottom: NavigationRoot.navBarHeight + 18),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[

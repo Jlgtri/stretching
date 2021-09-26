@@ -5,7 +5,6 @@ import 'dart:convert';
 import 'package:meta/meta.dart';
 import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
 import 'package:stretching/utils/json_converters.dart';
-import 'package:stretching/widgets/navigation/components/filters.dart';
 
 /// The converter of the [SMStudioModel].
 const SMStudioConverter smStudioConverter = SMStudioConverter._();
@@ -96,6 +95,7 @@ class SMStudioModel implements Comparable<SMStudioModel> {
   /// The media gallery provided for this studio.
   final Iterable<SMStudioMediaModel> mediaGallerySite;
 
+  /// The id of the post of this studion in the SMStretching API.
   final int cctSinglePostId;
 
   /// The link to this studio's profile page.
@@ -113,8 +113,10 @@ class SMStudioModel implements Comparable<SMStudioModel> {
   /// The link to the on-map location of this studio.
   final String where;
 
+  /// The information about what this studio does.
   final String whatTodo;
 
+  /// The information on how to find this studio.
   final String howToFind;
 
   /// The type of this model in the SMStretching API.

@@ -20,6 +20,7 @@ import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/models_smstretching/sm_activity_price_model.dart';
+import 'package:stretching/providers/appsflyer_provider.dart';
 import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
@@ -112,6 +113,7 @@ class RootScreen extends HookConsumerWidget {
             ref.read(locationProvider.last),
             ref.read(orientationProvider.last),
             ref.read(messagingProvider.future),
+            ref.read(appsflyerProvider.future),
             // Future.delayed(const Duration(seconds: 15)),
           ]);
           final currentLocale = ez.currentLocale;
@@ -277,6 +279,9 @@ extension RoutesData on Routes {
   String get name =>
       this == Routes.root ? '/' : Routes.root.name + describeEnum(this);
 
+  /// See: [ModalRoute.withName].
+  bool Function(Route<dynamic>) get withName => ModalRoute.withName(name);
+
   /// The builder of this route.
   Widget Function(BuildContext context)? get builder {
     switch (this) {
@@ -392,7 +397,7 @@ extension RoutesData on Routes {
 //                 }
 //               } else {
 //                 Navigator.of(context, rootNavigator: true)
-//                     .popUntil(ModalRoute.withName(Routes.root.name));
+//                     .popUntil(Routes.root.withName);
 //               }
 //             }
 //           });

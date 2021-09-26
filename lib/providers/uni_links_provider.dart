@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:catcher/catcher.dart';
 import 'package:flutter/widgets.dart';
 import 'package:riverpod/riverpod.dart';
 import 'package:stretching/api_smstretching.dart';
@@ -38,20 +39,36 @@ Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
     return;
   }
 
-  final navigation = ref.read(navigationProvider);
+  Future<void> goToScreen(final NavigationScreen screen) async {
+    final navigation = ref.read(navigationProvider);
+    Future<void> clearNavigator() async {
+      final screen = NavigationScreen.values.elementAt(navigation.index);
+      final navigator = ref.read(currentNavigatorProvider(screen)).currentState;
+      while (await navigator?.maybePop() ?? false) {
+        await Future<void>.delayed(NavigationRoot.transitionDuration);
+      }
+      navigator?.popUntil(Routes.root.withName);
+    }
+
+    Catcher.navigatorKey?.currentState?.popUntil(Routes.root.withName);
+    try {
+      if (navigation.index != screen.index) {
+        await clearNavigator();
+        navigation.jumpToTab(screen.index);
+        await Future<void>.delayed(NavigationRoot.transitionDuration);
+      }
+    } finally {
+      await clearNavigator();
+    }
+  }
+
   final id = int.tryParse(uri.path.replaceFirst('/', ''));
   switch (uri.host) {
     case 'profile':
-      final screenIndex = NavigationScreen.profile.index;
-      if (navigation.index != screenIndex) {
-        navigation.jumpToTab(screenIndex);
-      }
+      await goToScreen(NavigationScreen.profile);
       break;
     case 'trainer':
-      if (navigation.index != NavigationScreen.trainers.index) {
-        navigation.jumpToTab(NavigationScreen.trainers.index);
-        await Future<void>.delayed(NavigationRoot.transitionDuration);
-      }
+      await goToScreen(NavigationScreen.trainers);
       if (id != null) {
         for (final trainer in ref.read(trainersProvider)) {
           if (trainer.id == id) {
@@ -60,13 +77,15 @@ Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
               final filteredTrainer = trainers.elementAt(index);
               if (filteredTrainer.item0.name == trainer.name) {
                 final scrollController = ref.read(
-                  navigationScrollController(NavigationScreen.trainers),
+                  navigationScrollControllerProvider(
+                    NavigationScreen.trainers,
+                  ),
                 );
                 final viewportDimension =
                     scrollController.position.viewportDimension;
                 var offset = 144 + (248 * (index & ~1) / 2);
                 if (scrollController.hasClients &&
-                    (offset < scrollController.offset - viewportDimension ||
+                    (offset < scrollController.offset ||
                         offset > scrollController.offset + viewportDimension)) {
                   if (offset > scrollController.offset + viewportDimension) {
                     offset -= viewportDimension - 260;
@@ -81,8 +100,7 @@ Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
                     duration: Duration(milliseconds: min(offsetDuration, 3000)),
                   );
                 }
-                final card = ref.read(trainersCardsProvider(filteredTrainer));
-                card.state?.call();
+                ref.read(trainersCardsProvider(filteredTrainer)).state?.call();
                 await Future<void>.delayed(TrainerCard.transitionDuration);
                 break;
               }
@@ -93,10 +111,7 @@ Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
       }
       break;
     case 'map':
-      if (navigation.index != NavigationScreen.studios.index) {
-        navigation.jumpToTab(NavigationScreen.studios.index);
-        await Future<void>.delayed(NavigationRoot.transitionDuration);
-      }
+      await goToScreen(NavigationScreen.studios);
       final studiosOnMap = ref.read(studiosOnMapProvider);
       if (!studiosOnMap.state) {
         studiosOnMap.state = !studiosOnMap.state;
@@ -104,10 +119,7 @@ Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
       }
       break;
     case 'studio':
-      if (navigation.index != NavigationScreen.studios.index) {
-        navigation.jumpToTab(NavigationScreen.studios.index);
-        await Future<void>.delayed(NavigationRoot.transitionDuration);
-      }
+      await goToScreen(NavigationScreen.studios);
       if (id != null) {
         final studios = ref.read(combinedStudiosProvider);
         for (var index = 0; index < studios.length; index++) {
@@ -119,13 +131,13 @@ Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
               await Future<void>.delayed(StudiosScreen.onMapSwitcherDuration);
             }
             final scrollController = ref.read(
-              navigationScrollController(NavigationScreen.studios),
+              navigationScrollControllerProvider(NavigationScreen.studios),
             );
             final viewportDimension =
                 scrollController.position.viewportDimension;
             var offset = (88 * (index + 1) + 8 * index).toDouble();
             if (scrollController.hasClients &&
-                (offset < scrollController.offset - viewportDimension ||
+                (offset < scrollController.offset ||
                     offset > scrollController.offset + viewportDimension)) {
               if (offset > scrollController.offset + viewportDimension) {
                 offset -= viewportDimension - 100;
@@ -146,14 +158,10 @@ Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
       }
       break;
     case 'timetable':
-      if (navigation.index != NavigationScreen.schedule.index) {
-        navigation.jumpToTab(NavigationScreen.schedule.index);
-        await Future<void>.delayed(NavigationRoot.transitionDuration);
-      }
+      await goToScreen(NavigationScreen.schedule);
       break;
     case 'stories':
-      navigation.jumpToTab(NavigationScreen.home.index);
-      await Future<void>.delayed(NavigationRoot.transitionDuration);
+      await goToScreen(NavigationScreen.home);
       if (id != null) {
         final stories = ref.read(smStoriesProvider);
         for (var index = 0; index < stories.length; index++) {
@@ -164,7 +172,7 @@ Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
                 scrollController.position.viewportDimension;
             var offset = (16 + 96 * (index + 1) + 6 * index).toDouble();
             if (scrollController.hasClients &&
-                (offset < scrollController.offset - viewportDimension ||
+                (offset < scrollController.offset ||
                     offset > scrollController.offset + viewportDimension)) {
               if (offset > scrollController.offset + viewportDimension) {
                 offset -= viewportDimension - 105;
@@ -177,7 +185,6 @@ Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
                 duration: Duration(milliseconds: min(offsetDuration, 1000)),
               );
             }
-            await Future<void>.delayed(const Duration(seconds: 1));
             ref.read(storiesCardsProvider(story.media)).state?.call();
             await Future<void>.delayed(StoryCardScreen.transitionDuration);
             break;

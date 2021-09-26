@@ -12,6 +12,7 @@ environment:
 
 dependencies:
   animations: ^2.0.1
+  appsflyer_sdk: ^6.3.5+3
   async: ^2.8.2
   auto_size_text: ^3.0.0-nullsafety.0
   badges: ^2.0.1
@@ -49,6 +50,7 @@ dependencies:
   meta: ^1.7.0
   modal_bottom_sheet: ^2.0.0
   native_device_orientation: ^1.0.0
+  package_info: ^2.0.2
   path: ^1.8.0
   path_provider: ^2.0.5
   permission_handler: ^8.1.6
@@ -63,8 +65,8 @@ dependencies:
   timezone: ^0.8.0
   tinkoff_acquiring: ^3.0.4
   translit: ^2.0.0
-  url_launcher: ^6.0.10
   uni_links: ^0.5.1
+  url_launcher: ^6.0.10
   validators: ^3.0.0
   webview_flutter: ^2.0.13
 

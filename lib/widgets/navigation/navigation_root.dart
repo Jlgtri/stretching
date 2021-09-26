@@ -102,6 +102,8 @@ extension NavigationScreenData on NavigationScreen {
     return PersistentBottomNavBarItem(
       title: title,
       routeAndNavigatorSettings: RouteAndNavigatorSettings(
+        initialRoute: Routes.root.name,
+        navigatorKey: ref.watch(currentNavigatorProvider(this)),
         navigatorObservers: <NavigatorObserver>[
           ref.watch(routeObserverProvider(this))
         ],
@@ -182,10 +184,18 @@ class PersistentTabControllerConverter<T extends Enum>
 
 /// The scroll controller for the each [NavigationScreen].
 final ProviderFamily<ScrollController, NavigationScreen>
-    navigationScrollController =
+    navigationScrollControllerProvider =
     Provider.family<ScrollController, NavigationScreen>(
         (final ref, final screen) {
   return ScrollController();
+});
+
+/// The provider of the current screen's navigator of the [navigationProvider].
+final ProviderFamily<GlobalKey<NavigatorState>, NavigationScreen>
+    currentNavigatorProvider =
+    Provider.family<GlobalKey<NavigatorState>, NavigationScreen>(
+        (final ref, final screen) {
+  return GlobalKey<NavigatorState>(debugLabel: screen.title);
 });
 
 /// The provider of the current transitioning state of the [navigationProvider].
@@ -287,42 +297,41 @@ class NavigationRoot extends HookConsumerWidget {
             duration: transitionDuration,
           ),
           backgroundColor: theme.colorScheme.surface,
-          onWillPop: (final _) async {
-            return (await showMaterialModalBottomSheet<bool?>(
-                  context: context,
-                  builder: (final context) {
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: <Widget>[
-                        BottomSheetHeader(title: TR.alertExitTitle.tr()),
-                        SingleChildScrollView(
-                          primary: false,
-                          controller: ModalScrollController.of(context),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 36,
-                            ),
-                            child: BottomButtons(
-                              firstText: TR.alertExitApprove.tr(),
-                              onFirstPressed: (final context) async {
-                                await SystemNavigator.pop();
-                                exit(0);
-                              },
-                              secondText: TR.alertExitDeny.tr(),
-                              onSecondPressed: (final context) async {
-                                await Navigator.of(context).maybePop();
-                                return false;
-                              },
-                            ),
+          onWillPop: (final _) async =>
+              (await showMaterialModalBottomSheet<bool?>(
+                context: context,
+                builder: (final context) {
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      BottomSheetHeader(title: TR.alertExitTitle.tr()),
+                      SingleChildScrollView(
+                        primary: false,
+                        controller: ModalScrollController.of(context),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 36,
                           ),
-                        )
-                      ],
-                    );
-                  },
-                )) ??
-                false;
-          },
+                          child: BottomButtons(
+                            firstText: TR.alertExitApprove.tr(),
+                            onFirstPressed: (final context) async {
+                              await SystemNavigator.pop();
+                              exit(0);
+                            },
+                            secondText: TR.alertExitDeny.tr(),
+                            onSecondPressed: (final context) async {
+                              await Navigator.of(context).maybePop();
+                              return false;
+                            },
+                          ),
+                        ),
+                      )
+                    ],
+                  );
+                },
+              )) ??
+              false,
           onItemSelected: (final index) async {
             final navigation = ref.read(navigationProvider.notifier);
             if (index == NavigationScreen.profile.index &&

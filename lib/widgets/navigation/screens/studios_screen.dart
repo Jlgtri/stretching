@@ -63,7 +63,7 @@ class StudiosScreen extends HookConsumerWidget {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
     final scrollController =
-        ref.watch(navigationScrollController(NavigationScreen.studios));
+        ref.watch(navigationScrollControllerProvider(NavigationScreen.studios));
     final devicePixelRatio =
         Platform.isAndroid ? mediaQuery.devicePixelRatio : 1;
 
@@ -140,218 +140,219 @@ class StudiosScreen extends HookConsumerWidget {
       );
     }
 
-    return PageTransitionSwitcher(
-      reverse: !onMap.state,
-      duration: onMapSwitcherDuration,
-      layoutBuilder: (final entries) => Stack(
-        children: <Widget>[
-          GoogleMap(
-            initialCameraPosition: _initialCameraPosition,
-            compassEnabled: false,
-            // myLocationEnabled: true,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
-            rotateGesturesEnabled: false,
-            tiltGesturesEnabled: false,
-            mapToolbarEnabled: false,
-            // onCameraMoveStarted: () {
-            //   infoWindowOffset.value = Offset.zero;
-            //   infoWindowOptions.value = null;
-            // },
-            markers: mapMarker.when(
-              data: (final marker) => <Marker>{
-                for (final studio in studios)
-                  Marker(
-                    markerId: MarkerId(studio.item0.id.toString()),
-                    position: LatLng(
-                      studio.item0.coordinateLat,
-                      studio.item0.coordinateLon,
-                    ),
-                    flat: true,
-                    icon: marker,
-                    onTap: () => moveToStudioOnMap(studio.item0),
-                  )
-              },
-              loading: () => <Marker>{},
-              error: (final e, final st) => <Marker>{},
-            ),
-            onTap: (final position) =>
-                infoWindowOptions.value = screenCoordinates.value = null,
-            onCameraMove: (final position) async {
-              final info = infoWindowOptions.value;
-              final controller = mapController.value;
-              if (info != null && controller != null) {
-                screenCoordinates.value =
-                    await controller.getScreenCoordinate(info.coordinates);
-              }
+    return Stack(
+      children: <Widget>[
+        GoogleMap(
+          initialCameraPosition: _initialCameraPosition,
+          compassEnabled: false,
+          // myLocationEnabled: true,
+          myLocationButtonEnabled: false,
+          zoomControlsEnabled: false,
+          rotateGesturesEnabled: false,
+          tiltGesturesEnabled: false,
+          mapToolbarEnabled: false,
+          // onCameraMoveStarted: () {
+          //   infoWindowOffset.value = Offset.zero;
+          //   infoWindowOptions.value = null;
+          // },
+          markers: mapMarker.when(
+            data: (final marker) => <Marker>{
+              for (final studio in studios)
+                Marker(
+                  markerId: MarkerId(studio.item0.id.toString()),
+                  position: LatLng(
+                    studio.item0.coordinateLat,
+                    studio.item0.coordinateLon,
+                  ),
+                  flat: true,
+                  icon: marker,
+                  onTap: () => moveToStudioOnMap(studio.item0),
+                )
             },
-            onMapCreated: (final controller) async {
-              final style = await ref.read(mapStyleProvider.future);
-              await controller.setMapStyle(style);
-              mapController.value = controller;
-            },
+            loading: () => <Marker>{},
+            error: (final e, final st) => <Marker>{},
           ),
+          onTap: (final position) =>
+              infoWindowOptions.value = screenCoordinates.value = null,
+          onCameraMove: (final position) async {
+            final info = infoWindowOptions.value;
+            final controller = mapController.value;
+            if (info != null && controller != null) {
+              screenCoordinates.value =
+                  await controller.getScreenCoordinate(info.coordinates);
+            }
+          },
+          onMapCreated: (final controller) async {
+            final style = await ref.read(mapStyleProvider.future);
+            await controller.setMapStyle(style);
+            mapController.value = controller;
+          },
+        ),
 
-          /// Location FAB
+        /// Location FAB
+        Positioned(
+          right: 24,
+          bottom: 24,
+          child: FloatingActionButton.small(
+            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            onPressed: () async {
+              final location = await ref.read(locationProvider.last);
+              await mapController.value?.animateCamera(
+                CameraUpdate.newCameraPosition(
+                  CameraPosition(
+                    target: LatLng(location.latitude, location.longitude),
+                    zoom: _initialCameraPosition.zoom,
+                    bearing: _initialCameraPosition.bearing,
+                    tilt: _initialCameraPosition.tilt,
+                  ),
+                ),
+              );
+            },
+            backgroundColor: theme.colorScheme.surface,
+            foregroundColor: theme.colorScheme.onSurface,
+            child: const FontIcon(
+              FontIconData(IconsCG.mapLocation, height: 14),
+            ),
+          ),
+        ),
+
+        /// The custom info window.
+        if (infoWindowOptions.value != null && screenCoordinates.value != null)
           Positioned(
-            right: 24,
-            bottom: 24,
-            child: FloatingActionButton.small(
-              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              onPressed: () async {
-                final location = await ref.read(locationProvider.last);
-                await mapController.value?.animateCamera(
-                  CameraUpdate.newCameraPosition(
-                    CameraPosition(
-                      target: LatLng(location.latitude, location.longitude),
-                      zoom: _initialCameraPosition.zoom,
-                      bearing: _initialCameraPosition.bearing,
-                      tilt: _initialCameraPosition.tilt,
-                    ),
-                  ),
-                );
-              },
-              backgroundColor: theme.colorScheme.surface,
-              foregroundColor: theme.colorScheme.onSurface,
-              child: const FontIcon(
-                FontIconData(IconsCG.mapLocation, height: 14),
+            left: (screenCoordinates.value!.x / devicePixelRatio) -
+                (infoWindowOptions.value!.offset.dx +
+                    infoWindowOptions.value!.size.width / 2),
+            top: (screenCoordinates.value!.y / devicePixelRatio) -
+                (infoWindowOptions.value!.offset.dy +
+                    infoWindowOptions.value!.size.height),
+            child: SizedBox.fromSize(
+              size: infoWindowOptions.value!.size,
+              child: StudioScreenCard(
+                studios.firstWhere((final studio) {
+                  final coordinates = infoWindowOptions.value!.coordinates;
+                  return studio.item0.coordinateLat.toStringAsFixed(6) ==
+                          coordinates.latitude.toStringAsFixed(6) &&
+                      studio.item0.coordinateLon.toStringAsFixed(6) ==
+                          coordinates.longitude.toStringAsFixed(6);
+                }),
               ),
             ),
           ),
 
-          /// The custom info window.
-          if (infoWindowOptions.value != null &&
-              screenCoordinates.value != null)
-            Positioned(
-              left: (screenCoordinates.value!.x / devicePixelRatio) -
-                  (infoWindowOptions.value!.offset.dx +
-                      infoWindowOptions.value!.size.width / 2),
-              top: (screenCoordinates.value!.y / devicePixelRatio) -
-                  (infoWindowOptions.value!.offset.dy +
-                      infoWindowOptions.value!.size.height),
-              child: SizedBox.fromSize(
-                size: infoWindowOptions.value!.size,
-                child: StudioScreenCard(
-                  studios.firstWhere((final studio) {
-                    final coordinates = infoWindowOptions.value!.coordinates;
-                    return studio.item0.coordinateLat.toStringAsFixed(6) ==
-                            coordinates.latitude.toStringAsFixed(6) &&
-                        studio.item0.coordinateLon.toStringAsFixed(6) ==
-                            coordinates.longitude.toStringAsFixed(6);
-                  }),
-                ),
-              ),
-            ),
-
-          /// Other Content
-          ...entries,
-
-          /// Switcher
-          Padding(
-            padding: const EdgeInsets.only(top: 24),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextButton.icon(
-                    icon: const FontIcon(FontIconData(IconsCG.list)),
-                    label: Text(TR.studiosViewList.tr()),
-                    style: (onMap.state
-                            ? TextButtonStyle.light.fromTheme(theme)
-                            : TextButtonStyle.dark.fromTheme(theme))
-                        .copyWith(
-                      textStyle:
-                          MaterialStateProperty.all(theme.textTheme.headline5),
-                      visualDensity: VisualDensity.compact,
-                      shape: MaterialStateProperty.all(
-                        const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(4)),
-                        ),
-                      ),
-                    ),
-                    onPressed: () => onMap.state ? onMap.state = false : null,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextButton.icon(
-                    icon: const FontIcon(FontIconData(IconsCG.pinOutline)),
-                    label: Text(TR.studiosViewMap.tr()),
-                    style: (onMap.state
-                            ? TextButtonStyle.dark.fromTheme(theme)
-                            : TextButtonStyle.light.fromTheme(theme))
-                        .copyWith(
-                      textStyle:
-                          MaterialStateProperty.all(theme.textTheme.headline5),
-                      visualDensity: VisualDensity.compact,
-                      shape: MaterialStateProperty.all(
-                        const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(4)),
-                        ),
-                      ),
-                    ),
-                    onPressed: () => !onMap.state ? onMap.state = true : null,
-                  ),
-                ),
-                const SizedBox(width: 16),
-              ],
-            ),
+        /// Other Content
+        PageTransitionSwitcher(
+          reverse: !onMap.state,
+          duration: onMapSwitcherDuration,
+          layoutBuilder: (final entries) => Stack(
+            children: entries,
           ),
-        ],
-      ),
-      transitionBuilder: (
-        final child,
-        final animation,
-        final secondaryAnimation,
-      ) {
-        return SharedAxisTransition(
-          animation: animation,
-          secondaryAnimation: secondaryAnimation,
-          fillColor: Colors.transparent,
-          transitionType: SharedAxisTransitionType.scaled,
-          child: child,
-        );
-      },
-      child: !onMap.state
-          ? Material(
-              color: theme.scaffoldBackgroundColor,
-              child: Padding(
-                padding: const EdgeInsets.only(top: 80),
-                child: SmartRefresher(
-                  controller: refresh.item0,
-                  onLoading: refresh.item0.loadComplete,
-                  onRefresh: refresh.item1,
-                  scrollController: scrollController,
-                  child: ListView.builder(
-                    controller: scrollController,
-                    primary: false,
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemExtent: 88,
-                    itemCount: studios.length,
-                    itemBuilder: (final context, final index) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: StudioScreenCard(
-                          studios.elementAt(index),
-                          onNonMapTap: (final studio) async {
-                            await onMainStudioCardTap(studio.item0);
-                            await analytics.logEvent(
-                              name: FAKeys.studioOnMap,
-                              parameters: <String, String>{
-                                'type': 'list',
-                                'studio': translit(studio.item1.studioName),
+          transitionBuilder: (
+            final child,
+            final animation,
+            final secondaryAnimation,
+          ) {
+            return SharedAxisTransition(
+              animation: animation,
+              secondaryAnimation: secondaryAnimation,
+              fillColor: Colors.transparent,
+              transitionType: SharedAxisTransitionType.scaled,
+              child: child,
+            );
+          },
+          child: !onMap.state
+              ? Material(
+                  color: theme.scaffoldBackgroundColor,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 80),
+                    child: SmartRefresher(
+                      controller: refresh.item0,
+                      onLoading: refresh.item0.loadComplete,
+                      onRefresh: refresh.item1,
+                      scrollController: scrollController,
+                      child: ListView.builder(
+                        controller: scrollController,
+                        primary: false,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemExtent: 88,
+                        itemCount: studios.length,
+                        itemBuilder: (final context, final index) {
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: StudioScreenCard(
+                              studios.elementAt(index),
+                              onNonMapTap: (final studio) async {
+                                await onMainStudioCardTap(studio.item0);
+                                await analytics.logEvent(
+                                  name: FAKeys.studioOnMap,
+                                  parameters: <String, String>{
+                                    'type': 'list',
+                                    'studio': translit(studio.item1.studioName),
+                                  },
+                                );
                               },
-                            );
-                          },
-                        ),
-                      );
-                    },
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
+                )
+              : null,
+        ),
+
+        /// Switcher
+        Padding(
+          padding: const EdgeInsets.only(top: 24),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const SizedBox(width: 16),
+              Expanded(
+                child: TextButton.icon(
+                  icon: const FontIcon(FontIconData(IconsCG.list)),
+                  label: Text(TR.studiosViewList.tr()),
+                  style: (onMap.state
+                          ? TextButtonStyle.light.fromTheme(theme)
+                          : TextButtonStyle.dark.fromTheme(theme))
+                      .copyWith(
+                    textStyle:
+                        MaterialStateProperty.all(theme.textTheme.headline5),
+                    visualDensity: VisualDensity.compact,
+                    shape: MaterialStateProperty.all(
+                      const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(4)),
+                      ),
+                    ),
+                  ),
+                  onPressed: () => onMap.state ? onMap.state = false : null,
                 ),
               ),
-            )
-          : null,
+              const SizedBox(width: 16),
+              Expanded(
+                child: TextButton.icon(
+                  icon: const FontIcon(FontIconData(IconsCG.pinOutline)),
+                  label: Text(TR.studiosViewMap.tr()),
+                  style: (onMap.state
+                          ? TextButtonStyle.dark.fromTheme(theme)
+                          : TextButtonStyle.light.fromTheme(theme))
+                      .copyWith(
+                    textStyle:
+                        MaterialStateProperty.all(theme.textTheme.headline5),
+                    visualDensity: VisualDensity.compact,
+                    shape: MaterialStateProperty.all(
+                      const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(4)),
+                      ),
+                    ),
+                  ),
+                  onPressed: () => !onMap.state ? onMap.state = true : null,
+                ),
+              ),
+              const SizedBox(width: 16),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

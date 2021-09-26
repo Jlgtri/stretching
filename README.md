@@ -4,7 +4,7 @@
 
 ### Build
 
-flutter build apk --target "lib/main.dart" --release --split-per-abi --split-debug-info --obfuscate
+flutter build apk --release --split-per-abi --split-debug-info --obfuscate
 
 ### Update Dependencies
 

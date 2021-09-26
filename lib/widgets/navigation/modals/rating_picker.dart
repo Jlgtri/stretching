@@ -68,7 +68,7 @@ class RatingPicker extends HookConsumerWidget {
           userPhone: ref.read(userProvider)!.phone,
         );
       } finally {
-        navigator.popUntil(ModalRoute.withName(Routes.root.name));
+        navigator.popUntil(Routes.root.withName);
       }
     }
 
@@ -108,8 +108,10 @@ class RatingPicker extends HookConsumerWidget {
                         child: Column(
                           children: <Widget>[
                             const SizedBox(height: 25),
-                            EmojiText('✌️',
-                                style: const TextStyle(fontSize: 70)),
+                            EmojiText(
+                              '✌️',
+                              style: const TextStyle(fontSize: 70),
+                            ),
                             const SizedBox(height: 20),
                             Text(
                               TR.ratingDone.tr(),
@@ -135,20 +137,23 @@ class RatingPicker extends HookConsumerWidget {
 
             /// Main page
             Scaffold(
+              appBar: AppBar(
+                elevation: 0,
+                toolbarHeight: 0,
+                systemOverlayStyle: SystemUiOverlayStyle(
+                  statusBarColor: theme.scaffoldBackgroundColor,
+                  statusBarBrightness: theme.brightness,
+                  statusBarIconBrightness: theme.brightness == Brightness.light
+                      ? Brightness.dark
+                      : Brightness.light,
+                ),
+              ),
               body: CustomScrollView(
                 primary: false,
                 slivers: <Widget>[
                   SliverAppBar(
                     toolbarHeight: 40,
                     backgroundColor: Colors.transparent,
-                    systemOverlayStyle: SystemUiOverlayStyle(
-                      statusBarColor: Colors.transparent,
-                      statusBarBrightness: theme.brightness,
-                      statusBarIconBrightness:
-                          theme.brightness == Brightness.light
-                              ? Brightness.dark
-                              : Brightness.light,
-                    ),
                     actions: <Widget>[
                       TextButton(
                         onPressed: navigator.maybePop,

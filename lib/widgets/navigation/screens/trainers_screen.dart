@@ -98,8 +98,8 @@ class TrainersScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final scrollController =
-        ref.watch(navigationScrollController(NavigationScreen.trainers));
+    final scrollController = ref
+        .watch(navigationScrollControllerProvider(NavigationScreen.trainers));
 
     final searchController = useTextEditingController();
     final searchFocusNode = useFocusNode();
@@ -322,8 +322,6 @@ class TrainerCard extends ConsumerWidget {
                   imageUrl: trainer.item1.trainerPhoto,
                   height: 160,
                   width: 160,
-                  placeholder: (final context, final url) =>
-                      const SizedBox.expand(),
                   imageBuilder: (final context, final imageProvider) {
                     return CircleAvatar(
                       radius: 80,
