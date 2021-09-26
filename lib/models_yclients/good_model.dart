@@ -260,7 +260,7 @@ class GoodModel implements Comparable<GoodModel> {
           boolToIntConverter.fromJson(map['loyalty_allow_empty_code']! as int),
       actualAmounts: (map['actual_amounts']! as Iterable)
           .cast<Map<String, Object?>>()
-          .map((final map) => GoodActualAmountModel.fromMap(map)),
+          .map(GoodActualAmountModel.fromMap),
       lastChangeDate: DateTime.parse(map['last_change_date']! as String),
     );
   }

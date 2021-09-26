@@ -23,6 +23,7 @@ import 'package:stretching/models_smstretching/sm_activity_price_model.dart';
 import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
+import 'package:stretching/providers/uni_links_provider.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/crashlytics_handler.dart';
 import 'package:stretching/utils/logger.dart';
@@ -89,6 +90,9 @@ class RootScreen extends HookConsumerWidget {
   /// The root widget of the app.
   const RootScreen({final Key? key}) : super(key: key);
 
+  /// The [AnimatedCrossFade.duration] of this screen.
+  static const Duration transitionDuration = Duration(seconds: 2);
+
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final ez = EasyLocalization.of(context)!;
@@ -118,6 +122,7 @@ class RootScreen extends HookConsumerWidget {
         } finally {
           try {
             await refreshAllProviders(ProviderScope.containerOf(context));
+            await ref.read(initialUniLinkProvider.future);
           } finally {
             widgetsBinding
                 .addPostFrameCallback((final _) => splash.state = false);
@@ -129,7 +134,7 @@ class RootScreen extends HookConsumerWidget {
     return Directionality(
       textDirection: ui.TextDirection.ltr,
       child: AnimatedCrossFade(
-        duration: const Duration(seconds: 2),
+        duration: transitionDuration,
         reverseDuration: Duration.zero,
         sizeCurve: const Interval(0, 1 / 2, curve: Curves.ease),
         firstCurve: const Interval(0, 1 / 2, curve: Curves.easeOutQuad),
@@ -185,9 +190,10 @@ class RootScreen extends HookConsumerWidget {
               final emojiStyle =
                   TextStyle(fontSize: textStyle.fontSize! * 5 / 4);
               return RefreshConfiguration(
-                // Header height is 60, header trigger height is 80,
-                // so max overscroll extent should be 20
-                maxOverScrollExtent: 20,
+                // Header height is 60, header trigger height is 75,
+                // so max overscroll extent should be 25
+                maxOverScrollExtent: 25,
+                headerTriggerDistance: 75,
                 headerBuilder: () => Consumer(
                   builder: (final context, final ref, final child) {
                     final connectionError =

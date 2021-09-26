@@ -9,7 +9,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:random_string/random_string.dart';
 import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/localization.g.dart';
@@ -23,7 +22,6 @@ import 'package:stretching/models_yclients/good_transaction_model.dart';
 import 'package:stretching/models_yclients/record_model.dart';
 import 'package:stretching/models_yclients/storage_operation_model.dart';
 import 'package:stretching/models_yclients/transaction_model.dart';
-import 'package:stretching/models_yclients/user_abonement_model.dart';
 import 'package:stretching/models_yclients/user_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/firebase_providers.dart';
@@ -194,7 +192,7 @@ class BusinessLogic {
   /// Book the [activity] for the user.
   ///
   /// 1. Check user's deposit. If the balance is enough, book with deposit.
-  /// 2. Check [userAbonements]. If valid abonement is found, book with it.
+  /// 2. Check [abonements]. If valid abonement is found, book with it.
   /// 3. Otherwise, book regularly with cash.
   ///
   /// - [updateAndTryAgain] is a callback with created record that allows
@@ -203,7 +201,7 @@ class BusinessLogic {
     required final NavigatorState navigator,
     required final UserModel user,
     required final CombinedActivityModel activity,
-    required final Iterable<CombinedAbonementModel> userAbonements,
+    required final Iterable<CombinedAbonementModel> abonements,
     required final bool useDiscount,
     final FutureOr<Tuple2<RecordModel, BookResult>> Function(RecordModel)?
         updateAndTryAgain,
@@ -292,14 +290,14 @@ class BusinessLogic {
       }
 
       try {
-        if (!await _smStretching.addUser(
-          userPhone: user.phone,
-          userEmail: email,
-          serverTime: serverTime,
-        )) {
-          await cancel();
-          throw BookException(BookExceptionType.general, record);
-        }
+        // if (!await _smStretching.addUser(
+        //   userPhone: user.phone,
+        //   userEmail: email,
+        //   serverTime: serverTime,
+        // )) {
+        //   await cancel();
+        //   throw BookException(BookExceptionType.general, record);
+        // }
 
         if (!await _smStretching.createRecord(
           documentId: record.documents.first.id,
@@ -322,7 +320,7 @@ class BusinessLogic {
     Future<bool> update(
       final ActivityPaidBy paidBy, {
       final ActivityRecordStatus status = ActivityRecordStatus.paid,
-      final UserAbonementModel? abonement,
+      final CombinedAbonementModel? abonement,
       final int? orderId,
     }) async {
       try {
@@ -366,8 +364,8 @@ class BusinessLogic {
           await _yClients.saleByAbonement(
             companyId: record.companyId,
             documentId: record.documents.first.id,
-            abonementId: abonement.id,
-            abonementNumber: abonement.number,
+            abonementId: abonement.item1.id,
+            abonementNumber: abonement.item1.number,
           );
         }
 
@@ -378,8 +376,9 @@ class BusinessLogic {
             payment: paidBy,
             userActive: status,
             date: serverTime,
-            abonement:
-                paidBy == ActivityPaidBy.abonement ? abonement?.id : null,
+            abonement: paidBy == ActivityPaidBy.abonement
+                ? abonement?.item2?.documentId
+                : null,
             userPhone: user.phone,
             orderId: paidBy == ActivityPaidBy.regular ? orderId : null,
           ),
@@ -413,9 +412,9 @@ class BusinessLogic {
     } else {
       /// Check if any abonement can be used for booking and book with it.
       var abonementNonMatchReason = SMAbonementNonMatchReason.none;
-      for (final abonement in userAbonements.toList(growable: false)
-        ..sort((final userAbonementA, final userAbonementB) {
-          return userAbonementA.item1.compareTo(userAbonementB.item1);
+      for (final abonement in abonements.toList(growable: false)
+        ..sort((final abonementA, final abonementB) {
+          return abonementA.item1.compareTo(abonementB.item1);
         })) {
         if (abonement.item1.unitedBalanceServicesCount <= 0) {
           continue;
@@ -424,7 +423,7 @@ class BusinessLogic {
         if (abonementNonMatchReason == SMAbonementNonMatchReason.none) {
           if (await update(
             ActivityPaidBy.abonement,
-            abonement: abonement.item1,
+            abonement: abonement,
           )) {
             return Tuple2(
               record,
@@ -786,7 +785,7 @@ class BusinessLogic {
 
     /// Create the storage operation of selling an
     /// abonement.
-    final goodSpecialNumber = randomAlpha(20);
+    final currentTime = serverTime;
     final storageOperation = await _yClients.createStorageOperation(
       clientId: clientId,
       companyId: good.salonId,
@@ -794,11 +793,12 @@ class BusinessLogic {
       masterId: options.kassirMobileId,
       goodId: good.goodId,
       goodCost: good.cost,
-      serverTime: serverTime,
-      goodSpecialNumber: goodSpecialNumber,
+      serverTime: currentTime,
     );
 
     /// Create abonement transaction.
+    final goodSpecialNumber = 'm_${storageOperation.documentId}'
+        '${currentTime.hour}${currentTime.minute}${currentTime.second}';
     final goodTransaction = await _yClients.createTransaction(
       clientId: clientId,
       companyId: good.salonId,
@@ -832,7 +832,7 @@ class BusinessLogic {
     await _smStretching.createAbonement(
       companyId: good.salonId,
       documentId: storageOperation.document.id,
-      abonementId: good.loyaltyAbonementTypeId!,
+      abonementId: abonement.yId,
       userPhone: userPhone,
       createdAt: serverTime,
       dateEnd: dateEnd,

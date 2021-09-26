@@ -73,6 +73,7 @@ class SMStretchingAPI {
     required final String userPhone,
     required final String userEmail,
     required final DateTime serverTime,
+    final String firebaseMessagingToken = '',
   }) async {
     final response = await _dio.post<String?>(
       '$smStretchingApiUrl/users/$smStretchingUrlToken/add_user',
@@ -80,7 +81,8 @@ class SMStretchingAPI {
         'phone': userPhone,
         'email': userEmail,
         'date_add': serverTime.toString().split('.').first,
-        // 'app_token': token,
+        if (firebaseMessagingToken.isNotEmpty)
+          'app_token': firebaseMessagingToken,
         'type_device': kIsWeb
             ? '0'
             : Platform.isAndroid
@@ -199,8 +201,7 @@ class SMStretchingAPI {
     if (data is! Iterable) {
       return const Iterable<SMRecordModel>.empty();
     }
-    return (data.cast<Map<String, Object?>>())
-        .map((final map) => SMRecordModel.fromMap(map));
+    return (data.cast<Map<String, Object?>>()).map(SMRecordModel.fromMap);
   }
 
   /// Create a payment in SMStretching API.
@@ -248,8 +249,7 @@ class SMStretchingAPI {
     if (data is! Iterable) {
       return const Iterable<SMPaymentModel>.empty();
     }
-    return (data.cast<Map<String, Object?>>())
-        .map((final map) => SMPaymentModel.fromMap(map));
+    return (data.cast<Map<String, Object?>>()).map(SMPaymentModel.fromMap);
   }
 
   /// Edits a payment in SMStretching API after finishing Tinkoff [acquiring].
@@ -275,7 +275,7 @@ class SMStretchingAPI {
         'Redirect': acquiring.item1.paymentURL,
         'Recurrent': 'N',
         'Token': acquiring.item0.signToken,
-        'timestamp': serverTime.toString(),
+        'timestamp': serverTime.toString().split('.').first,
       },
     );
     return response.statusCode == 200;
@@ -318,7 +318,7 @@ class SMStretchingAPI {
     required final int abonementId,
     required final String userPhone,
     required final DateTime createdAt,
-    required final DateTime? dateEnd,
+    final DateTime? dateEnd,
   }) async {
     final response = await _dio.post<String>(
       '$smStretchingApiUrl/goods/$smStretchingUrlToken/add',
@@ -328,9 +328,9 @@ class SMStretchingAPI {
         'abonement_id': abonementId,
         'document_id': documentId,
         'company_id': companyId,
-        'date_start': createdAt.toString(),
+        'date_start': createdAt.toString().split('.').first,
         'phone': userPhone,
-        'date_end': dateEnd.toString(),
+        if (dateEnd != null) 'date_end': dateEnd.toString().split('.').first,
       },
     );
     return response.statusCode == 200;
@@ -353,7 +353,7 @@ class SMStretchingAPI {
       data: <String, Object?>{
         'active': active ? 1 : 0,
         'document_id': documentId,
-        'date_end': dateEnd.toString(),
+        'date_end': dateEnd.toString().split('.').first,
       },
     );
     return response.statusCode == 200;
@@ -373,8 +373,7 @@ class SMStretchingAPI {
     if (data is! Iterable) {
       return const Iterable<SMWishlistModel>.empty();
     }
-    return (data.cast<Map<String, Object?>>())
-        .map((final map) => SMWishlistModel.fromMap(map));
+    return (data.cast<Map<String, Object?>>()).map(SMWishlistModel.fromMap);
   }
 
   /// Create a wishlist item in the SMStretching API.
@@ -465,7 +464,7 @@ final StateNotifierProvider<ContentNotifier<SMStudioModel>,
       final response = await smStretching._dio
           .get<Iterable>('$smStretchingContentUrl/studii');
       return (response.data!.cast<Map<String, Object?>>())
-          .map((final map) => SMStudioModel.fromMap(map));
+          .map(SMStudioModel.fromMap);
     },
   );
 });
@@ -509,7 +508,7 @@ final StateNotifierProvider<ContentNotifier<SMTrainerModel>,
           .get<String>('$smStretchingContentUrl/shtab_v2');
       return ((json.decode(response.data!) as Iterable)
               .cast<Map<String, Object?>>())
-          .map((final map) => SMTrainerModel.fromMap(map));
+          .map(SMTrainerModel.fromMap);
     },
   );
 });
@@ -540,7 +539,7 @@ final StateNotifierProvider<ContentNotifier<SMUserAbonementModel>,
       }
       return ((json.decode(response.data!) as Iterable)
               .cast<Map<String, Object?>>())
-          .map((final map) => SMUserAbonementModel.fromMap(map));
+          .map(SMUserAbonementModel.fromMap);
     },
   );
   ref.listen<bool>(
@@ -592,7 +591,7 @@ final StateNotifierProvider<ContentNotifier<SMClassesGalleryModel>,
       final response = await smStretching._dio
           .get<Iterable>('$smStretchingContentUrl/gallery_for_classes');
       return (response.data!.cast<Map<String, Object?>>())
-          .map((final map) => SMClassesGalleryModel.fromMap(map));
+          .map(SMClassesGalleryModel.fromMap);
     },
   );
 });
@@ -612,7 +611,7 @@ final StateNotifierProvider<ContentNotifier<SMAdvertismentModel>,
       final response = await smStretching._dio
           .get<Iterable>('$smStretchingContentUrl/adv_banner');
       return (response.data!.cast<Map<String, Object?>>())
-          .map((final map) => SMAdvertismentModel.fromMap(map));
+          .map(SMAdvertismentModel.fromMap);
     },
   );
 });
@@ -632,7 +631,7 @@ final StateNotifierProvider<ContentNotifier<SMStoryModel>,
       final response = await smStretching._dio
           .get<Iterable>('$smStretchingContentUrl/stories');
       return (response.data!.cast<Map<String, Object?>>())
-          .map((final map) => SMStoryModel.fromMap(map));
+          .map(SMStoryModel.fromMap);
     },
   );
 });

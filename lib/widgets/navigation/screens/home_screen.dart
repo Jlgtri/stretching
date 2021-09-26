@@ -19,6 +19,7 @@ import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
+import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/json_converters.dart';
@@ -31,7 +32,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 /// The id converter of the [SMStoryModel].
 final Provider<SMStoryIdConverter> smStoryIdConverterProvider =
-    Provider<SMStoryIdConverter>((final ref) => SMStoryIdConverter._(ref));
+    Provider<SMStoryIdConverter>(SMStoryIdConverter._);
 
 /// The id converter of the [SMStoryModel].
 class SMStoryIdConverter implements JsonConverter<SMStoryModel?, int> {
@@ -66,6 +67,19 @@ final StateNotifierProvider<SaveToHiveIterableNotifier<SMStoryModel, String>,
   );
 });
 
+/// The scroll controller for the [StoryCardScreen] scrollable.
+final Provider<ScrollController> storiesScrollControllerProvider =
+    Provider<ScrollController>((final ref) {
+  return ScrollController();
+});
+
+/// The [OpenContainer.openBuilder] provider of the [StoryCardScreen] for each
+/// [SMStoryModel].
+final StateProviderFamily<void Function()?, int> storiesCardsProvider =
+    StateProvider.family<void Function()?, int>(
+  (final ref, final storyMedia) => null,
+);
+
 /// The screen for the [NavigationScreen.home].
 class HomeScreen extends HookConsumerWidget {
   /// The screen for the [NavigationScreen.home].
@@ -74,11 +88,14 @@ class HomeScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final scrollController =
+        ref.watch(navigationScrollController(NavigationScreen.home));
+    final storiesScrollController = ref.watch(storiesScrollControllerProvider);
     final unauthorized =
         ref.watch(userProvider.select((final user) => user == null));
 
-    final smAds = ref.watch(smAdvertismentsProvider);
-    final smStories = ref.watch(smStoriesProvider).toList();
+    final smAdvertisments = ref.watch(smAdvertismentsProvider);
+    final smStories = ref.watch(smStoriesProvider);
     final activities = ref.watch(combinedActivitiesProvider);
     final userRecords = <UserRecordModel, CombinedActivityModel>{
       for (final userRecord
@@ -105,33 +122,39 @@ class HomeScreen extends HookConsumerWidget {
       controller: refresh.item0,
       onLoading: refresh.item0.loadComplete,
       onRefresh: refresh.item1,
+      scrollController: scrollController,
       child: CustomScrollView(
         primary: false,
         shrinkWrap: true,
+        controller: scrollController,
         slivers: <Widget>[
           /// Stories
           SliverPadding(
             padding:
                 const EdgeInsets.symmetric(vertical: 16).copyWith(bottom: 0),
             sliver: SliverToBoxAdapter(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Row(
-                  children: <Widget>[
-                    for (final smStory in smStories) ...[
-                      StoryCardScreen(smStory),
-                      const SizedBox(width: 6)
-                    ]
-                  ]..removeLast(),
+              child: LimitedBox(
+                maxHeight: 96,
+                child: ListView.builder(
+                  cacheExtent: double.infinity,
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  controller: storiesScrollController,
+                  itemCount: smStories.length,
+                  itemBuilder: (final context, final index) => Padding(
+                    padding: index == smStories.length - 1
+                        ? EdgeInsets.zero
+                        : const EdgeInsets.only(right: 6),
+                    child: StoryCardScreen(smStories.elementAt(index)),
+                  ),
                 ),
               ),
             ),
           ),
 
           /// Advertisment
-          if (smAds.isNotEmpty)
+          if (smAdvertisments.isNotEmpty)
             SliverPadding(
               padding: const EdgeInsets.all(16).copyWith(bottom: 0),
               sliver: SliverToBoxAdapter(
@@ -162,7 +185,7 @@ class HomeScreen extends HookConsumerWidget {
                           leading: const FontIconBackButton(),
                         ),
                         body: WebView(
-                          initialUrl: smAds.last.advLink,
+                          initialUrl: smAdvertisments.last.advLink,
                           javascriptMode: JavascriptMode.unrestricted,
                           navigationDelegate: (final navigation) {
                             return navigation.url.startsWith(smStretchingUrl)
@@ -186,7 +209,7 @@ class HomeScreen extends HookConsumerWidget {
                           child: CachedNetworkImage(
                             height: 100,
                             fit: BoxFit.fitWidth,
-                            imageUrl: smAds.last.advImage,
+                            imageUrl: smAdvertisments.last.advImage,
                             imageBuilder: (final context, final imageProvider) {
                               return Ink(
                                 decoration: BoxDecoration(
@@ -316,10 +339,13 @@ class StoryCardScreen extends HookConsumerWidget {
   /// The story to show on this screen.
   final SMStoryModel story;
 
+  /// The [OpenContainer.transitionDuration] of this widget.
+  static const Duration transitionDuration = Duration(milliseconds: 500);
+
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final controller = useMemoized(() => StoryController());
+    final controller = useMemoized(StoryController.new);
     final alreadyWatched = ref.watch(
       homeWatchedStoriesProvider.select((final watchedStories) {
         return watchedStories.any((final watchedStory) {
@@ -358,7 +384,7 @@ class StoryCardScreen extends HookConsumerWidget {
       closedColor: Colors.transparent,
       middleColor: Colors.transparent,
       useRootNavigator: true,
-      transitionDuration: const Duration(milliseconds: 500),
+      transitionDuration: transitionDuration,
       openBuilder: (final context, final action) => StoryView(
         controller: controller,
         onComplete: () async {
@@ -379,74 +405,79 @@ class StoryCardScreen extends HookConsumerWidget {
           }
         },
       ),
-      closedBuilder: (final context, final action) => Container(
-        height: 96,
-        width: 96,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          border: !alreadyWatched
-              ? Border.all(color: const Color(0xFF5709FF))
-              : null,
-          borderRadius: const BorderRadius.all(Radius.circular(18)),
-        ),
-        child: ElevatedButton(
-          onPressed: () async {
-            action();
-            await analytics.logEvent(
-              name: FAKeys.stories,
-              parameters: <String, String>{
-                'content_title': translit(story.textPreview)
-              },
-            );
-          },
-          style: ButtonStyle(
-            padding: MaterialStateProperty.all(EdgeInsets.zero),
-            backgroundColor: MaterialStateProperty.all(Colors.transparent),
-            shape: MaterialStateProperty.all(
-              const RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(16)),
-              ),
-            ),
-            elevation: MaterialStateProperty.all(2.5),
+      closedBuilder: (final context, final action) {
+        ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
+          ref.read(storiesCardsProvider(story.media)).state = action;
+        });
+        return Container(
+          height: 96,
+          width: 96,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            border: !alreadyWatched
+                ? Border.all(color: const Color(0xFF5709FF))
+                : null,
+            borderRadius: const BorderRadius.all(Radius.circular(18)),
           ),
-          child: Ink(
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.all(Radius.circular(16)),
-              image: DecorationImage(
-                fit: BoxFit.cover,
-                image: CachedNetworkImageProvider(
-                  story.mediaPreviewV2?.url ?? story.mediaLink,
+          child: ElevatedButton(
+            onPressed: () async {
+              action();
+              await analytics.logEvent(
+                name: FAKeys.stories,
+                parameters: <String, String>{
+                  'content_title': translit(story.textPreview)
+                },
+              );
+            },
+            style: ButtonStyle(
+              padding: MaterialStateProperty.all(EdgeInsets.zero),
+              backgroundColor: MaterialStateProperty.all(Colors.transparent),
+              shape: MaterialStateProperty.all(
+                const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
                 ),
               ),
+              elevation: MaterialStateProperty.all(0),
             ),
-            child: Container(
-              height: 90,
-              width: 90,
-              alignment: Alignment.bottomLeft,
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.all(Radius.circular(16)),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: <Color>[
-                    Colors.transparent,
-                    Colors.black54,
-                  ],
+            child: Ink(
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.all(Radius.circular(16)),
+                image: DecorationImage(
+                  fit: BoxFit.cover,
+                  image: CachedNetworkImageProvider(
+                    story.mediaPreviewV2?.url ?? story.mediaLink,
+                  ),
                 ),
               ),
-              child: Text(
-                story.textPreview,
-                style: theme.textTheme.overline?.copyWith(
-                  fontWeight: FontWeight.w500,
-                  color: theme.colorScheme.onPrimary,
+              child: Container(
+                height: 90,
+                width: 90,
+                alignment: Alignment.bottomLeft,
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.all(Radius.circular(16)),
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: <Color>[
+                      Colors.transparent,
+                      Colors.black54,
+                    ],
+                  ),
                 ),
-                textScaleFactor: 1,
+                child: Text(
+                  story.textPreview,
+                  style: theme.textTheme.overline?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: theme.colorScheme.onPrimary,
+                  ),
+                  textScaleFactor: 1,
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

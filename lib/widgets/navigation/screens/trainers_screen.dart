@@ -9,7 +9,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
@@ -23,6 +22,7 @@ import 'package:stretching/models_yclients/trainer_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/hive_provider.dart';
+import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/json_converters.dart';
 import 'package:stretching/widgets/components/emoji_text.dart';
@@ -79,6 +79,14 @@ final Provider<Iterable<CombinedTrainerModel>> filteredTrainersProvider =
   );
 });
 
+/// The [OpenContainer.openBuilder] provider of the [TrainerCard] for each
+/// [CombinedTrainerModel].
+final StateProviderFamily<void Function()?, CombinedTrainerModel>
+    trainersCardsProvider =
+    StateProvider.family<void Function()?, CombinedTrainerModel>(
+  (final ref, final trainer) => null,
+);
+
 /// The screen for the [NavigationScreen.trainers].
 class TrainersScreen extends HookConsumerWidget {
   /// The screen for the [NavigationScreen.trainers].
@@ -90,11 +98,12 @@ class TrainersScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final scrollController = ModalScrollController.of(context);
+    final scrollController =
+        ref.watch(navigationScrollController(NavigationScreen.trainers));
 
     final searchController = useTextEditingController();
     final searchFocusNode = useFocusNode();
-    final searchKey = useMemoized(() => GlobalKey());
+    final searchKey = useMemoized(GlobalKey.new);
     final refresh = useRefreshController(
       extraRefresh: () async {
         while (ref.read(connectionErrorProvider).state) {
@@ -139,6 +148,7 @@ class TrainersScreen extends HookConsumerWidget {
         controller: refresh.item0,
         onLoading: refresh.item0.loadComplete,
         onRefresh: refresh.item1,
+        scrollController: scrollController,
         child: CustomScrollView(
           shrinkWrap: true,
           cacheExtent: double.infinity,
@@ -266,7 +276,7 @@ class TrainersScreen extends HookConsumerWidget {
 /// The card to display a trainer.
 ///
 /// Initially shows just a card, but opens [TrainerScreen] when pressed.
-class TrainerCard extends StatelessWidget {
+class TrainerCard extends ConsumerWidget {
   /// The card to display a trainer.
   ///
   /// Initially shows just a card, but opens [TrainerScreen] when pressed.
@@ -278,8 +288,11 @@ class TrainerCard extends StatelessWidget {
   /// The trainer model from YClients API to display on this screen.
   final CombinedTrainerModel trainer;
 
+  /// The [OpenContainer.transitionDuration] of this widget.
+  static const Duration transitionDuration = Duration(milliseconds: 500);
+
   @override
-  Widget build(final BuildContext context) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
     return OpenContainer<void>(
       tappable: false,
@@ -288,10 +301,13 @@ class TrainerCard extends StatelessWidget {
       openColor: Colors.transparent,
       closedColor: Colors.transparent,
       middleColor: Colors.transparent,
-      transitionDuration: const Duration(milliseconds: 500),
+      transitionDuration: transitionDuration,
       openBuilder: (final context, final action) =>
           TrainerScreen(trainer, onBackButtonPressed: action),
       closedBuilder: (final context, final action) {
+        ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
+          ref.read(trainersCardsProvider(trainer)).state = action;
+        });
         return MaterialButton(
           onPressed: action,
           visualDensity: VisualDensity.compact,
@@ -392,8 +408,8 @@ class TrainerScreen extends HookWidget {
       //   onFirstPressed: (final context) {},
       // ),
       carouselHeight: 400,
-      paragraphs: <Tuple2<String?, String>>[
-        Tuple2(null, trainer.item1.shortlyAbout)
+      paragraphs: <ContentParagraph>[
+        ContentParagraph(body: trainer.item1.shortlyAbout)
       ],
       carousel: videoPlayerController == null
           ? const Center(child: CircularProgressIndicator.adaptive())

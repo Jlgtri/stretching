@@ -65,6 +65,8 @@ class ProfileScreen extends HookConsumerWidget {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
     final navigator = Navigator.of(context, rootNavigator: true);
+    final scrollController =
+        ref.watch(navigationScrollController(NavigationScreen.profile));
 
     final abonements = ref.watch(combinedAbonementsProvider);
     List<Widget> createCards() {
@@ -90,7 +92,7 @@ class ProfileScreen extends HookConsumerWidget {
     }
 
     final abonementsCards = useRef(createCards());
-    final cardController = useMemoized(() => TCardController());
+    final cardController = useMemoized(TCardController.new);
     final refresh = useRefreshController(
       extraRefresh: () async {
         while (ref.read(connectionErrorProvider).state) {
@@ -251,8 +253,10 @@ class ProfileScreen extends HookConsumerWidget {
         controller: refresh.item0,
         onLoading: refresh.item0.loadComplete,
         onRefresh: refresh.item1,
+        scrollController: scrollController,
         child: ListView(
           primary: false,
+          controller: scrollController,
           padding: const EdgeInsets.symmetric(vertical: 16),
           children: <Widget>[
             /// Deposit
@@ -681,7 +685,7 @@ class DepositCard extends ConsumerWidget {
           ),
         );
       },
-      loading: () => const SizedBox.shrink(),
+      loading: SizedBox.shrink,
       error: (final error, final stackTrace) => const SizedBox.shrink(),
     );
   }

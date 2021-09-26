@@ -1,5 +1,4 @@
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:darq/darq.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:expandable_text/expandable_text.dart';
 import 'package:flutter/foundation.dart';
@@ -16,9 +15,42 @@ import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 
 /// The paragraph model for the [ContentScreen].
-///
-/// First element is a title and second is a body.
-typedef ContentParagraph = Tuple2<String?, String>;
+@immutable
+class ContentParagraph {
+  /// The paragraph model for the [ContentScreen].
+  const ContentParagraph({
+    required final this.body,
+    final this.title = '',
+    final this.expandable = true,
+  });
+
+  /// The title of this paragraph.
+  final String title;
+
+  /// The body of this paragraph.
+  final String body;
+
+  /// If the [body] can be expanded.
+  final bool expandable;
+
+  @override
+  bool operator ==(final Object other) {
+    return identical(this, other) ||
+        other is ContentParagraph &&
+            other.title == title &&
+            other.body == body &&
+            other.expandable == expandable;
+  }
+
+  @override
+  int get hashCode => title.hashCode ^ body.hashCode ^ expandable.hashCode;
+
+  @override
+  String toString() {
+    return 'ContentParagraph(title: $title, body: $body, '
+        'expandable: $expandable)';
+  }
+}
 
 /// The screen that shows a content on a similar template.
 class ContentScreen extends HookConsumerStatefulWidget {
@@ -183,7 +215,8 @@ class ContentScreenState extends ConsumerState<ContentScreen>
                                 style: widget.secondSubtitle.isNotEmpty
                                     ? theme.textTheme.headline1
                                     : theme.textTheme.headline2,
-                                maxLines: 1,
+                                maxLines:
+                                    widget.secondSubtitle.isNotEmpty ? 2 : 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
                               Flexible(
@@ -220,9 +253,9 @@ class ContentScreenState extends ConsumerState<ContentScreen>
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            if (paragraph.item0 != null) ...[
+                            if (paragraph.title.isNotEmpty) ...[
                               Text(
-                                paragraph.item0!,
+                                paragraph.title,
                                 style: theme.textTheme.headline3,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -231,7 +264,8 @@ class ContentScreenState extends ConsumerState<ContentScreen>
                             ],
                             Flexible(
                               child: ExpandableText(
-                                paragraph.item1,
+                                paragraph.body,
+                                expanded: !paragraph.expandable,
                                 expandText: TR.miscExtend.tr(),
                                 maxLines: 4,
                                 linkColor: theme.hintColor,

@@ -90,7 +90,7 @@ class AnimatedBackground extends HookWidget {
         switchState();
       }),
     );
-    final animKey = useMemoized(() => UniqueKey());
+    final animKey = useMemoized(UniqueKey.new);
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,

@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:stretching/widgets/navigation/screens/activities_screen.dart';
+import 'package:stretching/widgets/navigation/screens/profile/contact_screen.dart';
 
 /// The current app's version.
 const String currentVersion = '2.0.0';
@@ -18,7 +19,7 @@ const List<Locale> supportedLocales = <Locale>[defaultLocale];
 const String smstretchingCity = 'Москва';
 
 /// The country code of the desired phone number.
-const int phoneCountryCode = 38;
+const int phoneCountryCode = 7;
 
 /// The length of the sms pin code for phone number authentication.
 const int pinCodeLength = 4;
@@ -34,3 +35,6 @@ const Duration maxReviewTimeout = Duration(days: 1);
 
 /// The name of the created calendar for the SMStretching Events.
 const String calendarName = 'SMSTRETCHING';
+
+/// The number for the [ContactScreen] support.
+const int supportPhoneNumber = 78004444270;

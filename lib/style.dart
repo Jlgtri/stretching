@@ -99,6 +99,7 @@ AppBarTheme get _appBarTheme {
     backgroundColor: _colorScheme.onSurface,
     foregroundColor: _colorScheme.surface,
     shadowColor: Colors.transparent,
+    elevation: 0,
   );
 }
 
@@ -224,7 +225,7 @@ InputDecorationTheme get _inputDecorationTheme {
 }
 
 ButtonThemeData get _buttonTheme {
-  return ButtonThemeData(
+  return const ButtonThemeData(
     padding: EdgeInsets.zero,
     minWidth: 0,
   );

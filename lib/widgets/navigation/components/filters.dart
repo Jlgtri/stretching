@@ -14,7 +14,7 @@ PreferredSizeWidget getSelectorWidget<T extends Object>({
   required final bool Function(T) selected,
   required final String Function(T) text,
   final double height = 36,
-  final EdgeInsets padding = const EdgeInsets.symmetric(vertical: 24),
+  final EdgeInsets padding = const EdgeInsets.only(top: 22, bottom: 26),
 }) {
   return PreferredSize(
     preferredSize: Size.fromHeight(height + padding.vertical),
@@ -104,7 +104,7 @@ class FilterButton extends StatelessWidget {
         ),
         selected: selected,
         selectedColor: theme.colorScheme.onSurface,
-        elevation: 4,
+        elevation: 0,
         pressElevation: 0,
         avatar: avatarUrl != null
             ? CachedNetworkImage(

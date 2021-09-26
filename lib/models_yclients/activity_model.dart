@@ -195,7 +195,7 @@ class ActivityModel implements Comparable<ActivityModel> {
       staff: ActivityStaffModel.fromMap(map['staff']! as Map<String, Object?>),
       resourceInstances: (map['resource_instances']! as Iterable<Object?>)
           .cast<Map<String, Object?>>()
-          .map((final map) => ActivityResourceInstanceModel.fromMap(map)),
+          .map(ActivityResourceInstanceModel.fromMap),
       labels: (map['labels']! as Iterable).cast<String>(),
     );
   }

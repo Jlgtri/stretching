@@ -161,7 +161,7 @@ class SMStoryModel {
       storiesImgV2: map['stories_img_v2'] != null
           ? (map['stories_img_v2']! as Iterable)
               .cast<Map<String, Object?>>()
-              .map((final map) => SMStoryContentModel.fromMap(map))
+              .map(SMStoryContentModel.fromMap)
           : null,
       cctSlug: map['cct_slug']! as String,
     );

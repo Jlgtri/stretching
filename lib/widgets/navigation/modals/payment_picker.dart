@@ -161,8 +161,8 @@ class PaymentPickerScreen extends HookConsumerWidget {
         .toList(growable: false)
       ..sort();
 
-    final buttonKey = useMemoized(() => GlobalKey());
-    final emailKey = useMemoized(() => GlobalKey());
+    final buttonKey = useMemoized(GlobalKey.new);
+    final emailKey = useMemoized(GlobalKey.new);
     final emailError = useState<String>('');
     final emailController = useTextEditingController(
       text: ref.read(paymentEmailProvider),
@@ -704,66 +704,64 @@ class AbonementCategoryPicker<T extends Object> extends StatelessWidget {
         children: <Widget>[
           Text(category, style: theme.textTheme.subtitle1),
           const SizedBox(height: 12),
-          if (values.isNotEmpty)
-            if (dropdown)
-              dropdownBuilder?.call(context, _dropdown) ?? _dropdown
-            else
-              Align(
-                alignment: Alignment.centerLeft,
-                child: ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: values.isNotEmpty
-                        ? maxWidth * values.length
-                        : double.infinity,
-                  ),
-                  child: ClipRRect(
-                    borderRadius: const BorderRadius.all(Radius.circular(4)),
-                    child: Table(
-                      border: TableBorder.all(
-                        borderRadius:
-                            const BorderRadius.all(Radius.circular(4)),
-                      ),
-                      children: <TableRow>[
-                        TableRow(
-                          children: <Widget>[
-                            for (final value in values)
-                              TableCell(
-                                verticalAlignment:
-                                    TableCellVerticalAlignment.middle,
-                                child: TextButton(
-                                  style: (selected.contains(value)
-                                          ? TextButtonStyle.dark
-                                          : TextButtonStyle.light)
-                                      .fromTheme(
-                                    theme,
-                                    ButtonStyle(
-                                      textStyle: MaterialStateProperty.all(
-                                        theme.textTheme.bodyText1,
-                                      ),
-                                      shape: MaterialStateProperty.all(
-                                        const RoundedRectangleBorder(),
-                                      ),
-                                      side: MaterialStateProperty.all(
-                                        BorderSide.none,
-                                      ),
+          if (dropdown)
+            dropdownBuilder?.call(context, _dropdown) ?? _dropdown
+          else if (values.isNotEmpty)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: values.isNotEmpty
+                      ? maxWidth * values.length
+                      : double.infinity,
+                ),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
+                  child: Table(
+                    border: TableBorder.all(
+                      borderRadius: const BorderRadius.all(Radius.circular(4)),
+                    ),
+                    children: <TableRow>[
+                      TableRow(
+                        children: <Widget>[
+                          for (final value in values)
+                            TableCell(
+                              verticalAlignment:
+                                  TableCellVerticalAlignment.middle,
+                              child: TextButton(
+                                style: (selected.contains(value)
+                                        ? TextButtonStyle.dark
+                                        : TextButtonStyle.light)
+                                    .fromTheme(
+                                  theme,
+                                  ButtonStyle(
+                                    textStyle: MaterialStateProperty.all(
+                                      theme.textTheme.bodyText1,
+                                    ),
+                                    shape: MaterialStateProperty.all(
+                                      const RoundedRectangleBorder(),
+                                    ),
+                                    side: MaterialStateProperty.all(
+                                      BorderSide.none,
                                     ),
                                   ),
-                                  onPressed: onSelected != null
-                                      ? () => onSelected!(
-                                            value,
-                                            !selected.contains(value),
-                                          )
-                                      : null,
-                                  child: builder(context, value),
                                 ),
+                                onPressed: onSelected != null
+                                    ? () => onSelected!(
+                                          value,
+                                          !selected.contains(value),
+                                        )
+                                    : null,
+                                child: builder(context, value),
                               ),
-                          ],
-                        ),
-                      ],
-                    ),
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
               ),
+            ),
         ],
       ),
     );

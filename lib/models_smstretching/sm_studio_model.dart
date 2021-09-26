@@ -222,7 +222,7 @@ class SMStudioModel implements Comparable<SMStudioModel> {
       studioYId: int.parse(map['studio_yid']! as String),
       mediaGallerySite: (map['media_gallery_site']! as Iterable)
           .cast<Map<String, Object?>>()
-          .map((final x) => SMStudioMediaModel.fromMap(x)),
+          .map(SMStudioMediaModel.fromMap),
       cctSinglePostId: int.parse(map['cct_single_post_id']! as String),
       link: map['link']! as String,
       instagram: map['instagram']! as String,

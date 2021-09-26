@@ -55,7 +55,7 @@ import 'package:stretching/widgets/navigation/screens/trainers_screen.dart';
 
 /// The id converter of the [StudioModel] and [SMStudioModel].
 final Provider<StudioIdConverter> studioIdConverterProvider =
-    Provider<StudioIdConverter>((final ref) => StudioIdConverter._(ref));
+    Provider<StudioIdConverter>(StudioIdConverter._);
 
 /// The id converter of the [StudioModel] and [SMStudioModel].
 class StudioIdConverter implements JsonConverter<CombinedStudioModel?, int> {
@@ -188,7 +188,7 @@ final StateProvider<DateTime> activitiesDayProvider =
     StateProvider<DateTime>((final ref) {
   final now = ref.read(currentTimeProvider).when(
         data: (final currentTime) => currentTime,
-        loading: () => DateTime.now(),
+        loading: DateTime.now,
         error: (final e, final st) => DateTime.now(),
       );
   final activities =
@@ -234,7 +234,7 @@ final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
     currentTimeProvider.select((final currentTime) {
       return currentTime.when(
         data: (final currentTime) => currentTime,
-        loading: () => DateTime.now(),
+        loading: DateTime.now,
         error: (final e, final st) => DateTime.now(),
       );
     }),
@@ -283,9 +283,12 @@ final Provider<Iterable<DateTime>> activitiesDaysProvider =
           return (activities.map((final activity) => activity.date))
               .distinct((final date) => date.day)
               .where((final date) {
-            return date.difference(now ?? DateTime.now()).inDays <
-                DateTime.daysPerWeek * 2;
-          }).toSet();
+                return date.difference(now ?? DateTime.now()).inDays <
+                    DateTime.daysPerWeek * 2;
+              })
+              .toSet()
+              .toList(growable: false)
+            ..sort();
         },
       ),
     );
@@ -325,6 +328,9 @@ class ActivitiesScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final scrollController =
+        ref.watch(navigationScrollController(NavigationScreen.schedule));
+
     final activities = ref.watch(filteredActivitiesProvider);
     final refresh = useRefreshController(
       extraRefresh: () async {
@@ -374,8 +380,10 @@ class ActivitiesScreen extends HookConsumerWidget {
             controller: refresh.item0,
             onLoading: refresh.item0.loadComplete,
             onRefresh: refresh.item1,
+            scrollController: scrollController,
             child: CustomScrollView(
               primary: false,
+              controller: scrollController,
               slivers: <Widget>[
                 /// A search field, categories and dates.
                 SliverAppBar(
@@ -570,7 +578,7 @@ class ActivitiesScreen extends HookConsumerWidget {
                               return activity.item0.date.difference(
                                 tempNow.when(
                                   data: (final tempNow) => tempNow,
-                                  loading: () => DateTime.now(),
+                                  loading: DateTime.now,
                                   error: (final e, final st) => DateTime.now(),
                                 ),
                               );
@@ -882,7 +890,7 @@ class ActivityCardContainer extends HookConsumerWidget {
           user: ref.read(userProvider)!,
           activity: activity,
           useDiscount: ref.read(discountProvider),
-          userAbonements: ref.read(combinedAbonementsProvider),
+          abonements: ref.read(combinedAbonementsProvider),
           updateAndTryAgain: (final record) async {
             await Future.wait(<Future<void>>[
               ref.read(userAbonementsProvider.notifier).refresh(),
@@ -894,7 +902,7 @@ class ActivityCardContainer extends HookConsumerWidget {
               user: ref.read(userProvider)!,
               activity: activity,
               useDiscount: ref.read(discountProvider),
-              userAbonements: ref.read(combinedAbonementsProvider),
+              abonements: ref.read(combinedAbonementsProvider),
             );
           },
         );
@@ -1158,7 +1166,7 @@ class ActivityCard extends ConsumerWidget {
             },
             borderRadius: const BorderRadius.all(Radius.circular(4)),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16).copyWith(bottom: 12),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
@@ -1593,11 +1601,12 @@ class ActivityScreenCard extends ConsumerWidget {
       ),
       paragraphs: <ContentParagraph>[
         if (activity.item3.item1.classInfo != null)
-          Tuple2(null, activity.item3.item1.classInfo!),
+          ContentParagraph(body: activity.item3.item1.classInfo!),
         if (activity.item3.item1.takeThis != null)
-          Tuple2(
-            TR.activitiesActivityImportantInfo.tr(),
-            activity.item3.item1.takeThis!,
+          ContentParagraph(
+            title: TR.activitiesActivityImportantInfo.tr(),
+            body: activity.item3.item1.takeThis!,
+            expandable: false,
           ),
       ],
       persistentFooterButtons: <Widget>[
@@ -2129,7 +2138,7 @@ class ActivitiesSearch extends HookConsumerWidget {
     final theme = Theme.of(context);
     final searchController = useTextEditingController();
     final searchFocusNode = useFocusNode();
-    final searchKey = useMemoized(() => GlobalKey());
+    final searchKey = useMemoized(GlobalKey.new);
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,

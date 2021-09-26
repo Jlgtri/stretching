@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:animations/animations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:darq/darq.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +11,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
@@ -35,6 +33,18 @@ import 'package:stretching/widgets/navigation/components/bottom_sheet.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+/// The provider of the current map state of the [StudiosScreen].
+final StateProvider<bool> studiosOnMapProvider =
+    StateProvider<bool>((final ref) => false);
+
+/// The action of the [OpenContainer.closedBuilder] provider of the
+/// [StudioScreenCard] for each [CombinedStudioModel].
+final StateProviderFamily<void Function()?, CombinedStudioModel>
+    studiosCardsProvider =
+    StateProvider.family<void Function()?, CombinedStudioModel>(
+  (final ref, final trainer) => null,
+);
+
 /// The screen for the [NavigationScreen.studios].
 class StudiosScreen extends HookConsumerWidget {
   /// The screen for the [NavigationScreen.studios].
@@ -45,14 +55,19 @@ class StudiosScreen extends HookConsumerWidget {
     zoom: 12.5,
   );
 
+  /// The duration of the switch of the [studiosOnMapProvider].
+  static const Duration onMapSwitcherDuration = Duration(milliseconds: 500);
+
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
-    final scrollController = ModalScrollController.of(context);
+    final scrollController =
+        ref.watch(navigationScrollController(NavigationScreen.studios));
     final devicePixelRatio =
         Platform.isAndroid ? mediaQuery.devicePixelRatio : 1;
 
+    final onMap = ref.watch(studiosOnMapProvider);
     final studios = ref.watch(combinedStudiosProvider);
     final mapMarker = ref.watch(
       mapMarkerProvider(
@@ -67,7 +82,6 @@ class StudiosScreen extends HookConsumerWidget {
     final mapController = useState<GoogleMapController?>(null);
     final infoWindowOptions = useState<InfoWindowOptions?>(null);
     final screenCoordinates = useState<ScreenCoordinate?>(null);
-    final onMap = useState<bool>(false);
     final refresh = useRefreshController(
       extraRefresh: () async {
         while (ref.read(connectionErrorProvider).state) {
@@ -103,7 +117,7 @@ class StudiosScreen extends HookConsumerWidget {
     }
 
     Future<void> onMainStudioCardTap(final StudioModel studio) async {
-      onMap.value = true;
+      onMap.state = true;
       await mapController.value?.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
@@ -127,8 +141,8 @@ class StudiosScreen extends HookConsumerWidget {
     }
 
     return PageTransitionSwitcher(
-      reverse: !onMap.value,
-      duration: const Duration(milliseconds: 500),
+      reverse: !onMap.state,
+      duration: onMapSwitcherDuration,
       layoutBuilder: (final entries) => Stack(
         children: <Widget>[
           GoogleMap(
@@ -243,7 +257,7 @@ class StudiosScreen extends HookConsumerWidget {
                   child: TextButton.icon(
                     icon: const FontIcon(FontIconData(IconsCG.list)),
                     label: Text(TR.studiosViewList.tr()),
-                    style: (onMap.value
+                    style: (onMap.state
                             ? TextButtonStyle.light.fromTheme(theme)
                             : TextButtonStyle.dark.fromTheme(theme))
                         .copyWith(
@@ -256,7 +270,7 @@ class StudiosScreen extends HookConsumerWidget {
                         ),
                       ),
                     ),
-                    onPressed: () => onMap.value ? onMap.value = false : null,
+                    onPressed: () => onMap.state ? onMap.state = false : null,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -264,7 +278,7 @@ class StudiosScreen extends HookConsumerWidget {
                   child: TextButton.icon(
                     icon: const FontIcon(FontIconData(IconsCG.pinOutline)),
                     label: Text(TR.studiosViewMap.tr()),
-                    style: (onMap.value
+                    style: (onMap.state
                             ? TextButtonStyle.dark.fromTheme(theme)
                             : TextButtonStyle.light.fromTheme(theme))
                         .copyWith(
@@ -277,7 +291,7 @@ class StudiosScreen extends HookConsumerWidget {
                         ),
                       ),
                     ),
-                    onPressed: () => !onMap.value ? onMap.value = true : null,
+                    onPressed: () => !onMap.state ? onMap.state = true : null,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -299,7 +313,7 @@ class StudiosScreen extends HookConsumerWidget {
           child: child,
         );
       },
-      child: !onMap.value
+      child: !onMap.state
           ? Material(
               color: theme.scaffoldBackgroundColor,
               child: Padding(
@@ -308,6 +322,7 @@ class StudiosScreen extends HookConsumerWidget {
                   controller: refresh.item0,
                   onLoading: refresh.item0.loadComplete,
                   onRefresh: refresh.item1,
+                  scrollController: scrollController,
                   child: ListView.builder(
                     controller: scrollController,
                     primary: false,
@@ -359,6 +374,9 @@ class StudioScreenCard extends ConsumerWidget {
   /// The callback to call on tap of this card if this widget is not on map.
   final OnStudio? onNonMapTap;
 
+  /// The [OpenContainer.transitionDuration] of this widget.
+  static const Duration transitionDuration = Duration(milliseconds: 500);
+
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     return OpenContainer<void>(
@@ -368,7 +386,7 @@ class StudioScreenCard extends ConsumerWidget {
       openColor: Colors.transparent,
       closedColor: Colors.transparent,
       middleColor: Colors.transparent,
-      transitionDuration: const Duration(milliseconds: 500),
+      transitionDuration: transitionDuration,
       openBuilder: (final context, final action) {
         return ContentScreen(
           type: NavigationScreen.studios,
@@ -411,11 +429,14 @@ class StudioScreenCard extends ConsumerWidget {
             ),
           ],
           paragraphs: <ContentParagraph>[
-            Tuple2(
-              TR.studiosTimetable.tr(),
-              studio.item0.schedule.replaceAll('; ', '\n').trim(),
+            ContentParagraph(
+              title: TR.studiosTimetable.tr(),
+              body: studio.item0.schedule.replaceAll('; ', '\n').trim(),
             ),
-            Tuple2(TR.studiosAbout.tr(), studio.item1.about),
+            ContentParagraph(
+              title: TR.studiosAbout.tr(),
+              body: studio.item1.about,
+            ),
           ],
           carousel: CarouselSlider.builder(
             options: CarouselOptions(
@@ -448,14 +469,15 @@ class StudioScreenCard extends ConsumerWidget {
           );
         }
 
+        ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
+          ref.read(studiosCardsProvider(studio)).state = action;
+        });
         return StudioCard(
           studio,
           onMap: onNonMapTap == null,
-          onTap: (final studio) => onNonMapTap == null
-              ? actionWithAnalytics()
-              : onNonMapTap?.call(studio),
+          onTap: (final studio) => actionWithAnalytics(),
           onAvatarTap: onNonMapTap != null
-              ? (final studio) => actionWithAnalytics()
+              ? (final studio) => onNonMapTap?.call(studio)
               : null,
         );
       },

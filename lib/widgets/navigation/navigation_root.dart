@@ -180,6 +180,14 @@ class PersistentTabControllerConverter<T extends Enum>
       converter.toJson(converter.fromJson(value.index));
 }
 
+/// The scroll controller for the each [NavigationScreen].
+final ProviderFamily<ScrollController, NavigationScreen>
+    navigationScrollController =
+    Provider.family<ScrollController, NavigationScreen>(
+        (final ref, final screen) {
+  return ScrollController();
+});
+
 /// The provider of the current transitioning state of the [navigationProvider].
 final StateProvider<bool> navigationTransitioningProvider =
     StateProvider<bool>((final ref) => false);

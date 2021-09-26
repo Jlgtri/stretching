@@ -64,6 +64,7 @@ dependencies:
   tinkoff_acquiring: ^3.0.4
   translit: ^2.0.0
   url_launcher: ^6.0.10
+  uni_links: ^0.5.1
   validators: ^3.0.0
   webview_flutter: ^2.0.13
 

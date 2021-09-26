@@ -15,6 +15,7 @@ AppBar cancelAppBar(
   return AppBar(
     toolbarHeight: 40,
     backgroundColor: Colors.transparent,
+    shadowColor: Colors.transparent,
     systemOverlayStyle: SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarBrightness: theme.brightness,
@@ -22,6 +23,7 @@ AppBar cancelAppBar(
           ? Brightness.dark
           : Brightness.light,
     ),
+    elevation: 0,
     centerTitle: true,
     title: title != null
         ? Text(

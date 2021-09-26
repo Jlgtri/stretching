@@ -57,8 +57,8 @@ class AuthorizationScreen extends HookConsumerWidget {
     // ignore: close_sinks
     final codeErrorController = useStreamController<ErrorAnimationType>();
 
-    final phoneKey = useMemoized(() => GlobalKey());
-    final codeKey = useMemoized(() => GlobalKey());
+    final phoneKey = useMemoized(GlobalKey.new);
+    final codeKey = useMemoized(GlobalKey.new);
 
     final phoneError = useState<String?>(null);
     final codeError = useState<String?>(null);
@@ -108,9 +108,13 @@ class AuthorizationScreen extends HookConsumerWidget {
               if (user != null) {
                 try {
                   await analytics.logEvent(name: FAKeys.login);
+                  final firebaseMessaging =
+                      await ref.read(messagingProvider.future);
                   await smStretching.addUser(
                     userPhone: user.phone,
                     userEmail: user.email,
+                    firebaseMessagingToken:
+                        await firebaseMessaging.getToken() ?? '',
                     serverTime: ref.read(smServerTimeProvider),
                   );
                 } finally {

@@ -36,7 +36,7 @@ class RatingPicker extends HookConsumerWidget {
 
     final locale = ref.watch(localeProvider);
     final selectedRating = useState<int>(emoji.length);
-    final commentsKey = useMemoized(() => GlobalKey());
+    final commentsKey = useMemoized(GlobalKey.new);
     final commentController = useTextEditingController();
     final doneAnimated = useState<bool>(false);
     final doneTransitionAnimation = useAnimationController(

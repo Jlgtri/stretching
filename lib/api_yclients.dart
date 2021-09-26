@@ -327,8 +327,8 @@ class YClientsAPI {
     required final int masterId,
     required final int goodId,
     required final int goodCost,
-    required final String goodSpecialNumber,
     required final DateTime serverTime,
+    final String goodSpecialNumber = '',
   }) async {
     final response = await _dio.post<YClientsResponse>(
       '$yClientsUrl/storage_operations/operation/$companyId',
@@ -353,7 +353,8 @@ class YClientsAPI {
             'cost': goodCost,
             'master_id': masterId,
             'client_id': clientId,
-            'good_special_number': goodSpecialNumber,
+            if (goodSpecialNumber.isNotEmpty)
+              'good_special_number': goodSpecialNumber,
           }
         ],
       },
@@ -399,7 +400,7 @@ class YClientsAPI {
     );
     return (response.data!.data as Iterable? ?? const Iterable<Object>.empty())
         .cast<Map<String, Object?>>()
-        .map((final map) => ClientModel.fromMap(map));
+        .map(ClientModel.fromMap);
   }
 
   /// Create a client in the YClients API.
@@ -814,20 +815,18 @@ final StateNotifierProvider<ContentNotifier<UserAbonementModel>,
     saveName: 'userAbonements',
     converter: abonementConverter,
     refreshState: (final notifier) async {
-      if (ref.read(userProvider) == null) {
-        return const Iterable<UserAbonementModel>.empty();
-      }
-      final userAbonements = await (ref.read(yClientsProvider))
-          .getIterableData(
-            jsonConverter: const IterableConverter(abonementConverter),
-            url: '$yClientsUrl/user/loyalty/abonements',
-            onError: (final error) async {
-              // debugger(message: error.message);
-              logger.e(error.message, error, error.stackTrace);
-            },
-          )
-          .toList();
-      return userAbonements.isEmpty ? null : userAbonements;
+      return ref.read(userProvider) == null
+          ? const Iterable<UserAbonementModel>.empty()
+          : await (ref.read(yClientsProvider))
+              .getIterableData(
+                jsonConverter: const IterableConverter(abonementConverter),
+                url: '$yClientsUrl/user/loyalty/abonements',
+                onError: (final error) async {
+                  // debugger(message: error.message);
+                  logger.e(error.message, error, error.stackTrace);
+                },
+              )
+              .toList();
     },
   );
   ref.listen<bool>(
@@ -856,7 +855,7 @@ final StateNotifierProvider<ContentNotifier<UserRecordModel>,
       if (ref.read(userProvider) == null) {
         return const Iterable<UserRecordModel>.empty();
       }
-      Iterable<UserRecordModel> userRecords = await (ref.read(yClientsProvider))
+      final userRecords = await (ref.read(yClientsProvider))
           .getIterableData<UserRecordModel>(
             jsonConverter: const IterableConverter(recordConverter),
             url: '$yClientsUrl/user/records',
@@ -867,12 +866,10 @@ final StateNotifierProvider<ContentNotifier<UserRecordModel>,
           )
           .toList();
       final studios = ref.read(studiosProvider);
-      userRecords = userRecords.where((final userRecord) {
-        return studios.any((final studio) {
-          return studio.id == userRecord.company.id;
-        });
-      }).toList();
-      return userRecords.isEmpty ? null : userRecords;
+      return userRecords.where((final userRecord) {
+        return userRecord.attendance == 2 &&
+            studios.any((final studio) => studio.id == userRecord.company.id);
+      });
     },
   );
   ref.listen<bool>(

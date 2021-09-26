@@ -47,12 +47,12 @@ class ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
     final user = ref.watch(userProvider)!;
     final userName = user.name.split(RegExp(r'\s+'));
 
-    final firstNameKey = useMemoized(() => GlobalKey());
-    final surnameKey = useMemoized(() => GlobalKey());
-    final middleNameKey = useMemoized(() => GlobalKey());
-    final phoneKey = useMemoized(() => GlobalKey());
-    final emailKey = useMemoized(() => GlobalKey());
-    final formKey = useMemoized(() => GlobalKey<FormState>());
+    final firstNameKey = useMemoized(GlobalKey.new);
+    final surnameKey = useMemoized(GlobalKey.new);
+    final middleNameKey = useMemoized(GlobalKey.new);
+    final phoneKey = useMemoized(GlobalKey.new);
+    final emailKey = useMemoized(GlobalKey.new);
+    final formKey = useMemoized(GlobalKey<FormState>.new);
 
     final firstName = useRef('');
     final surname = useRef('');

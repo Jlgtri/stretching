@@ -359,7 +359,7 @@ class RecordModel {
       staffId: map['staff_id']! as int,
       services: (map['services']! as Iterable)
           .cast<Map<String, Object?>>()
-          .map((final map) => RecordServiceModel.fromMap(map)),
+          .map(RecordServiceModel.fromMap),
       goodsTransactions: map['goods_transactions']! as Iterable,
       staff: RecordStaffModel.fromMap(map['staff']! as Map<String, Object?>),
       client: map['client'] != null
@@ -398,12 +398,12 @@ class RecordModel {
       customFontColor: map['custom_font_color']! as String,
       recordLabels: (map['record_labels']! as Iterable)
           .cast<Map<String, Object?>>()
-          .map((final map) => RecordLabelModel.fromMap(map)),
+          .map(RecordLabelModel.fromMap),
       activityId: map['activity_id']! as int,
       customFields: map['custom_fields']! as Iterable,
       documents: (map['documents']! as Iterable)
           .cast<Map<String, Object?>>()
-          .map((final map) => RecordDocumentModel.fromMap(map)),
+          .map(RecordDocumentModel.fromMap),
       smsRemainHours: map['sms_remain_hours'] as int?,
       emailRemainHours: map['email_remain_hours'] as int?,
       paymentStatus: map['payment_status'] as int?,

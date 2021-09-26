@@ -61,7 +61,7 @@ class TransactionModel {
       ),
       paymentMethods: (map['payment_methods']! as Iterable)
           .cast<Map<String, Object?>>()
-          .map((final map) => TransactionPaymentMethodModel.fromMap(map)),
+          .map(TransactionPaymentMethodModel.fromMap),
     );
   }
 
@@ -686,7 +686,7 @@ class TransactionStateModel {
     return TransactionStateModel(
       items: (map['items']! as Iterable)
           .cast<Map<String, Object?>>()
-          .map((final map) => TransactionStateItemModel.fromMap(map)),
+          .map(TransactionStateItemModel.fromMap),
       loyaltyTransactions: map['loyalty_transactions']! as Iterable,
       paymentTransactions: (map['payment_transactions']! as Iterable)
           .cast<Map<String, Object?>>()

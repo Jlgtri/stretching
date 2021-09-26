@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:darq/darq.dart';
 import 'package:device_calendar/device_calendar.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -56,7 +58,7 @@ final Provider<Iterable<CombinedAbonementModel>> combinedAbonementsProvider =
     smUserAbonementsProvider.select((final smUserAbonements) {
       return <int, SMUserAbonementModel>{
         for (final smUserAbonement in smUserAbonements)
-          smUserAbonement.abonementId: smUserAbonement
+          smUserAbonement.documentId: smUserAbonement
       };
     }),
   );
@@ -67,7 +69,7 @@ final Provider<Iterable<CombinedAbonementModel>> combinedAbonementsProvider =
       };
     }),
   );
-
+  final abons = (ref.watch(userAbonementsProvider)).toList();
   return <CombinedAbonementModel>[
     for (final userAbonement in (ref.watch(userAbonementsProvider))
         .distinct((final userAbonement) => userAbonement.id))
@@ -75,7 +77,12 @@ final Provider<Iterable<CombinedAbonementModel>> combinedAbonementsProvider =
         CombinedAbonementModel(
           smAbonements[userAbonement.type.id]!,
           userAbonement,
-          smUserAbonements[userAbonement.type.id],
+          smUserAbonements[int.tryParse(
+            userAbonement.number
+                .substring(0, max(0, userAbonement.number.length - 6))
+                .split('_')
+                .last,
+          )],
         )
   ]..sort((final abonementA, final abonementB) {
       return abonementA.item1.compareTo(abonementB.item1);
@@ -135,7 +142,7 @@ typedef CombinedTrainerModel = Tuple2<TrainerModel, SMTrainerModel>;
 
 /// The id converter of the [TrainerModel] and [SMTrainerModel].
 final Provider<SMTrainerIdConverter> smTrainerIdConverterProvider =
-    Provider<SMTrainerIdConverter>((final ref) => SMTrainerIdConverter._(ref));
+    Provider<SMTrainerIdConverter>(SMTrainerIdConverter._);
 
 /// The id converter of the [TrainerModel] and [SMTrainerModel].
 class SMTrainerIdConverter implements JsonConverter<SMTrainerModel?, int> {

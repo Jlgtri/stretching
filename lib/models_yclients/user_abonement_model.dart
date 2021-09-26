@@ -50,7 +50,7 @@ class UserAbonementModel implements Comparable<UserAbonementModel> {
   /// The id of this abonement in the YClients API.
   final int id;
 
-  /// The hash number of this abonement.
+  /// The unique number of this abonement.
   final String number;
 
   /// The name of the balance string of this abonement.

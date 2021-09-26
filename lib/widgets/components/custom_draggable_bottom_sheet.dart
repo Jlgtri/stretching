@@ -61,8 +61,8 @@ class CustomDraggableBottomSheet extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final mediaQuery = MediaQuery.of(context);
-    final animatedContainerKey = useMemoized(() => GlobalKey());
-    final sheetKey = useMemoized(() => GlobalKey());
+    final animatedContainerKey = useMemoized(GlobalKey.new);
+    final sheetKey = useMemoized(GlobalKey.new);
 
     final height = useState<double>(0);
     useMemoized(
@@ -83,7 +83,7 @@ class CustomDraggableBottomSheet extends HookConsumerWidget {
     );
 
     // for some reason initSize can't equal max size for very long widgets
-    final childKey = useMemoized(() => GlobalKey());
+    final childKey = useMemoized(GlobalKey.new);
     useMemoized(
       () => ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
         final size = childKey.currentContext?.size;
