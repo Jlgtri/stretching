@@ -280,7 +280,7 @@ class BottomButtons<T> extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    if (firstTitleText.isNotEmpty) ...[
+                    if (firstTitleText.isNotEmpty) ...<Widget>[
                       Text(
                         firstTitleText,
                         style: theme.textTheme.headline5?.copyWith(
@@ -297,7 +297,7 @@ class BottomButtons<T> extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          if (firstStrikeText.isNotEmpty) ...[
+                          if (firstStrikeText.isNotEmpty) ...<Widget>[
                             Text(
                               firstStrikeText,
                               style: theme.textTheme.headline3?.copyWith(
@@ -332,7 +332,7 @@ class BottomButtons<T> extends StatelessWidget {
             ),
           ),
         ),
-        if (secondText.isNotEmpty) ...[
+        if (secondText.isNotEmpty) ...<Widget>[
           if (direction == Axis.vertical)
             const SizedBox(height: 16)
           else
@@ -358,7 +358,7 @@ class BottomButtons<T> extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    if (secondTitleText.isNotEmpty) ...[
+                    if (secondTitleText.isNotEmpty) ...<Widget>[
                       Text(
                         secondTitleText,
                         style: theme.textTheme.headline5?.copyWith(
@@ -375,7 +375,7 @@ class BottomButtons<T> extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          if (secondStrikeText.isNotEmpty) ...[
+                          if (secondStrikeText.isNotEmpty) ...<Widget>[
                             Text(
                               secondStrikeText,
                               style: theme.textTheme.headline3?.copyWith(

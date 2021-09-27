@@ -266,7 +266,7 @@ class ProfileScreen extends HookConsumerWidget {
             ),
 
             /// Abonements
-            if (abonementsCards.value.isNotEmpty) ...[
+            if (abonementsCards.value.isNotEmpty) ...<Widget>[
               TCard(
                 lockYAxis: true,
                 slideSpeed: abonementsCards.value.length == 1 ? 0 : 12,
@@ -561,7 +561,7 @@ class AbonementCard extends ConsumerWidget {
                   TextSpan(
                     text: isDeactivated ? TR.abonementDeactivated.tr() : null,
                     children: <InlineSpan>[
-                      if (!isDeactivated) ...[
+                      if (!isDeactivated) ...<InlineSpan>[
                         TextSpan(
                           text: TR.abonementLeftCount.plural(
                             abonement.item1.unitedBalanceServicesCount,

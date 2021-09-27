@@ -256,7 +256,7 @@ class PaymentPickerScreen extends HookConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          if (payment == null) ...[
+          if (payment == null) ...<Widget>[
             /// Day Count Picker
             AbonementCategoryPicker<int>(
               maxWidth: 50,
@@ -583,7 +583,7 @@ class PaymentPickerScreen extends HookConsumerWidget {
                     IconsCG.visa,
                     IconsCG.mastercard,
                     IconsCG.world
-                  ]) ...[
+                  ]) ...<Widget>[
                     Flexible(
                       child: FontIcon(
                         FontIconData(icon, color: theme.hintColor),

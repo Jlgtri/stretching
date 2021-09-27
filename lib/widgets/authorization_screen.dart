@@ -212,7 +212,7 @@ class AuthorizationScreen extends HookConsumerWidget {
                       textAlign: !enteringPhone.value ? TextAlign.center : null,
                     ),
                   ),
-                  if (enteringPhone.value) ...[
+                  if (enteringPhone.value) ...<Widget>[
                     const SizedBox(height: 18),
                     _AuthorizationPhoneField(
                       fieldKey: phoneKey,
@@ -239,7 +239,7 @@ class AuthorizationScreen extends HookConsumerWidget {
                           ),
                       child: Text(TR.authReceiveCode.tr()),
                     )
-                  ] else ...[
+                  ] else ...<Widget>[
                     const SizedBox(height: 50),
                     SizedBox(
                       width: 200,

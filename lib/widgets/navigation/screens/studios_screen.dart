@@ -433,10 +433,12 @@ class StudioScreenCard extends ConsumerWidget {
             ContentParagraph(
               title: TR.studiosTimetable.tr(),
               body: studio.item0.schedule.replaceAll('; ', '\n').trim(),
+              expandable: false,
             ),
             ContentParagraph(
               title: TR.studiosAbout.tr(),
               body: studio.item1.about,
+              expandable: false,
             ),
           ],
           carousel: CarouselSlider.builder(
@@ -584,7 +586,7 @@ class StudioCard extends HookConsumerWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
-              if (!onMap) ...[
+              if (!onMap) ...<Widget>[
                 const SizedBox(height: 2),
                 Text(
                   currentLocation.when<String>(

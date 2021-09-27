@@ -235,104 +235,93 @@ class HomeScreen extends HookConsumerWidget {
               ),
             ),
 
-          /// Prompt to authorize
-          if (unauthorized)
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-              sliver: SliverToBoxAdapter(
-                child: TextButton(
-                  onPressed: () => Navigator.of(context, rootNavigator: true)
-                      .pushNamed(Routes.auth.name),
-                  style: TextButtonStyle.light.fromTheme(theme).copyWith(
-                        backgroundColor: MaterialStateProperty.all(
-                          Colors.transparent,
-                        ),
-                      ),
-                  child: Text(
-                    TR.homeRegister.tr(),
-                    style: TextStyle(color: theme.colorScheme.onSurface),
-                  ),
-                ),
-              ),
-            )
-
           /// Empty state and nearest classes
-          else ...<Widget>[
-            SliverPadding(
-              padding: const EdgeInsets.all(16).copyWith(top: 32),
-              sliver: SliverToBoxAdapter(
-                child: Text(
-                  TR.homeClasses.tr(),
-                  style: theme.textTheme.headline3,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+          SliverPadding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16).copyWith(top: 32),
+            sliver: SliverToBoxAdapter(
+              child: Text(
+                TR.homeClasses.tr(),
+                style: theme.textTheme.headline3,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (userRecords.isEmpty)
-              SliverPadding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
-                sliver: SliverToBoxAdapter(
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 240),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Flexible(
+          ),
+          if (userRecords.isEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
+              sliver: SliverToBoxAdapter(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 240),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Flexible(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 240),
                           child: Text(
                             TR.homeClassesEmpty.tr(),
                             style: theme.textTheme.bodyText2,
                             textAlign: TextAlign.center,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ),
-              )
-            else
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (final context, final index) {
-                    final recordEntry = userRecords.entries.elementAt(index);
-                    return ActivityCardContainer(
-                      recordEntry.value,
-                      onMain: true,
-                      timeLeftBeforeStart:
-                          recordEntry.key.date.difference(serverTime),
-                    );
-                  },
-                  childCount: userRecords.length,
                 ),
               ),
-
-            /// Sign Up For Training Button
-            SliverPadding(
-              padding: const EdgeInsets.all(16),
-              sliver: SliverToBoxAdapter(
-                child: TextButton(
-                  style: (TextButtonStyle.light.fromTheme(theme)).copyWith(
-                    backgroundColor: MaterialStateProperty.all(
-                      Colors.transparent,
-                    ),
-                  ),
-                  onPressed: () async {
-                    (ref.read(navigationProvider)).jumpToTab(
-                      NavigationScreen.schedule.index,
-                    );
-                    await analytics.logEvent(name: FAKeys.homeGoToSchedule);
-                  },
-                  child: EmojiText(
-                    '⚡️  ${TR.homeApply.tr()}',
-                    style: theme.textTheme.button?.copyWith(
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
-                ),
+            )
+          else
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (final context, final index) {
+                  final recordEntry = userRecords.entries.elementAt(index);
+                  return ActivityCardContainer(
+                    recordEntry.value,
+                    onMain: true,
+                    timeLeftBeforeStart:
+                        recordEntry.key.date.difference(serverTime),
+                  );
+                },
+                childCount: userRecords.length,
               ),
             ),
-          ],
+
+          /// Prompt to authorize Or Sign Up For Training Button
+
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverToBoxAdapter(
+              child: TextButton(
+                onPressed: unauthorized
+                    ? () => Navigator.of(context, rootNavigator: true)
+                        .pushNamed(Routes.auth.name)
+                    : () async {
+                        (ref.read(navigationProvider)).jumpToTab(
+                          NavigationScreen.schedule.index,
+                        );
+                        await analytics.logEvent(name: FAKeys.homeGoToSchedule);
+                      },
+                style: (TextButtonStyle.light.fromTheme(theme)).copyWith(
+                  backgroundColor: MaterialStateProperty.all(
+                    Colors.transparent,
+                  ),
+                ),
+                child: unauthorized
+                    ? Text(
+                        TR.homeRegister.tr(),
+                        style: TextStyle(color: theme.colorScheme.onSurface),
+                      )
+                    : EmojiText(
+                        '⚡️  ${TR.homeApply.tr()}',
+                        style: theme.textTheme.button?.copyWith(
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+              ),
+            ),
+          )
         ],
       ),
     );

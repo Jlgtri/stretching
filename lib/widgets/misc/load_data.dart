@@ -34,7 +34,7 @@
 //           'activities',
 //           title: 'Schedule',
 //         ),
-//         if (user != null) ...[
+//         if (user != null) ...<Widget>[
 //           DataProgress(
 //             userAbonementsProvider,
 //             'abonements',

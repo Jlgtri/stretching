@@ -253,7 +253,7 @@ class ContentScreenState extends ConsumerState<ContentScreen>
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
-                            if (paragraph.title.isNotEmpty) ...[
+                            if (paragraph.title.isNotEmpty) ...<Widget>[
                               Text(
                                 paragraph.title,
                                 style: theme.textTheme.headline3,

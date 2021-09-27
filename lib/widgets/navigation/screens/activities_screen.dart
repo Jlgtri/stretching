@@ -386,16 +386,16 @@ class ActivitiesScreen extends HookConsumerWidget {
               controller: scrollController,
               slivers: <Widget>[
                 /// A search field, categories and dates.
-                SliverAppBar(
-                  primary: false,
-                  backgroundColor: Colors.transparent,
-                  toolbarHeight: 126,
-                  titleSpacing: 0,
-                  title: Material(
-                    color: theme.scaffoldBackgroundColor,
-                    borderRadius: const BorderRadius.all(Radius.circular(10)),
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 16),
+                SliverPadding(
+                  padding: const EdgeInsets.only(top: 6),
+                  sliver: SliverAppBar(
+                    primary: false,
+                    backgroundColor: Colors.transparent,
+                    toolbarHeight: 110,
+                    titleSpacing: 0,
+                    title: Material(
+                      color: theme.scaffoldBackgroundColor,
+                      borderRadius: const BorderRadius.all(Radius.circular(10)),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
@@ -551,12 +551,14 @@ class ActivitiesScreen extends HookConsumerWidget {
                         ],
                       ),
                     ),
+                    // bottom: PreferredSize(
+                    //   preferredSize: const Size.fromHeight(60),
+                    //   child:
+                    // ),
                   ),
-                  // bottom: PreferredSize(
-                  //   preferredSize: const Size.fromHeight(60),
-                  //   child:
-                  // ),
                 ),
+
+                /// Date Picker
                 const SliverPadding(
                   padding: EdgeInsets.only(top: 4, bottom: 12),
                   sliver: SliverPersistentHeader(

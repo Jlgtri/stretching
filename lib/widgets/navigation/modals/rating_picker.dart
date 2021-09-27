@@ -276,7 +276,7 @@ class RatingPicker extends HookConsumerWidget {
                           children: <Widget>[
                             for (var index = 1;
                                 index <= emoji.length;
-                                index++) ...[
+                                index++) ...<Widget>[
                               FontIcon(
                                 FontIconData(
                                   IconsCG.star,
