@@ -1,6 +1,5 @@
 import 'package:animations/animations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:cached_video_player/cached_video_player.dart';
 import 'package:darq/darq.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
@@ -30,6 +29,7 @@ import 'package:stretching/widgets/components/focus_wrapper.dart';
 import 'package:stretching/widgets/content_screen.dart';
 import 'package:stretching/widgets/navigation/components/filters.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
+import 'package:video_player/video_player.dart';
 
 /// The provider of filters for [SMTrainerModel].
 final StateNotifierProvider<SaveToHiveIterableNotifier<ClassCategory, String>,
