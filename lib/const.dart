@@ -5,7 +5,7 @@ import 'package:stretching/widgets/navigation/screens/activities_screen.dart';
 import 'package:stretching/widgets/navigation/screens/profile/contact_screen.dart';
 
 /// The current app's version.
-const String currentVersion = '2.0.0';
+const String currentVersion = '2.0.1';
 
 /// The default [Locale] of this app.
 const Locale defaultLocale = Locale('ru', 'RU');
