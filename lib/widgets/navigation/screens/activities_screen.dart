@@ -328,9 +328,10 @@ class ActivitiesScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
+
     final scrollController = ref
         .watch(navigationScrollControllerProvider(NavigationScreen.schedule));
-
     final activities = ref.watch(filteredActivitiesProvider);
     final refresh = useRefreshController(
       extraRefresh: () async {
@@ -451,10 +452,23 @@ class ActivitiesScreen extends HookConsumerWidget {
                                           fillColor: theme.colorScheme.surface,
                                           contentPadding:
                                               const EdgeInsets.all(8),
-                                          prefixIconConstraints:
-                                              const BoxConstraints(
-                                            maxHeight: 32,
-                                            maxWidth: 48,
+                                          prefixIcon: Padding(
+                                            padding: EdgeInsets.only(
+                                              bottom: 4,
+                                              left: 4 *
+                                                  mediaQuery.textScaleFactor,
+                                            ),
+                                            child: Center(
+                                              child: FontIcon(
+                                                FontIconData(
+                                                  IconsCG.search,
+                                                  color: theme.hintColor,
+                                                  height: 24 *
+                                                      mediaQuery
+                                                          .textScaleFactor,
+                                                ),
+                                              ),
+                                            ),
                                           ),
                                         ),
                                   ),
@@ -527,7 +541,6 @@ class ActivitiesScreen extends HookConsumerWidget {
                                   }),
                                 );
                                 return getSelectorWidget<CombinedClassesModel>(
-                                  theme: theme,
                                   text: (final smClassGallery) =>
                                       smClassGallery.item0.translation,
                                   selected: (final value) => ref
@@ -551,20 +564,16 @@ class ActivitiesScreen extends HookConsumerWidget {
                         ],
                       ),
                     ),
-                    // bottom: PreferredSize(
-                    //   preferredSize: const Size.fromHeight(60),
-                    //   child:
-                    // ),
                   ),
                 ),
 
                 /// Date Picker
-                const SliverPadding(
-                  padding: EdgeInsets.only(top: 4, bottom: 12),
+                SliverPadding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 12),
                   sliver: SliverPersistentHeader(
                     floating: true,
                     pinned: true,
-                    delegate: ActivitiesScreenDayPicker(),
+                    delegate: ActivitiesScreenDayPicker(context),
                   ),
                 ),
 
@@ -613,7 +622,11 @@ class ActivitiesScreen extends HookConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         const SizedBox(height: 32),
-                        EmojiText('😣', style: const TextStyle(fontSize: 30)),
+                        EmojiText(
+                          '😣',
+                          style: const TextStyle(fontSize: 30),
+                          textScaleFactor: mediaQuery.textScaleFactor,
+                        ),
                         const SizedBox(height: 16),
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 284),
@@ -646,7 +659,11 @@ class ActivitiesScreen extends HookConsumerWidget {
                     child: Column(
                       children: <Widget>[
                         const SizedBox(height: 75),
-                        EmojiText('😣', style: const TextStyle(fontSize: 30)),
+                        EmojiText(
+                          '😣',
+                          style: const TextStyle(fontSize: 30),
+                          textScaleFactor: mediaQuery.textScaleFactor,
+                        ),
                         const SizedBox(height: 16),
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 262),
@@ -676,6 +693,7 @@ class ActivitiesStudiosPickerDropdown extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     final selectedStudios = ref.watch(activitiesStudiosFilterProvider);
     return Container(
       color: theme.appBarTheme.backgroundColor,
@@ -685,13 +703,13 @@ class ActivitiesStudiosPickerDropdown extends HookConsumerWidget {
       child: DropdownBelow<CombinedStudioModel?>(
         isDense: true,
         elevation: 12,
-        boxHeight: 30,
-        boxWidth: 160,
-        itemWidth: 160,
+        boxHeight: 30 * mediaQuery.textScaleFactor,
+        boxWidth: 160 * mediaQuery.textScaleFactor,
+        itemWidth: 160 * mediaQuery.textScaleFactor,
         icon: FontIcon(
           FontIconData(
             IconsCG.angleDown,
-            height: 10,
+            height: 10 * mediaQuery.textScaleFactor,
             color: theme.hintColor,
           ),
         ),
@@ -1134,6 +1152,7 @@ class ActivityCard extends ConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     final grey = theme.colorScheme.onSurface.withOpacity(2 / 3);
 
     final appliedRecord = ref.watch(
@@ -1146,138 +1165,137 @@ class ActivityCard extends ConsumerWidget {
       }),
     );
 
-    return SizedBox(
-      height: 124,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        child: Material(
-          color: theme.colorScheme.surface,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Material(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.all(Radius.circular(4)),
+        child: InkWell(
+          onTap: () async {
+            onOpenButtonPressed();
+            await analytics.logEvent(
+              name: onMain ? FAKeys.upcomingRecordClick : FAKeys.activity,
+              parameters: <String, String>{
+                'trainer': translit(activity.item2.item1.trainerName),
+                'studio': translit(activity.item1.item1.studioName),
+                'class': activity.item0.service.title,
+                'date_time': faTime(activity.item0.date),
+              },
+            );
+          },
           borderRadius: const BorderRadius.all(Radius.circular(4)),
-          child: InkWell(
-            onTap: () async {
-              onOpenButtonPressed();
-              await analytics.logEvent(
-                name: onMain ? FAKeys.upcomingRecordClick : FAKeys.activity,
-                parameters: <String, String>{
-                  'trainer': translit(activity.item2.item1.trainerName),
-                  'studio': translit(activity.item1.item1.studioName),
-                  'class': activity.item0.service.title,
-                  'date_time': faTime(activity.item0.date),
-                },
-              );
-            },
-            borderRadius: const BorderRadius.all(Radius.circular(4)),
-            child: Padding(
-              padding: const EdgeInsets.all(16).copyWith(bottom: 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  SizedBox(
-                    width: 70,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        /// Time
-                        Text(
-                          <Object>[
-                            activity.item0.date.hour,
-                            activity.item0.date.minute
-                                .toString()
-                                .padLeft(2, '0')
-                          ].join(':'),
-                          style: theme.textTheme.bodyText1,
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-
-                        /// Duration
-                        Text(
-                          activity.item0.length.inMinutes < 60
-                              ? TR.activitiesDurationMinuteShort.tr(
-                                  args: <String>[
-                                    activity.item0.length.inMinutes.toString()
-                                  ],
-                                )
-                              : TR.activitiesDurationHour.plural(
-                                  activity.item0.length.inHours,
-                                  args: <String>[
-                                    activity.item0.length.inHours.toString()
-                                  ],
-                                ),
-                          style:
-                              theme.textTheme.headline6?.copyWith(color: grey),
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-
-                        const SizedBox(height: 4),
-
-                        /// Trainer Avatar
-                        Flexible(
-                          child: CachedNetworkImage(
-                            imageUrl: activity.item2.item0.avatar,
-                            cacheKey: 'x40_${activity.item2.item0.avatar}',
-                            height: 40,
-                            width: 40,
-                            memCacheWidth: 40,
-                            memCacheHeight: 40,
-                            fadeInDuration: Duration.zero,
-                            fadeOutDuration: Duration.zero,
-                            imageBuilder: (final context, final imageProvider) {
-                              return CircleAvatar(
-                                backgroundColor: Colors.transparent,
-                                foregroundColor: Colors.transparent,
-                                radius: 16,
-                                foregroundImage: imageProvider,
-                              );
-                            },
-                          ),
-                        )
-                      ],
+          child: Padding(
+            padding: const EdgeInsets.all(16).copyWith(bottom: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    /// Time
+                    Text(
+                      <Object>[
+                        activity.item0.date.hour,
+                        activity.item0.date.minute.toString().padLeft(2, '0')
+                      ].join(':'),
+                      style: theme.textTheme.bodyText1,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            /// Class Name
-                            Text(
-                              activity.item0.service.title,
-                              style: theme.textTheme.bodyText1,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
 
-                            /// Trainer Name
-                            Text(
-                              activity.item2.item1.trainerName,
-                              style: theme.textTheme.caption
-                                  ?.copyWith(color: grey),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                    /// Duration
+                    Text(
+                      activity.item0.length.inMinutes < 60
+                          ? TR.activitiesDurationMinuteShort.tr(
+                              args: <String>[
+                                activity.item0.length.inMinutes.toString()
+                              ],
+                            )
+                          : TR.activitiesDurationHour.plural(
+                              activity.item0.length.inHours,
+                              args: <String>[
+                                activity.item0.length.inHours.toString()
+                              ],
                             ),
+                      style: theme.textTheme.headline6?.copyWith(color: grey),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
 
-                            /// Studio Name
-                            EmojiText(
-                              // appliedRecord?.online != null
-                              //     ? '🔗 ${TR.homeClassesOnline.tr()}'
-                              //     :
-                              activity.item1.item1.studioName,
-                              style: theme.textTheme.caption
-                                  ?.copyWith(color: grey),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
-                        ),
-                        Flexible(
+                    const SizedBox(height: 4),
+
+                    /// Trainer Avatar
+                    Flexible(
+                      child: CachedNetworkImage(
+                        imageUrl: activity.item2.item0.avatar,
+                        cacheKey: 'x52_${activity.item2.item0.avatar}',
+                        height: 40 * mediaQuery.textScaleFactor,
+                        width: 40 * mediaQuery.textScaleFactor,
+                        memCacheWidth: 52,
+                        memCacheHeight: 52,
+                        fadeInDuration: Duration.zero,
+                        fadeOutDuration: Duration.zero,
+                        imageBuilder: (final context, final imageProvider) {
+                          return CircleAvatar(
+                            backgroundColor: Colors.transparent,
+                            foregroundColor: Colors.transparent,
+                            radius: 20 * mediaQuery.textScaleFactor,
+                            foregroundImage: imageProvider,
+                          );
+                        },
+                      ),
+                    )
+                  ],
+                ),
+                const SizedBox(width: 24),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          /// Class Name
+                          Text(
+                            activity.item0.service.title,
+                            style: theme.textTheme.bodyText1,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+
+                          /// Trainer Name
+                          Text(
+                            activity.item2.item1.trainerName,
+                            style:
+                                theme.textTheme.caption?.copyWith(color: grey),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+
+                          /// Studio Name
+                          EmojiText(
+                            // appliedRecord?.online != null
+                            //     ? '🔗 ${TR.homeClassesOnline.tr()}'
+                            //     :
+                            activity.item1.item1.studioName,
+                            style:
+                                theme.textTheme.caption?.copyWith(color: grey),
+                            textScaleFactor: mediaQuery.textScaleFactor,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Flexible(
+                        child: Align(
+                          alignment: Alignment.bottomLeft,
                           child: Opacity(
                             opacity: appliedRecord != null &&
                                     timeLeftBeforeStart.inHours < 12
@@ -1285,7 +1303,7 @@ class ActivityCard extends ConsumerWidget {
                                 : 1,
                             child: SizedBox(
                               height: 24,
-                              width: onMain ? 120 : null,
+                              width: onMain ? 120 : 160,
                               child: TextButton(
                                 style: (TextButtonStyle.light.fromTheme(theme))
                                     .copyWith(
@@ -1317,118 +1335,117 @@ class ActivityCard extends ConsumerWidget {
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  SizedBox(
-                    width: 90,
-                    child: Column(
-                      mainAxisAlignment: onMain
-                          ? MainAxisAlignment.spaceBetween
-                          : MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: <Widget>[
-                        /// Extra Data on Main
-                        if (onMain)
-                          Consumer(
-                            builder: (final context, final ref, final child) {
-                              final locale = ref.watch(localeProvider);
-                              final serverTime =
-                                  ref.watch(smServerTimeProvider);
-                              final isToday =
-                                  activity.item0.date.year == serverTime.year &&
-                                      activity.item0.date.month ==
-                                          serverTime.month &&
-                                      activity.item0.date.day == serverTime.day;
-                              final weekDay = DateFormat.EEEE(locale.toString())
-                                  .format(activity.item0.date);
-                              return Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: <Widget>[
-                                  /// Activity Date
-                                  Container(
-                                    width: isToday ? 70 : 90,
-                                    alignment: Alignment.center,
-                                    margin: const EdgeInsets.only(bottom: 10),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isToday
-                                          ? theme.colorScheme.onSurface
-                                          : theme.colorScheme.primary,
-                                      borderRadius: const BorderRadius.all(
-                                        Radius.circular(4),
-                                      ),
-                                    ),
-                                    child: Text(
-                                      isToday
-                                          ? TR.homeClassesToday.tr()
-                                          : DateFormat.MMMMd(locale.toString())
-                                              .format(activity.item0.date),
-                                      style: theme.textTheme.overline?.copyWith(
-                                        color: theme.colorScheme.surface,
-                                      ),
-                                      maxLines: 1,
-                                      textScaleFactor: 1,
-                                      overflow: TextOverflow.ellipsis,
+                ),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: 90 * mediaQuery.textScaleFactor,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: onMain
+                        ? MainAxisAlignment.spaceBetween
+                        : MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: <Widget>[
+                      /// Extra Data on Main
+                      if (onMain)
+                        Consumer(
+                          builder: (final context, final ref, final child) {
+                            final locale = ref.watch(localeProvider);
+                            final serverTime = ref.watch(smServerTimeProvider);
+                            final isToday = activity.item0.date.year ==
+                                    serverTime.year &&
+                                activity.item0.date.month == serverTime.month &&
+                                activity.item0.date.day == serverTime.day;
+                            final weekDay = DateFormat.EEEE(locale.toString())
+                                .format(activity.item0.date);
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                /// Activity Date
+                                Container(
+                                  width: isToday ? 70 : 90,
+                                  alignment: Alignment.center,
+                                  margin: const EdgeInsets.only(bottom: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 6,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isToday
+                                        ? theme.colorScheme.onSurface
+                                        : theme.colorScheme.primary,
+                                    borderRadius: const BorderRadius.all(
+                                      Radius.circular(4),
                                     ),
                                   ),
-
-                                  /// Activity Weekday
-                                  if (!isToday)
-                                    Text(
-                                      weekDay.isNotEmpty
-                                          ? weekDay
-                                                  .substring(0, 1)
-                                                  .toUpperCase() +
-                                              weekDay.substring(1).toLowerCase()
-                                          : '',
-                                      style: theme.textTheme.overline,
-                                      maxLines: 1,
-                                      textScaleFactor: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                    )
-                                ],
-                              );
-                            },
-                          ),
-
-                        /// If it is too late too cancel the activity.
-                        if (appliedRecord != null &&
-                            timeLeftBeforeStart.inHours < 12)
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: <Widget>[
-                              if (!onMain)
-                                EmojiText(
-                                  '⏱',
-                                  style: TextStyle(color: theme.hintColor),
+                                  child: Text(
+                                    isToday
+                                        ? TR.homeClassesToday.tr()
+                                        : DateFormat.MMMMd(locale.toString())
+                                            .format(activity.item0.date),
+                                    style: theme.textTheme.overline?.copyWith(
+                                      color: theme.colorScheme.surface,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              Text(
-                                TR.activities12h.tr(),
-                                textAlign: TextAlign.center,
-                                style: theme.textTheme.overline,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                textScaleFactor: 1,
+
+                                /// Activity Weekday
+                                if (!isToday)
+                                  Text(
+                                    weekDay.isNotEmpty
+                                        ? weekDay
+                                                .substring(0, 1)
+                                                .toUpperCase() +
+                                            weekDay.substring(1).toLowerCase()
+                                        : '',
+                                    style: theme.textTheme.overline,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  )
+                              ],
+                            );
+                          },
+                        ),
+
+                      /// If it is too late too cancel the activity.
+                      if (appliedRecord != null &&
+                          timeLeftBeforeStart.inHours < 12)
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            if (!onMain)
+                              EmojiText(
+                                '⏱',
+                                style: TextStyle(color: theme.hintColor),
+                                textScaleFactor: mediaQuery.textScaleFactor,
                               ),
-                            ],
-                          )
-                        else if (!onMain)
-                          Padding(
-                            padding: const EdgeInsets.only(left: 32),
-                            child: ActivityCardRecordsCount(
-                              activity.item0.recordsLeft,
-                              showDefault: false,
+                            Text(
+                              TR.activities12h.tr(),
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.overline,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              textScaleFactor: 1,
                             ),
+                          ],
+                        )
+                      else if (!onMain)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 32),
+                          child: ActivityCardRecordsCount(
+                            activity.item0.recordsLeft,
+                            showDefault: false,
                           ),
-                      ],
-                    ),
+                        ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -1482,6 +1499,7 @@ class ActivityCardRecordsCount extends StatelessWidget {
   @override
   Widget build(final BuildContext context) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
@@ -1492,6 +1510,7 @@ class ActivityCardRecordsCount extends StatelessWidget {
                 : recordsCount <= 3
                     ? '🔥'
                     : '',
+            textScaleFactor: mediaQuery.textScaleFactor,
           ),
         if (recordsCount <= 3 || showDefault)
           Text(
@@ -1543,6 +1562,10 @@ class ActivityScreenCard extends ConsumerWidget {
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
+    final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
+    final images = activity.item3.item1.gallery.split(',');
+
     String formatSubTitle() {
       final date = DateFormat('dd.MM').format(activity.item0.date);
       final time = DateFormat.Hm().format(activity.item0.date);
@@ -1567,8 +1590,6 @@ class ActivityScreenCard extends ConsumerWidget {
       }),
     );
 
-    final theme = Theme.of(context);
-    final images = activity.item3.item1.gallery.split(',');
     return ContentScreen(
       type: onMain ? NavigationScreen.home : NavigationScreen.schedule,
       onBackButtonPressed: onBackButtonPressed,
@@ -1578,7 +1599,9 @@ class ActivityScreenCard extends ConsumerWidget {
       trailing: Column(
         children: <Widget>[
           ConstrainedBox(
-            constraints: const BoxConstraints.tightFor(width: 54),
+            constraints: BoxConstraints.tightFor(
+              width: 54 * mediaQuery.textScaleFactor,
+            ),
             child: ActivityCardRecordsCount(activity.item0.recordsLeft),
           ),
           const SizedBox(height: 24),
@@ -1778,22 +1801,43 @@ class ActivitiesDateFilterCard extends ConsumerWidget {
   /// The callback on this card.
   final void Function() onSelected;
 
+  /// The margin of this widget.
+  static const EdgeInsets padding =
+      EdgeInsets.symmetric(vertical: 4, horizontal: 10);
+
+  /// The size of this widget.
+  static Size size(
+    final ThemeData theme, [
+    final double textScaleFactor = 1,
+  ]) {
+    final overline = theme.textTheme.overline!;
+    final overlineFontSize = overline.height! * overline.fontSize!;
+    final subtitle1 = theme.textTheme.subtitle1!;
+    final subtitle2 = theme.textTheme.subtitle2!;
+    final maxSubtitleFontSize = max(
+      subtitle1.height! * subtitle1.fontSize!,
+      subtitle2.height! * subtitle2.fontSize!,
+    );
+    final height = padding.vertical +
+        (maxSubtitleFontSize + overlineFontSize) * textScaleFactor;
+    return Size(height - 4, height);
+  }
+
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: SizedBox(
-        width: 40,
-        child: MaterialButton(
-          elevation: 0,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(8)),
-          ),
-          disabledColor: theme.colorScheme.onSurface,
-          onPressed: !selected ? onSelected : null,
+    return InkWell(
+      onTap: !selected ? onSelected : null,
+      borderRadius: const BorderRadius.all(Radius.circular(8)),
+      child: Material(
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
+        color: selected ? theme.colorScheme.onSurface : Colors.transparent,
+        child: Padding(
+          padding: padding,
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               /// Weekday
               Text(
@@ -1804,17 +1848,19 @@ class ActivitiesDateFilterCard extends ConsumerWidget {
               ),
 
               /// Day
-              Text(
-                date.day.toString(),
-                style: (selected
-                        ? theme.textTheme.subtitle1
-                        : theme.textTheme.subtitle2)
-                    ?.copyWith(
-                  color: selected
-                      ? theme.colorScheme.surface
-                      : theme.colorScheme.onSurface,
+              Expanded(
+                child: Text(
+                  date.day.toString(),
+                  style: (selected
+                          ? theme.textTheme.subtitle1
+                          : theme.textTheme.subtitle2)
+                      ?.copyWith(
+                    color: selected
+                        ? theme.colorScheme.surface
+                        : theme.colorScheme.onSurface,
+                  ),
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -1841,6 +1887,7 @@ Future<void> showActivitiesFiltersBottomSheet(
   final void Function()? onResetPressed,
 }) async {
   final theme = Theme.of(context);
+  final mediaQuery = MediaQuery.of(context);
   return showMaterialModalBottomSheet(
     context: context,
     useRootNavigator: true,
@@ -1853,7 +1900,7 @@ Future<void> showActivitiesFiltersBottomSheet(
           children: <Widget>[
             AppBar(
               primary: false,
-              toolbarHeight: 40,
+              toolbarHeight: 40 * mediaQuery.textScaleFactor,
               centerTitle: true,
               title: Text(
                 TR.miscFilterTitle.tr(),
@@ -2226,6 +2273,8 @@ class ActivitiesSearchResults extends ConsumerWidget {
         return classes.where((final _class) {
           return search.isEmpty ||
               (_class.item0.translation.toLowerCase())
+                  .contains(search.toLowerCase()) ||
+              (_class.item1.classesName.toLowerCase())
                   .contains(search.toLowerCase());
         });
       }),
@@ -2274,25 +2323,28 @@ class ActivitiesSearchResults extends ConsumerWidget {
             borderRadius: BorderRadius.all(Radius.circular(8)),
           ),
           leading: imageUrl != null
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    ClipRRect(
-                      borderRadius: const BorderRadius.all(Radius.circular(6)),
-                      child: CachedNetworkImage(
-                        cacheKey: 'h32w50_$imageUrl',
-                        alignment: Alignment.topCenter,
-                        height: height.toDouble(),
-                        width: width.toDouble(),
-                        maxHeightDiskCache: height.toInt(),
-                        maxWidthDiskCache: width.toInt(),
-                        memCacheHeight: height.toInt(),
-                        memCacheWidth: width.toInt(),
-                        imageUrl: imageUrl,
-                        fit: BoxFit.fitWidth,
+              ? CachedNetworkImage(
+                  cacheKey: 'h32w50_$imageUrl',
+                  alignment: Alignment.topCenter,
+                  height: height.toDouble(),
+                  width: width.toDouble(),
+                  maxHeightDiskCache: height.toInt(),
+                  maxWidthDiskCache: width.toInt(),
+                  memCacheHeight: height.toInt(),
+                  memCacheWidth: width.toInt(),
+                  imageUrl: imageUrl,
+                  fit: BoxFit.fitWidth,
+                  imageBuilder: (final context, final imageProvider) {
+                    return Container(
+                      clipBehavior: Clip.antiAlias,
+                      decoration: ShapeDecoration(
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(6)),
+                        ),
+                        image: DecorationImage(image: imageProvider),
                       ),
-                    )
-                  ],
+                    );
+                  },
                 )
               : null,
           title: Text(
@@ -2320,6 +2372,7 @@ class ActivitiesSearchResults extends ConsumerWidget {
             onTap: () async {
               final notifier =
                   ref.read(activitiesStudiosFilterProvider.notifier);
+              await notifier.clear();
               if (!notifier.state.contains(studio)) {
                 await notifier.add(studio);
               }
@@ -2368,13 +2421,23 @@ class ActivitiesSearchResults extends ConsumerWidget {
 /// The picker of the [activitiesDayProvider] current state.
 class ActivitiesScreenDayPicker extends SliverPersistentHeaderDelegate {
   /// The picker of the [activitiesDayProvider] current state.
-  const ActivitiesScreenDayPicker();
+  const ActivitiesScreenDayPicker(final this._context);
+  final BuildContext _context;
 
   @override
-  double get minExtent => 68;
+  double get minExtent {
+    final size = ActivitiesDateFilterCard.size(
+      Theme.of(_context),
+      MediaQuery.of(_context).textScaleFactor,
+    );
+    return size.height + spacing;
+  }
 
   @override
-  double get maxExtent => 68;
+  double get maxExtent => minExtent;
+
+  /// The margin of this widget.
+  static const double spacing = 16;
 
   @override
   Widget build(
@@ -2385,36 +2448,38 @@ class ActivitiesScreenDayPicker extends SliverPersistentHeaderDelegate {
     return Material(
       color: Theme.of(context).scaffoldBackgroundColor,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: SizedBox(
-          height: 44,
-          child: Consumer(
-            builder: (final context, final ref, final child) {
-              final day = ref.watch(activitiesDayProvider).state;
-              final activitiesDays = ref.watch(activitiesDaysProvider);
-              return ListView.builder(
-                // controller: dayController,
-                primary: false,
-                shrinkWrap: true,
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                itemCount: activitiesDays.length,
-                itemExtent: 56,
-                itemBuilder: (final context, final index) {
-                  final date = activitiesDays.elementAt(index);
-                  return ActivitiesDateFilterCard(
+        padding: const EdgeInsets.symmetric(vertical: spacing / 2),
+        child: Consumer(
+          builder: (final context, final ref, final child) {
+            final day = ref.watch(activitiesDayProvider).state;
+            final activitiesDays = ref.watch(activitiesDaysProvider);
+            return ListView.builder(
+              primary: false,
+              shrinkWrap: true,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: spacing / 2),
+              itemCount: activitiesDays.length,
+              itemExtent: ActivitiesDateFilterCard.size(
+                    Theme.of(context),
+                    MediaQuery.of(context).textScaleFactor,
+                  ).width +
+                  spacing,
+              itemBuilder: (final context, final index) {
+                final date = activitiesDays.elementAt(index);
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: spacing / 2),
+                  child: ActivitiesDateFilterCard(
                     date,
                     selected: day.year == date.year &&
                         day.month == date.month &&
                         day.day == date.day,
-                    onSelected: () {
-                      ref.read(activitiesDayProvider).state = date;
-                    },
-                  );
-                },
-              );
-            },
-          ),
+                    onSelected: () =>
+                        ref.read(activitiesDayProvider).state = date,
+                  ),
+                );
+              },
+            );
+          },
         ),
       ),
     );

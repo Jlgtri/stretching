@@ -151,6 +151,7 @@ class ContentScreenState extends ConsumerState<ContentScreen>
   @override
   Widget build(final BuildContext context) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     return Padding(
       padding: EdgeInsets.only(
         bottom: widget.persistentFooterButtons.isNotEmpty
@@ -167,8 +168,8 @@ class ContentScreenState extends ConsumerState<ContentScreen>
             SliverAppBar(
               pinned: true,
               expandedHeight: widget.carouselHeight,
-              systemOverlayStyle: const SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
+              systemOverlayStyle: SystemUiOverlayStyle(
+                statusBarColor: theme.colorScheme.onSurface.withOpacity(1 / 5),
               ),
               leading: FontIconBackButton(
                 onPressed: widget.onBackButtonPressed,
@@ -215,9 +216,10 @@ class ContentScreenState extends ConsumerState<ContentScreen>
                                 style: widget.secondSubtitle.isNotEmpty
                                     ? theme.textTheme.headline1
                                     : theme.textTheme.headline2,
-                                maxLines:
-                                    widget.secondSubtitle.isNotEmpty ? 2 : 1,
+                                maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
+                                textScaleFactor:
+                                    mediaQuery.textScaleFactor.clamp(0, 1.2),
                               ),
                               Flexible(
                                 child: Text(
@@ -302,6 +304,7 @@ class _ContentCarousel extends HookWidget {
   @override
   Widget build(final BuildContext context) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     final currentCarouselIndex = useState<int>(0);
     final controller =
         useMemoized(() => this.carousel.createState().carouselController);
@@ -363,8 +366,8 @@ class _ContentCarousel extends HookWidget {
                 paintStyle: PaintingStyle.stroke,
                 dotColor: theme.colorScheme.surface,
                 activeDotColor: theme.colorScheme.surface,
-                dotHeight: 8,
-                dotWidth: 8,
+                dotHeight: 8 * mediaQuery.textScaleFactor,
+                dotWidth: 8 * mediaQuery.textScaleFactor,
               ),
               duration: carousel.options.autoPlayAnimationDuration,
               curve: carousel.options.autoPlayCurve,

@@ -187,7 +187,11 @@ class PromptBookScreen extends HookWidget {
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: <Widget>[
-                          EmojiText('😬', style: const TextStyle(fontSize: 35)),
+                          EmojiText(
+                            '😬',
+                            style: const TextStyle(fontSize: 35),
+                            textScaleFactor: mediaQuery.textScaleFactor,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             abonementNonMatchReason.translation,
@@ -305,6 +309,7 @@ class SuccessfulBookScreen extends ConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 0,
@@ -327,6 +332,7 @@ class SuccessfulBookScreen extends ConsumerWidget {
                 EmojiText(
                   '🤘😍',
                   style: const TextStyle(fontSize: 45, letterSpacing: 3),
+                  textScaleFactor: mediaQuery.textScaleFactor,
                 ),
                 const SizedBox(height: 16),
                 Padding(
@@ -346,7 +352,11 @@ class SuccessfulBookScreen extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 30),
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 285),
+                    constraints: BoxConstraints(
+                      maxWidth: mediaQuery.textScaleFactor <= 1
+                          ? 285
+                          : double.infinity,
+                    ),
                     child: Text(
                       TR.successfulBookInfo.tr(),
                       style: theme.textTheme.bodyText2,
@@ -423,6 +433,7 @@ class ResultBookScreen extends ConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     return Scaffold(
       appBar: showBackButton
           ? cancelAppBar(
@@ -447,7 +458,11 @@ class ResultBookScreen extends ConsumerWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: <Widget>[
-                EmojiText(emoji, style: const TextStyle(fontSize: 45)),
+                EmojiText(
+                  emoji,
+                  style: const TextStyle(fontSize: 45),
+                  textScaleFactor: mediaQuery.textScaleFactor,
+                ),
                 const SizedBox(height: 12),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 45),

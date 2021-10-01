@@ -17,6 +17,7 @@ import 'package:stretching/main.dart';
 import 'package:stretching/providers/hide_appbar_provider.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
+import 'package:stretching/providers/uni_links_provider.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/utils/enum_to_string.dart';
 import 'package:stretching/utils/json_converters.dart';
@@ -272,7 +273,8 @@ class NavigationRoot extends HookConsumerWidget {
     final mediaQuery = MediaQuery.of(context);
     useMemoized(() {
       (ref.read(widgetsBindingProvider))
-          .addObserver(ReviewRecordsEventHandler(context, ref));
+        ..addObserver(ReviewRecordsEventHandler(context, ref))
+        ..addPostFrameCallback((final _) => ref.read(uniLinksProvider.future));
     });
     final appBar = mainAppBar(theme);
     return Stack(

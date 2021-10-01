@@ -24,7 +24,6 @@ import 'package:stretching/providers/appsflyer_provider.dart';
 import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
-import 'package:stretching/providers/uni_links_provider.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/crashlytics_handler.dart';
 import 'package:stretching/utils/logger.dart';
@@ -47,7 +46,7 @@ Future<void> main() async {
     ),
     releaseConfig: CatcherOptions(
       ErrorPageReportMode(),
-      <ReportHandler>[CrashlyticsHandler()],
+      <ReportHandler>[ConsoleHandler(), CrashlyticsHandler()],
       logger: ChangedCatcherLogger(),
     ),
     rootWidget: EasyLocalization(
@@ -122,17 +121,12 @@ class RootScreen extends HookConsumerWidget {
                 .setStateAsync(currentLocale);
           }
         } finally {
-          try {
-            await refreshAllProviders(ProviderScope.containerOf(context));
-            await ref.read(initialUniLinkProvider.future);
-          } finally {
-            widgetsBinding
-                .addPostFrameCallback((final _) => splash.state = false);
-          }
+          await refreshAllProviders(ProviderScope.containerOf(context));
         }
       }),
       preserveState: false,
     );
+
     return Directionality(
       textDirection: ui.TextDirection.ltr,
       child: AnimatedCrossFade(
@@ -169,14 +163,14 @@ class RootScreen extends HookConsumerWidget {
           maxHeight: widgetsBinding.window.physicalSize.height,
           maxWidth: widgetsBinding.window.physicalSize.width,
           child: MaterialApp(
-            title: 'SMSTRETCHING DEV',
+            title: 'SMSTRETCHING',
             restorationScopeId: 'stretching',
             locale: ez.locale,
             localizationsDelegates: ez.delegates
               ..add(RefreshLocalizations.delegate),
             debugShowCheckedModeBanner: false,
             supportedLocales: ez.supportedLocales,
-            themeMode: ref.watch(themeProvider),
+            themeMode: ref.watch(themeModeProvider),
             theme: lightTheme,
             darkTheme: darkTheme,
             initialRoute: Routes.root.name,
@@ -187,10 +181,15 @@ class RootScreen extends HookConsumerWidget {
             },
             builder: (final context, final child) {
               final theme = Theme.of(context);
+              final mediaQuery = MediaQuery.of(context);
               final textStyle =
                   theme.textTheme.bodyText2!.copyWith(color: theme.hintColor);
               final emojiStyle =
                   TextStyle(fontSize: textStyle.fontSize! * 5 / 4);
+              widgetsBinding.addPostFrameCallback((final _) {
+                ref.read(rootThemeProvider).state = theme;
+                ref.read(rootMediaQueryProvider).state = mediaQuery;
+              });
               return RefreshConfiguration(
                 // Header height is 60, header trigger height is 75,
                 // so max overscroll extent should be 25
@@ -210,12 +209,24 @@ class RootScreen extends HookConsumerWidget {
                       completeText: connectionError
                           ? TR.miscPullToRefreshCompleteInternetError.tr()
                           : TR.miscPullToRefreshComplete.tr(),
-                      idleIcon: EmojiText('😉', style: emojiStyle),
-                      releaseIcon: EmojiText('🔥', style: emojiStyle),
+                      idleIcon: EmojiText(
+                        '😉',
+                        style: emojiStyle,
+                        textScaleFactor: mediaQuery.textScaleFactor,
+                      ),
+                      releaseIcon: EmojiText(
+                        '🔥',
+                        style: emojiStyle,
+                        textScaleFactor: mediaQuery.textScaleFactor,
+                      ),
                       // refreshingIcon: EmojiText('🤘', style: emojiStyle),
                       completeIcon: connectionError
                           ? const FontIcon(FontIconData(IconsCG.globe))
-                          : EmojiText('❤', style: emojiStyle),
+                          : EmojiText(
+                              '❤',
+                              style: emojiStyle,
+                              textScaleFactor: mediaQuery.textScaleFactor,
+                            ),
                     );
                   },
                 ),
@@ -328,6 +339,7 @@ extension RoutesData on Routes {
                   return ErrorScreen(error.item0, error.item1);
                 }
               }
+
               return ref.watch(splashProvider).state
                   ? const SizedBox.shrink()
                   : const NavigationRoot();

@@ -32,6 +32,7 @@ class RatingPicker extends HookConsumerWidget {
     const emoji = <String>['😢', '😬', '😐', '🙂', '🤩'];
 
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     final navigator = Navigator.of(context, rootNavigator: true);
 
     final locale = ref.watch(localeProvider);
@@ -111,6 +112,7 @@ class RatingPicker extends HookConsumerWidget {
                             EmojiText(
                               '✌️',
                               style: const TextStyle(fontSize: 70),
+                              textScaleFactor: mediaQuery.textScaleFactor,
                             ),
                             const SizedBox(height: 20),
                             Text(
@@ -307,6 +309,7 @@ class RatingPicker extends HookConsumerWidget {
                                 ? emoji.elementAt(selectedRating.value - 1)
                                 : '',
                             style: const TextStyle(fontSize: 60),
+                            textScaleFactor: mediaQuery.textScaleFactor,
                           ),
                         ),
                       ),

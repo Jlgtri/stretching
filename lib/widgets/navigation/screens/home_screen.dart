@@ -1,13 +1,14 @@
+import 'dart:async';
+
 import 'package:animations/animations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cached_video_player/cached_video_player.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
-import 'package:story_view/story_view.dart';
 import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/localization.g.dart';
@@ -26,6 +27,7 @@ import 'package:stretching/utils/json_converters.dart';
 import 'package:stretching/widgets/appbars.dart';
 import 'package:stretching/widgets/components/emoji_text.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
+import 'package:stretching/widgets/navigation/components/stories.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 import 'package:stretching/widgets/navigation/screens/activities_screen.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -85,9 +87,14 @@ class HomeScreen extends HookConsumerWidget {
   /// The screen for the [NavigationScreen.home].
   const HomeScreen({final Key? key}) : super(key: key);
 
+  /// The spacing of the [StoryCardScreen].
+  static const double storiesSpacing = 6;
+
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
+
     final scrollController =
         ref.watch(navigationScrollControllerProvider(NavigationScreen.home));
     final storiesScrollController = ref.watch(storiesScrollControllerProvider);
@@ -129,32 +136,36 @@ class HomeScreen extends HookConsumerWidget {
         controller: scrollController,
         slivers: <Widget>[
           /// Stories
-          SliverPadding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 16).copyWith(bottom: 0),
-            sliver: SliverToBoxAdapter(
-              child: LimitedBox(
-                maxHeight: 96,
-                child: ListView.builder(
-                  cacheExtent: double.infinity,
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  controller: storiesScrollController,
-                  itemCount: smStories.length,
-                  itemBuilder: (final context, final index) => Padding(
-                    padding: index == smStories.length - 1
-                        ? EdgeInsets.zero
-                        : const EdgeInsets.only(right: 6),
-                    child: LimitedBox(
-                      maxWidth: 96,
+          if (smStories.isNotEmpty)
+            SliverPadding(
+              padding: const EdgeInsets.only(top: 16),
+              sliver: SliverToBoxAdapter(
+                child: LimitedBox(
+                  maxHeight: 96,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16 - storiesSpacing / 2,
+                    ),
+                    controller: storiesScrollController,
+                    itemCount: smStories.length,
+                    prototypeItem: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: storiesSpacing / 2,
+                      ),
+                      child: StoryCardScreen(smStories.first),
+                    ),
+                    itemBuilder: (final context, final index) => Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: storiesSpacing / 2,
+                      ),
                       child: StoryCardScreen(smStories.elementAt(index)),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
 
           /// Advertisment
           if (smAdvertisments.isNotEmpty)
@@ -252,44 +263,47 @@ class HomeScreen extends HookConsumerWidget {
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
               sliver: SliverToBoxAdapter(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 240),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Flexible(
-                        child: ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 240),
-                          child: Text(
-                            TR.homeClassesEmpty.tr(),
-                            style: theme.textTheme.bodyText2,
-                            textAlign: TextAlign.center,
-                          ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Flexible(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: mediaQuery.textScaleFactor <= 1
+                              ? 260
+                              : double.infinity,
+                        ),
+                        child: Text(
+                          TR.homeClassesEmpty.tr(),
+                          style: theme.textTheme.bodyText2,
+                          textAlign: TextAlign.center,
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             )
           else
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (final context, final index) {
-                  final recordEntry = userRecords.entries.elementAt(index);
-                  return ActivityCardContainer(
-                    recordEntry.value,
-                    onMain: true,
-                    timeLeftBeforeStart:
-                        recordEntry.key.date.difference(serverTime),
-                  );
-                },
-                childCount: userRecords.length,
+            SliverPadding(
+              padding: const EdgeInsets.only(top: 12),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (final context, final index) {
+                    final recordEntry = userRecords.entries.elementAt(index);
+                    return ActivityCardContainer(
+                      recordEntry.value,
+                      onMain: true,
+                      timeLeftBeforeStart:
+                          recordEntry.key.date.difference(serverTime),
+                    );
+                  },
+                  childCount: userRecords.length,
+                ),
               ),
             ),
 
           /// Prompt to authorize Or Sign Up For Training Button
-
           SliverPadding(
             padding: const EdgeInsets.all(16),
             sliver: SliverToBoxAdapter(
@@ -318,6 +332,7 @@ class HomeScreen extends HookConsumerWidget {
                         style: theme.textTheme.button?.copyWith(
                           color: theme.colorScheme.onSurface,
                         ),
+                        textScaleFactor: mediaQuery.textScaleFactor,
                       ),
               ),
             ),
@@ -339,10 +354,15 @@ class StoryCardScreen extends HookConsumerWidget {
   /// The [OpenContainer.transitionDuration] of this widget.
   static const Duration transitionDuration = Duration(milliseconds: 500);
 
+  /// The size of this widget.
+  static const double storySize = 96;
+
+  /// The padding of this widget when watched.
+  static const double storyInnerPadding = 6;
+
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final controller = useMemoized(StoryController.new);
     final alreadyWatched = ref.watch(
       homeWatchedStoriesProvider.select((final watchedStories) {
         return watchedStories.any((final watchedStory) {
@@ -350,65 +370,76 @@ class StoryCardScreen extends HookConsumerWidget {
         });
       }),
     );
-    final stories = useMemoized(() {
-      return <StoryItem>[
-        StoryItem.pageImage(
-          url: story.mediaLink,
-          controller: controller,
-          duration: const Duration(milliseconds: 2500),
-        ),
-        if (story.storiesImgV2 != null)
-          for (final img in story.storiesImgV2!)
-            if (img.url.endsWith('.mp4'))
-              StoryItem.pageVideo(
-                img.url,
-                controller: controller,
-                duration: const Duration(seconds: 10),
-              )
-            else
-              StoryItem.pageImage(
-                url: img.url,
-                controller: controller,
-                duration: const Duration(milliseconds: 2500),
-              )
-      ];
-    });
+
     return OpenContainer<void>(
       tappable: false,
+      useRootNavigator: true,
       openElevation: 0,
       closedElevation: 0,
       openColor: Colors.transparent,
       closedColor: Colors.transparent,
       middleColor: Colors.transparent,
-      useRootNavigator: true,
       transitionDuration: transitionDuration,
-      openBuilder: (final context, final action) => StoryView(
-        controller: controller,
-        onComplete: () async {
-          action();
-          if (!alreadyWatched) {
-            await ref.read(homeWatchedStoriesProvider.notifier).add(story);
-          }
-        },
-        onStoryShow: (final story) {
-          if (stories.length == 1) {
-            controller.next();
-          }
-        },
-        storyItems: stories,
-        onVerticalSwipeComplete: (final direction) {
-          if (direction == Direction.down) {
-            action();
-          }
-        },
-      ),
+      openBuilder: (final context, final action) {
+        return Scaffold(
+          body: Story(
+            onFlashBack: action,
+            onFlashForward: () async {
+              action();
+              if (!alreadyWatched) {
+                await ref.read(homeWatchedStoriesProvider.notifier).add(story);
+              }
+            },
+            progressSegmentPadding:
+                const EdgeInsets.symmetric(horizontal: 16).copyWith(top: 8),
+            progressSegmentBuilder: ({
+              required final context,
+              required final index,
+              required final progress,
+            }) {
+              return Container(
+                height: 2,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface.withOpacity(1 / 2),
+                  borderRadius: BorderRadius.circular(1),
+                ),
+                child: Material(
+                  elevation: 1,
+                  color: Colors.transparent,
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: progress,
+                    child: Material(color: theme.colorScheme.surface),
+                  ),
+                ),
+              );
+            },
+            stories: <StoryModel>[
+              PhotoStory(story.mediaLink),
+              if (story.storiesImgV2 != null)
+                for (final image in story.storiesImgV2!)
+                  if (image.url.endsWith('.mp4'))
+                    VideoStory(
+                      VideoPlayerController.network(image.url),
+                      onDownloaded: (final ref, final video) {
+                        (ref.read(storyDurationProvider).state)
+                            ?.call(video.duration);
+                      },
+                    )
+                  else
+                    PhotoStory(image.url)
+            ],
+          ),
+        );
+      },
       closedBuilder: (final context, final action) {
         ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
           ref.read(storiesCardsProvider(story.media)).state = action;
         });
         return Container(
-          height: 96,
-          width: 96,
+          height: storySize,
+          width: storySize,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             border: !alreadyWatched
@@ -416,8 +447,10 @@ class StoryCardScreen extends HookConsumerWidget {
                 : null,
             borderRadius: const BorderRadius.all(Radius.circular(18)),
           ),
-          child: ElevatedButton(
-            onPressed: () async {
+          child: InkWell(
+            splashColor: theme.colorScheme.surface.withOpacity(1 / 5),
+            borderRadius: const BorderRadius.all(Radius.circular(16)),
+            onTap: () async {
               action();
               await analytics.logEvent(
                 name: FAKeys.stories,
@@ -426,16 +459,6 @@ class StoryCardScreen extends HookConsumerWidget {
                 },
               );
             },
-            style: ButtonStyle(
-              padding: MaterialStateProperty.all(EdgeInsets.zero),
-              backgroundColor: MaterialStateProperty.all(Colors.transparent),
-              shape: MaterialStateProperty.all(
-                const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(16)),
-                ),
-              ),
-              elevation: MaterialStateProperty.all(0),
-            ),
             child: Ink(
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.all(Radius.circular(16)),
@@ -447,8 +470,8 @@ class StoryCardScreen extends HookConsumerWidget {
                 ),
               ),
               child: Container(
-                height: 90,
-                width: 90,
+                height: storySize - storyInnerPadding,
+                width: storySize - storyInnerPadding,
                 alignment: Alignment.bottomLeft,
                 padding: const EdgeInsets.all(8),
                 decoration: const BoxDecoration(

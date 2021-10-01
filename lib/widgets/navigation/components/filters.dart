@@ -8,13 +8,13 @@ import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
 ///
 /// [onSelected] is called when category is tapped.
 PreferredSizeWidget getSelectorWidget<T extends Object>({
-  required final ThemeData theme,
   required final void Function(T, bool value) onSelected,
   required final Iterable<T> values,
   required final bool Function(T) selected,
   required final String Function(T) text,
   final double height = 36,
   final EdgeInsets padding = const EdgeInsets.only(top: 22, bottom: 26),
+  final EdgeInsetsGeometry margin = const EdgeInsets.symmetric(horizontal: 4),
 }) {
   return PreferredSize(
     preferredSize: Size.fromHeight(height + padding.vertical),
@@ -32,14 +32,12 @@ PreferredSizeWidget getSelectorWidget<T extends Object>({
             child: Row(
               children: <Widget>[
                 for (final value in values)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: FilterButton(
-                      selected: selected(value),
-                      text: text(value),
-                      onSelected: (final selectedValue) =>
-                          onSelected(value, selectedValue),
-                    ),
+                  FilterButton(
+                    margin: margin,
+                    selected: selected(value),
+                    text: text(value),
+                    onSelected: (final selectedValue) =>
+                        onSelected(value, selectedValue),
                   ),
               ],
             ),
@@ -92,20 +90,22 @@ class FilterButton extends StatelessWidget {
     return Padding(
       padding: margin,
       child: ChoiceChip(
-        padding: EdgeInsets.zero,
-        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        label: Text(
-          text,
-          style: theme.textTheme.headline6?.copyWith(
-            color: selected
-                ? theme.colorScheme.surface
-                : theme.colorScheme.onSurface,
-          ),
-        ),
-        selected: selected,
-        selectedColor: theme.colorScheme.onSurface,
         elevation: 0,
         pressElevation: 0,
+        visualDensity: VisualDensity.compact,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        padding: EdgeInsets.fromLTRB(avatarUrl == null ? 16 : 0, 2, 16, 2),
+        label: Text(text),
+        labelStyle: theme.textTheme.headline6?.copyWith(
+          color: selected
+              ? theme.colorScheme.surface
+              : theme.colorScheme.onSurface,
+        ),
+        labelPadding: avatarUrl != null
+            ? const EdgeInsets.only(left: 12)
+            : EdgeInsets.zero,
+        selected: selected,
+        selectedColor: theme.colorScheme.onSurface,
         avatar: avatarUrl != null
             ? CachedNetworkImage(
                 imageUrl: avatarUrl!,

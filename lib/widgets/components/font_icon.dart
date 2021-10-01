@@ -288,6 +288,11 @@ class FontIconButton extends StatelessWidget {
         onPressed: onPressed,
         padding: icon.data.padding,
         alignment: icon.data.alignment,
+        visualDensity: VisualDensity.compact,
+        iconSize: icon.data.height != null || icon.data.width != null
+            ? max(icon.data.height ?? 0, icon.data.width ?? 0) *
+                (1 + splashMultiplier)
+            : 24,
         constraints: constraints ??
             (icon.data.height != null || icon.data.width != null
                 ? BoxConstraints(
@@ -296,10 +301,10 @@ class FontIconButton extends StatelessWidget {
                       minWidth: icon.data.width ?? 0,
                       maxWidth: icon.data.width ?? double.infinity,
                     ) *
-                    2
+                    (1 + splashMultiplier)
                 : null),
         splashRadius: icon.data.height != null || icon.data.width != null
-            ? max(icon.data.height ?? 0, icon.data.height ?? 0) *
+            ? max(icon.data.height ?? 0, icon.data.width ?? 0) *
                 splashMultiplier
             : null,
       ),
@@ -354,7 +359,7 @@ class FontIconBackButton extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 4),
         ),
       ),
-      splashMultiplier: 3 / 5,
+      splashMultiplier: 7 / 10,
       color: color,
       tooltip: MaterialLocalizations.of(context).backButtonTooltip,
       onPressed: onPressed ?? Navigator.of(context).maybePop,

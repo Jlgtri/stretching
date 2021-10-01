@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:native_device_orientation/native_device_orientation.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/providers/hive_provider.dart';
@@ -19,9 +20,9 @@ final Provider<WidgetsBinding> widgetsBindingProvider =
   return WidgetsFlutterBinding.ensureInitialized();
 });
 
-/// The provider that contais current theme.
+/// The provider that contais current [ThemeMode].
 final StateNotifierProvider<SaveToHiveNotifier<ThemeMode, String>, ThemeMode>
-    themeProvider =
+    themeModeProvider =
     StateNotifierProvider<SaveToHiveNotifier<ThemeMode, String>, ThemeMode>(
         (final ref) {
   return SaveToHiveNotifier<ThemeMode, String>(
@@ -31,6 +32,14 @@ final StateNotifierProvider<SaveToHiveNotifier<ThemeMode, String>, ThemeMode>
     defaultValue: ThemeMode.system,
   );
 });
+
+/// The provider of the current app's root [Theme].
+final StateProvider<ThemeData?> rootThemeProvider =
+    StateProvider<ThemeData?>((final ref) => null);
+
+/// The provider of the current app's root [MediaQuery].
+final StateProvider<MediaQueryData?> rootMediaQueryProvider =
+    StateProvider<MediaQueryData?>((final ref) => null);
 
 /// The provider that contains current locale.
 final StateNotifierProvider<SaveToHiveNotifier<Locale, String>, Locale>
@@ -51,6 +60,7 @@ final StreamProvider<Position> locationProvider =
   return Geolocator.getPositionStream(
     distanceFilter: 10,
     intervalDuration: const Duration(seconds: 10),
+    timeLimit: const Duration(days: 365),
   );
 });
 

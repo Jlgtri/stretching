@@ -270,7 +270,9 @@ class ProfileScreen extends HookConsumerWidget {
               TCard(
                 lockYAxis: true,
                 slideSpeed: abonementsCards.value.length == 1 ? 0 : 12,
-                size: const Size.fromHeight(114),
+                size: Size.fromHeight(
+                  100 * mediaQuery.textScaleFactor + 14,
+                ),
                 delaySlideFor: 150,
                 onEnd: () => cardController.forward(
                   direction: SwipDirection.Right,
@@ -411,6 +413,7 @@ class BuyAbonementCard extends ConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     const gradient = LinearGradient(
       colors: <Color>[Color(0xFFD353F0), Color(0xFF18D1EE)], //0xFFD353F0
       begin: Alignment.topRight,
@@ -418,58 +421,68 @@ class BuyAbonementCard extends ConsumerWidget {
     );
 
     return Container(
-      height: 130,
       decoration: const BoxDecoration(
         gradient: gradient,
         borderRadius: BorderRadius.all(Radius.circular(16)),
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.all(16).copyWith(top: 0),
-        horizontalTitleGap: 8,
-        minVerticalPadding: 0,
-        minLeadingWidth: 30,
-        leading: Padding(
-          padding: const EdgeInsets.only(top: 8),
-          child: EmojiText('⚡️', style: const TextStyle(fontSize: 20)),
-        ),
-        title: Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                TR.abonementBuy.tr(),
-                style: theme.textTheme.bodyText1?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              MaterialButton(
-                onPressed: onPressed,
-                visualDensity: VisualDensity.compact,
-                elevation: 0,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(4)),
-                ),
-                color: theme.colorScheme.surface,
-                child: Text(
-                  TR.abonementBuyButton.tr(),
-                  style: theme.textTheme.caption?.copyWith(
-                    fontWeight: FontWeight.w500,
-                    foreground: Paint()
-                      ..shader = gradient.createShader(
-                        const Rect.fromLTWH(0, 0, 200, 50),
-                      ),
+      padding: const EdgeInsets.all(16).copyWith(right: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(top: 4, right: 8),
+            child: EmojiText(
+              '⚡️',
+              style: const TextStyle(fontSize: 20),
+              textScaleFactor: mediaQuery.textScaleFactor,
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(right: 30),
+                  child: Text(
+                    TR.abonementBuy.tr(),
+                    style: theme.textTheme.bodyText1?.copyWith(
+                      color: theme.colorScheme.onPrimary,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              )
-            ],
+                const SizedBox(height: 20),
+                Material(
+                  color: theme.colorScheme.surface,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(4)),
+                  ),
+                  child: InkWell(
+                    onTap: onPressed,
+                    borderRadius: const BorderRadius.all(Radius.circular(4)),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 7,
+                      ),
+                      child: Text(
+                        TR.abonementBuyButton.tr(),
+                        style: theme.textTheme.caption?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          foreground: Paint()
+                            ..shader = gradient.createShader(
+                              const Rect.fromLTWH(0, 0, 200, 50),
+                            ),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -508,95 +521,91 @@ class AbonementCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final isDeactivated = abonement.item1.expirationDate == null;
     final locale = ref.watch(localeProvider);
-    return SizedBox(
-      height: 100,
-      child: Stack(
-        alignment: Alignment.bottomRight,
-        fit: StackFit.expand,
-        children: <Widget>[
-          Container(
-            height: 100,
-            decoration: BoxDecoration(
-              gradient: !isDeactivated
-                  ? const LinearGradient(
-                      colors: <Color>[Color(0xFFD353F0), Color(0xFF18D1EE)],
-                      begin: Alignment.topRight,
-                      end: Alignment.bottomLeft,
-                    )
-                  : null,
-              color: isDeactivated ? theme.hintColor.withOpacity(1) : null,
-              borderRadius: const BorderRadius.all(Radius.circular(12)),
-            ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                /// Title and Abonement
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    /// Title
-                    Text(
-                      TR.abonementTitle.tr(),
-                      style: theme.textTheme.subtitle1
-                          ?.copyWith(color: theme.colorScheme.onPrimary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
+    return Stack(
+      alignment: Alignment.bottomRight,
+      fit: StackFit.expand,
+      children: <Widget>[
+        Container(
+          decoration: BoxDecoration(
+            gradient: !isDeactivated
+                ? const LinearGradient(
+                    colors: <Color>[Color(0xFFD353F0), Color(0xFF18D1EE)],
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
+                  )
+                : null,
+            color: isDeactivated ? theme.hintColor.withOpacity(1) : null,
+            borderRadius: const BorderRadius.all(Radius.circular(12)),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              /// Title and Abonement
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  /// Title
+                  Text(
+                    TR.abonementTitle.tr(),
+                    style: theme.textTheme.subtitle1
+                        ?.copyWith(color: theme.colorScheme.onPrimary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
 
-                    /// Abonement
-                    Text(
-                      abonement.item1.type.title,
-                      style: theme.textTheme.caption
-                          ?.copyWith(color: theme.colorScheme.onPrimary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                  /// Abonement
+                  Text(
+                    abonement.item1.type.title,
+                    style: theme.textTheme.caption
+                        ?.copyWith(color: theme.colorScheme.onPrimary),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+              Text.rich(
+                TextSpan(
+                  text: isDeactivated ? TR.abonementDeactivated.tr() : null,
+                  children: <InlineSpan>[
+                    if (!isDeactivated) ...<InlineSpan>[
+                      TextSpan(
+                        text: TR.abonementLeftCount.plural(
+                          abonement.item1.unitedBalanceServicesCount,
+                          args: <String>[
+                            abonement.item1.unitedBalanceServicesCount
+                                .toString(),
+                            abonement.item1.type.unitedBalanceServicesCount
+                                .toString()
+                          ],
+                        ),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const TextSpan(text: ' '),
+                      TextSpan(
+                        text: TR.abonementLeftDate.tr(
+                          args: <String>[
+                            DateFormat.MMMMd(locale.toString())
+                                .format(abonement.item1.expirationDate!)
+                          ],
+                        ),
+                        style: const TextStyle(fontWeight: FontWeight.normal),
+                      )
+                    ]
                   ],
                 ),
-                Text.rich(
-                  TextSpan(
-                    text: isDeactivated ? TR.abonementDeactivated.tr() : null,
-                    children: <InlineSpan>[
-                      if (!isDeactivated) ...<InlineSpan>[
-                        TextSpan(
-                          text: TR.abonementLeftCount.plural(
-                            abonement.item1.unitedBalanceServicesCount,
-                            args: <String>[
-                              abonement.item1.unitedBalanceServicesCount
-                                  .toString(),
-                              abonement.item1.type.unitedBalanceServicesCount
-                                  .toString()
-                            ],
-                          ),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const TextSpan(text: ' '),
-                        TextSpan(
-                          text: TR.abonementLeftDate.tr(
-                            args: <String>[
-                              DateFormat.MMMMd(locale.toString())
-                                  .format(abonement.item1.expirationDate!)
-                            ],
-                          ),
-                          style: const TextStyle(fontWeight: FontWeight.normal),
-                        )
-                      ]
-                    ],
-                  ),
-                  style: theme.textTheme.overline?.copyWith(
-                    color: theme.colorScheme.onPrimary,
-                  ),
+                style: theme.textTheme.overline?.copyWith(
+                  color: theme.colorScheme.onPrimary,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          if (indicator != null) indicator!,
-        ],
-      ),
+        ),
+        if (indicator != null) indicator!,
+      ],
     );
   }
 
@@ -622,6 +631,7 @@ class DepositCard extends ConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     return (ref.watch(smUserDepositProvider)).when(
       data: (final userDeposit) {
         num deposit = userDeposit;
@@ -655,7 +665,11 @@ class DepositCard extends ConsumerWidget {
                 padding: const EdgeInsets.only(top: 4),
                 child: SizedBox(
                   width: 36,
-                  child: EmojiText('✌️', style: const TextStyle(fontSize: 22)),
+                  child: EmojiText(
+                    '✌️',
+                    style: const TextStyle(fontSize: 22),
+                    textScaleFactor: mediaQuery.textScaleFactor,
+                  ),
                 ),
               ),
               Expanded(

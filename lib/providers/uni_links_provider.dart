@@ -8,14 +8,15 @@ import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/main.dart';
 import 'package:stretching/providers/combined_providers.dart';
+import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
 import 'package:stretching/widgets/navigation/screens/home_screen.dart';
 import 'package:stretching/widgets/navigation/screens/studios_screen.dart';
 import 'package:stretching/widgets/navigation/screens/trainers_screen.dart';
 import 'package:uni_links/uni_links.dart';
 
-/// The provider of the initial [getInitialUri] handler.
-final FutureProvider<void> initialUniLinkProvider =
+/// The provider of the initial [getInitialUri] handler and [uriLinkStream].
+final FutureProvider<void> uniLinksProvider =
     FutureProvider<void>((final ref) async {
   uriLinkStream.listen((final uri) => _onUri(ref, uri));
   final completer = Completer<void>();
@@ -35,7 +36,10 @@ final FutureProvider<void> initialUniLinkProvider =
 });
 
 Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
-  if (uri == null || uri.scheme != 'smstretching') {
+  final theme = ref.read(rootThemeProvider).state;
+  final mediaQuery = ref.read(rootMediaQueryProvider).state;
+  if ((theme == null || mediaQuery == null) ||
+      (uri == null || uri.scheme != 'smstretching')) {
     return;
   }
 
@@ -62,6 +66,43 @@ Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
     }
   }
 
+  Future<void> animateToCard({
+    required final ScrollController controller,
+    required final int index,
+    required final double height,
+    final double spacing = 0,
+    final double offset = 0,
+    final Duration duration = const Duration(milliseconds: 300),
+    final Duration maxDuration = const Duration(seconds: 3),
+    final int crossAxisCount = 1,
+    final Curve curve = Curves.ease,
+  }) async {
+    final viewportDimension = controller.position.viewportDimension;
+    final _index = (index / crossAxisCount).truncate();
+    var _offset = offset +
+        height * (_index + (crossAxisCount > 1 ? 0 : 1)) +
+        spacing * _index;
+    if (controller.hasClients &&
+        (_offset < controller.offset ||
+            _offset > controller.offset + viewportDimension)) {
+      if (_offset > controller.offset + viewportDimension) {
+        _offset -= viewportDimension - (height + spacing * 3 / 2);
+      }
+      final indexOffset =
+          max(0, controller.offset - offset) ~/ (height + spacing);
+      final offsetDuration =
+          (indexOffset - (_index + (crossAxisCount > 1 ? 0 : 1))).abs() *
+              duration.inMilliseconds;
+      await controller.animateTo(
+        _offset.clamp(0, controller.position.maxScrollExtent),
+        curve: curve,
+        duration: Duration(
+          milliseconds: offsetDuration.clamp(0, maxDuration.inMilliseconds),
+        ),
+      );
+    }
+  }
+
   final id = int.tryParse(uri.path.replaceFirst('/', ''));
   switch (uri.host) {
     case 'profile':
@@ -76,30 +117,18 @@ Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
             for (var index = 0; index < trainers.length; index++) {
               final filteredTrainer = trainers.elementAt(index);
               if (filteredTrainer.item0.name == trainer.name) {
-                final scrollController = ref.read(
-                  navigationScrollControllerProvider(
-                    NavigationScreen.trainers,
+                await animateToCard(
+                  index: index,
+                  offset: 144,
+                  crossAxisCount: TrainersScreen.crossAxisCount,
+                  height: TrainerCard.height(theme, mediaQuery),
+                  spacing: TrainersScreen.mainAxisSpacing,
+                  controller: ref.read(
+                    navigationScrollControllerProvider(
+                      NavigationScreen.trainers,
+                    ),
                   ),
                 );
-                final viewportDimension =
-                    scrollController.position.viewportDimension;
-                var offset = 144 + (248 * (index & ~1) / 2);
-                if (scrollController.hasClients &&
-                    (offset < scrollController.offset ||
-                        offset > scrollController.offset + viewportDimension)) {
-                  if (offset > scrollController.offset + viewportDimension) {
-                    offset -= viewportDimension - 260;
-                  }
-                  final indexOffset =
-                      max(0, scrollController.offset - 144) ~/ 248;
-                  final offsetDuration =
-                      (indexOffset - (index & ~1) ~/ 2).abs() * 300;
-                  await scrollController.animateTo(
-                    offset.clamp(0, scrollController.position.maxScrollExtent),
-                    curve: Curves.ease,
-                    duration: Duration(milliseconds: min(offsetDuration, 3000)),
-                  );
-                }
                 ref.read(trainersCardsProvider(filteredTrainer)).state?.call();
                 await Future<void>.delayed(TrainerCard.transitionDuration);
                 break;
@@ -130,26 +159,16 @@ Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
               studiosOnMap.state = !studiosOnMap.state;
               await Future<void>.delayed(StudiosScreen.onMapSwitcherDuration);
             }
-            final scrollController = ref.read(
-              navigationScrollControllerProvider(NavigationScreen.studios),
+            await animateToCard(
+              index: index,
+              height: StudioCard.height(mediaQuery.textScaleFactor),
+              spacing: 8,
+              duration: const Duration(milliseconds: 250),
+              maxDuration: const Duration(seconds: 1),
+              controller: ref.read(
+                navigationScrollControllerProvider(NavigationScreen.studios),
+              ),
             );
-            final viewportDimension =
-                scrollController.position.viewportDimension;
-            var offset = (88 * (index + 1) + 8 * index).toDouble();
-            if (scrollController.hasClients &&
-                (offset < scrollController.offset ||
-                    offset > scrollController.offset + viewportDimension)) {
-              if (offset > scrollController.offset + viewportDimension) {
-                offset -= viewportDimension - 100;
-              }
-              final indexOffset = scrollController.offset ~/ 96;
-              final offsetDuration = (indexOffset - (index + 1)).abs() * 250;
-              await scrollController.animateTo(
-                offset.clamp(0, scrollController.position.maxScrollExtent),
-                curve: Curves.ease,
-                duration: Duration(milliseconds: min(offsetDuration, 1000)),
-              );
-            }
             ref.read(studiosCardsProvider(studio)).state?.call();
             await Future<void>.delayed(StudioScreenCard.transitionDuration);
             break;
@@ -167,24 +186,15 @@ Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
         for (var index = 0; index < stories.length; index++) {
           final story = stories.elementAt(index);
           if (story.media == id) {
-            final scrollController = ref.read(storiesScrollControllerProvider);
-            final viewportDimension =
-                scrollController.position.viewportDimension;
-            var offset = (16 + 96 * (index + 1) + 6 * index).toDouble();
-            if (scrollController.hasClients &&
-                (offset < scrollController.offset ||
-                    offset > scrollController.offset + viewportDimension)) {
-              if (offset > scrollController.offset + viewportDimension) {
-                offset -= viewportDimension - 105;
-              }
-              final indexOffset = max(0, scrollController.offset - 16) ~/ 102;
-              final offsetDuration = (indexOffset - (index + 1)).abs() * 200;
-              await scrollController.animateTo(
-                offset.clamp(0, scrollController.position.maxScrollExtent),
-                curve: Curves.ease,
-                duration: Duration(milliseconds: min(offsetDuration, 1000)),
-              );
-            }
+            await animateToCard(
+              index: index,
+              offset: 16,
+              height: StoryCardScreen.storySize,
+              spacing: HomeScreen.storiesSpacing,
+              duration: const Duration(milliseconds: 200),
+              maxDuration: const Duration(seconds: 1),
+              controller: ref.read(storiesScrollControllerProvider),
+            );
             ref.read(storiesCardsProvider(story.media)).state?.call();
             await Future<void>.delayed(StoryCardScreen.transitionDuration);
             break;

@@ -1,10 +1,10 @@
 import 'package:animations/animations.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cached_video_player/cached_video_player.dart';
 import 'package:darq/darq.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -29,7 +29,6 @@ import 'package:stretching/widgets/components/focus_wrapper.dart';
 import 'package:stretching/widgets/content_screen.dart';
 import 'package:stretching/widgets/navigation/components/filters.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
-import 'package:video_player/video_player.dart';
 
 /// The provider of filters for [SMTrainerModel].
 final StateNotifierProvider<SaveToHiveIterableNotifier<ClassCategory, String>,
@@ -95,11 +94,19 @@ class TrainersScreen extends HookConsumerWidget {
   /// The height of the categories picker widget.
   static const double categoriesHeight = 80;
 
+  /// The cross-axis count of trainers on this screen.
+  static const int crossAxisCount = 2;
+
+  /// The main-axis spacing of the trainers on this screen.
+  static const double mainAxisSpacing = 16;
+
+  /// The cross-axis spacing of the trainers on this screen.
+  static const double crossAxisSpacing = 12;
+
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final scrollController = ref
-        .watch(navigationScrollControllerProvider(NavigationScreen.trainers));
+    final mediaQuery = MediaQuery.of(context);
 
     final searchController = useTextEditingController();
     final searchFocusNode = useFocusNode();
@@ -116,11 +123,12 @@ class TrainersScreen extends HookConsumerWidget {
       ],
     );
 
+    final trainers = ref.watch(filteredTrainersProvider);
     final areTrainersPresent = ref.watch(
       combinedTrainersProvider.select((final trainers) => trainers.isNotEmpty),
     );
-    final trainers = ref.watch(filteredTrainersProvider);
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light);
+    final scrollController = ref
+        .watch(navigationScrollControllerProvider(NavigationScreen.trainers));
 
     return FocusWrapper(
       unfocussableKeys: <GlobalKey>[searchKey],
@@ -204,7 +212,6 @@ class TrainersScreen extends HookConsumerWidget {
                 ),
               ),
               bottom: getSelectorWidget<ClassCategory>(
-                theme: theme,
                 values: ClassCategory.values,
                 text: (final value) => value.translation,
                 selected: (final value) =>
@@ -225,11 +232,11 @@ class TrainersScreen extends HookConsumerWidget {
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 sliver: SliverGrid(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 24,
-                    mainAxisExtent: 224,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: crossAxisSpacing,
+                    mainAxisSpacing: mainAxisSpacing,
+                    mainAxisExtent: TrainerCard.height(theme, mediaQuery),
                   ),
                   delegate: SliverChildBuilderDelegate(
                     (final context, final index) => Align(
@@ -252,6 +259,7 @@ class TrainersScreen extends HookConsumerWidget {
                       EmojiText(
                         areTrainersPresent ? '🤔' : '🧘‍♀️',
                         style: const TextStyle(fontSize: 30),
+                        textScaleFactor: mediaQuery.textScaleFactor,
                       ),
                       const SizedBox(height: 10),
                       Text(
@@ -291,6 +299,29 @@ class TrainerCard extends ConsumerWidget {
   /// The [OpenContainer.transitionDuration] of this widget.
   static const Duration transitionDuration = Duration(milliseconds: 500);
 
+  /// The font of the name of the trainer of this widget.
+  static TextStyle? trainerFont(final TextTheme textTheme) =>
+      textTheme.subtitle2;
+
+  /// The inner padding of this widget.
+  static const EdgeInsetsGeometry padding = EdgeInsets.only(bottom: 8);
+
+  /// The padding of the avatar of this widget.
+  static const EdgeInsetsGeometry avatarPadding = EdgeInsets.all(8);
+
+  /// The maximum count of lines for the name of the trainer.
+  static const int maxLines = 2;
+
+  /// The diameter of the avatar of this widget.
+  static const double avatarSize = 160;
+
+  /// The overall height of this widget.
+  static double height(final ThemeData theme, final MediaQueryData mediaQuery) {
+    final font = trainerFont(theme.textTheme)!;
+    return (padding.vertical + avatarSize + avatarPadding.vertical) +
+        font.fontSize! * font.height! * maxLines * mediaQuery.textScaleFactor;
+  }
+
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
@@ -308,42 +339,41 @@ class TrainerCard extends ConsumerWidget {
         ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
           ref.read(trainersCardsProvider(trainer)).state = action;
         });
-        return MaterialButton(
-          onPressed: action,
-          visualDensity: VisualDensity.compact,
-          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          padding: EdgeInsets.zero,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(8),
-                child: CachedNetworkImage(
-                  imageUrl: trainer.item1.trainerPhoto,
-                  height: 160,
-                  width: 160,
-                  imageBuilder: (final context, final imageProvider) {
-                    return CircleAvatar(
-                      radius: 80,
-                      foregroundImage: imageProvider,
-                    );
-                  },
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
-                  child: Text(
-                    trainer.item1.trainerName,
-                    style: theme.textTheme.subtitle2,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                    textScaleFactor: 1,
+        return InkWell(
+          onTap: action,
+          child: Padding(
+            padding: padding,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Padding(
+                  padding: avatarPadding,
+                  child: CachedNetworkImage(
+                    imageUrl: trainer.item1.trainerPhoto,
+                    height: avatarSize,
+                    width: avatarSize,
+                    imageBuilder: (final context, final imageProvider) {
+                      return CircleAvatar(
+                        radius: avatarSize / 2,
+                        foregroundImage: imageProvider,
+                      );
+                    },
                   ),
                 ),
-              ),
-            ],
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      trainer.item1.trainerName,
+                      style: trainerFont(theme.textTheme),
+                      maxLines: maxLines,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

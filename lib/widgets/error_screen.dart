@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stretching/business_logic.dart';
 import 'package:stretching/generated/icons.g.dart';
@@ -73,56 +74,70 @@ class ErrorScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    return OpenContainer<void>(
-      tappable: false,
-      openElevation: 0,
-      closedElevation: 0,
-      openColor: Colors.transparent,
-      closedColor: Colors.transparent,
-      middleColor: Colors.transparent,
-      transitionDuration: const Duration(milliseconds: 500),
-      openBuilder: (final context, final action) =>
-          ContactScreen(onBackButton: action),
-      closedBuilder: (final context, final action) {
-        return Scaffold(
-          body: Align(
-            child: SingleChildScrollView(
-              primary: true,
-              padding: const EdgeInsets.symmetric(horizontal: 45),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  EmojiText('😣', style: const TextStyle(fontSize: 32)),
-                  const SizedBox(height: 14),
-                  Text(TR.errorTitle.tr(), style: theme.textTheme.headline2),
-                  const SizedBox(height: 40),
-                  Text.rich(
-                    TextSpan(
-                      text: TR.errorDescription.tr(),
-                      children: <InlineSpan>[
-                        TextSpan(
-                          text: TR.errorDescriptionBold.tr(),
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        )
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 50),
-                  SizedBox(
-                    width: 200,
-                    child: TextButton(
-                      style: TextButtonStyle.light.fromTheme(theme),
-                      onPressed: action,
-                      child: Text(TR.errorButton.tr()),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+    final mediaQuery = MediaQuery.of(context);
+    final isContactScreen = useState<bool>(false);
+    return PageTransitionSwitcher(
+      duration: const Duration(milliseconds: 500),
+      layoutBuilder: (final entries) => Stack(children: entries),
+      transitionBuilder: (
+        final child,
+        final animation,
+        final secondaryAnimation,
+      ) {
+        return SharedAxisTransition(
+          animation: animation,
+          secondaryAnimation: secondaryAnimation,
+          transitionType: SharedAxisTransitionType.horizontal,
+          fillColor: theme.scaffoldBackgroundColor,
+          child: child,
         );
       },
+      child: isContactScreen.value
+          ? ContactScreen(onBackButton: () => isContactScreen.value = false)
+          : Scaffold(
+              body: Align(
+                child: SingleChildScrollView(
+                  primary: true,
+                  padding: const EdgeInsets.symmetric(horizontal: 45),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      EmojiText(
+                        '😣',
+                        style: const TextStyle(fontSize: 32),
+                        textScaleFactor: mediaQuery.textScaleFactor,
+                      ),
+                      const SizedBox(height: 14),
+                      Text(TR.errorTitle.tr(),
+                          style: theme.textTheme.headline2),
+                      const SizedBox(height: 40),
+                      Text.rich(
+                        TextSpan(
+                          text: TR.errorDescription.tr(),
+                          children: <InlineSpan>[
+                            TextSpan(
+                              text: TR.errorDescriptionBold.tr(),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
+                            )
+                          ],
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 50),
+                      SizedBox(
+                        width: 200,
+                        child: TextButton(
+                          style: TextButtonStyle.light.fromTheme(theme),
+                          onPressed: () => isContactScreen.value = true,
+                          child: Text(TR.errorButton.tr()),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
     );
   }
 

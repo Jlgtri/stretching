@@ -37,6 +37,7 @@ class AuthorizationScreen extends HookConsumerWidget {
     const phonePrefix = '+$phoneCountryCode ';
 
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     final navigator = Navigator.of(context);
 
     final isLoading = useState<bool>(false);
@@ -179,7 +180,6 @@ class AuthorizationScreen extends HookConsumerWidget {
         body: SingleChildScrollView(
           primary: false,
           child: PageTransitionSwitcher(
-            reverse: !enteringPhone.value,
             duration: const Duration(seconds: 1),
             layoutBuilder: (final entries) => Stack(children: entries),
             transitionBuilder: (
@@ -210,6 +210,7 @@ class AuthorizationScreen extends HookConsumerWidget {
                             ].join('\n'),
                       style: theme.textTheme.headline2,
                       textAlign: !enteringPhone.value ? TextAlign.center : null,
+                      textScaleFactor: mediaQuery.textScaleFactor.clamp(0, 1.2),
                     ),
                   ),
                   if (enteringPhone.value) ...<Widget>[

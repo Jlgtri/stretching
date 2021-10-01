@@ -8,6 +8,7 @@ class FocusWrapper extends StatelessWidget {
   const FocusWrapper({
     required final this.child,
     final this.unfocus = true,
+    final this.onlyWithoutKeyboard = false,
     final this.unfocussableKeys = const Iterable<GlobalKey>.empty(),
     final Key? key,
   }) : super(key: key);
@@ -18,45 +19,55 @@ class FocusWrapper extends StatelessWidget {
   /// If this widget should unfocus.
   final bool unfocus;
 
+  /// If this widget should unfocus only without keyboard shown on the screen.
+  final bool onlyWithoutKeyboard;
+
   /// The keys of the widgets that should not trigger unfocus operation.
   /// For example, fields themselves.
   final Iterable<GlobalKey> unfocussableKeys;
 
   @override
-  Widget build(final BuildContext context) {
-    void _unfocus(final PointerEvent event) {
-      for (final key in unfocussableKeys) {
-        if (key.globalPaintBounds?.contains(event.position) ?? false) {
-          return;
-        }
-      }
+  Widget build(final BuildContext context) => Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: unfocus
+            ? (final event) {
+                for (final key in unfocussableKeys) {
+                  if (key.globalPaintBounds?.contains(event.position) ??
+                      false) {
+                    return;
+                  }
+                }
 
-      final currentFocus = FocusScope.of(context);
-      if (!currentFocus.hasPrimaryFocus && currentFocus.focusedChild != null) {
-        currentFocus.focusedChild?.unfocus();
-      }
-    }
-
-    return Listener(
-      behavior: HitTestBehavior.translucent,
-      onPointerDown: unfocus ? _unfocus : null,
-      child: child,
-    );
-  }
+                final currentFocus = FocusScope.of(context);
+                if (!currentFocus.hasPrimaryFocus &&
+                    currentFocus.focusedChild != null &&
+                    (!onlyWithoutKeyboard ||
+                        MediaQuery.of(context).viewInsets.bottom == 0)) {
+                  currentFocus.focusedChild?.unfocus();
+                }
+              }
+            : null,
+        child: child,
+      );
 
   @override
-  void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
-    super.debugFillProperties(
-      properties
-        ..add(DiagnosticsProperty<bool>('unfocus', unfocus))
-        ..add(
-          IterableProperty<GlobalKey>(
-            'unfocussableKeys',
-            unfocussableKeys,
+  void debugFillProperties(final DiagnosticPropertiesBuilder properties) =>
+      super.debugFillProperties(
+        properties
+          ..add(DiagnosticsProperty<bool>('unfocus', unfocus))
+          ..add(
+            DiagnosticsProperty<bool>(
+              'onlyWithoutKeyboard',
+              onlyWithoutKeyboard,
+            ),
+          )
+          ..add(
+            IterableProperty<GlobalKey>(
+              'unfocussableKeys',
+              unfocussableKeys,
+            ),
           ),
-        ),
-    );
-  }
+      );
 }
 
 extension on GlobalKey {

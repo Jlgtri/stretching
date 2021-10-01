@@ -31,6 +31,11 @@ flutter pub run flutter_native_splash:remove
 
 - `resConfigs` in app/gradle defaultOptions
 
+### Deep Links (Android)
+
+- adb shell
+- am start -a android.intent.action.VIEW -d "smstretching://stories/6184" ru.smstretching.appstudio
+
 ## Creating a class from YClients API
 
 ### Create a class at quicktype.io

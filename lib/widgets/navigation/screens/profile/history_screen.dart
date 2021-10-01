@@ -71,62 +71,71 @@ class HistoryScreenState extends ConsumerState<HistoryScreen>
     );
 
     Widget childRecord(final UserRecordModel userRecord) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 8),
-        child: ListTile(
-          tileColor: theme.colorScheme.surface,
+      return Container(
+        constraints: const BoxConstraints(minHeight: 80),
+        decoration: ShapeDecoration(
+          color: theme.colorScheme.surface,
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.all(Radius.circular(4)),
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          leading: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                dateFormat.format(userRecord.date),
-                style: theme.textTheme.bodyText2,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                timeFormat.format(userRecord.date),
-                style: theme.textTheme.bodyText2,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              )
-            ],
-          ),
-          title: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                userRecord.services.first.title,
-                style: theme.textTheme.bodyText1,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              Text(
-                userRecord.staff.name,
-                style: theme.textTheme.bodyText2?.copyWith(
-                  color: theme.hintColor,
+        ),
+        margin: const EdgeInsets.only(top: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  dateFormat.format(userRecord.date),
+                  style: theme.textTheme.bodyText2,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              // const SizedBox(height: 4),
-              Text(
-                userRecord.company.title,
-                style: theme.textTheme.bodyText2?.copyWith(
-                  color: theme.hintColor,
+                Flexible(
+                  child: Text(
+                    timeFormat.format(userRecord.date),
+                    style: theme.textTheme.bodyText2,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
+              ],
+            ),
+            const SizedBox(width: 14),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  userRecord.services.first.title,
+                  style: theme.textTheme.bodyText1,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  userRecord.staff.name,
+                  style: theme.textTheme.caption?.copyWith(
+                    color: theme.hintColor,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  userRecord.company.title,
+                  style: theme.textTheme.caption?.copyWith(
+                    color: theme.hintColor,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ],
         ),
       );
     }

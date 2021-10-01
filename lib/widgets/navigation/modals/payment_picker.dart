@@ -13,6 +13,7 @@ import 'package:stretching/models_smstretching/sm_abonement_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
+import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/json_converters.dart';
 import 'package:stretching/widgets/components/focus_wrapper.dart';
@@ -147,6 +148,8 @@ class PaymentPickerScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
+
     final smAbonementsStudios =
         smAbonements.map((final smAbonement) => smAbonement.service).toSet();
     final studios = ref.watch(
@@ -165,7 +168,10 @@ class PaymentPickerScreen extends HookConsumerWidget {
     final emailKey = useMemoized(GlobalKey.new);
     final emailError = useState<String>('');
     final emailController = useTextEditingController(
-      text: ref.read(paymentEmailProvider),
+      text: () {
+        final email = ref.read(paymentEmailProvider);
+        return email.isEmpty ? ref.read(userProvider)!.email : email;
+      }(),
     );
     final emailFocusNode = useFocusNode();
     final emailShowSuffix = useState<bool>(false);
@@ -287,103 +293,126 @@ class PaymentPickerScreen extends HookConsumerWidget {
             /// Studio Picker
             AbonementCategoryPicker<CombinedStudioModel>(
               dropdown: true,
-              dropdownBuilder: (final context, final child) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    IntrinsicWidth(
-                      child: ListTile(
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                        horizontalTitleGap: 16,
-                        visualDensity: VisualDensity.compact,
-                        leading: Container(
-                          height: 24,
-                          width: 24,
-                          color: Colors.grey.shade300,
-                          alignment: Alignment.center,
-                          child: Container(
-                            height: 8,
-                            width: 8,
-                            color: pickedAllStudios.value
-                                ? theme.colorScheme.onSurface
-                                : Colors.transparent,
-                          ),
+              spacing: 10,
+              dropdownBuilder: (final context, final child) => Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Material(
+                    color: Colors.transparent,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(4)),
+                    ),
+                    child: InkWell(
+                      onTap: () => pickedAllStudios.value = true,
+                      borderRadius: const BorderRadius.all(Radius.circular(4)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: <Widget>[
+                            Container(
+                              height: 24,
+                              width: 24,
+                              color: Colors.grey.shade300,
+                              alignment: Alignment.center,
+                              margin: const EdgeInsets.only(right: 16),
+                              child: Container(
+                                height: 8,
+                                width: 8,
+                                color: pickedAllStudios.value
+                                    ? theme.colorScheme.onSurface
+                                    : Colors.transparent,
+                              ),
+                            ),
+                            Flexible(
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 48),
+                                child: Text(
+                                  TR.paymentPickerStudioAll.tr(),
+                                  style: theme.textTheme.bodyText1,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        minLeadingWidth: 16,
-                        onTap: () => pickedAllStudios.value = true,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(4)),
-                        ),
-                        title: Padding(
-                          padding: const EdgeInsets.only(right: 48),
-                          child: Text(
-                            TR.paymentPickerStudioAll.tr(),
-                            style: theme.textTheme.bodyText1,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  if (studios.isNotEmpty) ...<Widget>[
+                    const SizedBox(height: 12),
+                    Material(
+                      color: Colors.transparent,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(4)),
+                      ),
+                      child: InkWell(
+                        onTap: () => pickedAllStudios.value = false,
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(4)),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: <Widget>[
+                              Container(
+                                height: 24,
+                                width: 24,
+                                color: Colors.grey.shade300,
+                                alignment: Alignment.center,
+                                margin: const EdgeInsets.only(right: 16),
+                                child: Container(
+                                  height: 8,
+                                  width: 8,
+                                  color: !pickedAllStudios.value
+                                      ? theme.colorScheme.onSurface
+                                      : Colors.transparent,
+                                ),
+                              ),
+                              Flexible(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 32),
+                                  child: Text.rich(
+                                    TextSpan(
+                                      text: TR.paymentPickerStudioPickText.tr(),
+                                      style:
+                                          theme.textTheme.bodyText1?.copyWith(
+                                        height: ((theme.textTheme.bodyText1!
+                                                        .fontSize! +
+                                                    4) /
+                                                theme.textTheme.bodyText1!
+                                                    .fontSize!) *
+                                            theme.textTheme.bodyText1!.height!,
+                                      ),
+                                      children: <InlineSpan>[
+                                        WidgetSpan(
+                                          child: Padding(
+                                            padding: EdgeInsets.only(
+                                              left: 6,
+                                              bottom: 2 *
+                                                  mediaQuery.textScaleFactor *
+                                                  mediaQuery.textScaleFactor,
+                                            ),
+                                            child: child,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
-                    if (studios.isNotEmpty)
-                      IntrinsicWidth(
-                        child: ListTile(
-                          dense: true,
-                          contentPadding: EdgeInsets.zero,
-                          horizontalTitleGap: 16,
-                          visualDensity: VisualDensity.compact,
-                          leading: Container(
-                            height: 24,
-                            width: 24,
-                            color: Colors.grey.shade300,
-                            alignment: Alignment.center,
-                            margin: const EdgeInsets.only(top: 6),
-                            child: Container(
-                              height: 8,
-                              width: 8,
-                              color: !pickedAllStudios.value
-                                  ? theme.colorScheme.onSurface
-                                  : Colors.transparent,
-                            ),
-                          ),
-                          minLeadingWidth: 16,
-                          onTap: () => pickedAllStudios.value = false,
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(4)),
-                          ),
-                          title: Padding(
-                            padding: const EdgeInsets.only(right: 32),
-                            child: Text.rich(
-                              TextSpan(
-                                text: TR.paymentPickerStudioPickText.tr(),
-                                style: theme.textTheme.bodyText1?.copyWith(
-                                  height:
-                                      ((theme.textTheme.bodyText1!.fontSize! +
-                                                  4) /
-                                              theme.textTheme.bodyText1!
-                                                  .fontSize!) *
-                                          theme.textTheme.bodyText1!.height!,
-                                ),
-                                children: <InlineSpan>[
-                                  WidgetSpan(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 6),
-                                      child: child,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      )
                   ],
-                );
-              },
+                ],
+              ),
               category: TR.paymentPickerStudioPick.tr(),
               selected: <CombinedStudioModel?>[pickedStudio.value]
                   .whereType<CombinedStudioModel>(),
@@ -631,6 +660,7 @@ class AbonementCategoryPicker<T extends Object> extends StatelessWidget {
     final this.onSelected,
     final this.maxWidth = 150,
     final this.dropdown = false,
+    final this.spacing = 12,
     final Key? key,
   }) : super(key: key);
 
@@ -657,6 +687,9 @@ class AbonementCategoryPicker<T extends Object> extends StatelessWidget {
 
   /// If this widget should be a dropdown.
   final bool dropdown;
+
+  /// The spacing between [category] and [values].
+  final double spacing;
 
   @override
   Widget build(final BuildContext context) {
@@ -703,7 +736,7 @@ class AbonementCategoryPicker<T extends Object> extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
           Text(category, style: theme.textTheme.subtitle1),
-          const SizedBox(height: 12),
+          SizedBox(height: spacing),
           if (dropdown)
             dropdownBuilder?.call(context, _dropdown) ?? _dropdown
           else if (values.isNotEmpty)
@@ -794,7 +827,8 @@ class AbonementCategoryPicker<T extends Object> extends StatelessWidget {
             onSelected,
           ),
         )
-        ..add(DiagnosticsProperty<bool>('dropdown', dropdown)),
+        ..add(DiagnosticsProperty<bool>('dropdown', dropdown))
+        ..add(DoubleProperty('spacing', spacing)),
     );
   }
 }

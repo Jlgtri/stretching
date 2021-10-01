@@ -53,6 +53,8 @@ class ContactScreenState extends ConsumerState<ContactScreen>
   @override
   Widget build(final BuildContext context) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
+
     Widget messenger(
       final String title,
       final String iconUrl,
@@ -61,23 +63,28 @@ class ContactScreenState extends ConsumerState<ContactScreen>
       return Align(
         child: MaterialButton(
           onPressed: () => launch(url),
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(4)),
+          shape: RoundedRectangleBorder(
+            borderRadius: const BorderRadius.all(Radius.circular(4)) *
+                mediaQuery.textScaleFactor,
           ),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
               Container(
-                height: 50,
-                width: 50,
+                height: 50 * mediaQuery.textScaleFactor,
+                width: 50 * mediaQuery.textScaleFactor,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface,
                   borderRadius: const BorderRadius.all(Radius.circular(4)),
                   border: Border.all(color: theme.hintColor),
                 ),
                 alignment: Alignment.center,
-                child: Image.asset(iconUrl, height: 32, width: 32),
+                child: Image.asset(
+                  iconUrl,
+                  height: 32 * mediaQuery.textScaleFactor,
+                  width: 32 * mediaQuery.textScaleFactor,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
@@ -85,6 +92,7 @@ class ContactScreenState extends ConsumerState<ContactScreen>
                 style: theme.textTheme.headline6,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
+                textScaleFactor: mediaQuery.textScaleFactor.clamp(0, 1.1),
               ),
             ],
           ),
@@ -131,6 +139,8 @@ class ContactScreenState extends ConsumerState<ContactScreen>
                         style: theme.textTheme.headline2,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
+                        textScaleFactor:
+                            mediaQuery.textScaleFactor.clamp(0, 1.2),
                       ),
                     ),
                   ),
@@ -138,7 +148,11 @@ class ContactScreenState extends ConsumerState<ContactScreen>
                     padding: const EdgeInsets.symmetric(horizontal: 36)
                         .copyWith(top: 60),
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 300),
+                      constraints: BoxConstraints(
+                        maxWidth: mediaQuery.textScaleFactor <= 1
+                            ? 300
+                            : double.infinity,
+                      ),
                       child: Text(
                         TR.supportTitle.tr(),
                         style: theme.textTheme.headline3,
@@ -195,6 +209,8 @@ class ContactScreenState extends ConsumerState<ContactScreen>
                         TR.supportInfo.tr(),
                         style: theme.textTheme.bodyText2,
                         textAlign: TextAlign.center,
+                        textScaleFactor:
+                            mediaQuery.textScaleFactor.clamp(0, 1.2),
                       ),
                     ),
                   ),
@@ -205,8 +221,10 @@ class ContactScreenState extends ConsumerState<ContactScreen>
           ),
         ),
         bottomNavigationBar: Padding(
-          padding:
-              const EdgeInsets.only(bottom: NavigationRoot.navBarHeight + 18),
+          padding: EdgeInsets.only(
+            bottom:
+                NavigationRoot.navBarHeight + 18 * mediaQuery.textScaleFactor,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
