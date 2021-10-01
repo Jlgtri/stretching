@@ -29,29 +29,26 @@
 		<key>UISupportedInterfaceOrientations</key>
 		<array>
 			<string>UIInterfaceOrientationPortrait</string>
-			<string>UIInterfaceOrientationLandscapeLeft</string>
-			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
 		<key>UISupportedInterfaceOrientations~ipad</key>
 		<array>
 			<string>UIInterfaceOrientationPortrait</string>
 			<string>UIInterfaceOrientationPortraitUpsideDown</string>
-			<string>UIInterfaceOrientationLandscapeLeft</string>
-			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
 		<key>UIStatusBarHidden</key>
 		<true/>
+		<key>NSLocationAlwaysUsageDescription</key>
+        <string>Needed to access location</string>
+        <key>NSLocationWhenInUseUsageDescription</key>
+        <string>Needed to access location</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>This app needs access to location when open.</string>
 		<key>NSLocationAlwaysUsageDescription</key>
 		<string>This app needs access to location when in the background.</string>
 		<key>NSCalendarsUsageDescription</key>
 		<string>Это поможет запускать полезный функционал, анализировать проблемы и предоставлять лучший сервис для вас.</string>
-		<array>
-			<string>UIInterfaceOrientationPortrait</string>
-		</array>
 		<key>CFBundleLocalizations</key>
 		<array>
 			<string>en</string>

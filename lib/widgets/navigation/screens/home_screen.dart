@@ -328,7 +328,7 @@ class HomeScreen extends HookConsumerWidget {
                         style: TextStyle(color: theme.colorScheme.onSurface),
                       )
                     : EmojiText(
-                        '⚡️  ${TR.homeApply.tr()}',
+                        '⚡ ${TR.homeApply.tr()}',
                         style: theme.textTheme.button?.copyWith(
                           color: theme.colorScheme.onSurface,
                         ),

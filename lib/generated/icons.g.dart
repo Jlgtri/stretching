@@ -24,7 +24,7 @@ abstract class IconsCG {
   static const IconData profile = IconData(0xe800, fontFamily: _kFontFam);
   static const IconData addOutline = IconData(0xe801, fontFamily: _kFontFam);
   static const IconData back = IconData(0xe802, fontFamily: _kFontFam);
-  static const IconData bolt = IconData(0xe803, fontFamily: _kFontFam);
+  static const IconData bolt = IconData(0xe803, fontFamily: _kFontFam); //803
   static const IconData calendar = IconData(0xe804, fontFamily: _kFontFam);
   static const IconData check = IconData(0xe806, fontFamily: _kFontFam);
   static const IconData filter = IconData(0xe807, fontFamily: _kFontFam);
