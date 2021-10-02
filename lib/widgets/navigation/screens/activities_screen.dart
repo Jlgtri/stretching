@@ -753,11 +753,22 @@ class ActivitiesStudiosPickerDropdown extends HookConsumerWidget {
               ),
             ),
         ],
-        onChanged: (final value) async {
+        onChanged: (final studio) async {
           final filteredStudiosNotifier =
               ref.read(activitiesStudiosFilterProvider.notifier);
-          if (value != null) {
-            await filteredStudiosNotifier.setStateAsync([value]);
+          if (studio != null) {
+            await filteredStudiosNotifier.setStateAsync([studio]);
+            final classes =
+                ref.read(combinedClassesProvider).where((final _class) {
+              return studio.item1.studioTags
+                  .toCategories()
+                  .contains(_class.item0);
+            });
+            final categoriesNotifiter =
+                ref.read(activitiesCategoriesFilterProvider.notifier);
+            await categoriesNotifiter.setStateAsync(
+              categoriesNotifiter.state.where(classes.contains),
+            );
           } else {
             await filteredStudiosNotifier.clear();
           }
