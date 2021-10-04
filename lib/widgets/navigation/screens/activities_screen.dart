@@ -375,7 +375,7 @@ class ActivitiesScreen extends HookConsumerWidget {
     final activities = ref.watch(filteredActivitiesProvider);
     final areActivitiesPresent = ref.watch(
       combinedActivitiesProvider
-          .select((final activitites) => activities.isNotEmpty),
+          .select((final activities) => activities.isNotEmpty),
     );
     final areDaysPresent = ref.watch(
       activitiesDaysProvider
