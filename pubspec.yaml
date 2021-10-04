@@ -84,8 +84,8 @@ dev_dependencies:
 
 flutter:
   assets:
-    - assets/google_map_style.json
     - assets/logo.gif
+    - assets/google_map_style.json
     - assets/emoji/10084.png
     - assets/emoji/1f499.png
     - assets/emoji/1f517.png
@@ -104,6 +104,7 @@ flutter:
     - assets/emoji/1f914.png
     - assets/emoji/1f918.png
     - assets/emoji/1f929.png
+    - assets/emoji/1f938.png
     - assets/emoji/1f964.png
     - assets/emoji/1f9d8.png
     - assets/emoji/23f1-fe0f.png
@@ -115,6 +116,7 @@ flutter:
     - assets/messengers/viber.png
     - assets/messengers/vk.png
     - assets/messengers/whatsApp.png
+    - assets/splash/logo.png
     - assets/translations/ru-RU.json
 
   fonts:

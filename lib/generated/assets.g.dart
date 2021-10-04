@@ -6,8 +6,6 @@
 ///
 /// flutter:
 ///   assets:
-///     - assets/logo.gif
-///     - assets/google_map_style.json
 ///     - assets/emoji/10084.png
 ///     - assets/emoji/1f499.png
 ///     - assets/emoji/1f517.png
@@ -21,11 +19,14 @@
 ///     - assets/emoji/1f62c.png
 ///     - assets/emoji/1f631.png
 ///     - assets/emoji/1f633.png
+///     - assets/logo.gif
+///     - assets/google_map_style.json
 ///     - assets/emoji/1f642.png
 ///     - assets/emoji/1f64c-1f3fb.png
 ///     - assets/emoji/1f914.png
 ///     - assets/emoji/1f918.png
 ///     - assets/emoji/1f929.png
+///     - assets/emoji/1f938.png
 ///     - assets/emoji/1f964.png
 ///     - assets/emoji/1f9d8.png
 ///     - assets/emoji/23f1-fe0f.png
@@ -33,20 +34,17 @@
 ///     - assets/emoji/270c-fe0f.png
 ///     - assets/emoji/2764-fe0f.png
 ///     - assets/messengers/facebook.png
+///     - assets/translations/ru-RU.json
 ///     - assets/messengers/telegram.png
 ///     - assets/messengers/viber.png
 ///     - assets/messengers/vk.png
 ///     - assets/messengers/whatsApp.png
-///     - assets/translations/ru-RU.json
-
+///     - assets/splash/background.png
+///     - assets/splash/logo.png
 
 // ignore_for_file: public_member_api_docs, lines_longer_than_80_chars
 
 abstract class AssetsCG {
-
-  static const String logo = 'assets/logo.gif';
-  static const String googleMapStyle = 'assets/google_map_style.json';
-
   static const String emoji = 'assets/emoji';
   static const String emoji10084 = 'assets/emoji/10084.png';
   static const String emoji1f499 = 'assets/emoji/1f499.png';
@@ -61,17 +59,23 @@ abstract class AssetsCG {
   static const String emoji1f62c = 'assets/emoji/1f62c.png';
   static const String emoji1f631 = 'assets/emoji/1f631.png';
   static const String emoji1f633 = 'assets/emoji/1f633.png';
+  static const String logo = 'assets/logo.gif';
+  static const String googleMapStyle = 'assets/google_map_style.json';
   static const String emoji1f642 = 'assets/emoji/1f642.png';
   static const String emoji1f64c1f3fb = 'assets/emoji/1f64c-1f3fb.png';
   static const String emoji1f914 = 'assets/emoji/1f914.png';
   static const String emoji1f918 = 'assets/emoji/1f918.png';
   static const String emoji1f929 = 'assets/emoji/1f929.png';
+  static const String emoji1f938 = 'assets/emoji/1f938.png';
   static const String emoji1f964 = 'assets/emoji/1f964.png';
   static const String emoji1f9d8 = 'assets/emoji/1f9d8.png';
   static const String emoji23f1fe0f = 'assets/emoji/23f1-fe0f.png';
   static const String emoji26a1 = 'assets/emoji/26a1.png';
   static const String emoji270cfe0f = 'assets/emoji/270c-fe0f.png';
   static const String emoji2764fe0f = 'assets/emoji/2764-fe0f.png';
+
+  static const String translations = 'assets/translations';
+  static const String translationsRuRU = 'assets/translations/ru-RU.json';
 
   static const String messengers = 'assets/messengers';
   static const String messengersFacebook = 'assets/messengers/facebook.png';
@@ -80,6 +84,7 @@ abstract class AssetsCG {
   static const String messengersVk = 'assets/messengers/vk.png';
   static const String messengersWhatsApp = 'assets/messengers/whatsApp.png';
 
-  static const String translations = 'assets/translations';
-  static const String translationsRuRU = 'assets/translations/ru-RU.json';
+  static const String splash = 'assets/splash';
+  static const String splashBackground = 'assets/splash/background.png';
+  static const String splashLogo = 'assets/splash/logo.png';
 }

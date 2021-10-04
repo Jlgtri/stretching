@@ -221,7 +221,7 @@ class HomeScreen extends HookConsumerWidget {
                               const BorderRadius.all(Radius.circular(12)),
                           onTap: action,
                           child: CachedNetworkImage(
-                            height: 100,
+                            height: 200,
                             fit: BoxFit.fitWidth,
                             imageUrl: smAdvertisments.last.advImage,
                             imageBuilder: (final context, final imageProvider) {
@@ -231,7 +231,7 @@ class HomeScreen extends HookConsumerWidget {
                                     Radius.circular(12),
                                   ),
                                   image: DecorationImage(
-                                    fit: BoxFit.fitWidth,
+                                    fit: BoxFit.cover,
                                     image: imageProvider,
                                   ),
                                 ),
@@ -247,44 +247,22 @@ class HomeScreen extends HookConsumerWidget {
             ),
 
           /// Empty state and nearest classes
-          SliverPadding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16).copyWith(top: 32),
-            sliver: SliverToBoxAdapter(
-              child: Text(
-                TR.homeClasses.tr(),
-                style: theme.textTheme.headline3,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-          if (userRecords.isEmpty)
+          if (userRecords.isNotEmpty) ...<Widget>[
+            /// Title
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16).copyWith(top: 32),
               sliver: SliverToBoxAdapter(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Flexible(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: mediaQuery.textScaleFactor <= 1
-                              ? 260
-                              : double.infinity,
-                        ),
-                        child: Text(
-                          TR.homeClassesEmpty.tr(),
-                          style: theme.textTheme.bodyText2,
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  TR.homeClasses.tr(),
+                  style: theme.textTheme.headline3,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            )
-          else
+            ),
+
+            /// Cards
             SliverPadding(
               padding: const EdgeInsets.only(top: 12),
               sliver: SliverList(
@@ -302,10 +280,40 @@ class HomeScreen extends HookConsumerWidget {
                 ),
               ),
             ),
+          ] else
+            SliverPadding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 50).copyWith(top: 32),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    EmojiText(
+                      '🤸',
+                      style: const TextStyle(fontSize: 36),
+                      textScaleFactor: mediaQuery.textScaleFactor,
+                    ),
+                    const SizedBox(height: 12),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: mediaQuery.textScaleFactor <= 1
+                            ? 280
+                            : double.infinity,
+                      ),
+                      child: Text(
+                        TR.homeClassesEmpty.tr(),
+                        style: theme.textTheme.bodyText2,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
           /// Prompt to authorize Or Sign Up For Training Button
           SliverPadding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 24),
             sliver: SliverToBoxAdapter(
               child: TextButton(
                 onPressed: unauthorized
@@ -322,18 +330,12 @@ class HomeScreen extends HookConsumerWidget {
                     Colors.transparent,
                   ),
                 ),
-                child: unauthorized
-                    ? Text(
-                        TR.homeRegister.tr(),
-                        style: TextStyle(color: theme.colorScheme.onSurface),
-                      )
-                    : EmojiText(
-                        '⚡ ${TR.homeApply.tr()}',
-                        style: theme.textTheme.button?.copyWith(
-                          color: theme.colorScheme.onSurface,
-                        ),
-                        textScaleFactor: mediaQuery.textScaleFactor,
-                      ),
+                child: Text(
+                  (unauthorized ? TR.homeRegister : TR.homeApply).tr(),
+                  style: theme.textTheme.button?.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
               ),
             ),
           )
