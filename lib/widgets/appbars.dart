@@ -46,7 +46,10 @@ AppBar cancelAppBar(
             ),
             child: Text(
               TR.tooltipsCancel.tr(),
-              style: TextStyle(color: theme.colorScheme.onSurface),
+              style: theme.textTheme.button
+                  ?.copyWith(color: theme.colorScheme.onSurface),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           )
       ],

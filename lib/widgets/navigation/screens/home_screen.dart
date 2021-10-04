@@ -326,6 +326,8 @@ class HomeScreen extends HookConsumerWidget {
                     color: theme.colorScheme.onSurface,
                   ),
                   textScaleFactor: mediaQuery.textScaleFactor.clamp(0, 1.2),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ),

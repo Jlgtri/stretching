@@ -183,17 +183,15 @@ final StateNotifierProvider<SaveToHiveIterableNotifier<ActivityTime, String>,
 );
 
 /// The current selected day of activities.
-final StateProvider<DateTime> activitiesDayProvider =
-    StateProvider<DateTime>((final ref) {
-  final now = ref.read(currentTimeProvider).when(
-        data: (final currentTime) => currentTime,
-        loading: DateTime.now,
-        error: (final e, final st) => DateTime.now(),
-      );
-  final activities = ref
-      .read(combinedActivitiesProvider)
-      .where((final activity) => activity.item0.date.isAfter(now));
-  return activities.isNotEmpty ? activities.first.item0.date : DateTime.now();
+final StateProvider<SpecificDay> activitiesDayProvider =
+    StateProvider<SpecificDay>((final ref) {
+  final days = ref.watch(activitiesDaysProvider);
+  return days.isNotEmpty
+      ? days.first
+      : () {
+          final now = DateTime.now();
+          return Tuple3(now.year, now.month, now.day);
+        }();
 });
 
 /// The provider of search query on [ActivitiesScreen].
@@ -229,7 +227,7 @@ final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
   final studios = ref.watch(activitiesStudiosFilterProvider);
   final trainers = ref.watch(activitiesTrainersFilterProvider);
   final now = ref.watch(
-    currentTimeProvider.select(
+    activitiesCurrentTimeProvider.select(
       (final currentTime) => currentTime.when(
         data: (final currentTime) => currentTime,
         loading: DateTime.now,
@@ -245,9 +243,9 @@ final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
           .where(
             (final activity) =>
                 activity.item0.date.isAfter(now) &&
-                activity.item0.date.year == day.year &&
-                activity.item0.date.month == day.month &&
-                activity.item0.date.day == day.day &&
+                activity.item0.date.year == day.item0 &&
+                activity.item0.date.month == day.item1 &&
+                activity.item0.date.day == day.item2 &&
                 (studios.isEmpty || studios.contains(activity.item1)) &&
                 (trainers.isEmpty || trainers.contains(activity.item2.item1)) &&
                 (categories.isEmpty ||
@@ -269,34 +267,68 @@ final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
   );
 });
 
-/// Periodic provider of the current time.
-final StreamProvider<DateTime> currentTimeProvider = StreamProvider<DateTime>(
-  (final ref) => Stream.periodic(
-    const Duration(seconds: 10),
-    (final index) => DateTime.now(),
-  ),
-);
+/// The provider of the current time for using activities.
+final StreamProvider<DateTime> activitiesCurrentTimeProvider =
+    StreamProvider<DateTime>((final ref) async* {
+  final activititesDates = ref.watch(
+    combinedActivitiesProvider.select(
+      (final activities) =>
+          <DateTime>{for (final activity in activities) activity.item0.date},
+    ),
+  );
+  final now = DateTime.now();
+  var previousDate = Tuple3(now.year, now.month, now.day);
+  var previousActivitiesDates = const <DateTime>[];
+  for (;;) {
+    final now = DateTime.now();
+    final _activititesDates = activititesDates
+        .where((final day) => day.isAfter(now))
+        .toList(growable: false);
+    if (!listEquals(previousActivitiesDates, _activititesDates)) {
+      previousActivitiesDates = _activititesDates;
+      previousDate = Tuple3(now.year, now.month, now.day);
+      yield now;
+    } else if (activititesDates.isNotEmpty &&
+        previousDate != Tuple3(now.year, now.month, now.day) &&
+        now.isBefore(activititesDates.first)) {
+      previousDate = Tuple3(now.year, now.month, now.day);
+      yield now;
+    }
+    await Future<void>.delayed(const Duration(milliseconds: 100));
+  }
+});
+
+/// The alias for the specific day in sequance year, month, day.
+typedef SpecificDay = Tuple3<int, int, int>;
 
 /// The provider of the current days of the [scheduleProvider].
-final Provider<Iterable<DateTime>> activitiesDaysProvider =
-    Provider<Iterable<DateTime>>((final ref) {
-  Iterable<DateTime> result([final DateTime? now]) => ref.watch(
-        scheduleProvider.select(
-          (final activities) =>
-              (activities.map((final activity) => activity.date))
-                  .distinct((final date) => date.day)
-                  .where(
-                    (final date) =>
-                        date.difference(now ?? DateTime.now()).inDays <
-                        DateTime.daysPerWeek * 2,
-                  )
-                  .toSet()
-                  .toList(growable: false)
-                ..sort(),
-        ),
-      );
+final Provider<Iterable<SpecificDay>> activitiesDaysProvider =
+    Provider<Iterable<SpecificDay>>((final ref) {
+  Iterable<SpecificDay> result([DateTime? now]) {
+    now ??= DateTime.now();
+    return ref.watch(
+      combinedActivitiesProvider.select(
+        (final activities) {
+          final dates = <DateTime>[
+            ...<DateTime>{
+              for (final activity in activities)
+                if (activity.item0.date.isAfter(now!)) activity.item0.date
+            }
+          ]..sort();
+          if (now!.difference(dates.first).inDays.abs() <= 1) {
+            dates.add(now);
+          }
+          return <SpecificDay>{
+            for (final date in dates.toList(growable: false)..sort())
+              if (date.difference(now).inDays < DateTime.daysPerWeek * 2)
+                Tuple3(date.year, date.month, date.day)
+          };
+        },
+      ),
+    );
+  }
 
-  return (ref.watch(currentTimeProvider)).when(
+  return (ref.watch(activitiesCurrentTimeProvider)).when(
     data: result,
     loading: result,
     error: (final e, final st) => result(),
@@ -306,16 +338,24 @@ final Provider<Iterable<DateTime>> activitiesDaysProvider =
 /// If the activities are present for the current selected day.
 final Provider<bool> areActivitiesPresentProvider = Provider<bool>((final ref) {
   final day = ref.watch(activitiesDayProvider).state;
+  final now = ref.watch(
+    activitiesCurrentTimeProvider.select(
+      (final currentTime) => currentTime.when(
+        data: (final currentTime) => currentTime,
+        loading: DateTime.now,
+        error: (final e, final st) => DateTime.now(),
+      ),
+    ),
+  );
   return ref.watch(
-    scheduleProvider.select(
-      (final activities) => activities
-          .where(
-            (final activity) =>
-                activity.date.year == day.year &&
-                activity.date.month == day.month &&
-                activity.date.day == day.day,
-          )
-          .isNotEmpty,
+    combinedActivitiesProvider.select(
+      (final activities) => activities.any(
+        (final activity) =>
+            activity.item0.date.isAfter(now) &&
+            activity.item0.date.year == day.item0 &&
+            activity.item0.date.month == day.item1 &&
+            activity.item0.date.day == day.item2,
+      ),
     ),
   );
 });
@@ -345,11 +385,6 @@ class ActivitiesScreen extends HookConsumerWidget {
         ref.read(userRecordsProvider.notifier),
       ],
     );
-    useMemoized(() {
-      ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
-        ref.read(activitiesDayProvider).state = activities.first.item0.date;
-      });
-    });
 
     // CustomDraggableScrollBar(
     //   itemsCount: activities.length,
@@ -438,7 +473,7 @@ class ActivitiesScreen extends HookConsumerWidget {
                         return ActivityCardContainer(
                           activity,
                           timeLeftBeforeStart: ref.watch(
-                            currentTimeProvider.select(
+                            activitiesCurrentTimeProvider.select(
                               (final tempNow) => activity.item0.date.difference(
                                 tempNow.when(
                                   data: (final tempNow) => tempNow,
@@ -486,7 +521,11 @@ class ActivitiesScreen extends HookConsumerWidget {
                               // dayController.jumpTo(0);
                               ref.refresh(activitiesDayProvider);
                             },
-                            child: Text(TR.activitiesEmptyFilterReset.tr()),
+                            child: Text(
+                              TR.activitiesEmptyFilterReset.tr(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ),
                         const SizedBox(height: 100),
@@ -1494,11 +1533,13 @@ class ActivityCardRecordsCount extends StatelessWidget {
             textScaleFactor: mediaQuery.textScaleFactor,
           ),
         if (recordsCount <= 3 || showDefault)
-          Text(
-            TR.activitiesFullness.plural(max(0, recordsCount)),
-            textAlign: TextAlign.center,
-            style: theme.textTheme.overline
-                ?.copyWith(color: theme.colorScheme.onSurface),
+          Flexible(
+            child: Text(
+              TR.activitiesFullness.plural(max(0, recordsCount)),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.overline
+                  ?.copyWith(color: theme.colorScheme.onSurface),
+            ),
           ),
       ],
     );
@@ -1577,16 +1618,12 @@ class ActivityScreenCard extends ConsumerWidget {
       title: activity.item3.item0.translation,
       subtitle: formatSubTitle(),
       secondSubtitle: activity.item1.item1.studioAddress,
-      trailing: Column(
-        children: <Widget>[
-          ConstrainedBox(
-            constraints: BoxConstraints.tightFor(
-              width: 54 * mediaQuery.textScaleFactor,
-            ),
-            child: ActivityCardRecordsCount(activity.item0.recordsLeft),
-          ),
-          const SizedBox(height: 24),
-        ],
+      trailing: Padding(
+        padding: const EdgeInsets.only(left: 12, top: 8),
+        child: SizedBox(
+          width: 54 * mediaQuery.textScaleFactor,
+          child: ActivityCardRecordsCount(activity.item0.recordsLeft),
+        ),
       ),
       carousel: CarouselSlider.builder(
         options: CarouselOptions(
@@ -1623,9 +1660,12 @@ class ActivityScreenCard extends ConsumerWidget {
               : activity.item0.recordsLeft <= 0
                   ? TR.activitiesActivityAddToWishlist.tr()
                   : TR.activitiesActivityBookOnScreen.tr(),
-          onFirstPressed: onPressed(appliedRecord) != null
-              ? (final context) => onPressed(appliedRecord)?.call()
-              : null,
+          onFirstPressed: () {
+            final _onPressed = onPressed(appliedRecord);
+            return _onPressed != null
+                ? (final dynamic _) => _onPressed.call()
+                : null;
+          }(),
           secondText: appliedRecord != null
               ? TR.activitiesActivityAddToCalendar.tr()
               : '',
@@ -1763,14 +1803,14 @@ class ActivityScreenCard extends ConsumerWidget {
 class ActivitiesDateFilterCard extends ConsumerWidget {
   /// The card for the date picker on [ActivitiesScreen].
   const ActivitiesDateFilterCard(
-    final this.date, {
+    final this.day, {
     required final this.selected,
     required final this.onSelected,
     final Key? key,
   }) : super(key: key);
 
   /// The date to show on this card.
-  final DateTime date;
+  final SpecificDay day;
 
   /// If this card is currently selected
   final bool selected;
@@ -1818,7 +1858,9 @@ class ActivitiesDateFilterCard extends ConsumerWidget {
             children: <Widget>[
               /// Weekday
               Text(
-                DateFormat.E(ref.watch(localeProvider).toString()).format(date),
+                DateFormat.E(ref.watch(localeProvider).toString()).format(
+                  DateTime(day.item0, day.item1, day.item2),
+                ),
                 style: theme.textTheme.overline?.copyWith(
                   color: selected ? theme.colorScheme.surface : theme.hintColor,
                 ),
@@ -1827,7 +1869,7 @@ class ActivitiesDateFilterCard extends ConsumerWidget {
               /// Day
               Expanded(
                 child: Text(
-                  date.day.toString(),
+                  day.last.toString(),
                   style: (selected
                           ? theme.textTheme.subtitle1
                           : theme.textTheme.subtitle2)
@@ -1849,7 +1891,7 @@ class ActivitiesDateFilterCard extends ConsumerWidget {
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(
       properties
-        ..add(DiagnosticsProperty<DateTime>('date', date))
+        ..add(DiagnosticsProperty<SpecificDay>('day', day))
         ..add(DiagnosticsProperty<bool>('selected', selected))
         ..add(
           ObjectFlagProperty<void Function()>.has('onSelected', onSelected),
@@ -2441,9 +2483,7 @@ class ActivitiesScreenDayPicker extends SliverPersistentHeaderDelegate {
                         const EdgeInsets.symmetric(horizontal: spacing / 2),
                     child: ActivitiesDateFilterCard(
                       date,
-                      selected: day.year == date.year &&
-                          day.month == date.month &&
-                          day.day == date.day,
+                      selected: day == date,
                       onSelected: () =>
                           ref.read(activitiesDayProvider).state = date,
                     ),

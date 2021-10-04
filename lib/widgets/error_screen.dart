@@ -131,7 +131,11 @@ class ErrorScreen extends HookConsumerWidget {
                         child: TextButton(
                           style: TextButtonStyle.light.fromTheme(theme),
                           onPressed: () => isContactScreen.value = true,
-                          child: Text(TR.errorButton.tr()),
+                          child: Text(
+                            TR.errorButton.tr(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ),
                     ],
@@ -182,7 +186,11 @@ class ConnectionErrorScreen extends ConsumerWidget {
                   horizontal: MediaQuery.of(context).size.width / 4,
                 ),
                 child: TextButton.icon(
-                  label: Text(TR.connectionErrorRepeat.tr()),
+                  label: Text(
+                    TR.connectionErrorRepeat.tr(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                   icon: const Padding(
                     padding: EdgeInsets.only(right: 4),
                     child: FontIcon(

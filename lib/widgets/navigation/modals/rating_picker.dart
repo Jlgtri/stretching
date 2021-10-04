@@ -165,7 +165,10 @@ class RatingPicker extends HookConsumerWidget {
                         ),
                         child: Text(
                           TR.tooltipsCancel.tr(),
-                          style: TextStyle(color: theme.colorScheme.onSurface),
+                          style: theme.textTheme.button
+                              ?.copyWith(color: theme.colorScheme.onSurface),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -387,6 +390,8 @@ class RatingPicker extends HookConsumerWidget {
                           style: theme.textTheme.button?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),

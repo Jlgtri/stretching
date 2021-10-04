@@ -498,7 +498,11 @@ class ResultBookScreen extends ConsumerWidget {
                     ),
                     onPressed:
                         onPressed ?? () => Navigator.of(context).maybePop(true),
-                    child: Text(button),
+                    child: Text(
+                      button,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 50),
@@ -523,7 +527,6 @@ class ResultBookScreen extends ConsumerWidget {
     );
   }
 }
-
 
 /// The pair of [InitRequest] and [InitResponse].
 typedef WebViewAcquiring = Tuple2<InitRequest, InitResponse>;

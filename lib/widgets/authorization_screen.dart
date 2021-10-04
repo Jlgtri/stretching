@@ -236,7 +236,11 @@ class AuthorizationScreen extends HookConsumerWidget {
                             foregroundColor:
                                 MaterialStateProperty.all(Colors.white),
                           ),
-                      child: Text(TR.authReceiveCode.tr()),
+                      child: Text(
+                        TR.authReceiveCode.tr(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     )
                   ] else ...<Widget>[
                     const SizedBox(height: 50),

@@ -269,8 +269,11 @@ class PaymentPickerScreen extends HookConsumerWidget {
               selected: <int?>[pickedCount.value].whereType<int>(),
               onSelected: (final count, final value) =>
                   pickedCount.value = count,
-              builder: (final context, final count) =>
-                  Text(count.toStringAsFixed(0)),
+              builder: (final context, final count) => Text(
+                count.toStringAsFixed(0),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               values: countValues,
             ),
 
@@ -284,6 +287,8 @@ class PaymentPickerScreen extends HookConsumerWidget {
                 time == ActivityTime.all
                     ? TR.paymentPickerTimeOfDayAll.tr()
                     : time.translate(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               values: ActivityTime.values.reversed.toList()
                 ..remove(ActivityTime.after),
@@ -417,8 +422,11 @@ class PaymentPickerScreen extends HookConsumerWidget {
                   .whereType<CombinedStudioModel>(),
               onSelected: (final studio, final value) =>
                   pickedStudio.value = studio,
-              builder: (final context, final studio) =>
-                  Text(studio.item1.studioName),
+              builder: (final context, final studio) => Text(
+                studio.item1.studioName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
               values: studios,
             ),
 

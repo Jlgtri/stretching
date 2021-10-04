@@ -202,6 +202,7 @@ class ContentScreenState extends ConsumerState<ContentScreen>
                     /// Heading with trailing action
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Expanded(
                           child: Column(
