@@ -325,6 +325,7 @@ class HomeScreen extends HookConsumerWidget {
                   style: theme.textTheme.button?.copyWith(
                     color: theme.colorScheme.onSurface,
                   ),
+                  textScaleFactor: mediaQuery.textScaleFactor.clamp(0, 1.2),
                 ),
               ),
             ),

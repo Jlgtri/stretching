@@ -643,7 +643,7 @@ class DepositCard extends ConsumerWidget {
           return const SizedBox.shrink();
         }
         return Container(
-          height: 80,
+          constraints: const BoxConstraints(minHeight: 80),
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               colors: <Color>[Color(0xFFC665F3), Color(0xFFE75566)],
@@ -671,7 +671,7 @@ class DepositCard extends ConsumerWidget {
               ),
               Expanded(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     /// Title
@@ -682,12 +682,15 @@ class DepositCard extends ConsumerWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 6),
 
                     /// Info
-                    Text(
-                      TR.depositInfo.plural(leftCount),
-                      style: theme.textTheme.overline
-                          ?.copyWith(color: theme.colorScheme.onPrimary),
+                    Flexible(
+                      child: Text(
+                        TR.depositInfo.plural(leftCount),
+                        style: theme.textTheme.overline
+                            ?.copyWith(color: theme.colorScheme.onPrimary),
+                      ),
                     )
                   ],
                 ),

@@ -194,14 +194,14 @@ class RootScreen extends HookConsumerWidget {
               mediaQuery = mediaQuery.copyWith(
                 textScaleFactor: mediaQuery.textScaleFactor.clamp(0.5, 1.3),
               );
-              final textStyle =
-                  theme.textTheme.bodyText2!.copyWith(color: theme.hintColor);
-              final emojiStyle =
-                  TextStyle(fontSize: textStyle.fontSize! * 5 / 4);
               widgetsBinding.addPostFrameCallback((final _) {
                 ref.read(rootThemeProvider).state = theme;
                 ref.read(rootMediaQueryProvider).state = mediaQuery;
               });
+              final textStyle =
+                  theme.textTheme.bodyText2!.copyWith(color: theme.hintColor);
+              final emojiStyle =
+                  TextStyle(fontSize: textStyle.fontSize! * 5 / 4);
               return MediaQuery(
                 data: mediaQuery,
                 child: RefreshConfiguration(

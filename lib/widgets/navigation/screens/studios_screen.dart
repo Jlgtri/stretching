@@ -78,7 +78,7 @@ class StudiosScreen extends HookConsumerWidget {
         FontIconData(
           IconsCG.pin,
           color: theme.colorScheme.onSurface,
-          height: (20 + 20 / 3) * 4 * mediaQuery.textScaleFactor,
+          height: (20 + 20 / 3) * 4 * mediaQuery.textScaleFactor.clamp(0, 1.2),
         ),
       ),
     );
