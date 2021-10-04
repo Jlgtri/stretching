@@ -11,67 +11,64 @@ AppBar cancelAppBar(
   final Widget? leading,
   final void Function()? onPressed,
   final String? title,
-}) {
-  return AppBar(
-    toolbarHeight: 40,
-    backgroundColor: Colors.transparent,
-    shadowColor: Colors.transparent,
-    systemOverlayStyle: SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarBrightness: theme.brightness,
-      statusBarIconBrightness: theme.brightness == Brightness.light
-          ? Brightness.dark
-          : Brightness.light,
-    ),
-    elevation: 0,
-    centerTitle: true,
-    title: title != null
-        ? Text(
-            title,
-            style: theme.textTheme.headline3,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
+}) =>
+    AppBar(
+      toolbarHeight: 40,
+      backgroundColor: Colors.transparent,
+      shadowColor: Colors.transparent,
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarBrightness: theme.brightness,
+        statusBarIconBrightness: theme.brightness == Brightness.light
+            ? Brightness.dark
+            : Brightness.light,
+      ),
+      elevation: 0,
+      centerTitle: true,
+      title: title != null
+          ? Text(
+              title,
+              style: theme.textTheme.headline3,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            )
+          : null,
+      leadingWidth: leading == const SizedBox.shrink() ? 0 : null,
+      automaticallyImplyLeading: false,
+      leading: leading,
+      actions: <Widget>[
+        if (onPressed != null)
+          TextButton(
+            onPressed: onPressed,
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.all(8),
+              primary: theme.colorScheme.onSurface,
+            ),
+            child: Text(
+              TR.tooltipsCancel.tr(),
+              style: TextStyle(color: theme.colorScheme.onSurface),
+            ),
           )
-        : null,
-    leadingWidth: leading == const SizedBox.shrink() ? 0 : null,
-    automaticallyImplyLeading: false,
-    leading: leading,
-    actions: <Widget>[
-      if (onPressed != null)
-        TextButton(
-          onPressed: onPressed,
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.all(8),
-            primary: theme.colorScheme.onSurface,
-          ),
-          child: Text(
-            TR.tooltipsCancel.tr(),
-            style: TextStyle(color: theme.colorScheme.onSurface),
-          ),
-        )
-    ],
-  );
-}
+      ],
+    );
 
 /// The main app bar with the [IconsCG.logo].
-AppBar mainAppBar(final ThemeData theme, {final Widget? leading}) {
-  return AppBar(
-    centerTitle: true,
-    toolbarHeight: 60,
-    leading: leading,
-    systemOverlayStyle: SystemUiOverlayStyle(
-      statusBarColor: theme.appBarTheme.backgroundColor,
-      statusBarBrightness: theme.brightness == Brightness.light
-          ? Brightness.dark
-          : Brightness.light,
-      statusBarIconBrightness: theme.brightness,
-    ),
-    title: FontIcon(
-      FontIconData(
-        IconsCG.logo,
-        height: 16,
-        color: theme.appBarTheme.foregroundColor,
+AppBar mainAppBar(final ThemeData theme, {final Widget? leading}) => AppBar(
+      centerTitle: true,
+      toolbarHeight: 60,
+      leading: leading,
+      systemOverlayStyle: SystemUiOverlayStyle(
+        statusBarColor: theme.appBarTheme.backgroundColor,
+        statusBarBrightness: theme.brightness == Brightness.light
+            ? Brightness.dark
+            : Brightness.light,
+        statusBarIconBrightness: theme.brightness,
       ),
-    ),
-  );
-}
+      title: FontIcon(
+        FontIconData(
+          IconsCG.logo,
+          height: 16,
+          color: theme.appBarTheme.foregroundColor,
+        ),
+      ),
+    );

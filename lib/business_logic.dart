@@ -13,16 +13,16 @@ import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/main.dart';
-import 'package:stretching/models_smstretching/sm_abonement_model.dart';
-import 'package:stretching/models_smstretching/sm_record_model.dart';
-import 'package:stretching/models_smstretching/sm_studio_options_model.dart';
-import 'package:stretching/models_yclients/activity_model.dart';
-import 'package:stretching/models_yclients/good_model.dart';
-import 'package:stretching/models_yclients/good_transaction_model.dart';
-import 'package:stretching/models_yclients/record_model.dart';
-import 'package:stretching/models_yclients/storage_operation_model.dart';
-import 'package:stretching/models_yclients/transaction_model.dart';
-import 'package:stretching/models_yclients/user_model.dart';
+import 'package:stretching/models/smstretching/sm_abonement_model.dart';
+import 'package:stretching/models/smstretching/sm_record_model.dart';
+import 'package:stretching/models/smstretching/sm_studio_options_model.dart';
+import 'package:stretching/models/yclients/activity_model.dart';
+import 'package:stretching/models/yclients/good_model.dart';
+import 'package:stretching/models/yclients/good_transaction_model.dart';
+import 'package:stretching/models/yclients/record_model.dart';
+import 'package:stretching/models/yclients/storage_operation_model.dart';
+import 'package:stretching/models/yclients/transaction_model.dart';
+import 'package:stretching/models/yclients/user_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/other_providers.dart';
@@ -148,9 +148,7 @@ class BookException implements Exception {
 
 /// The provider of the [BusinessLogic].
 final Provider<BusinessLogic> businessLogicProvider =
-    Provider<BusinessLogic>((final ref) {
-  return BusinessLogic._(ref);
-});
+    Provider<BusinessLogic>(BusinessLogic._);
 
 /// The provider of the main business logic.
 class BusinessLogic {
@@ -413,9 +411,10 @@ class BusinessLogic {
       /// Check if any abonement can be used for booking and book with it.
       var abonementNonMatchReason = SMAbonementNonMatchReason.none;
       for (final abonement in abonements.toList(growable: false)
-        ..sort((final abonementA, final abonementB) {
-          return abonementA.item1.compareTo(abonementB.item1);
-        })) {
+        ..sort(
+          (final abonementA, final abonementB) =>
+              abonementA.item1.compareTo(abonementB.item1),
+        )) {
         if (abonement.item1.unitedBalanceServicesCount <= 0) {
           continue;
         }
@@ -460,18 +459,17 @@ class BusinessLogic {
       final result = await navigator.push(
         MaterialPageRoute<BookResult>(
           builder: (final context) {
-            Future<void> pickedAnalytics({required final bool abonement}) {
-              return analytics.logEvent(
-                name: FAKeys.abonementPicked,
-                parameters: <String, String>{
-                  'studio': translit(activity.item1.item1.studioName),
-                  'class': translit(activity.item0.service.title),
-                  'trainer': translit(activity.item2.item1.trainerName),
-                  'date_time': faTime(serverTime),
-                  'type': abonement ? 'training_pass' : 'single_training',
-                },
-              );
-            }
+            Future<void> pickedAnalytics({required final bool abonement}) =>
+                analytics.logEvent(
+                  name: FAKeys.abonementPicked,
+                  parameters: <String, String>{
+                    'studio': translit(activity.item1.item1.studioName),
+                    'class': translit(activity.item0.service.title),
+                    'trainer': translit(activity.item2.item1.trainerName),
+                    'date_time': faTime(serverTime),
+                    'type': abonement ? 'training_pass' : 'single_training',
+                  },
+                );
 
             return WillPopScope(
               onWillPop: () async =>

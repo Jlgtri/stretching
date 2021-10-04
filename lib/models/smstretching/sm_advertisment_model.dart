@@ -76,46 +76,42 @@ class SMAdvertismentModel {
     final DateTime? cctCreated,
     final DateTime? cctModified,
     final String? cctSlug,
-  }) {
-    return SMAdvertismentModel(
-      id: id ?? this.id,
-      cctStatus: cctStatus ?? this.cctStatus,
-      advImage: advImage ?? this.advImage,
-      advLink: advLink ?? this.advLink,
-      cctAuthorId: cctAuthorId ?? this.cctAuthorId,
-      cctCreated: cctCreated ?? this.cctCreated,
-      cctModified: cctModified ?? this.cctModified,
-      cctSlug: cctSlug ?? this.cctSlug,
-    );
-  }
+  }) =>
+      SMAdvertismentModel(
+        id: id ?? this.id,
+        cctStatus: cctStatus ?? this.cctStatus,
+        advImage: advImage ?? this.advImage,
+        advLink: advLink ?? this.advLink,
+        cctAuthorId: cctAuthorId ?? this.cctAuthorId,
+        cctCreated: cctCreated ?? this.cctCreated,
+        cctModified: cctModified ?? this.cctModified,
+        cctSlug: cctSlug ?? this.cctSlug,
+      );
 
   /// Convert this model to map with string keys.
-  Map<String, Object?> toMap() {
-    return <String, Object?>{
-      '_ID': id.toString(),
-      'cct_status': cctStatus,
-      'adv_image': advImage,
-      'adv_link': advLink,
-      'cct_author_id': cctAuthorId.toString().split('.').first,
-      'cct_created': cctCreated.toString().split('.').first,
-      'cct_modified': cctModified.toString(),
-      'cct_slug': cctSlug,
-    };
-  }
+  Map<String, Object?> toMap() => <String, Object?>{
+        '_ID': id.toString(),
+        'cct_status': cctStatus,
+        'adv_image': advImage,
+        'adv_link': advLink,
+        'cct_author_id': cctAuthorId.toString().split('.').first,
+        'cct_created': cctCreated.toString().split('.').first,
+        'cct_modified': cctModified.toString(),
+        'cct_slug': cctSlug,
+      };
 
   /// Convert the map with string keys to this model.
-  factory SMAdvertismentModel.fromMap(final Map<String, Object?> map) {
-    return SMAdvertismentModel(
-      id: int.parse(map['_ID']! as String),
-      cctStatus: map['cct_status']! as String,
-      advImage: map['adv_image']! as String,
-      advLink: map['adv_link']! as String,
-      cctAuthorId: int.parse(map['cct_author_id']! as String),
-      cctCreated: DateTime.parse(map['cct_created']! as String),
-      cctModified: DateTime.parse(map['cct_modified']! as String),
-      cctSlug: map['cct_slug']! as String,
-    );
-  }
+  factory SMAdvertismentModel.fromMap(final Map<String, Object?> map) =>
+      SMAdvertismentModel(
+        id: int.parse(map['_ID']! as String),
+        cctStatus: map['cct_status']! as String,
+        advImage: map['adv_image']! as String,
+        advLink: map['adv_link']! as String,
+        cctAuthorId: int.parse(map['cct_author_id']! as String),
+        cctCreated: DateTime.parse(map['cct_created']! as String),
+        cctModified: DateTime.parse(map['cct_modified']! as String),
+        cctSlug: map['cct_slug']! as String,
+      );
 
   /// Convert this model to a json string.
   String toJson() => json.encode(toMap());
@@ -125,36 +121,32 @@ class SMAdvertismentModel {
       SMAdvertismentModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is SMAdvertismentModel &&
-            other.id == id &&
-            other.cctStatus == cctStatus &&
-            other.advImage == advImage &&
-            other.advLink == advLink &&
-            other.cctAuthorId == cctAuthorId &&
-            other.cctCreated == cctCreated &&
-            other.cctModified == cctModified &&
-            other.cctSlug == cctSlug;
-  }
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is SMAdvertismentModel &&
+          other.id == id &&
+          other.cctStatus == cctStatus &&
+          other.advImage == advImage &&
+          other.advLink == advLink &&
+          other.cctAuthorId == cctAuthorId &&
+          other.cctCreated == cctCreated &&
+          other.cctModified == cctModified &&
+          other.cctSlug == cctSlug;
 
   @override
-  int get hashCode {
-    return id.hashCode ^
-        cctStatus.hashCode ^
-        advImage.hashCode ^
-        advLink.hashCode ^
-        cctAuthorId.hashCode ^
-        cctCreated.hashCode ^
-        cctModified.hashCode ^
-        cctSlug.hashCode;
-  }
+  int get hashCode =>
+      id.hashCode ^
+      cctStatus.hashCode ^
+      advImage.hashCode ^
+      advLink.hashCode ^
+      cctAuthorId.hashCode ^
+      cctCreated.hashCode ^
+      cctModified.hashCode ^
+      cctSlug.hashCode;
 
   @override
-  String toString() {
-    return 'SMAdvertismentModel(id: $id, cctStatus: $cctStatus, '
-        'advImage: $advImage, advLink: $advLink, cctAuthorId: $cctAuthorId, '
-        'cctCreated: $cctCreated, cctModified: $cctModified, '
-        'cctSlug: $cctSlug)';
-  }
+  String toString() => 'SMAdvertismentModel(id: $id, cctStatus: $cctStatus, '
+      'advImage: $advImage, advLink: $advLink, cctAuthorId: $cctAuthorId, '
+      'cctCreated: $cctCreated, cctModified: $cctModified, '
+      'cctSlug: $cctSlug)';
 }

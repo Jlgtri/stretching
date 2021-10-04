@@ -15,9 +15,9 @@ import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/refresh_content_hook.dart';
 import 'package:stretching/main.dart';
-import 'package:stretching/models_smstretching/sm_abonement_model.dart';
-import 'package:stretching/models_smstretching/sm_studio_options_model.dart';
-import 'package:stretching/models_yclients/good_model.dart';
+import 'package:stretching/models/smstretching/sm_abonement_model.dart';
+import 'package:stretching/models/smstretching/sm_studio_options_model.dart';
+import 'package:stretching/models/yclients/good_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/hide_appbar_provider.dart';
@@ -69,27 +69,25 @@ class ProfileScreen extends HookConsumerWidget {
         ref.watch(navigationScrollControllerProvider(NavigationScreen.profile));
 
     final abonements = ref.watch(combinedAbonementsProvider);
-    List<Widget> createCards() {
-      return <Widget>[
-        for (var index = 0; index < abonements.length; index++)
-          AbonementCard(
-            abonements.elementAt(index),
-            indicator: abonements.length > 1
-                ? Align(
-                    alignment: Alignment.bottomRight,
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 12, right: 24),
-                      child: Text(
-                        '${index + 1} / ${abonements.length}',
-                        style: theme.textTheme.headline6
-                            ?.copyWith(color: theme.colorScheme.onPrimary),
+    List<Widget> createCards() => <Widget>[
+          for (var index = 0; index < abonements.length; index++)
+            AbonementCard(
+              abonements.elementAt(index),
+              indicator: abonements.length > 1
+                  ? Align(
+                      alignment: Alignment.bottomRight,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 12, right: 24),
+                        child: Text(
+                          '${index + 1} / ${abonements.length}',
+                          style: theme.textTheme.headline6
+                              ?.copyWith(color: theme.colorScheme.onPrimary),
+                        ),
                       ),
-                    ),
-                  )
-                : null,
-          )
-      ];
-    }
+                    )
+                  : null,
+            )
+        ];
 
     final abonementsCards = useRef(createCards());
     final cardController = useMemoized(TCardController.new);
@@ -156,14 +154,13 @@ class ProfileScreen extends HookConsumerWidget {
             final animation,
             final secondaryAnimation,
             final child,
-          ) {
-            return SharedAxisTransition(
-              animation: animation,
-              secondaryAnimation: secondaryAnimation,
-              transitionType: SharedAxisTransitionType.horizontal,
-              child: child,
-            );
-          },
+          ) =>
+              SharedAxisTransition(
+            animation: animation,
+            secondaryAnimation: secondaryAnimation,
+            transitionType: SharedAxisTransitionType.horizontal,
+            child: child,
+          ),
         ),
       );
     }
@@ -194,13 +191,14 @@ class ProfileScreen extends HookConsumerWidget {
       final businessLogic = ref.read(businessLogicProvider);
       final smDefaultStudioId =
           await ref.read(smDefaultStudioIdProvider.future);
-      final good = businessLogic.goods.firstWhere((final good) {
-        return good.loyaltyAbonementTypeId == abonement.yId &&
+      final good = businessLogic.goods.firstWhere(
+        (final good) =>
+            good.loyaltyAbonementTypeId == abonement.yId &&
             _smStudiosOptions.keys.contains(good.salonId) &&
             (abonement.service == null
                 ? good.salonId == smDefaultStudioId
-                : good.salonId == abonement.service);
-      });
+                : good.salonId == abonement.service),
+      );
       final options = _smStudiosOptions[good.salonId]!;
       final payment = await businessLogic.payTinkoff(
         navigator: navigator,
@@ -318,16 +316,15 @@ class ProfileScreen extends HookConsumerWidget {
                         icon: Padding(
                           padding: const EdgeInsets.only(right: 8, bottom: 5),
                           child: ShaderMask(
-                            shaderCallback: (final rect) {
-                              return const LinearGradient(
-                                colors: <Color>[
-                                  Color(0xFFD0ACEA),
-                                  Color(0xFFE898E0)
-                                ],
-                                begin: Alignment.bottomLeft,
-                                end: Alignment.topRight,
-                              ).createShader(rect);
-                            },
+                            shaderCallback: (final rect) =>
+                                const LinearGradient(
+                              colors: <Color>[
+                                Color(0xFFD0ACEA),
+                                Color(0xFFE898E0)
+                              ],
+                              begin: Alignment.bottomLeft,
+                              end: Alignment.topRight,
+                            ).createShader(rect),
                             child: const FontIcon(
                               FontIconData(
                                 IconsCG.add,

@@ -137,22 +137,20 @@ class CustomDraggableBottomSheet extends HookConsumerWidget {
         maxChildSize: maxChildSize,
         minChildSize: minChildSize,
         initialChildSize: initialChildSize,
-        builder: (final context, final controller) {
-          return AnimatedContainer(
-            key: animatedContainerKey,
-            height: height.value,
-            duration: const Duration(seconds: 1),
-            child: SizedBox(
-              key: childKey,
-              child: builder(
-                controller,
-                maxChildSize < maxScreenSize / screenSize
-                    ? const NeverScrollableScrollPhysics()
-                    : null,
-              ),
+        builder: (final context, final controller) => AnimatedContainer(
+          key: animatedContainerKey,
+          height: height.value,
+          duration: const Duration(seconds: 1),
+          child: SizedBox(
+            key: childKey,
+            child: builder(
+              controller,
+              maxChildSize < maxScreenSize / screenSize
+                  ? const NeverScrollableScrollPhysics()
+                  : null,
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }

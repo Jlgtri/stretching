@@ -83,15 +83,14 @@ class ErrorScreen extends HookConsumerWidget {
         final child,
         final animation,
         final secondaryAnimation,
-      ) {
-        return SharedAxisTransition(
-          animation: animation,
-          secondaryAnimation: secondaryAnimation,
-          transitionType: SharedAxisTransitionType.horizontal,
-          fillColor: theme.scaffoldBackgroundColor,
-          child: child,
-        );
-      },
+      ) =>
+          SharedAxisTransition(
+        animation: animation,
+        secondaryAnimation: secondaryAnimation,
+        transitionType: SharedAxisTransitionType.horizontal,
+        fillColor: theme.scaffoldBackgroundColor,
+        child: child,
+      ),
       child: isContactScreen.value
           ? ContactScreen(onBackButton: () => isContactScreen.value = false)
           : Scaffold(
@@ -108,8 +107,10 @@ class ErrorScreen extends HookConsumerWidget {
                         textScaleFactor: mediaQuery.textScaleFactor,
                       ),
                       const SizedBox(height: 14),
-                      Text(TR.errorTitle.tr(),
-                          style: theme.textTheme.headline2),
+                      Text(
+                        TR.errorTitle.tr(),
+                        style: theme.textTheme.headline2,
+                      ),
                       const SizedBox(height: 40),
                       Text.rich(
                         TextSpan(

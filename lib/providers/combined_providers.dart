@@ -11,16 +11,16 @@ import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/localization.g.dart';
-import 'package:stretching/models_smstretching/sm_abonement_model.dart';
-import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
-import 'package:stretching/models_smstretching/sm_studio_model.dart';
-import 'package:stretching/models_smstretching/sm_studio_options_model.dart';
-import 'package:stretching/models_smstretching/sm_trainer_model.dart';
-import 'package:stretching/models_smstretching/sm_user_abonement_model.dart';
-import 'package:stretching/models_yclients/activity_model.dart';
-import 'package:stretching/models_yclients/company_model.dart';
-import 'package:stretching/models_yclients/trainer_model.dart';
-import 'package:stretching/models_yclients/user_abonement_model.dart';
+import 'package:stretching/models/smstretching/sm_abonement_model.dart';
+import 'package:stretching/models/smstretching/sm_classes_gallery_model.dart';
+import 'package:stretching/models/smstretching/sm_studio_model.dart';
+import 'package:stretching/models/smstretching/sm_studio_options_model.dart';
+import 'package:stretching/models/smstretching/sm_trainer_model.dart';
+import 'package:stretching/models/smstretching/sm_user_abonement_model.dart';
+import 'package:stretching/models/yclients/activity_model.dart';
+import 'package:stretching/models/yclients/company_model.dart';
+import 'package:stretching/models/yclients/trainer_model.dart';
+import 'package:stretching/models/yclients/user_abonement_model.dart';
 import 'package:stretching/utils/json_converters.dart';
 import 'package:timezone/timezone.dart';
 
@@ -31,12 +31,12 @@ typedef CombinedClassesModel = Tuple2<ClassCategory, SMClassesGalleryModel>;
 final Provider<Iterable<CombinedClassesModel>> combinedClassesProvider =
     Provider<Iterable<CombinedClassesModel>>((final ref) {
   final smClassesGallery = ref.watch(
-    smClassesGalleryProvider.select((final smClassesGallery) {
-      return <int, SMClassesGalleryModel>{
+    smClassesGalleryProvider.select(
+      (final smClassesGallery) => <int, SMClassesGalleryModel>{
         for (final smClassGallery in smClassesGallery)
           smClassGallery.classesYId: smClassGallery
-      };
-    }),
+      },
+    ),
   );
   return <CombinedClassesModel>[
     for (final classes in ClassCategory.values)
@@ -55,21 +55,20 @@ typedef CombinedAbonementModel
 final Provider<Iterable<CombinedAbonementModel>> combinedAbonementsProvider =
     Provider<Iterable<CombinedAbonementModel>>((final ref) {
   final smUserAbonements = ref.watch(
-    smUserAbonementsProvider.select((final smUserAbonements) {
-      return <int, SMUserAbonementModel>{
+    smUserAbonementsProvider.select(
+      (final smUserAbonements) => <int, SMUserAbonementModel>{
         for (final smUserAbonement in smUserAbonements)
           smUserAbonement.documentId: smUserAbonement
-      };
-    }),
+      },
+    ),
   );
   final smAbonements = ref.watch(
-    smAbonementsProvider.select((final smAbonements) {
-      return <int, SMAbonementModel>{
+    smAbonementsProvider.select(
+      (final smAbonements) => <int, SMAbonementModel>{
         for (final smAbonement in smAbonements) smAbonement.yId: smAbonement
-      };
-    }),
+      },
+    ),
   );
-  final abons = (ref.watch(userAbonementsProvider)).toList();
   return <CombinedAbonementModel>[
     for (final userAbonement in (ref.watch(userAbonementsProvider))
         .distinct((final userAbonement) => userAbonement.id))
@@ -84,9 +83,10 @@ final Provider<Iterable<CombinedAbonementModel>> combinedAbonementsProvider =
                 .last,
           )],
         )
-  ]..sort((final abonementA, final abonementB) {
-      return abonementA.item1.compareTo(abonementB.item1);
-    });
+  ]..sort(
+      (final abonementA, final abonementB) =>
+          abonementA.item1.compareTo(abonementB.item1),
+    );
 });
 
 /// The pair of [StudioModel] and [SMStudioModel].
@@ -96,32 +96,29 @@ typedef CombinedStudioModel
 /// The extra data provided for [CombinedStudioModel].
 extension CombinedStudioModelData on CombinedStudioModel {
   /// Return the avatar from this studios.
-  String get avatarUrl {
-    return item1.mediaGallerySite.isNotEmpty
-        ? item1.mediaGallerySite.first.url
-        : item0.photos.isNotEmpty
-            ? item0.photos.first
-            : item0.logo;
-  }
+  String get avatarUrl => item1.mediaGallerySite.isNotEmpty
+      ? item1.mediaGallerySite.first.url
+      : item0.photos.isNotEmpty
+          ? item0.photos.first
+          : item0.logo;
 }
 
 /// The provider of [StudioModel] and [SMStudioModel] pairs.
 final Provider<Iterable<CombinedStudioModel>> combinedStudiosProvider =
     Provider<Iterable<CombinedStudioModel>>((final ref) {
   final studios = ref.watch(
-    studiosProvider.select((final studios) {
-      return <int, StudioModel>{
-        for (final studio in studios) studio.id: studio
-      };
-    }),
+    studiosProvider.select(
+      (final studios) =>
+          <int, StudioModel>{for (final studio in studios) studio.id: studio},
+    ),
   );
   final studiosOptions = ref.watch(
-    smStudiosOptionsProvider.select((final studiosOptions) {
-      return <int, SMStudioOptionsModel>{
+    smStudiosOptionsProvider.select(
+      (final studiosOptions) => <int, SMStudioOptionsModel>{
         for (final studioOptions in studiosOptions)
           studioOptions.studioId: studioOptions
-      };
-    }),
+      },
+    ),
   );
   return <CombinedStudioModel>[
     for (final smStudio in ref.watch(smStudiosProvider))
@@ -132,9 +129,9 @@ final Provider<Iterable<CombinedStudioModel>> combinedStudiosProvider =
             smStudio,
             studiosOptions[smStudio.studioYId]!,
           )
-  ]..sort((final studioA, final studioB) {
-      return studioA.item1.compareTo(studioB.item1);
-    });
+  ]..sort(
+      (final studioA, final studioB) => studioA.item1.compareTo(studioB.item1),
+    );
 });
 
 /// The pair of [TrainerModel] and [SMTrainerModel].
@@ -164,9 +161,7 @@ class SMTrainerIdConverter implements JsonConverter<SMTrainerModel?, int> {
 
 /// The id converter of the [TrainerModel] and [SMTrainerModel].
 final Provider<CombinedClassesIdConverter> combinedClassesIdConverterProvider =
-    Provider<CombinedClassesIdConverter>((final ref) {
-  return CombinedClassesIdConverter._(ref);
-});
+    Provider<CombinedClassesIdConverter>(CombinedClassesIdConverter._);
 
 /// The id converter of the [TrainerModel] and [SMTrainerModel].
 class CombinedClassesIdConverter
@@ -197,9 +192,10 @@ final Provider<Iterable<CombinedTrainerModel>> combinedTrainersProvider =
       for (final trainer in trainers)
         if (trainer.name == smTrainer.trainerName)
           CombinedTrainerModel(trainer, smTrainer)
-  ]..sort((final trainerA, final trainerB) {
-      return trainerA.item1.compareTo(trainerB.item1);
-    });
+  ]..sort(
+      (final trainerA, final trainerB) =>
+          trainerA.item1.compareTo(trainerB.item1),
+    );
 });
 
 /// The [ActivityModel] with [CombinedTrainerModel] and [CombinedStudioModel].
@@ -365,25 +361,25 @@ extension CombinedActivityModelData on CombinedActivityModel {
 final Provider<Iterable<CombinedActivityModel>> combinedActivitiesProvider =
     Provider<Iterable<CombinedActivityModel>>((final ref) {
   final trainers = ref.watch(
-    combinedTrainersProvider.select((final trainers) {
-      return <int, CombinedTrainerModel>{
+    combinedTrainersProvider.select(
+      (final trainers) => <int, CombinedTrainerModel>{
         for (final trainer in trainers) trainer.item0.id: trainer
-      };
-    }),
+      },
+    ),
   );
   final studios = ref.watch(
-    combinedStudiosProvider.select((final studios) {
-      return <int, CombinedStudioModel>{
+    combinedStudiosProvider.select(
+      (final studios) => <int, CombinedStudioModel>{
         for (final studio in studios) studio.item0.id: studio
-      };
-    }),
+      },
+    ),
   );
   final classes = ref.watch(
-    combinedClassesProvider.select((final classes) {
-      return <int, CombinedClassesModel>{
+    combinedClassesProvider.select(
+      (final classes) => <int, CombinedClassesModel>{
         for (final _class in classes) _class.item1.classesYId: _class
-      };
-    }),
+      },
+    ),
   );
 
   return <CombinedActivityModel>[
@@ -397,7 +393,8 @@ final Provider<Iterable<CombinedActivityModel>> combinedActivitiesProvider =
               trainers[activity.staffId]!,
               classes[activity.service.id]!,
             )
-  ]..sort((final activityA, final activityB) {
-      return activityA.item0.compareTo(activityB.item0);
-    });
+  ]..sort(
+      (final activityA, final activityB) =>
+          activityA.item0.compareTo(activityB.item0),
+    );
 });

@@ -159,73 +159,70 @@ class GoodModel implements Comparable<GoodModel> {
     final bool? loyaltyAllowEmptyCode,
     final Iterable<GoodActualAmountModel>? actualAmounts,
     final DateTime? lastChangeDate,
-  }) {
-    return GoodModel(
-      id: id ?? this.id,
-      title: title ?? this.title,
-      unit: unit ?? this.unit,
-      value: value ?? this.value,
-      label: label ?? this.label,
-      article: article ?? this.article,
-      category: category ?? this.category,
-      categoryId: categoryId ?? this.categoryId,
-      salonId: salonId ?? this.salonId,
-      goodId: goodId ?? this.goodId,
-      cost: cost ?? this.cost,
-      unitId: unitId ?? this.unitId,
-      unitShortTitle: unitShortTitle ?? this.unitShortTitle,
-      serviceUnitId: serviceUnitId ?? this.serviceUnitId,
-      serviceUnitShortTitle:
-          serviceUnitShortTitle ?? this.serviceUnitShortTitle,
-      actualCost: actualCost ?? this.actualCost,
-      unitActualCost: unitActualCost ?? this.unitActualCost,
-      unitActualCostFormat: unitActualCostFormat ?? this.unitActualCostFormat,
-      unitEquals: unitEquals ?? this.unitEquals,
-      barcode: barcode ?? this.barcode,
-      loyaltyAbonementTypeId:
-          loyaltyAbonementTypeId ?? this.loyaltyAbonementTypeId,
-      loyaltyCertificateTypeId:
-          loyaltyCertificateTypeId ?? this.loyaltyCertificateTypeId,
-      loyaltyAllowEmptyCode:
-          loyaltyAllowEmptyCode ?? this.loyaltyAllowEmptyCode,
-      actualAmounts: actualAmounts ?? this.actualAmounts,
-      lastChangeDate: lastChangeDate ?? this.lastChangeDate,
-    );
-  }
+  }) =>
+      GoodModel(
+        id: id ?? this.id,
+        title: title ?? this.title,
+        unit: unit ?? this.unit,
+        value: value ?? this.value,
+        label: label ?? this.label,
+        article: article ?? this.article,
+        category: category ?? this.category,
+        categoryId: categoryId ?? this.categoryId,
+        salonId: salonId ?? this.salonId,
+        goodId: goodId ?? this.goodId,
+        cost: cost ?? this.cost,
+        unitId: unitId ?? this.unitId,
+        unitShortTitle: unitShortTitle ?? this.unitShortTitle,
+        serviceUnitId: serviceUnitId ?? this.serviceUnitId,
+        serviceUnitShortTitle:
+            serviceUnitShortTitle ?? this.serviceUnitShortTitle,
+        actualCost: actualCost ?? this.actualCost,
+        unitActualCost: unitActualCost ?? this.unitActualCost,
+        unitActualCostFormat: unitActualCostFormat ?? this.unitActualCostFormat,
+        unitEquals: unitEquals ?? this.unitEquals,
+        barcode: barcode ?? this.barcode,
+        loyaltyAbonementTypeId:
+            loyaltyAbonementTypeId ?? this.loyaltyAbonementTypeId,
+        loyaltyCertificateTypeId:
+            loyaltyCertificateTypeId ?? this.loyaltyCertificateTypeId,
+        loyaltyAllowEmptyCode:
+            loyaltyAllowEmptyCode ?? this.loyaltyAllowEmptyCode,
+        actualAmounts: actualAmounts ?? this.actualAmounts,
+        lastChangeDate: lastChangeDate ?? this.lastChangeDate,
+      );
 
   /// Convert this model to map with string keys.
-  Map<String, Object?> toMap() {
-    return <String, Object?>{
-      if (id != null) 'id': id,
-      'title': title,
-      if (unit != null) 'unit': unit,
-      'value': value,
-      'label': label,
-      'article': article,
-      'category': category,
-      'category_id': categoryId,
-      'salon_id': salonId,
-      'good_id': goodId,
-      'cost': cost,
-      'unit_id': unitId,
-      'unit_short_title': unitShortTitle,
-      'service_unit_id': serviceUnitId,
-      'service_unit_short_title': serviceUnitShortTitle,
-      'actual_cost': actualCost,
-      'unit_actual_cost': unitActualCost,
-      'unit_actual_cost_format': unitActualCostFormat,
-      'unit_equals': unitEquals,
-      'barcode': barcode,
-      'loyalty_abonement_type_id': loyaltyAbonementTypeId ?? 0,
-      'loyalty_certificate_type_id': loyaltyCertificateTypeId ?? 0,
-      'loyalty_allow_empty_code':
-          boolToIntConverter.toJson(loyaltyAllowEmptyCode),
-      'actual_amounts': actualAmounts
-          .map((final actualAmount) => actualAmount.toMap())
-          .toList(growable: false),
-      'last_change_date': lastChangeDate.toIso8601String(),
-    };
-  }
+  Map<String, Object?> toMap() => <String, Object?>{
+        if (id != null) 'id': id,
+        'title': title,
+        if (unit != null) 'unit': unit,
+        'value': value,
+        'label': label,
+        'article': article,
+        'category': category,
+        'category_id': categoryId,
+        'salon_id': salonId,
+        'good_id': goodId,
+        'cost': cost,
+        'unit_id': unitId,
+        'unit_short_title': unitShortTitle,
+        'service_unit_id': serviceUnitId,
+        'service_unit_short_title': serviceUnitShortTitle,
+        'actual_cost': actualCost,
+        'unit_actual_cost': unitActualCost,
+        'unit_actual_cost_format': unitActualCostFormat,
+        'unit_equals': unitEquals,
+        'barcode': barcode,
+        'loyalty_abonement_type_id': loyaltyAbonementTypeId ?? 0,
+        'loyalty_certificate_type_id': loyaltyCertificateTypeId ?? 0,
+        'loyalty_allow_empty_code':
+            boolToIntConverter.toJson(loyaltyAllowEmptyCode),
+        'actual_amounts': actualAmounts
+            .map((final actualAmount) => actualAmount.toMap())
+            .toList(growable: false),
+        'last_change_date': lastChangeDate.toIso8601String(),
+      };
 
   /// Convert the map with string keys to this model.
   factory GoodModel.fromMap(final Map<String, Object?> map) {
@@ -276,80 +273,77 @@ class GoodModel implements Comparable<GoodModel> {
   int compareTo(final GoodModel other) => salonId.compareTo(other.salonId);
 
   @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is GoodModel &&
-            other.id == id &&
-            other.title == title &&
-            other.unit == unit &&
-            other.value == value &&
-            other.label == label &&
-            other.article == article &&
-            other.category == category &&
-            other.categoryId == categoryId &&
-            other.salonId == salonId &&
-            other.goodId == goodId &&
-            other.cost == cost &&
-            other.unitId == unitId &&
-            other.unitShortTitle == unitShortTitle &&
-            other.serviceUnitId == serviceUnitId &&
-            other.serviceUnitShortTitle == serviceUnitShortTitle &&
-            other.actualCost == actualCost &&
-            other.unitActualCost == unitActualCost &&
-            other.unitActualCostFormat == unitActualCostFormat &&
-            other.unitEquals == unitEquals &&
-            other.barcode == barcode &&
-            other.loyaltyAbonementTypeId == loyaltyAbonementTypeId &&
-            other.loyaltyCertificateTypeId == loyaltyCertificateTypeId &&
-            other.loyaltyAllowEmptyCode == loyaltyAllowEmptyCode &&
-            other.actualAmounts == actualAmounts &&
-            other.lastChangeDate == lastChangeDate;
-  }
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is GoodModel &&
+          other.id == id &&
+          other.title == title &&
+          other.unit == unit &&
+          other.value == value &&
+          other.label == label &&
+          other.article == article &&
+          other.category == category &&
+          other.categoryId == categoryId &&
+          other.salonId == salonId &&
+          other.goodId == goodId &&
+          other.cost == cost &&
+          other.unitId == unitId &&
+          other.unitShortTitle == unitShortTitle &&
+          other.serviceUnitId == serviceUnitId &&
+          other.serviceUnitShortTitle == serviceUnitShortTitle &&
+          other.actualCost == actualCost &&
+          other.unitActualCost == unitActualCost &&
+          other.unitActualCostFormat == unitActualCostFormat &&
+          other.unitEquals == unitEquals &&
+          other.barcode == barcode &&
+          other.loyaltyAbonementTypeId == loyaltyAbonementTypeId &&
+          other.loyaltyCertificateTypeId == loyaltyCertificateTypeId &&
+          other.loyaltyAllowEmptyCode == loyaltyAllowEmptyCode &&
+          other.actualAmounts == actualAmounts &&
+          other.lastChangeDate == lastChangeDate;
 
   @override
-  int get hashCode {
-    return id.hashCode ^
-        title.hashCode ^
-        unit.hashCode ^
-        value.hashCode ^
-        label.hashCode ^
-        article.hashCode ^
-        category.hashCode ^
-        categoryId.hashCode ^
-        salonId.hashCode ^
-        goodId.hashCode ^
-        cost.hashCode ^
-        unitId.hashCode ^
-        unitShortTitle.hashCode ^
-        serviceUnitId.hashCode ^
-        serviceUnitShortTitle.hashCode ^
-        actualCost.hashCode ^
-        unitActualCost.hashCode ^
-        unitActualCostFormat.hashCode ^
-        unitEquals.hashCode ^
-        barcode.hashCode ^
-        loyaltyAbonementTypeId.hashCode ^
-        loyaltyCertificateTypeId.hashCode ^
-        loyaltyAllowEmptyCode.hashCode ^
-        actualAmounts.hashCode ^
-        lastChangeDate.hashCode;
-  }
+  int get hashCode =>
+      id.hashCode ^
+      title.hashCode ^
+      unit.hashCode ^
+      value.hashCode ^
+      label.hashCode ^
+      article.hashCode ^
+      category.hashCode ^
+      categoryId.hashCode ^
+      salonId.hashCode ^
+      goodId.hashCode ^
+      cost.hashCode ^
+      unitId.hashCode ^
+      unitShortTitle.hashCode ^
+      serviceUnitId.hashCode ^
+      serviceUnitShortTitle.hashCode ^
+      actualCost.hashCode ^
+      unitActualCost.hashCode ^
+      unitActualCostFormat.hashCode ^
+      unitEquals.hashCode ^
+      barcode.hashCode ^
+      loyaltyAbonementTypeId.hashCode ^
+      loyaltyCertificateTypeId.hashCode ^
+      loyaltyAllowEmptyCode.hashCode ^
+      actualAmounts.hashCode ^
+      lastChangeDate.hashCode;
 
   @override
-  String toString() {
-    return 'GoodModel(id: $id, title: $title, unit: $unit, value: $value, '
-        'label: $label, article: $article, category: $category, '
-        'categoryId: $categoryId, salonId: $salonId, goodId: $goodId, '
-        'cost: $cost, unitId: $unitId, unitShortTitle: $unitShortTitle, '
-        'serviceUnitId: $serviceUnitId, '
-        'serviceUnitShortTitle: $serviceUnitShortTitle, '
-        'actualCost: $actualCost, unitActualCost: $unitActualCost, '
-        'unitActualCostFormat: $unitActualCostFormat, unitEquals: $unitEquals, '
-        'barcode: $barcode, loyaltyAbonementTypeId: $loyaltyAbonementTypeId, '
-        'loyaltyCertificateTypeId: $loyaltyCertificateTypeId, '
-        'loyaltyAllowEmptyCode: $loyaltyAllowEmptyCode, '
-        'actualAmounts: $actualAmounts, lastChangeDate: $lastChangeDate)';
-  }
+  String toString() =>
+      'GoodModel(id: $id, title: $title, unit: $unit, value: $value, '
+      'label: $label, article: $article, category: $category, '
+      'categoryId: $categoryId, salonId: $salonId, goodId: $goodId, '
+      'cost: $cost, unitId: $unitId, unitShortTitle: $unitShortTitle, '
+      'serviceUnitId: $serviceUnitId, '
+      'serviceUnitShortTitle: $serviceUnitShortTitle, '
+      'actualCost: $actualCost, unitActualCost: $unitActualCost, '
+      'unitActualCostFormat: $unitActualCostFormat, unitEquals: $unitEquals, '
+      'barcode: $barcode, loyaltyAbonementTypeId: $loyaltyAbonementTypeId, '
+      'loyaltyCertificateTypeId: $loyaltyCertificateTypeId, '
+      'loyaltyAllowEmptyCode: $loyaltyAllowEmptyCode, '
+      'actualAmounts: $actualAmounts, lastChangeDate: $lastChangeDate)';
 }
 
 /// The actual amount model for [GoodModel].
@@ -371,53 +365,47 @@ class GoodActualAmountModel implements Comparable<GoodActualAmountModel> {
   GoodActualAmountModel copyWith({
     final int? storageId,
     final int? amount,
-  }) {
-    return GoodActualAmountModel(
-      storageId: storageId ?? this.storageId,
-      amount: amount ?? this.amount,
-    );
-  }
+  }) =>
+      GoodActualAmountModel(
+        storageId: storageId ?? this.storageId,
+        amount: amount ?? this.amount,
+      );
 
   /// Convert this model to map with string keys.
-  Map<String, Object?> toMap() {
-    return <String, Object?>{'storage_id': storageId, 'amount': amount};
-  }
+  Map<String, Object?> toMap() =>
+      <String, Object?>{'storage_id': storageId, 'amount': amount};
 
   /// Convert the map with string keys to this model.
-  factory GoodActualAmountModel.fromMap(final Map<String, Object?> map) {
-    return GoodActualAmountModel(
-      storageId: map['storage_id']! as int,
-      amount: map['amount']! as int,
-    );
-  }
+  factory GoodActualAmountModel.fromMap(final Map<String, Object?> map) =>
+      GoodActualAmountModel(
+        storageId: map['storage_id']! as int,
+        amount: map['amount']! as int,
+      );
 
   /// Convert this model to a json string.
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory GoodActualAmountModel.fromJson(final String source) {
-    return GoodActualAmountModel.fromMap(
-      json.decode(source)! as Map<String, Object?>,
-    );
-  }
+  factory GoodActualAmountModel.fromJson(final String source) =>
+      GoodActualAmountModel.fromMap(
+        json.decode(source)! as Map<String, Object?>,
+      );
 
   @override
   int compareTo(final GoodActualAmountModel other) =>
       amount.compareTo(other.amount);
 
   @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is GoodActualAmountModel &&
-            other.storageId == storageId &&
-            other.amount == amount;
-  }
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is GoodActualAmountModel &&
+          other.storageId == storageId &&
+          other.amount == amount;
 
   @override
   int get hashCode => storageId.hashCode ^ amount.hashCode;
 
   @override
-  String toString() {
-    return 'GoodActualAmountModel(storageId: $storageId, amount: $amount)';
-  }
+  String toString() =>
+      'GoodActualAmountModel(storageId: $storageId, amount: $amount)';
 }

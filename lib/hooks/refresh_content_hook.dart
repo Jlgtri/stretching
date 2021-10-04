@@ -15,15 +15,14 @@ Tuple2<RefreshController, Future<void> Function()> useRefreshController({
   final Iterable<ContentNotifier> notifiers =
       const Iterable<ContentNotifier>.empty(),
   final FutureOr<void> Function()? extraRefresh,
-}) {
-  return use(
-    _RefreshControllerHook(
-      requestRefresh: requestRefresh,
-      notifiers: notifiers,
-      extraRefresh: extraRefresh,
-    ),
-  );
-}
+}) =>
+    use(
+      _RefreshControllerHook(
+        requestRefresh: requestRefresh,
+        notifiers: notifiers,
+        extraRefresh: extraRefresh,
+      ),
+    );
 
 class _RefreshControllerHook
     extends Hook<Tuple2<RefreshController, Future<void> Function()>> {

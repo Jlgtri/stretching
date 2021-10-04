@@ -26,14 +26,14 @@ import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/refresh_content_hook.dart';
 import 'package:stretching/main.dart';
-import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
-import 'package:stretching/models_smstretching/sm_record_model.dart';
-import 'package:stretching/models_smstretching/sm_studio_model.dart';
-import 'package:stretching/models_smstretching/sm_trainer_model.dart';
-import 'package:stretching/models_smstretching/sm_wishlist_model.dart';
-import 'package:stretching/models_yclients/activity_model.dart';
-import 'package:stretching/models_yclients/company_model.dart';
-import 'package:stretching/models_yclients/user_record_model.dart';
+import 'package:stretching/models/smstretching/sm_classes_gallery_model.dart';
+import 'package:stretching/models/smstretching/sm_record_model.dart';
+import 'package:stretching/models/smstretching/sm_studio_model.dart';
+import 'package:stretching/models/smstretching/sm_trainer_model.dart';
+import 'package:stretching/models/smstretching/sm_wishlist_model.dart';
+import 'package:stretching/models/yclients/activity_model.dart';
+import 'package:stretching/models/yclients/company_model.dart';
+import 'package:stretching/models/yclients/user_record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/firebase_providers.dart';
@@ -81,16 +81,16 @@ final StateNotifierProvider<
         Iterable<CombinedStudioModel>> activitiesStudiosFilterProvider =
     StateNotifierProvider<
         SaveToHiveIterableNotifier<CombinedStudioModel, String>,
-        Iterable<CombinedStudioModel>>((final ref) {
-  return SaveToHiveIterableNotifier<CombinedStudioModel, String>(
+        Iterable<CombinedStudioModel>>(
+  (final ref) => SaveToHiveIterableNotifier<CombinedStudioModel, String>(
     hive: ref.watch(hiveProvider),
     saveName: 'activities_studios',
     converter: StringToIterableConverter(
       OptionalIterableConverter(ref.watch(studioIdConverterProvider)),
     ),
     defaultValue: const Iterable<CombinedStudioModel>.empty(),
-  );
-});
+  ),
+);
 
 /// The provider of filters for [SMTrainerModel].
 final StateNotifierProvider<
@@ -98,23 +98,23 @@ final StateNotifierProvider<
         Iterable<CombinedClassesModel>> activitiesCategoriesFilterProvider =
     StateNotifierProvider<
         SaveToHiveIterableNotifier<CombinedClassesModel, String>,
-        Iterable<CombinedClassesModel>>((final ref) {
-  return SaveToHiveIterableNotifier<CombinedClassesModel, String>(
+        Iterable<CombinedClassesModel>>(
+  (final ref) => SaveToHiveIterableNotifier<CombinedClassesModel, String>(
     hive: ref.watch(hiveProvider),
     saveName: 'activities_categories',
     converter: StringToIterableConverter(
       OptionalIterableConverter(ref.watch(combinedClassesIdConverterProvider)),
     ),
     defaultValue: const Iterable<CombinedClassesModel>.empty(),
-  );
-});
+  ),
+);
 
 /// The provider of filters for [SMTrainerModel].
 final StateNotifierProvider<SaveToHiveIterableNotifier<SMTrainerModel, String>,
         Iterable<SMTrainerModel>> activitiesTrainersFilterProvider =
     StateNotifierProvider<SaveToHiveIterableNotifier<SMTrainerModel, String>,
-        Iterable<SMTrainerModel>>((final ref) {
-  return SaveToHiveIterableNotifier<SMTrainerModel, String>(
+        Iterable<SMTrainerModel>>(
+  (final ref) => SaveToHiveIterableNotifier<SMTrainerModel, String>(
     hive: ref.watch(hiveProvider),
     saveName: 'activities_trainers',
     converter: StringToIterableConverter(
@@ -123,8 +123,8 @@ final StateNotifierProvider<SaveToHiveIterableNotifier<SMTrainerModel, String>,
     onValueCreated: (final trainers) =>
         trainers.toList(growable: false)..sort(),
     defaultValue: const Iterable<SMTrainerModel>.empty(),
-  );
-});
+  ),
+);
 
 /// The filter for the [ActivityModel] time.
 enum ActivityTime {
@@ -141,13 +141,12 @@ enum ActivityTime {
 /// The extra data provided for [ActivityTime].
 extension ActivityTimeData on ActivityTime {
   /// Return the translation of this time for the specified [time].
-  String translate([final TimeOfDay time = filterTime]) {
-    return '${TR.miscFilterTime}_${enumToString(this)}'.tr(
-      args: <String>[
-        <Object>[time.hour, time.minute.toString().padLeft(2, '0')].join(':')
-      ],
-    );
-  }
+  String translate([final TimeOfDay time = filterTime]) =>
+      '${TR.miscFilterTime}_${enumToString(this)}'.tr(
+        args: <String>[
+          <Object>[time.hour, time.minute.toString().padLeft(2, '0')].join(':')
+        ],
+      );
 
   /// Check if [date] is [before] or [after] `16:45` on it's day.
   ///
@@ -172,16 +171,16 @@ extension ActivityTimeData on ActivityTime {
 final StateNotifierProvider<SaveToHiveIterableNotifier<ActivityTime, String>,
         Iterable<ActivityTime>> activitiesTimeFilterProvider =
     StateNotifierProvider<SaveToHiveIterableNotifier<ActivityTime, String>,
-        Iterable<ActivityTime>>((final ref) {
-  return SaveToHiveIterableNotifier<ActivityTime, String>(
+        Iterable<ActivityTime>>(
+  (final ref) => SaveToHiveIterableNotifier<ActivityTime, String>(
     hive: ref.watch(hiveProvider),
     saveName: 'activities_time',
     converter: const StringToIterableConverter(
       IterableConverter(EnumConverter(ActivityTime.values)),
     ),
     defaultValue: const Iterable<ActivityTime>.empty(),
-  );
-});
+  ),
+);
 
 /// The current selected day of activities.
 final StateProvider<DateTime> activitiesDayProvider =
@@ -191,10 +190,9 @@ final StateProvider<DateTime> activitiesDayProvider =
         loading: DateTime.now,
         error: (final e, final st) => DateTime.now(),
       );
-  final activities =
-      ref.read(combinedActivitiesProvider).where((final activity) {
-    return activity.item0.date.isAfter(now);
-  });
+  final activities = ref
+      .read(combinedActivitiesProvider)
+      .where((final activity) => activity.item0.date.isAfter(now));
   return activities.isNotEmpty ? activities.first.item0.date : DateTime.now();
 });
 
@@ -231,68 +229,72 @@ final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
   final studios = ref.watch(activitiesStudiosFilterProvider);
   final trainers = ref.watch(activitiesTrainersFilterProvider);
   final now = ref.watch(
-    currentTimeProvider.select((final currentTime) {
-      return currentTime.when(
+    currentTimeProvider.select(
+      (final currentTime) => currentTime.when(
         data: (final currentTime) => currentTime,
         loading: DateTime.now,
         error: (final e, final st) => DateTime.now(),
-      );
-    }),
+      ),
+    ),
   );
   return ref.watch(
     /// First of all, checks if any activities are present.
     /// Then, applies time, studios, trainers and classes filters.
-    combinedActivitiesProvider.select((final activities) {
-      return activities.where((final activity) {
-        return activity.item0.date.isAfter(now) &&
-            activity.item0.date.year == day.year &&
-            activity.item0.date.month == day.month &&
-            activity.item0.date.day == day.day &&
-            (studios.isEmpty || studios.contains(activity.item1)) &&
-            (trainers.isEmpty || trainers.contains(activity.item2.item1)) &&
-            (categories.isEmpty ||
-                categories.any((final category) {
-                  return category.item0.id == activity.item0.service.id;
-                })) &&
-            (time.isEmpty ||
-                time.any((final time) => time.isWithin(activity.item0.date)));
-      }).toList(growable: false)
-        ..sort((final activityA, final activityB) {
-          return activityA.item0.compareTo(activityB.item0);
-        });
-    }),
+    combinedActivitiesProvider.select(
+      (final activities) => activities
+          .where(
+            (final activity) =>
+                activity.item0.date.isAfter(now) &&
+                activity.item0.date.year == day.year &&
+                activity.item0.date.month == day.month &&
+                activity.item0.date.day == day.day &&
+                (studios.isEmpty || studios.contains(activity.item1)) &&
+                (trainers.isEmpty || trainers.contains(activity.item2.item1)) &&
+                (categories.isEmpty ||
+                    categories.any(
+                      (final category) =>
+                          category.item0.id == activity.item0.service.id,
+                    )) &&
+                (time.isEmpty ||
+                    time.any(
+                      (final time) => time.isWithin(activity.item0.date),
+                    )),
+          )
+          .toList(growable: false)
+        ..sort(
+          (final activityA, final activityB) =>
+              activityA.item0.compareTo(activityB.item0),
+        ),
+    ),
   );
 });
 
 /// Periodic provider of the current time.
-final StreamProvider<DateTime> currentTimeProvider =
-    StreamProvider<DateTime>((final ref) {
-  return Stream.periodic(
+final StreamProvider<DateTime> currentTimeProvider = StreamProvider<DateTime>(
+  (final ref) => Stream.periodic(
     const Duration(seconds: 10),
     (final index) => DateTime.now(),
-  );
-});
+  ),
+);
 
 /// The provider of the current days of the [scheduleProvider].
 final Provider<Iterable<DateTime>> activitiesDaysProvider =
     Provider<Iterable<DateTime>>((final ref) {
-  Iterable<DateTime> result([final DateTime? now]) {
-    return ref.watch(
-      scheduleProvider.select(
-        (final activities) {
-          return (activities.map((final activity) => activity.date))
-              .distinct((final date) => date.day)
-              .where((final date) {
-                return date.difference(now ?? DateTime.now()).inDays <
-                    DateTime.daysPerWeek * 2;
-              })
-              .toSet()
-              .toList(growable: false)
-            ..sort();
-        },
-      ),
-    );
-  }
+  Iterable<DateTime> result([final DateTime? now]) => ref.watch(
+        scheduleProvider.select(
+          (final activities) =>
+              (activities.map((final activity) => activity.date))
+                  .distinct((final date) => date.day)
+                  .where(
+                    (final date) =>
+                        date.difference(now ?? DateTime.now()).inDays <
+                        DateTime.daysPerWeek * 2,
+                  )
+                  .toSet()
+                  .toList(growable: false)
+                ..sort(),
+        ),
+      );
 
   return (ref.watch(currentTimeProvider)).when(
     data: result,
@@ -305,18 +307,16 @@ final Provider<Iterable<DateTime>> activitiesDaysProvider =
 final Provider<bool> areActivitiesPresentProvider = Provider<bool>((final ref) {
   final day = ref.watch(activitiesDayProvider).state;
   return ref.watch(
-    scheduleProvider.select((final activities) {
-      final todayActivities = activities.where((final activity) {
-        return activity.date.year == day.year &&
-            activity.date.month == day.month &&
-            activity.date.day == day.day;
-      });
-      return todayActivities.isNotEmpty;
-      //  &&
-      //     todayActivities.any((final activity) {
-      //       return activity.date.isAfter(now);
-      //     });
-    }),
+    scheduleProvider.select(
+      (final activities) => activities
+          .where(
+            (final activity) =>
+                activity.date.year == day.year &&
+                activity.date.month == day.month &&
+                activity.date.day == day.day,
+          )
+          .isNotEmpty,
+    ),
   );
 });
 
@@ -403,163 +403,15 @@ class ActivitiesScreen extends HookConsumerWidget {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             child: Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    readOnly: true,
-                                    onTap: () => Navigator.of(
-                                      context,
-                                      rootNavigator: true,
-                                    ).push<void>(
-                                      MaterialPageRoute(
-                                        builder: (final context) =>
-                                            const ActivitiesSearch(),
-                                      ),
-                                    ),
-                                    onChanged: (final value) =>
-                                        (ref.read(activitiesSearchProvider))
-                                            .state = value,
-                                    decoration: InputDecorationStyle.search
-                                        .fromTheme(
-                                          theme,
-                                          hintText: TR.activitiesSearch.tr(),
-                                        )
-                                        .copyWith(
-                                          border: const OutlineInputBorder(
-                                            borderSide: BorderSide.none,
-                                          ),
-                                          errorBorder: const OutlineInputBorder(
-                                            borderSide: BorderSide.none,
-                                          ),
-                                          enabledBorder:
-                                              const OutlineInputBorder(
-                                            borderSide: BorderSide.none,
-                                          ),
-                                          focusedBorder:
-                                              const OutlineInputBorder(
-                                            borderSide: BorderSide.none,
-                                          ),
-                                          disabledBorder:
-                                              const OutlineInputBorder(
-                                            borderSide: BorderSide.none,
-                                          ),
-                                          focusedErrorBorder:
-                                              const OutlineInputBorder(
-                                            borderSide: BorderSide.none,
-                                          ),
-                                          isDense: true,
-                                          filled: true,
-                                          fillColor: theme.colorScheme.surface,
-                                          contentPadding:
-                                              const EdgeInsets.all(8),
-                                          prefixIcon: Padding(
-                                            padding: EdgeInsets.only(
-                                              bottom: 4,
-                                              left: 4 *
-                                                  mediaQuery.textScaleFactor,
-                                            ),
-                                            child: Center(
-                                              child: FontIcon(
-                                                FontIconData(
-                                                  IconsCG.search,
-                                                  color: theme.hintColor,
-                                                  height: 24 *
-                                                      mediaQuery
-                                                          .textScaleFactor,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                  ),
-                                ),
-                                Consumer(
-                                  builder:
-                                      (final context, final ref, final child) {
-                                    final filtersCount = ref
-                                        .watch(activitiesFiltersCountProvider);
-                                    return Badge(
-                                      padding: const EdgeInsets.all(4),
-                                      animationType: BadgeAnimationType.scale,
-                                      animationDuration:
-                                          const Duration(milliseconds: 300),
-                                      position: filtersCount >= 10
-                                          ? const BadgePosition(end: 4, top: 4)
-                                          : const BadgePosition(end: 8, top: 6),
-                                      badgeContent: Text(
-                                        filtersCount.toString(),
-                                        style:
-                                            theme.textTheme.caption?.copyWith(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                          color: theme.colorScheme.surface,
-                                        ),
-                                      ),
-                                      ignorePointer: true,
-                                      showBadge: filtersCount > 0,
-                                      badgeColor: theme.colorScheme.onSurface,
-                                      child: IconButton(
-                                        onPressed: () async {
-                                          await showActivitiesFiltersBottomSheet(
-                                            context,
-                                            onResetPressed: () =>
-                                                resetFilters(ref),
-                                          );
-                                        },
-                                        splashRadius: 20,
-                                        tooltip: TR.miscFilterTitle.tr(),
-                                        icon: FontIcon(
-                                          FontIconData(
-                                            IconsCG.filter,
-                                            color: theme.colorScheme.onSurface,
-                                          ),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                )
+                              children: const <Widget>[
+                                Expanded(child: ActivitiesSearchField()),
+                                ActivitiesFiltersCounter(),
                               ],
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 16),
-                            child: Consumer(
-                              builder: (final context, final ref, final child) {
-                                final studios =
-                                    ref.watch(activitiesStudiosFilterProvider);
-                                final classes = ref.watch(
-                                  combinedClassesProvider
-                                      .select((final classes) {
-                                    return classes.where((final _class) {
-                                      return studios.isEmpty ||
-                                          studios.any((final studio) {
-                                            return studio.item1.studioTags
-                                                .toCategories()
-                                                .contains(_class.item0);
-                                          });
-                                    });
-                                  }),
-                                );
-                                return getSelectorWidget<CombinedClassesModel>(
-                                  text: (final smClassGallery) =>
-                                      smClassGallery.item0.translation,
-                                  selected: (final value) => ref
-                                      .read(activitiesCategoriesFilterProvider)
-                                      .contains(value),
-                                  values: classes,
-                                  onSelected: (final category, final value) {
-                                    final categoriesNotifier = ref.read(
-                                      activitiesCategoriesFilterProvider
-                                          .notifier,
-                                    );
-                                    value
-                                        ? categoriesNotifier.add(category)
-                                        : categoriesNotifier.remove(category);
-                                  },
-                                  padding: const EdgeInsets.only(top: 16),
-                                );
-                              },
-                            ),
+                          const Padding(
+                            padding: EdgeInsets.only(top: 16),
+                            child: ActivitiesCategoriesPicker(),
                           ),
                         ],
                       ),
@@ -577,6 +429,7 @@ class ActivitiesScreen extends HookConsumerWidget {
                   ),
                 ),
 
+                /// Cards
                 if (activities.isNotEmpty)
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
@@ -585,15 +438,15 @@ class ActivitiesScreen extends HookConsumerWidget {
                         return ActivityCardContainer(
                           activity,
                           timeLeftBeforeStart: ref.watch(
-                            currentTimeProvider.select((final tempNow) {
-                              return activity.item0.date.difference(
+                            currentTimeProvider.select(
+                              (final tempNow) => activity.item0.date.difference(
                                 tempNow.when(
                                   data: (final tempNow) => tempNow,
                                   loading: DateTime.now,
                                   error: (final e, final st) => DateTime.now(),
                                 ),
-                              );
-                            }),
+                              ),
+                            ),
                           ),
                         );
                       },
@@ -601,20 +454,7 @@ class ActivitiesScreen extends HookConsumerWidget {
                     ),
                   )
 
-                // SliverFillRemaining(
-                //   child: ListView.builder(
-                //     shrinkWrap: true,
-                //     primary: false,
-                //     itemCount: activities.length,
-                //     itemBuilder: (final context, final index) {
-                //       final activity = activities.elementAt(index);
-                //       return ActivityCardContainer(
-                //         activity,
-                //         timeLeftBeforeStart: activity.item0.date.difference(now),
-                //       );
-                //     },
-                //   ),
-                // )
+                /// Empty Filter
                 else if (ref.watch(areActivitiesPresentProvider))
                   SliverFillRemaining(
                     hasScrollBody: false,
@@ -653,6 +493,8 @@ class ActivitiesScreen extends HookConsumerWidget {
                       ],
                     ),
                   )
+
+                /// Empty
                 else
                   SliverFillRemaining(
                     hasScrollBody: false,
@@ -758,12 +600,11 @@ class ActivitiesStudiosPickerDropdown extends HookConsumerWidget {
               ref.read(activitiesStudiosFilterProvider.notifier);
           if (studio != null) {
             await filteredStudiosNotifier.setStateAsync([studio]);
-            final classes =
-                ref.read(combinedClassesProvider).where((final _class) {
-              return studio.item1.studioTags
-                  .toCategories()
-                  .contains(_class.item0);
-            });
+            final classes = ref.read(combinedClassesProvider).where(
+                  (final _class) => studio.item1.studioTags
+                      .toCategories()
+                      .contains(_class.item0),
+                );
             final categoriesNotifiter =
                 ref.read(activitiesCategoriesFilterProvider.notifier);
             await categoriesNotifiter.setStateAsync(
@@ -778,12 +619,148 @@ class ActivitiesStudiosPickerDropdown extends HookConsumerWidget {
   }
 }
 
+/// The widget for displaying a value of [activitiesFiltersCountProvider].
+class ActivitiesFiltersCounter extends ConsumerWidget {
+  /// The widget for displaying a value of [activitiesFiltersCountProvider].
+  const ActivitiesFiltersCounter({final Key? key}) : super(key: key);
+
+  @override
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final theme = Theme.of(context);
+    final filtersCount = ref.watch(activitiesFiltersCountProvider);
+    return Badge(
+      padding: const EdgeInsets.all(4),
+      animationType: BadgeAnimationType.scale,
+      animationDuration: const Duration(milliseconds: 300),
+      position: filtersCount >= 10
+          ? const BadgePosition(end: 4, top: 4)
+          : const BadgePosition(end: 8, top: 6),
+      badgeContent: Text(
+        filtersCount.toString(),
+        style: theme.textTheme.caption?.copyWith(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: theme.colorScheme.surface,
+        ),
+      ),
+      ignorePointer: true,
+      showBadge: filtersCount > 0,
+      badgeColor: theme.colorScheme.onSurface,
+      child: IconButton(
+        onPressed: () async {
+          await showActivitiesFiltersBottomSheet(
+            context,
+            onResetPressed: () => resetFilters(ref),
+          );
+        },
+        splashRadius: 20,
+        tooltip: TR.miscFilterTitle.tr(),
+        icon: FontIcon(
+          FontIconData(
+            IconsCG.filter,
+            color: theme.colorScheme.onSurface,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// The picker of categories for the [ActivitiesScreen].
+class ActivitiesCategoriesPicker extends ConsumerWidget {
+  /// The picker of categories for the [ActivitiesScreen].
+  const ActivitiesCategoriesPicker({final Key? key}) : super(key: key);
+
+  @override
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final studios = ref.watch(activitiesStudiosFilterProvider);
+    final classes = ref.watch(
+      combinedClassesProvider.select(
+        (final classes) => classes.where(
+          (final _class) =>
+              studios.isEmpty ||
+              studios.any(
+                (final studio) => (studio.item1.studioTags.toCategories())
+                    .contains(_class.item0),
+              ),
+        ),
+      ),
+    );
+    return getSelectorWidget<CombinedClassesModel>(
+      text: (final smClassGallery) => smClassGallery.item0.translation,
+      selected: (final value) =>
+          ref.read(activitiesCategoriesFilterProvider).contains(value),
+      values: classes,
+      onSelected: (final category, final value) {
+        final categoriesNotifier = ref.read(
+          activitiesCategoriesFilterProvider.notifier,
+        );
+        (value ? categoriesNotifier.add : categoriesNotifier.remove)(category);
+      },
+      padding: const EdgeInsets.only(top: 16),
+    );
+  }
+}
+
+/// The search field on [ActivitiesScreen].
+class ActivitiesSearchField extends ConsumerWidget {
+  /// The search field on [ActivitiesScreen].
+  const ActivitiesSearchField({final Key? key}) : super(key: key);
+
+  @override
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
+    return TextField(
+      readOnly: true,
+      onTap: () => Navigator.of(context, rootNavigator: true).push<void>(
+        MaterialPageRoute(builder: (final context) => const ActivitiesSearch()),
+      ),
+      onChanged: (final value) =>
+          (ref.read(activitiesSearchProvider)).state = value,
+      decoration: InputDecorationStyle.search
+          .fromTheme(theme, hintText: TR.activitiesSearch.tr())
+          .copyWith(
+            border: const OutlineInputBorder(borderSide: BorderSide.none),
+            errorBorder: const OutlineInputBorder(borderSide: BorderSide.none),
+            enabledBorder:
+                const OutlineInputBorder(borderSide: BorderSide.none),
+            focusedBorder:
+                const OutlineInputBorder(borderSide: BorderSide.none),
+            disabledBorder:
+                const OutlineInputBorder(borderSide: BorderSide.none),
+            focusedErrorBorder:
+                const OutlineInputBorder(borderSide: BorderSide.none),
+            isDense: true,
+            filled: true,
+            fillColor: theme.colorScheme.surface,
+            contentPadding: const EdgeInsets.all(8),
+            prefixIcon: Padding(
+              padding: EdgeInsets.only(
+                bottom: 4,
+                left: 4 * mediaQuery.textScaleFactor,
+              ),
+              child: Center(
+                child: FontIcon(
+                  FontIconData(
+                    IconsCG.search,
+                    color: theme.hintColor,
+                    height: 24 * mediaQuery.textScaleFactor,
+                  ),
+                ),
+              ),
+            ),
+          ),
+    );
+  }
+}
+
 /// The loader of the [ActivityCardContainer] for the each
 /// [ActivityCardContainer.activity].
 final StateProviderFamily<bool, ActivityModel> activityCardLoadingProvider =
-    StateProvider.family<bool, ActivityModel>((final ref, final activity) {
-  return false;
-});
+    StateProvider.family<bool, ActivityModel>(
+  (final ref, final activity) => false,
+);
 
 /// The transition between [ActivityCard] and [ActivityScreenCard].
 class ActivityCardContainer extends HookConsumerWidget {
@@ -811,17 +788,15 @@ class ActivityCardContainer extends HookConsumerWidget {
     final isLoading = ref.watch(activityCardLoadingProvider(activity.item0));
     final isMounted = useIsMounted();
 
-    Future<void> logFirebase(final String name) {
-      return analytics.logEvent(
-        name: name,
-        parameters: <String, String>{
-          'studio': translit(activity.item1.item1.studioName),
-          'class': activity.item0.service.title,
-          'trainer': translit(activity.item2.item1.trainerName),
-          'date_time': faTime(ref.read(smServerTimeProvider)),
-        },
-      );
-    }
+    Future<void> logFirebase(final String name) => analytics.logEvent(
+          name: name,
+          parameters: <String, String>{
+            'studio': translit(activity.item1.item1.studioName),
+            'class': activity.item0.service.title,
+            'trainer': translit(activity.item2.item1.trainerName),
+            'date_time': faTime(ref.read(smServerTimeProvider)),
+          },
+        );
 
     Future<bool> cancelBook(
       final UserRecordModel appliedRecord, {
@@ -839,29 +814,25 @@ class ActivityCardContainer extends HookConsumerWidget {
           discount: ref.read(discountProvider),
         );
         if (smRecord != null) {
-          Widget refundedBody(final String body, final String button) {
-            return Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: <Widget>[
-                  Text(
-                    body,
-                    style: theme.textTheme.subtitle2,
-                  ),
-                  const SizedBox(height: 24),
-                  BottomButtons<dynamic>(
-                    firstText: button,
-                    onFirstPressed: (final context) {
-                      navigator.popUntil(Routes.root.withName);
-                      (ref.read(navigationProvider))
-                          .jumpToTab(NavigationScreen.profile.index);
-                    },
-                  ),
-                ],
-              ),
-            );
-          }
+          Widget refundedBody(final String body, final String button) =>
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(body, style: theme.textTheme.subtitle2),
+                    const SizedBox(height: 24),
+                    BottomButtons<dynamic>(
+                      firstText: button,
+                      onFirstPressed: (final context) {
+                        navigator.popUntil(Routes.root.withName);
+                        (ref.read(navigationProvider))
+                            .jumpToTab(NavigationScreen.profile.index);
+                      },
+                    ),
+                  ],
+                ),
+              );
 
           switch (smRecord.payment) {
             case ActivityPaidBy.deposit:
@@ -1012,9 +983,9 @@ class ActivityCardContainer extends HookConsumerWidget {
         await logFirebase(fullscreen ? FAKeys.wishlistScreen : FAKeys.wishlist);
         final user = ref.read(userProvider)!;
         final userWishlist = await smStretching.getWishlist(user.phone);
-        final alreadyApplied = userWishlist.any((final userWishlist) {
-          return userWishlist.activityId == activity.item0.id;
-        });
+        final alreadyApplied = userWishlist.any(
+          (final userWishlist) => userWishlist.activityId == activity.item0.id,
+        );
         var addedToWishlist = false;
         if (!alreadyApplied) {
           addedToWishlist = await smStretching.createWishlist(
@@ -1249,14 +1220,13 @@ class ActivityCard extends ConsumerWidget {
                         memCacheHeight: 52,
                         fadeInDuration: Duration.zero,
                         fadeOutDuration: Duration.zero,
-                        imageBuilder: (final context, final imageProvider) {
-                          return CircleAvatar(
-                            backgroundColor: Colors.transparent,
-                            foregroundColor: Colors.transparent,
-                            radius: 20 * mediaQuery.textScaleFactor,
-                            foregroundImage: imageProvider,
-                          );
-                        },
+                        imageBuilder: (final context, final imageProvider) =>
+                            CircleAvatar(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: Colors.transparent,
+                          radius: 20 * mediaQuery.textScaleFactor,
+                          foregroundImage: imageProvider,
+                        ),
                       ),
                     )
                   ],
@@ -1625,15 +1595,14 @@ class ActivityScreenCard extends ConsumerWidget {
           enableInfiniteScroll: images.length > 1,
         ),
         itemCount: images.length,
-        itemBuilder: (final context, final index, final realIndex) {
-          return CachedNetworkImage(
-            imageUrl: images.elementAt(index),
-            fit: BoxFit.fitHeight,
-            alignment: Alignment.topCenter,
-            width: MediaQuery.of(context).size.width,
-            height: 280,
-          );
-        },
+        itemBuilder: (final context, final index, final realIndex) =>
+            CachedNetworkImage(
+          imageUrl: images.elementAt(index),
+          fit: BoxFit.fitHeight,
+          alignment: Alignment.topCenter,
+          width: MediaQuery.of(context).size.width,
+          height: 280,
+        ),
       ),
       paragraphs: <ContentParagraph>[
         if (activity.item3.item1.classInfo != null)
@@ -1698,67 +1667,64 @@ class ActivityScreenCard extends ConsumerWidget {
               onBackButtonPressed: action,
               upperType: null,
             ),
-            closedBuilder: (final context, final action) {
-              return SizedBox(
-                height: 80,
-                child: ListTile(
-                  onTap: action,
-                  // dense: true,
-                  // visualDensity: VisualDensity.compact,
-                  horizontalTitleGap: 8,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  tileColor: theme.colorScheme.surface,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(8)),
-                  ),
-                  minVerticalPadding: 0,
-                  leading: CachedNetworkImage(
-                    height: 56,
-                    width: 56,
-                    fit: BoxFit.cover,
-                    alignment: Alignment.topCenter,
-                    imageUrl: activity.item2.item1.trainerPhoto,
-                    imageBuilder: (final context, final imageProvider) {
-                      return CircleAvatar(
-                        radius: 28,
-                        foregroundImage: imageProvider,
-                      );
-                    },
-                    placeholder: (final context, final url) => const Center(
-                      child: CircularProgressIndicator.adaptive(),
-                    ),
-                    errorWidget:
-                        (final context, final url, final dynamic error) =>
-                            const FontIcon(FontIconData(IconsCG.logo)),
-                  ),
-                  title: Text(
-                    activity.item2.item1.trainerName,
-                    style: theme.textTheme.bodyText1,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  subtitle: Text(
-                    (activity.item2.item1.classesType?.toCategories())
-                            ?.map((final category) => category.translation)
-                            .join(', ') ??
-                        '',
-                    style: theme.textTheme.bodyText2?.copyWith(
-                      color: theme.hintColor,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  trailing: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const <Widget>[
-                      FontIcon(FontIconData(IconsCG.angleRight, height: 24)),
-                      SizedBox(height: 12),
-                    ],
-                  ),
+            closedBuilder: (final context, final action) => SizedBox(
+              height: 80,
+              child: ListTile(
+                onTap: action,
+                // dense: true,
+                // visualDensity: VisualDensity.compact,
+                horizontalTitleGap: 8,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                tileColor: theme.colorScheme.surface,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
                 ),
-              );
-            },
+                minVerticalPadding: 0,
+                leading: CachedNetworkImage(
+                  height: 56,
+                  width: 56,
+                  fit: BoxFit.cover,
+                  alignment: Alignment.topCenter,
+                  imageUrl: activity.item2.item1.trainerPhoto,
+                  imageBuilder: (final context, final imageProvider) =>
+                      CircleAvatar(
+                    radius: 28,
+                    foregroundImage: imageProvider,
+                  ),
+                  placeholder: (final context, final url) => const Center(
+                    child: CircularProgressIndicator.adaptive(),
+                  ),
+                  errorWidget:
+                      (final context, final url, final dynamic error) =>
+                          const FontIcon(FontIconData(IconsCG.logo)),
+                ),
+                title: Text(
+                  activity.item2.item1.trainerName,
+                  style: theme.textTheme.bodyText1,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  (activity.item2.item1.classesType?.toCategories())
+                          ?.map((final category) => category.translation)
+                          .join(', ') ??
+                      '',
+                  style: theme.textTheme.bodyText2?.copyWith(
+                    color: theme.hintColor,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const <Widget>[
+                    FontIcon(FontIconData(IconsCG.angleRight, height: 24)),
+                    SizedBox(height: 12),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ],
@@ -1903,65 +1869,63 @@ Future<void> showActivitiesFiltersBottomSheet(
     context: context,
     useRootNavigator: true,
     backgroundColor: Colors.transparent,
-    builder: (final context) {
-      return BottomSheetBase(
-        borderRadius: 14,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            AppBar(
-              primary: false,
-              toolbarHeight: 40 * mediaQuery.textScaleFactor,
-              centerTitle: true,
-              title: Text(
-                TR.miscFilterTitle.tr(),
-                style: theme.textTheme.headline3,
-              ),
-              backgroundColor: Colors.transparent,
-              leading: IconButton(
-                iconSize: 16,
-                splashRadius: 16,
-                tooltip: TR.tooltipsClose.tr(),
-                color: theme.colorScheme.onSurface,
-                icon: const Icon(IconsCG.closeSlim),
-                onPressed: Navigator.maybeOf(context)?.maybePop,
-              ),
-              actions: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: MaterialButton(
-                    visualDensity: VisualDensity.comfortable,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(4)),
-                    ),
-                    onPressed: onResetPressed,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        TR.miscFilterReset.tr(),
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface,
-                          fontWeight: FontWeight.w500,
-                        ),
+    builder: (final context) => BottomSheetBase(
+      borderRadius: 14,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          AppBar(
+            primary: false,
+            toolbarHeight: 40 * mediaQuery.textScaleFactor,
+            centerTitle: true,
+            title: Text(
+              TR.miscFilterTitle.tr(),
+              style: theme.textTheme.headline3,
+            ),
+            backgroundColor: Colors.transparent,
+            leading: IconButton(
+              iconSize: 16,
+              splashRadius: 16,
+              tooltip: TR.tooltipsClose.tr(),
+              color: theme.colorScheme.onSurface,
+              icon: const Icon(IconsCG.closeSlim),
+              onPressed: Navigator.maybeOf(context)?.maybePop,
+            ),
+            actions: <Widget>[
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: MaterialButton(
+                  visualDensity: VisualDensity.comfortable,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(4)),
+                  ),
+                  onPressed: onResetPressed,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      TR.miscFilterReset.tr(),
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-              ],
-            ),
-            Flexible(
-              child: SingleChildScrollView(
-                primary: false,
-                controller: ModalScrollController.of(context),
-                padding: const EdgeInsets.all(16),
-                child: const FiltersScreen(),
               ),
+              const SizedBox(width: 8),
+            ],
+          ),
+          Flexible(
+            child: SingleChildScrollView(
+              primary: false,
+              controller: ModalScrollController.of(context),
+              padding: const EdgeInsets.all(16),
+              child: const FiltersScreen(),
             ),
-          ],
-        ),
-      );
-    },
+          ),
+        ],
+      ),
+    ),
   );
 }
 
@@ -2000,7 +1964,7 @@ class FiltersScreen extends ConsumerWidget {
         //                       avatarUrl: studio.avatarUrl,
         //                       borderColor: Colors.grey.shade300,
         //                       backgroundColor: theme.colorScheme.surface,
-        //                       margin: const EdgeInsets.symmetric(vertical: 6),
+        //                      margin: const EdgeInsets.symmetric(vertical: 6),
         //                       selected: ref.watch(
         //                         activitiesStudiosFilterProvider
         //                             .select((final selectedStudios) {
@@ -2086,28 +2050,26 @@ class FiltersScreen extends ConsumerWidget {
                   for (final time
                       in ActivityTime.values.toList()..remove(ActivityTime.all))
                     Consumer(
-                      builder: (final context, final ref, final child) {
-                        return FilterButton(
-                          text: time.translate(),
-                          borderColor: Colors.grey.shade300,
-                          backgroundColor: theme.colorScheme.surface,
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          selected: ref.watch(
-                            activitiesTimeFilterProvider
-                                .select((final selectedTime) {
-                              return selectedTime.contains(time);
-                            }),
+                      builder: (final context, final ref, final child) =>
+                          FilterButton(
+                        text: time.translate(),
+                        borderColor: Colors.grey.shade300,
+                        backgroundColor: theme.colorScheme.surface,
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        selected: ref.watch(
+                          activitiesTimeFilterProvider.select(
+                            (final selectedTime) => selectedTime.contains(time),
                           ),
-                          onSelected: (final value) {
-                            final timeNotifier = ref.read(
-                              activitiesTimeFilterProvider.notifier,
-                            );
-                            value
-                                ? timeNotifier.add(time)
-                                : timeNotifier.remove(time);
-                          },
-                        );
-                      },
+                        ),
+                        onSelected: (final value) {
+                          final timeNotifier = ref.read(
+                            activitiesTimeFilterProvider.notifier,
+                          );
+                          value
+                              ? timeNotifier.add(time)
+                              : timeNotifier.remove(time);
+                        },
+                      ),
                     ),
                 ],
               ),
@@ -2133,29 +2095,28 @@ class FiltersScreen extends ConsumerWidget {
                   final children = <Widget>[
                     for (final trainer in trainers)
                       Consumer(
-                        builder: (final context, final ref, final child) {
-                          return FilterButton(
-                            text: trainer.trainerName,
-                            avatarUrl: trainer.trainerPhoto,
-                            borderColor: Colors.grey.shade300,
-                            backgroundColor: theme.colorScheme.surface,
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            selected: ref.watch(
-                              activitiesTrainersFilterProvider
-                                  .select((final selectedTrainers) {
-                                return selectedTrainers.contains(trainer);
-                              }),
+                        builder: (final context, final ref, final child) =>
+                            FilterButton(
+                          text: trainer.trainerName,
+                          avatarUrl: trainer.trainerPhoto,
+                          borderColor: Colors.grey.shade300,
+                          backgroundColor: theme.colorScheme.surface,
+                          margin: const EdgeInsets.symmetric(vertical: 4),
+                          selected: ref.watch(
+                            activitiesTrainersFilterProvider.select(
+                              (final selectedTrainers) =>
+                                  selectedTrainers.contains(trainer),
                             ),
-                            onSelected: (final value) {
-                              final trainersNotifier = ref.read(
-                                activitiesTrainersFilterProvider.notifier,
-                              );
-                              value
-                                  ? trainersNotifier.add(trainer)
-                                  : trainersNotifier.remove(trainer);
-                            },
-                          );
-                        },
+                          ),
+                          onSelected: (final value) {
+                            final trainersNotifier = ref.read(
+                              activitiesTrainersFilterProvider.notifier,
+                            );
+                            value
+                                ? trainersNotifier.add(trainer)
+                                : trainersNotifier.remove(trainer);
+                          },
+                        ),
                       ),
                   ];
                   return NativeDeviceOrientationReader(
@@ -2280,37 +2241,36 @@ class ActivitiesSearchResults extends ConsumerWidget {
 
     final search = ref.watch(activitiesSearchProvider).state;
     final categories = ref.watch(
-      combinedClassesProvider.select((final classes) {
-        return classes.where((final _class) {
-          return search.isEmpty ||
+      combinedClassesProvider.select(
+        (final classes) => classes.where(
+          (final _class) =>
+              search.isEmpty ||
               (_class.item0.translation.toLowerCase())
                   .contains(search.toLowerCase()) ||
               (_class.item1.classesName.toLowerCase())
-                  .contains(search.toLowerCase());
-        });
-      }),
+                  .contains(search.toLowerCase()),
+        ),
+      ),
     );
     final trainers = ref.watch(
-      smTrainersProvider.select((final smTrainers) {
-        if (search.isEmpty) {
-          return const Iterable<SMTrainerModel>.empty();
-        }
-        return smTrainers.where((final smTrainer) {
-          return (smTrainer.trainerName.toLowerCase())
-              .contains(search.toLowerCase());
-        });
-      }),
+      smTrainersProvider.select(
+        (final smTrainers) => search.isEmpty
+            ? const Iterable<SMTrainerModel>.empty()
+            : smTrainers.where(
+                (final smTrainer) => (smTrainer.trainerName.toLowerCase())
+                    .contains(search.toLowerCase()),
+              ),
+      ),
     );
     final studios = ref.watch(
-      combinedStudiosProvider.select((final smStudios) {
-        if (search.isEmpty) {
-          return const Iterable<CombinedStudioModel>.empty();
-        }
-        return smStudios.where((final smStudio) {
-          return (smStudio.item1.studioName.toLowerCase())
-              .contains(search.toLowerCase());
-        });
-      }),
+      combinedStudiosProvider.select(
+        (final smStudios) => search.isEmpty
+            ? const Iterable<CombinedStudioModel>.empty()
+            : smStudios.where(
+                (final smStudio) => (smStudio.item1.studioName.toLowerCase())
+                    .contains(search.toLowerCase()),
+              ),
+      ),
     );
 
     Widget searchResult({
@@ -2345,17 +2305,16 @@ class ActivitiesSearchResults extends ConsumerWidget {
                   memCacheWidth: width.toInt(),
                   imageUrl: imageUrl,
                   fit: BoxFit.fitWidth,
-                  imageBuilder: (final context, final imageProvider) {
-                    return Container(
-                      clipBehavior: Clip.antiAlias,
-                      decoration: ShapeDecoration(
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(6)),
-                        ),
-                        image: DecorationImage(image: imageProvider),
+                  imageBuilder: (final context, final imageProvider) =>
+                      Container(
+                    clipBehavior: Clip.antiAlias,
+                    decoration: ShapeDecoration(
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(6)),
                       ),
-                    );
-                  },
+                      image: DecorationImage(image: imageProvider),
+                    ),
+                  ),
                 )
               : null,
           title: Text(
@@ -2455,46 +2414,46 @@ class ActivitiesScreenDayPicker extends SliverPersistentHeaderDelegate {
     final BuildContext context,
     final double shrinkOffset,
     final bool overlapsContent,
-  ) {
-    return Material(
-      color: Theme.of(context).scaffoldBackgroundColor,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: spacing / 2),
-        child: Consumer(
-          builder: (final context, final ref, final child) {
-            final day = ref.watch(activitiesDayProvider).state;
-            final activitiesDays = ref.watch(activitiesDaysProvider);
-            return ListView.builder(
-              primary: false,
-              shrinkWrap: true,
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: spacing / 2),
-              itemCount: activitiesDays.length,
-              itemExtent: ActivitiesDateFilterCard.size(
-                    Theme.of(context),
-                    MediaQuery.of(context).textScaleFactor,
-                  ).width +
-                  spacing,
-              itemBuilder: (final context, final index) {
-                final date = activitiesDays.elementAt(index);
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: spacing / 2),
-                  child: ActivitiesDateFilterCard(
-                    date,
-                    selected: day.year == date.year &&
-                        day.month == date.month &&
-                        day.day == date.day,
-                    onSelected: () =>
-                        ref.read(activitiesDayProvider).state = date,
-                  ),
-                );
-              },
-            );
-          },
+  ) =>
+      Material(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: spacing / 2),
+          child: Consumer(
+            builder: (final context, final ref, final child) {
+              final day = ref.watch(activitiesDayProvider).state;
+              final activitiesDays = ref.watch(activitiesDaysProvider);
+              return ListView.builder(
+                primary: false,
+                shrinkWrap: true,
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: spacing / 2),
+                itemCount: activitiesDays.length,
+                itemExtent: ActivitiesDateFilterCard.size(
+                      Theme.of(context),
+                      MediaQuery.of(context).textScaleFactor,
+                    ).width +
+                    spacing,
+                itemBuilder: (final context, final index) {
+                  final date = activitiesDays.elementAt(index);
+                  return Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: spacing / 2),
+                    child: ActivitiesDateFilterCard(
+                      date,
+                      selected: day.year == date.year &&
+                          day.month == date.month &&
+                          day.day == date.day,
+                      onSelected: () =>
+                          ref.read(activitiesDayProvider).state = date,
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         ),
-      ),
-    );
-  }
+      );
 
   @override
   bool shouldRebuild(final ActivitiesScreenDayPicker oldDelegate) => false;

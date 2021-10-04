@@ -15,9 +15,9 @@ import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/main.dart';
-import 'package:stretching/models_smstretching/sm_abonement_model.dart';
-import 'package:stretching/models_yclients/activity_model.dart';
-import 'package:stretching/models_yclients/record_model.dart';
+import 'package:stretching/models/smstretching/sm_abonement_model.dart';
+import 'package:stretching/models/yclients/activity_model.dart';
+import 'package:stretching/models/yclients/record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/widgets/appbars.dart';
@@ -524,77 +524,6 @@ class ResultBookScreen extends ConsumerWidget {
   }
 }
 
-// /// The result screen after adding user to a wishlist.
-// class WishListResultScreen extends StatelessWidget {
-//   /// The result screen after adding user to a wishlist.
-//   const WishListResultScreen({required final this.alreadyAdded, final Key? key})
-//       : super(key: key);
-
-//   /// If this wishlist was already added.
-//   final bool alreadyAdded;
-
-//   @override
-//   Widget build(final BuildContext context) {
-//     final theme = Theme.of(context);
-//     return Scaffold(
-//       appBar: cancelAppBar(
-//         theme,
-//         onPressed: () => Navigator.of(context).maybePop(false),
-//       ),
-//       body: NativeDeviceOrientationReader(
-//         builder: (final context) => Align(
-//           child: SingleChildScrollView(
-//             key: UniqueKey(),
-//             child: Column(
-//               mainAxisSize: MainAxisSize.min,
-//               children: <Widget>[
-//                 EmojiText('🧘', style: const TextStyle(fontSize: 45)),
-//                 const SizedBox(height: 12),
-//                 Padding(
-//                   padding: const EdgeInsets.symmetric(horizontal: 50),
-//                   child: Text(
-//                     alreadyAdded
-//                         ? TR.wishlistAlreadyAdded.tr()
-//                         : TR.wishlistAddedTitle.tr(),
-//                     style: theme.textTheme.headline2,
-//                     textAlign: TextAlign.center,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 10),
-//                 Padding(
-//                   padding: const EdgeInsets.symmetric(horizontal: 45),
-//                   child: Text(
-//                     TR.wishlistAddedBody.tr(),
-//                     style: theme.textTheme.bodyText2,
-//                     textAlign: TextAlign.center,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 30),
-//                 Padding(
-//                   padding: const EdgeInsets.symmetric(horizontal: 90),
-//                   child: BottomButtons<dynamic>(
-//                     inverse: true,
-//                     firstText: TR.wishlistAddedButton.tr(),
-//                     onFirstPressed: (final context) =>
-//                         Navigator.of(context).maybePop(true),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 50),
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-
-//   @override
-//   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
-//     super.debugFillProperties(
-//       properties..add(DiagnosticsProperty<bool>('alreadyAdded', alreadyAdded)),
-//     );
-//   }
-// }
 
 /// The pair of [InitRequest] and [InitResponse].
 typedef WebViewAcquiring = Tuple2<InitRequest, InitResponse>;
@@ -660,66 +589,64 @@ Future<void> showRefundedModalBottomSheet({
     duration: const Duration(milliseconds: 500),
     animationCurve: Curves.easeInOut,
     closeProgressThreshold: 4 / 5,
-    builder: (final context) {
-      return BottomSheetBase(
-        child: CustomScrollView(
-          primary: false,
-          shrinkWrap: true,
-          controller: ModalScrollController.of(context),
-          cacheExtent: double.infinity,
-          slivers: <Widget>[
-            SliverAppBar(
-              primary: false,
-              toolbarHeight: 64,
-              title: Align(
-                alignment: Alignment.bottomLeft,
-                child: Text(title),
+    builder: (final context) => BottomSheetBase(
+      child: CustomScrollView(
+        primary: false,
+        shrinkWrap: true,
+        controller: ModalScrollController.of(context),
+        cacheExtent: double.infinity,
+        slivers: <Widget>[
+          SliverAppBar(
+            primary: false,
+            toolbarHeight: 64,
+            title: Align(
+              alignment: Alignment.bottomLeft,
+              child: Text(title),
+            ),
+            titleTextStyle: theme.textTheme.headline3?.copyWith(height: 3.5),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
               ),
-              titleTextStyle: theme.textTheme.headline3?.copyWith(height: 3.5),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(20),
-                  topRight: Radius.circular(20),
-                ),
-              ),
-              // backgroundColor: Colors.transparent,
-              automaticallyImplyLeading: false,
-              leadingWidth: 0,
-              leading: const SizedBox.shrink(),
-              backgroundColor: theme.backgroundColor,
-              actions: <Widget>[
-                Align(
-                  alignment: Alignment.topRight,
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: IconButton(
-                      onPressed: Navigator.of(context).maybePop,
-                      padding: const EdgeInsets.only(bottom: 2),
-                      splashRadius: 16,
-                      iconSize: 16,
-                      icon: FontIcon(
-                        FontIconData(
-                          IconsCG.close,
-                          height: 20,
-                          alignment: Alignment.topCenter,
-                          color: theme.colorScheme.onSurface,
-                        ),
+            ),
+            // backgroundColor: Colors.transparent,
+            automaticallyImplyLeading: false,
+            leadingWidth: 0,
+            leading: const SizedBox.shrink(),
+            backgroundColor: theme.backgroundColor,
+            actions: <Widget>[
+              Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 10),
+                  child: IconButton(
+                    onPressed: Navigator.of(context).maybePop,
+                    padding: const EdgeInsets.only(bottom: 2),
+                    splashRadius: 16,
+                    iconSize: 16,
+                    icon: FontIcon(
+                      FontIconData(
+                        IconsCG.close,
+                        height: 20,
+                        alignment: Alignment.topCenter,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
-              ],
-            ),
-            SliverToBoxAdapter(
-              child: Material(
-                color: theme.backgroundColor,
-                child: child,
               ),
+              const SizedBox(width: 8),
+            ],
+          ),
+          SliverToBoxAdapter(
+            child: Material(
+              color: theme.backgroundColor,
+              child: child,
             ),
-          ],
-        ),
-      );
-    },
+          ),
+        ],
+      ),
+    ),
   );
 }

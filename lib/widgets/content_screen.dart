@@ -34,22 +34,19 @@ class ContentParagraph {
   final bool expandable;
 
   @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is ContentParagraph &&
-            other.title == title &&
-            other.body == body &&
-            other.expandable == expandable;
-  }
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is ContentParagraph &&
+          other.title == title &&
+          other.body == body &&
+          other.expandable == expandable;
 
   @override
   int get hashCode => title.hashCode ^ body.hashCode ^ expandable.hashCode;
 
   @override
-  String toString() {
-    return 'ContentParagraph(title: $title, body: $body, '
-        'expandable: $expandable)';
-  }
+  String toString() => 'ContentParagraph(title: $title, body: $body, '
+      'expandable: $expandable)';
 }
 
 /// The screen that shows a content on a similar template.

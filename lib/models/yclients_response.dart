@@ -29,59 +29,50 @@ class YClientsRequestExtra<T extends Object?> {
     final FromJson<T?, Object?>? onData,
     final bool? validate,
     final bool? devToken,
-  }) {
-    return YClientsRequestExtra<T>(
-      onData: onData ?? this.onData,
-      validate: validate ?? this.validate,
-      devToken: devToken ?? this.devToken,
-    );
-  }
+  }) =>
+      YClientsRequestExtra<T>(
+        onData: onData ?? this.onData,
+        validate: validate ?? this.validate,
+        devToken: devToken ?? this.devToken,
+      );
 
   /// Convert this model to map with string keys.
-  Map<String, Object?> toMap() {
-    return <String, Object?>{
-      'onData': onData,
-      'validate': validate,
-      'devToken': devToken,
-    };
-  }
+  Map<String, Object?> toMap() => <String, Object?>{
+        'onData': onData,
+        'validate': validate,
+        'devToken': devToken,
+      };
 
   /// Convert the map with string keys to this model.
-  factory YClientsRequestExtra.fromMap(final Map<String, Object?> map) {
-    return YClientsRequestExtra<T>(
-      onData: map['onData'] as FromJson<T?, Object?>?,
-      validate: map['validate']! as bool,
-      devToken: map['devToken']! as bool,
-    );
-  }
+  factory YClientsRequestExtra.fromMap(final Map<String, Object?> map) =>
+      YClientsRequestExtra<T>(
+        onData: map['onData'] as FromJson<T?, Object?>?,
+        validate: map['validate']! as bool,
+        devToken: map['devToken']! as bool,
+      );
 
   /// Convert this model to a json string.
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory YClientsRequestExtra.fromJson(final String source) {
-    return YClientsRequestExtra.fromMap(
-      json.decode(source) as Map<String, Object?>,
-    );
-  }
+  factory YClientsRequestExtra.fromJson(final String source) =>
+      YClientsRequestExtra.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is YClientsRequestExtra<T> &&
-            other.onData == onData &&
-            other.validate == validate &&
-            other.devToken == devToken;
-  }
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is YClientsRequestExtra<T> &&
+          other.onData == onData &&
+          other.validate == validate &&
+          other.devToken == devToken;
 
   @override
   int get hashCode => onData.hashCode ^ validate.hashCode ^ devToken.hashCode;
 
   @override
-  String toString() {
-    return 'YClientsRequestExtra(onData: $onData, validate: $validate, '
-        'devToken: $devToken)';
-  }
+  String toString() =>
+      'YClientsRequestExtra(onData: $onData, validate: $validate, '
+      'devToken: $devToken)';
 }
 
 /// The response from the YClients API.
@@ -112,65 +103,57 @@ class YClientsResponse<T extends Object> {
     final bool? success,
     final T? data,
     final YClientsResponseMeta? meta,
-  }) {
-    return YClientsResponse<T>(
-      success: success ?? this.success,
-      data: data ?? this.data,
-      meta: meta ?? this.meta,
-    );
-  }
+  }) =>
+      YClientsResponse<T>(
+        success: success ?? this.success,
+        data: data ?? this.data,
+        meta: meta ?? this.meta,
+      );
 
   /// Convert this model to map with string keys.
-  Map<String, Object?> toMap({final ToJson<T?, Object?>? onData}) {
-    return <String, Object?>{
-      'success': success,
-      'data': data != null && onData != null ? onData(data) : data,
-      'meta': meta?.toMap() ?? const <Object>[],
-    };
-  }
+  Map<String, Object?> toMap({final ToJson<T?, Object?>? onData}) =>
+      <String, Object?>{
+        'success': success,
+        'data': data != null && onData != null ? onData(data) : data,
+        'meta': meta?.toMap() ?? const <Object>[],
+      };
 
   /// Convert the map with string keys to this model.
   factory YClientsResponse.fromMap(
     final Map<String, Object?> map, {
     final FromJson<T?, Object>? onData,
-  }) {
-    return YClientsResponse<T>(
-      success: map['success']! as bool,
-      data: onData != null && map['data'] != null
-          ? onData(map['data'])
-          : map['data'] as T?,
-      meta: map['meta'] != null && map['meta'] is! Iterable
-          ? YClientsResponseMeta.fromMap(map['meta']! as Map<String, Object?>)
-          : null,
-    );
-  }
+  }) =>
+      YClientsResponse<T>(
+        success: map['success']! as bool,
+        data: onData != null && map['data'] != null
+            ? onData(map['data'])
+            : map['data'] as T?,
+        meta: map['meta'] != null && map['meta'] is! Iterable
+            ? YClientsResponseMeta.fromMap(map['meta']! as Map<String, Object?>)
+            : null,
+      );
 
   /// Convert this model to a json string.
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory YClientsResponse.fromJson(final String source) {
-    return YClientsResponse.fromMap(
-      json.decode(source) as Map<String, Object?>,
-    );
-  }
+  factory YClientsResponse.fromJson(final String source) =>
+      YClientsResponse.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is YClientsResponse<T> &&
-            other.success == success &&
-            other.data == data &&
-            other.meta == meta;
-  }
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is YClientsResponse<T> &&
+          other.success == success &&
+          other.data == data &&
+          other.meta == meta;
 
   @override
   int get hashCode => success.hashCode ^ data.hashCode ^ meta.hashCode;
 
   @override
-  String toString() {
-    return 'YClientsResponse(success: $success, data: $data, meta: $meta)';
-  }
+  String toString() =>
+      'YClientsResponse(success: $success, data: $data, meta: $meta)';
 }
 
 /// The metadata received on [YClientsResponse].
@@ -192,46 +175,38 @@ class YClientsResponseMeta {
   YClientsResponseMeta copyWith({
     final int? count,
     final String? message,
-  }) {
-    return YClientsResponseMeta(
-      count: count ?? this.count,
-      message: message ?? this.message,
-    );
-  }
+  }) =>
+      YClientsResponseMeta(
+        count: count ?? this.count,
+        message: message ?? this.message,
+      );
 
   /// Convert this model to map with string keys.
-  Map<String, Object?> toMap() {
-    return <String, Object?>{
-      if (count != null) 'count': count,
-      if (message != null) 'message': message,
-    };
-  }
+  Map<String, Object?> toMap() => <String, Object?>{
+        if (count != null) 'count': count,
+        if (message != null) 'message': message,
+      };
 
   /// Convert the map with string keys to this model.
-  factory YClientsResponseMeta.fromMap(final Map<String, Object?> map) {
-    return YClientsResponseMeta(
-      count: map['count'] as int?,
-      message: map['message'] as String?,
-    );
-  }
+  factory YClientsResponseMeta.fromMap(final Map<String, Object?> map) =>
+      YClientsResponseMeta(
+        count: map['count'] as int?,
+        message: map['message'] as String?,
+      );
 
   /// Convert this model to a json string.
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory YClientsResponseMeta.fromJson(final String source) {
-    return YClientsResponseMeta.fromMap(
-      json.decode(source) as Map<String, Object?>,
-    );
-  }
+  factory YClientsResponseMeta.fromJson(final String source) =>
+      YClientsResponseMeta.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is YClientsResponseMeta &&
-            other.count == count &&
-            other.message == message;
-  }
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is YClientsResponseMeta &&
+          other.count == count &&
+          other.message == message;
 
   @override
   int get hashCode => count.hashCode ^ message.hashCode;

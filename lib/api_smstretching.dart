@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:catcher/catcher.dart';
 import 'package:darq/darq.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
@@ -10,22 +11,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/const.dart';
-import 'package:stretching/models_smstretching/sm_abonement_model.dart';
-import 'package:stretching/models_smstretching/sm_activity_price_model.dart';
-import 'package:stretching/models_smstretching/sm_advertisment_model.dart';
-import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
-import 'package:stretching/models_smstretching/sm_payment_model.dart';
-import 'package:stretching/models_smstretching/sm_record_model.dart';
-import 'package:stretching/models_smstretching/sm_story_model.dart';
-import 'package:stretching/models_smstretching/sm_studio_model.dart';
-import 'package:stretching/models_smstretching/sm_studio_options_model.dart';
-import 'package:stretching/models_smstretching/sm_trainer_model.dart';
-import 'package:stretching/models_smstretching/sm_user_abonement_model.dart';
-import 'package:stretching/models_smstretching/sm_wishlist_model.dart';
-import 'package:stretching/models_yclients/activity_model.dart';
-import 'package:stretching/models_yclients/storage_operation_model.dart';
-import 'package:stretching/models_yclients/user_model.dart';
-import 'package:stretching/models_yclients/user_record_model.dart';
+import 'package:stretching/models/smstretching/sm_abonement_model.dart';
+import 'package:stretching/models/smstretching/sm_activity_price_model.dart';
+import 'package:stretching/models/smstretching/sm_advertisment_model.dart';
+import 'package:stretching/models/smstretching/sm_classes_gallery_model.dart';
+import 'package:stretching/models/smstretching/sm_payment_model.dart';
+import 'package:stretching/models/smstretching/sm_record_model.dart';
+import 'package:stretching/models/smstretching/sm_story_model.dart';
+import 'package:stretching/models/smstretching/sm_studio_model.dart';
+import 'package:stretching/models/smstretching/sm_studio_options_model.dart';
+import 'package:stretching/models/smstretching/sm_trainer_model.dart';
+import 'package:stretching/models/smstretching/sm_user_abonement_model.dart';
+import 'package:stretching/models/smstretching/sm_wishlist_model.dart';
+import 'package:stretching/models/yclients/activity_model.dart';
+import 'package:stretching/models/yclients/storage_operation_model.dart';
+import 'package:stretching/models/yclients/user_model.dart';
+import 'package:stretching/models/yclients/user_record_model.dart';
 import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
@@ -455,8 +456,8 @@ final FutureProvider<int> smDefaultStudioIdProvider =
 final StateNotifierProvider<ContentNotifier<SMStudioModel>,
         Iterable<SMStudioModel>> smStudiosProvider =
     StateNotifierProvider<ContentNotifier<SMStudioModel>,
-        Iterable<SMStudioModel>>((final ref) {
-  return ContentNotifier<SMStudioModel>(
+        Iterable<SMStudioModel>>(
+  (final ref) => ContentNotifier<SMStudioModel>(
     hive: ref.watch(hiveProvider),
     saveName: 'smStudios',
     converter: smStudioConverter,
@@ -466,8 +467,8 @@ final StateNotifierProvider<ContentNotifier<SMStudioModel>,
       return (response.data!.cast<Map<String, Object?>>())
           .map(SMStudioModel.fromMap);
     },
-  );
-});
+  ),
+);
 
 /// The studios options provider for SMStretching API.
 ///
@@ -475,8 +476,8 @@ final StateNotifierProvider<ContentNotifier<SMStudioModel>,
 final StateNotifierProvider<ContentNotifier<SMStudioOptionsModel>,
         Iterable<SMStudioOptionsModel>> smStudiosOptionsProvider =
     StateNotifierProvider<ContentNotifier<SMStudioOptionsModel>,
-        Iterable<SMStudioOptionsModel>>((final ref) {
-  return ContentNotifier<SMStudioOptionsModel>(
+        Iterable<SMStudioOptionsModel>>(
+  (final ref) => ContentNotifier<SMStudioOptionsModel>(
     hive: ref.watch(hiveProvider),
     saveName: 'smStudiosOptions',
     converter: smStudioOptionsConverter,
@@ -485,12 +486,12 @@ final StateNotifierProvider<ContentNotifier<SMStudioOptionsModel>,
         '$smStretchingApiUrl/options/$smStretchingUrlToken/get_all',
       );
       final data = json.decode(response.data!) as Map<String, Object?>;
-      return data.entries.map((final entry) {
-        return SMStudioOptionsModel.fromMap({entry.key: entry.value});
-      });
+      return data.entries.map(
+        (final entry) => SMStudioOptionsModel.fromMap({entry.key: entry.value}),
+      );
     },
-  );
-});
+  ),
+);
 
 /// The trainers provider for SMStretching API.
 ///
@@ -498,8 +499,8 @@ final StateNotifierProvider<ContentNotifier<SMStudioOptionsModel>,
 final StateNotifierProvider<ContentNotifier<SMTrainerModel>,
         Iterable<SMTrainerModel>> smTrainersProvider =
     StateNotifierProvider<ContentNotifier<SMTrainerModel>,
-        Iterable<SMTrainerModel>>((final ref) {
-  return ContentNotifier<SMTrainerModel>(
+        Iterable<SMTrainerModel>>(
+  (final ref) => ContentNotifier<SMTrainerModel>(
     hive: ref.watch(hiveProvider),
     saveName: 'smTrainers',
     converter: smTrainerConverter,
@@ -510,8 +511,8 @@ final StateNotifierProvider<ContentNotifier<SMTrainerModel>,
               .cast<Map<String, Object?>>())
           .map(SMTrainerModel.fromMap);
     },
-  );
-});
+  ),
+);
 
 /// The user abonements provider for SMStretching API.
 ///
@@ -557,8 +558,8 @@ final StateNotifierProvider<ContentNotifier<SMUserAbonementModel>,
 final StateNotifierProvider<ContentNotifier<SMAbonementModel>,
         Iterable<SMAbonementModel>> smAbonementsProvider =
     StateNotifierProvider<ContentNotifier<SMAbonementModel>,
-        Iterable<SMAbonementModel>>((final ref) {
-  return ContentNotifier<SMAbonementModel>(
+        Iterable<SMAbonementModel>>(
+  (final ref) => ContentNotifier<SMAbonementModel>(
     hive: ref.watch(hiveProvider),
     saveName: 'smAbonements',
     converter: smAbonementConverter,
@@ -568,13 +569,15 @@ final StateNotifierProvider<ContentNotifier<SMAbonementModel>,
         '$smStretchingApiUrl/goods/$smStretchingUrlToken/get_all',
       );
       final data = json.decode(response.data!) as Map<String, Object?>;
-      return data.entries.map((final entry) {
-        return SMAbonementModel.fromMap({entry.key: entry.value});
-      }).toList(growable: false)
+      return data.entries
+          .map(
+            (final entry) => SMAbonementModel.fromMap({entry.key: entry.value}),
+          )
+          .toList(growable: false)
         ..sort();
     },
-  );
-});
+  ),
+);
 
 /// The classes gallery provider for SMStretching API.
 ///
@@ -582,19 +585,20 @@ final StateNotifierProvider<ContentNotifier<SMAbonementModel>,
 final StateNotifierProvider<ContentNotifier<SMClassesGalleryModel>,
         Iterable<SMClassesGalleryModel>> smClassesGalleryProvider =
     StateNotifierProvider<ContentNotifier<SMClassesGalleryModel>,
-        Iterable<SMClassesGalleryModel>>((final ref) {
-  return ContentNotifier<SMClassesGalleryModel>(
+        Iterable<SMClassesGalleryModel>>(
+  (final ref) => ContentNotifier<SMClassesGalleryModel>(
     hive: ref.watch(hiveProvider),
     saveName: 'smClassesGallery',
     converter: smClassesGalleryConverter,
     refreshState: (final notifier) async {
-      final response = await smStretching._dio
-          .get<Iterable>('$smStretchingContentUrl/gallery_for_classes');
+      final response = await smStretching._dio.get<Iterable>(
+        '$smStretchingContentUrl/gallery_for_classes',
+      );
       return (response.data!.cast<Map<String, Object?>>())
           .map(SMClassesGalleryModel.fromMap);
     },
-  );
-});
+  ),
+);
 
 /// The provider of the advertisments from the SMStretching API.
 ///
@@ -602,8 +606,8 @@ final StateNotifierProvider<ContentNotifier<SMClassesGalleryModel>,
 final StateNotifierProvider<ContentNotifier<SMAdvertismentModel>,
         Iterable<SMAdvertismentModel>> smAdvertismentsProvider =
     StateNotifierProvider<ContentNotifier<SMAdvertismentModel>,
-        Iterable<SMAdvertismentModel>>((final ref) {
-  return ContentNotifier<SMAdvertismentModel>(
+        Iterable<SMAdvertismentModel>>(
+  (final ref) => ContentNotifier<SMAdvertismentModel>(
     hive: ref.watch(hiveProvider),
     saveName: 'smAdvertisments',
     converter: smAdvertismentConverter,
@@ -613,8 +617,8 @@ final StateNotifierProvider<ContentNotifier<SMAdvertismentModel>,
       return (response.data!.cast<Map<String, Object?>>())
           .map(SMAdvertismentModel.fromMap);
     },
-  );
-});
+  ),
+);
 
 /// The provider of the stories from the SMStretching API.
 ///
@@ -622,8 +626,8 @@ final StateNotifierProvider<ContentNotifier<SMAdvertismentModel>,
 final StateNotifierProvider<ContentNotifier<SMStoryModel>,
         Iterable<SMStoryModel>> smStoriesProvider =
     StateNotifierProvider<ContentNotifier<SMStoryModel>,
-        Iterable<SMStoryModel>>((final ref) {
-  return ContentNotifier<SMStoryModel>(
+        Iterable<SMStoryModel>>(
+  (final ref) => ContentNotifier<SMStoryModel>(
     hive: ref.watch(hiveProvider),
     saveName: 'smStories',
     converter: smStoryConverter,
@@ -633,14 +637,12 @@ final StateNotifierProvider<ContentNotifier<SMStoryModel>,
       return (response.data!.cast<Map<String, Object?>>())
           .map(SMStoryModel.fromMap);
     },
-  );
-});
+  ),
+);
 
 /// The id converter of the [UserRecordModel].
 final Provider<UserRecordIdConverter> userRecordIdConverterProvider =
-    Provider<UserRecordIdConverter>((final ref) {
-  return UserRecordIdConverter._(ref);
-});
+    Provider<UserRecordIdConverter>(UserRecordIdConverter._);
 
 /// The id converter of the [UserRecordModel].
 class UserRecordIdConverter implements JsonConverter<UserRecordModel?, int> {
@@ -664,31 +666,32 @@ class UserRecordIdConverter implements JsonConverter<UserRecordModel?, int> {
 final StateNotifierProvider<SaveToHiveIterableNotifier<UserRecordModel, String>,
         Iterable<UserRecordModel>> pushedRecordsProvider =
     StateNotifierProvider<SaveToHiveIterableNotifier<UserRecordModel, String>,
-        Iterable<UserRecordModel>>((final ref) {
-  return SaveToHiveIterableNotifier<UserRecordModel, String>(
+        Iterable<UserRecordModel>>(
+  (final ref) => SaveToHiveIterableNotifier<UserRecordModel, String>(
     hive: ref.watch(hiveProvider),
     saveName: 'pushed_records',
     converter: StringToIterableConverter(
       OptionalIterableConverter(ref.watch(userRecordIdConverterProvider)),
     ),
     defaultValue: const Iterable<UserRecordModel>.empty(),
-  );
-});
+  ),
+);
 
 /// The event handler for push a review screen to user when a record finishes.
 class ReviewRecordsEventHandler extends WidgetsBindingObserver {
   /// The event handler for push a review screen to user when a record finishes.
-  ReviewRecordsEventHandler(final this._context, final this._ref);
-  final BuildContext _context;
+  ReviewRecordsEventHandler(final this._ref);
   final WidgetRef _ref;
 
   @override
   Future<void> didChangeAppLifecycleState(final AppLifecycleState state) async {
     final userPhone = _ref.read(userProvider)?.phone;
-    if (state != AppLifecycleState.resumed || userPhone == null) {
+    final navigator = Catcher.navigatorKey?.currentState;
+    if (state != AppLifecycleState.resumed ||
+        userPhone == null ||
+        navigator == null) {
       return;
     }
-    final navigator = Navigator.of(_context, rootNavigator: true);
     final currentTime = _ref.read(smServerTimeProvider);
     final pushedRecordsNotifier = _ref.read(pushedRecordsProvider.notifier);
     for (final userRecord in _ref.read(userRecordsProvider)) {

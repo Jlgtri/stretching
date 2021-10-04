@@ -29,22 +29,19 @@ class InfoWindowOptions {
     final LatLng? coordinates,
     final Size? size,
     final Offset? offset,
-  }) {
-    return InfoWindowOptions(
-      coordinates: coordinates ?? this.coordinates,
-      size: size ?? this.size,
-      offset: offset ?? this.offset,
-    );
-  }
+  }) =>
+      InfoWindowOptions(
+        coordinates: coordinates ?? this.coordinates,
+        size: size ?? this.size,
+        offset: offset ?? this.offset,
+      );
 
   /// Convert this model to map with string keys.
-  Map<String, Object?> toMap() {
-    return <String, Object?>{
-      'coordinates': coordinates.toJson(),
-      'size': <double>[size.width, size.height].join(','),
-      'offset': <double>[offset.dx, offset.dy].join(','),
-    };
-  }
+  Map<String, Object?> toMap() => <String, Object?>{
+        'coordinates': coordinates.toJson(),
+        'size': <double>[size.width, size.height].join(','),
+        'offset': <double>[offset.dx, offset.dy].join(','),
+      };
 
   /// Convert the map with string keys to this model.
   factory InfoWindowOptions.fromMap(final Map<String, Object?> map) {
@@ -61,27 +58,22 @@ class InfoWindowOptions {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory InfoWindowOptions.fromJson(final String source) {
-    return InfoWindowOptions.fromMap(
-      json.decode(source)! as Map<String, Object?>,
-    );
-  }
+  factory InfoWindowOptions.fromJson(final String source) =>
+      InfoWindowOptions.fromMap(json.decode(source)! as Map<String, Object?>);
 
   @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is InfoWindowOptions &&
-            other.coordinates == coordinates &&
-            other.size == size &&
-            other.offset == offset;
-  }
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is InfoWindowOptions &&
+          other.coordinates == coordinates &&
+          other.size == size &&
+          other.offset == offset;
 
   @override
   int get hashCode => coordinates.hashCode ^ size.hashCode ^ offset.hashCode;
 
   @override
-  String toString() {
-    return 'InfoWindowOptions(coordinates: $coordinates, size: $size, '
-        'offset: $offset)';
-  }
+  String toString() =>
+      'InfoWindowOptions(coordinates: $coordinates, size: $size, '
+      'offset: $offset)';
 }

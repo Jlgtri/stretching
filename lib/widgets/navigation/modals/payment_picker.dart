@@ -9,7 +9,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
-import 'package:stretching/models_smstretching/sm_abonement_model.dart';
+import 'package:stretching/models/smstretching/sm_abonement_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
@@ -26,14 +26,13 @@ import 'package:validators/validators.dart';
 final StateNotifierProvider<SaveToHiveNotifier<String, String>, String>
     paymentEmailProvider =
     StateNotifierProvider<SaveToHiveNotifier<String, String>, String>(
-        (final ref) {
-  return SaveToHiveNotifier(
+  (final ref) => SaveToHiveNotifier(
     hive: ref.watch(hiveProvider),
     saveName: 'paymentEmail',
     converter: DummyConverter(),
     defaultValue: '',
-  );
-});
+  ),
+);
 
 /// The callback on payment. The payment is regular if [abonement] is null.
 typedef OnPayment = FutureOr<void> Function(
@@ -153,11 +152,11 @@ class PaymentPickerScreen extends HookConsumerWidget {
     final smAbonementsStudios =
         smAbonements.map((final smAbonement) => smAbonement.service).toSet();
     final studios = ref.watch(
-      combinedStudiosProvider.select((final studios) {
-        return studios.where((final studio) {
-          return smAbonementsStudios.contains(studio.item0.id);
-        });
-      }),
+      combinedStudiosProvider.select(
+        (final studios) => studios.where(
+          (final studio) => smAbonementsStudios.contains(studio.item0.id),
+        ),
+      ),
     );
     final countValues = (smAbonements.map((final abonement) => abonement.count))
         .toSet()
@@ -218,18 +217,18 @@ class PaymentPickerScreen extends HookConsumerWidget {
     );
 
     final abonement = smAbonements.cast<SMAbonementModel?>().firstWhere(
-      (final smAbonement) {
-        return smAbonement!.count == pickedCount.value &&
-            (!smAbonement.time && pickedTimeOfDay.value == ActivityTime.all ||
-                smAbonement.time &&
-                    pickedTimeOfDay.value == ActivityTime.before) &&
-            ((pickedAllStudios.value && smAbonement.service == null) ||
-                (!pickedAllStudios.value &&
-                    (pickedStudio.value == null ||
-                        smAbonement.service == pickedStudio.value!.item0.id)));
-      },
-      orElse: () => null,
-    );
+          (final smAbonement) =>
+              smAbonement!.count == pickedCount.value &&
+              (!smAbonement.time && pickedTimeOfDay.value == ActivityTime.all ||
+                  smAbonement.time &&
+                      pickedTimeOfDay.value == ActivityTime.before) &&
+              ((pickedAllStudios.value && smAbonement.service == null) ||
+                  (!pickedAllStudios.value &&
+                      (pickedStudio.value == null ||
+                          smAbonement.service ==
+                              pickedStudio.value!.item0.id))),
+          orElse: () => null,
+        );
 
     useFuture(
       useMemoized(

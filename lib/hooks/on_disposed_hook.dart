@@ -10,9 +10,8 @@ typedef OnDisposed<T extends Object?> = FutureOr<T> Function();
 /// Creates a hook that calls [callback] when it is disposed.
 void useOnDisposed<T extends Object?>(
   final OnDisposed<T> callback,
-) {
-  return use(_OnDisposedHook<T>(callback));
-}
+) =>
+    use(_OnDisposedHook<T>(callback));
 
 class _OnDisposedHook<T extends Object?> extends Hook<void> {
   const _OnDisposedHook(final this.callback);

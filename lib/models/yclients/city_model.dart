@@ -48,31 +48,26 @@ class CityModel {
     final int? id,
     final int? countryId,
     final String? title,
-  }) {
-    return CityModel(
-      id: id ?? this.id,
-      countryId: countryId ?? this.countryId,
-      title: title ?? this.title,
-    );
-  }
+  }) =>
+      CityModel(
+        id: id ?? this.id,
+        countryId: countryId ?? this.countryId,
+        title: title ?? this.title,
+      );
 
   /// Convert this model to map with string keys.
-  Map<String, Object?> toMap() {
-    return <String, Object?>{
-      'id': id,
-      'country_id': countryId,
-      'title': title,
-    };
-  }
+  Map<String, Object?> toMap() => <String, Object?>{
+        'id': id,
+        'country_id': countryId,
+        'title': title,
+      };
 
   /// Convert the map with string keys to this model.
-  factory CityModel.fromMap(final Map<String, Object?> map) {
-    return CityModel(
-      id: map['id']! as int,
-      countryId: map['country_id']! as int,
-      title: map['title']! as String,
-    );
-  }
+  factory CityModel.fromMap(final Map<String, Object?> map) => CityModel(
+        id: map['id']! as int,
+        countryId: map['country_id']! as int,
+        title: map['title']! as String,
+      );
 
   /// Convert this model to a json string.
   String toJson() => json.encode(toMap());
@@ -82,19 +77,17 @@ class CityModel {
       CityModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is CityModel &&
-            other.id == id &&
-            other.countryId == countryId &&
-            other.title == title;
-  }
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is CityModel &&
+          other.id == id &&
+          other.countryId == countryId &&
+          other.title == title;
 
   @override
   int get hashCode => id.hashCode ^ countryId.hashCode ^ title.hashCode;
 
   @override
-  String toString() {
-    return 'CityModel(id: $id, countryId: $countryId, title: $title)';
-  }
+  String toString() =>
+      'CityModel(id: $id, countryId: $countryId, title: $title)';
 }

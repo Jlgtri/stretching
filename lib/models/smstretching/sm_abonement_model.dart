@@ -5,7 +5,7 @@ import 'dart:convert';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:meta/meta.dart';
 import 'package:stretching/generated/localization.g.dart';
-import 'package:stretching/models_yclients/activity_model.dart';
+import 'package:stretching/models/yclients/activity_model.dart';
 import 'package:stretching/utils/enum_to_string.dart';
 import 'package:stretching/utils/json_converters.dart';
 import 'package:stretching/widgets/navigation/screens/activities_screen.dart';
@@ -116,33 +116,30 @@ class SMAbonementModel implements Comparable<SMAbonementModel> {
     final int? yHold,
     final int? yId,
     final int? cost,
-  }) {
-    return SMAbonementModel(
-      id: id ?? this.id,
-      count: count ?? this.count,
-      service: service ?? this.service,
-      time: time ?? this.time,
-      ySrok: ySrok ?? this.ySrok,
-      yHold: yHold ?? this.yHold,
-      yId: yId ?? this.yId,
-      cost: cost ?? this.cost,
-    );
-  }
+  }) =>
+      SMAbonementModel(
+        id: id ?? this.id,
+        count: count ?? this.count,
+        service: service ?? this.service,
+        time: time ?? this.time,
+        ySrok: ySrok ?? this.ySrok,
+        yHold: yHold ?? this.yHold,
+        yId: yId ?? this.yId,
+        cost: cost ?? this.cost,
+      );
 
   /// Convert this model to map with string keys.
-  Map<String, Object?> toMap() {
-    return <String, Object?>{
-      id.toString(): <String, Object?>{
-        'count': count.toString(),
-        'service': (service ?? 0).toString(),
-        'time': boolToIntConverter.toJson(time).toString(),
-        'y_srok': ySrok.toString(),
-        'y_hold': yHold.toString(),
-        'y_id': yId.toString(),
-        'cost': cost.toString(),
-      }
-    };
-  }
+  Map<String, Object?> toMap() => <String, Object?>{
+        id.toString(): <String, Object?>{
+          'count': count.toString(),
+          'service': (service ?? 0).toString(),
+          'time': boolToIntConverter.toJson(time).toString(),
+          'y_srok': ySrok.toString(),
+          'y_hold': yHold.toString(),
+          'y_id': yId.toString(),
+          'cost': cost.toString(),
+        }
+      };
 
   /// Convert the map with string keys to this model.
   factory SMAbonementModel.fromMap(final Map<String, Object?> map) {
@@ -164,44 +161,38 @@ class SMAbonementModel implements Comparable<SMAbonementModel> {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory SMAbonementModel.fromJson(final String source) {
-    return SMAbonementModel.fromMap(
-      json.decode(source) as Map<String, Object?>,
-    );
-  }
+  factory SMAbonementModel.fromJson(final String source) =>
+      SMAbonementModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
   int compareTo(final SMAbonementModel other) => cost.compareTo(other.cost);
 
   @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is SMAbonementModel &&
-            other.id == id &&
-            other.count == count &&
-            other.service == service &&
-            other.time == time &&
-            other.ySrok == ySrok &&
-            other.yHold == yHold &&
-            other.yId == yId &&
-            other.cost == cost;
-  }
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is SMAbonementModel &&
+          other.id == id &&
+          other.count == count &&
+          other.service == service &&
+          other.time == time &&
+          other.ySrok == ySrok &&
+          other.yHold == yHold &&
+          other.yId == yId &&
+          other.cost == cost;
 
   @override
-  int get hashCode {
-    return id.hashCode ^
-        count.hashCode ^
-        service.hashCode ^
-        time.hashCode ^
-        ySrok.hashCode ^
-        yHold.hashCode ^
-        yId.hashCode ^
-        cost.hashCode;
-  }
+  int get hashCode =>
+      id.hashCode ^
+      count.hashCode ^
+      service.hashCode ^
+      time.hashCode ^
+      ySrok.hashCode ^
+      yHold.hashCode ^
+      yId.hashCode ^
+      cost.hashCode;
 
   @override
-  String toString() {
-    return 'SMAbonementModel(id: $id, count: $count, service: $service, '
-        'time: $time, ySrok: $ySrok, yHold: $yHold, yId: $yId, cost: $cost)';
-  }
+  String toString() =>
+      'SMAbonementModel(id: $id, count: $count, service: $service, '
+      'time: $time, ySrok: $ySrok, yHold: $yHold, yId: $yId, cost: $cost)';
 }

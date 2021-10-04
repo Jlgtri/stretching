@@ -78,46 +78,41 @@ class UserModel {
     final String? email,
     final String? avatar,
     final String? hash,
-  }) {
-    return UserModel(
-      id: id ?? this.id,
-      userToken: userToken ?? this.userToken,
-      name: name ?? this.name,
-      phone: phone ?? this.phone,
-      login: login ?? this.login,
-      email: email ?? this.email,
-      avatar: avatar ?? this.avatar,
-      hash: hash ?? this.hash,
-    );
-  }
+  }) =>
+      UserModel(
+        id: id ?? this.id,
+        userToken: userToken ?? this.userToken,
+        name: name ?? this.name,
+        phone: phone ?? this.phone,
+        login: login ?? this.login,
+        email: email ?? this.email,
+        avatar: avatar ?? this.avatar,
+        hash: hash ?? this.hash,
+      );
 
   /// Convert this model to map with string keys.
-  Map<String, Object?> toMap() {
-    return <String, Object?>{
-      'id': id,
-      'user_token': userToken,
-      'name': name,
-      'phone': phone,
-      'login': login,
-      'email': email,
-      'avatar': avatar,
-      '0': hash,
-    };
-  }
+  Map<String, Object?> toMap() => <String, Object?>{
+        'id': id,
+        'user_token': userToken,
+        'name': name,
+        'phone': phone,
+        'login': login,
+        'email': email,
+        'avatar': avatar,
+        '0': hash,
+      };
 
   /// Convert the map with string keys to this model.
-  factory UserModel.fromMap(final Map<String, Object?> map) {
-    return UserModel(
-      id: map['id']! as int,
-      userToken: map['user_token']! as String,
-      name: map['name']! as String,
-      phone: map['phone']! as String,
-      login: map['login']! as String,
-      email: map['email']! as String,
-      avatar: map['avatar']! as String,
-      hash: map['0']! as String,
-    );
-  }
+  factory UserModel.fromMap(final Map<String, Object?> map) => UserModel(
+        id: map['id']! as int,
+        userToken: map['user_token']! as String,
+        name: map['name']! as String,
+        phone: map['phone']! as String,
+        login: map['login']! as String,
+        email: map['email']! as String,
+        avatar: map['avatar']! as String,
+        hash: map['0']! as String,
+      );
 
   /// Convert this model to a json string.
   String toJson() => json.encode(toMap());
@@ -127,35 +122,31 @@ class UserModel {
       UserModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is UserModel &&
-            other.id == id &&
-            other.userToken == userToken &&
-            other.name == name &&
-            other.phone == phone &&
-            other.login == login &&
-            other.email == email &&
-            other.avatar == avatar &&
-            other.hash == hash;
-  }
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is UserModel &&
+          other.id == id &&
+          other.userToken == userToken &&
+          other.name == name &&
+          other.phone == phone &&
+          other.login == login &&
+          other.email == email &&
+          other.avatar == avatar &&
+          other.hash == hash;
 
   @override
-  int get hashCode {
-    return id.hashCode ^
-        userToken.hashCode ^
-        name.hashCode ^
-        phone.hashCode ^
-        login.hashCode ^
-        email.hashCode ^
-        avatar.hashCode ^
-        hash.hashCode;
-  }
+  int get hashCode =>
+      id.hashCode ^
+      userToken.hashCode ^
+      name.hashCode ^
+      phone.hashCode ^
+      login.hashCode ^
+      email.hashCode ^
+      avatar.hashCode ^
+      hash.hashCode;
 
   @override
-  String toString() {
-    return 'UserModel(id: $id, userToken: $userToken, name: $name, '
-        'phone: $phone, login: $login, email: $email, avatar: $avatar, '
-        'hash: $hash)';
-  }
+  String toString() => 'UserModel(id: $id, userToken: $userToken, name: $name, '
+      'phone: $phone, login: $login, email: $email, avatar: $avatar, '
+      'hash: $hash)';
 }

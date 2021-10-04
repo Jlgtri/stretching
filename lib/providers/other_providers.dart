@@ -6,7 +6,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:native_device_orientation/native_device_orientation.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/providers/hive_provider.dart';
@@ -16,22 +15,21 @@ import 'package:stretching/widgets/components/font_icon.dart';
 /// The premade initialisation of a Flutter's [WidgetsBinding].
 /// Also is used for accessing the non null [WidgetsBinding] class.
 final Provider<WidgetsBinding> widgetsBindingProvider =
-    Provider<WidgetsBinding>((final ref) {
-  return WidgetsFlutterBinding.ensureInitialized();
-});
+    Provider<WidgetsBinding>(
+  (final ref) => WidgetsFlutterBinding.ensureInitialized(),
+);
 
 /// The provider that contais current [ThemeMode].
 final StateNotifierProvider<SaveToHiveNotifier<ThemeMode, String>, ThemeMode>
     themeModeProvider =
     StateNotifierProvider<SaveToHiveNotifier<ThemeMode, String>, ThemeMode>(
-        (final ref) {
-  return SaveToHiveNotifier<ThemeMode, String>(
+  (final ref) => SaveToHiveNotifier<ThemeMode, String>(
     hive: ref.watch(hiveProvider),
     saveName: 'theme',
     converter: const EnumConverter<ThemeMode>(ThemeMode.values),
     defaultValue: ThemeMode.system,
-  );
-});
+  ),
+);
 
 /// The provider of the current app's root [Theme].
 final StateProvider<ThemeData?> rootThemeProvider =
@@ -45,41 +43,38 @@ final StateProvider<MediaQueryData?> rootMediaQueryProvider =
 final StateNotifierProvider<SaveToHiveNotifier<Locale, String>, Locale>
     localeProvider =
     StateNotifierProvider<SaveToHiveNotifier<Locale, String>, Locale>(
-        (final ref) {
-  return SaveToHiveNotifier<Locale, String>(
+  (final ref) => SaveToHiveNotifier<Locale, String>(
     hive: ref.watch(hiveProvider),
     saveName: 'locale',
     converter: localeConverter,
     defaultValue: defaultLocale,
-  );
-});
+  ),
+);
 
 /// Thhe provider of the current device's location.
-final StreamProvider<Position> locationProvider =
-    StreamProvider<Position>((final ref) {
-  return Geolocator.getPositionStream(
+final StreamProvider<Position> locationProvider = StreamProvider<Position>(
+  (final ref) => Geolocator.getPositionStream(
     distanceFilter: 10,
     intervalDuration: const Duration(seconds: 10),
     timeLimit: const Duration(days: 365),
-  );
-});
+  ),
+);
 
 /// Thhe provider of the current device's location.
 final StreamProvider<ServiceStatus> locationServicesProvider =
-    StreamProvider<ServiceStatus>((final ref) {
-  return Geolocator.getServiceStatusStream()
+    StreamProvider<ServiceStatus>(
+  (final ref) => Geolocator.getServiceStatusStream()
     ..listen((final status) {
       if (status == ServiceStatus.enabled) {
         ref.refresh(locationProvider);
       }
-    });
-});
+    }),
+);
 
 /// The style for the Google Map.
-final FutureProvider<String> mapStyleProvider =
-    FutureProvider<String>((final ref) {
-  return rootBundle.loadString(AssetsCG.googleMapStyle);
-});
+final FutureProvider<String> mapStyleProvider = FutureProvider<String>(
+  (final ref) => rootBundle.loadString(AssetsCG.googleMapStyle),
+);
 
 /// The style for the Google Map.
 final FutureProviderFamily<BitmapDescriptor, FontIconData> mapMarkerProvider =
@@ -99,18 +94,12 @@ final FutureProviderFamily<BitmapDescriptor, FontIconData> mapMarkerProvider =
 });
 
 /// The provider of current time on device.
-final StreamProvider<DateTime> timeProvider =
-    StreamProvider<DateTime>((final ref) {
-  return Stream<DateTime>.periodic(const Duration(seconds: 1), (final i) {
-    return DateTime.now();
-  });
-});
-
-/// The provider of the orientation on the device.
-final StreamProvider<NativeDeviceOrientation> orientationProvider =
-    StreamProvider((final ref) {
-  return NativeDeviceOrientationCommunicator().onOrientationChanged();
-});
+final StreamProvider<DateTime> timeProvider = StreamProvider<DateTime>(
+  (final ref) => Stream<DateTime>.periodic(
+    const Duration(seconds: 1),
+    (final i) => DateTime.now(),
+  ),
+);
 
 /// The notifier of the current server time.
 class ServerTimeNotifier extends StateNotifier<DateTime> {

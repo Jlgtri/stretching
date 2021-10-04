@@ -9,7 +9,7 @@ import 'package:native_device_orientation/native_device_orientation.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/hook_consumer_stateful_widget.dart';
-import 'package:stretching/models_yclients/user_record_model.dart';
+import 'package:stretching/models/yclients/user_record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/hide_appbar_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
@@ -49,15 +49,16 @@ class HistoryScreenState extends ConsumerState<HistoryScreen>
     final userYearAndMonthRecords = ref.watch(
       userRecordsProvider.select((final userRecords) {
         final companyIds = ref.watch(
-          combinedStudiosProvider.select((final studios) {
-            return studios.map((final studio) => studio.item0.id);
-          }),
+          combinedStudiosProvider.select(
+            (final studios) => studios.map((final studio) => studio.item0.id),
+          ),
         );
         final data = <Tuple2<int, int>, List<UserRecordModel>>{};
         for (final userRecord in userRecords.toList(growable: false)
-          ..sort((final userRecordA, final userRecordB) {
-            return userRecordB.date.compareTo(userRecordA.date);
-          })) {
+          ..sort(
+            (final userRecordA, final userRecordB) =>
+                userRecordB.date.compareTo(userRecordA.date),
+          )) {
           if (!userRecord.deleted &&
               userRecord.date.add(userRecord.length).isBefore(now) &&
               companyIds.contains(userRecord.company.id)) {
@@ -70,75 +71,73 @@ class HistoryScreenState extends ConsumerState<HistoryScreen>
       }),
     );
 
-    Widget childRecord(final UserRecordModel userRecord) {
-      return Container(
-        constraints: const BoxConstraints(minHeight: 80),
-        decoration: ShapeDecoration(
-          color: theme.colorScheme.surface,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(4)),
+    Widget childRecord(final UserRecordModel userRecord) => Container(
+          constraints: const BoxConstraints(minHeight: 80),
+          decoration: ShapeDecoration(
+            color: theme.colorScheme.surface,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(4)),
+            ),
           ),
-        ),
-        margin: const EdgeInsets.only(top: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  dateFormat.format(userRecord.date),
-                  style: theme.textTheme.bodyText2,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Flexible(
-                  child: Text(
-                    timeFormat.format(userRecord.date),
+          margin: const EdgeInsets.only(top: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    dateFormat.format(userRecord.date),
                     style: theme.textTheme.bodyText2,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 14),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  userRecord.services.first.title,
-                  style: theme.textTheme.bodyText1,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  userRecord.staff.name,
-                  style: theme.textTheme.caption?.copyWith(
-                    color: theme.hintColor,
+                  Flexible(
+                    child: Text(
+                      timeFormat.format(userRecord.date),
+                      style: theme.textTheme.bodyText2,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  userRecord.company.title,
-                  style: theme.textTheme.caption?.copyWith(
-                    color: theme.hintColor,
+                ],
+              ),
+              const SizedBox(width: 14),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    userRecord.services.first.title,
+                    style: theme.textTheme.bodyText1,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ],
-        ),
-      );
-    }
+                  const SizedBox(height: 1),
+                  Text(
+                    userRecord.staff.name,
+                    style: theme.textTheme.caption?.copyWith(
+                      color: theme.hintColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    userRecord.company.title,
+                    style: theme.textTheme.caption?.copyWith(
+                      color: theme.hintColor,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
 
     Widget recordGroup(
       final MapEntry<Tuple2<int, int>, List<UserRecordModel>> entry,

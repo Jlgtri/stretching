@@ -15,9 +15,9 @@ import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/disposable_change_notifier_hook.dart';
 import 'package:stretching/hooks/refresh_content_hook.dart';
 import 'package:stretching/main.dart';
-import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
-import 'package:stretching/models_smstretching/sm_trainer_model.dart';
-import 'package:stretching/models_yclients/trainer_model.dart';
+import 'package:stretching/models/smstretching/sm_classes_gallery_model.dart';
+import 'package:stretching/models/smstretching/sm_trainer_model.dart';
+import 'package:stretching/models/yclients/trainer_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/hive_provider.dart';
@@ -34,16 +34,16 @@ import 'package:stretching/widgets/navigation/navigation_root.dart';
 final StateNotifierProvider<SaveToHiveIterableNotifier<ClassCategory, String>,
         Iterable<ClassCategory>> trainersCategoriesFilterProvider =
     StateNotifierProvider<SaveToHiveIterableNotifier<ClassCategory, String>,
-        Iterable<ClassCategory>>((final ref) {
-  return SaveToHiveIterableNotifier<ClassCategory, String>(
+        Iterable<ClassCategory>>(
+  (final ref) => SaveToHiveIterableNotifier<ClassCategory, String>(
     hive: ref.watch(hiveProvider),
     saveName: 'trainers_categories',
     converter: const StringToIterableConverter(
       IterableConverter(EnumConverter(ClassCategory.values)),
     ),
     defaultValue: const Iterable<ClassCategory>.empty(),
-  );
-});
+  ),
+);
 
 /// Provider of the search value on trainers screen.
 final StateProvider<String> searchTrainersProvider =
@@ -51,8 +51,8 @@ final StateProvider<String> searchTrainersProvider =
 
 /// Provider of the normalized trainers with applied filters.
 final Provider<Iterable<CombinedTrainerModel>> filteredTrainersProvider =
-    Provider<Iterable<CombinedTrainerModel>>((final ref) {
-  return ref.watch(
+    Provider<Iterable<CombinedTrainerModel>>(
+  (final ref) => ref.watch(
     /// Apply a filter to trainers.
     ///
     /// First of all, removes all undesired trainers from yClients trainers.
@@ -62,21 +62,23 @@ final Provider<Iterable<CombinedTrainerModel>> filteredTrainersProvider =
     trainersProvider.select((final trainers) {
       final categories = ref.watch(trainersCategoriesFilterProvider);
       final search = ref.watch(searchTrainersProvider).state;
-      return ref.watch(combinedTrainersProvider).where((final trainer) {
-        return search.isEmpty ||
-            (trainer.item1.trainerName.toLowerCase())
-                .contains(search.toLowerCase());
-      }).where((final trainer) {
-        if (categories.isEmpty) {
-          return true;
-        } else {
-          final trainerCategories = trainer.item1.classesType?.toCategories();
-          return trainerCategories?.any(categories.contains) ?? false;
-        }
-      }).distinct((final trainer) => trainer.item1.trainerName.toLowerCase());
+      return (ref.watch(combinedTrainersProvider))
+          .where(
+            (final trainer) =>
+                (search.isEmpty ||
+                    (trainer.item1.trainerName.toLowerCase())
+                        .contains(search.toLowerCase())) &&
+                (categories.isEmpty ||
+                    ((trainer.item1.classesType?.toCategories())
+                            ?.any(categories.contains) ??
+                        false)),
+          )
+          .distinct(
+            (final trainer) => trainer.item1.trainerName.toLowerCase(),
+          );
     }),
-  );
-});
+  ),
+);
 
 /// The [OpenContainer.openBuilder] provider of the [TrainerCard] for each
 /// [CombinedTrainerModel].
@@ -137,11 +139,11 @@ class TrainersScreen extends HookConsumerWidget {
           //   itemsCount: trainers.length,
           //   visible: trainers.length > 6,
           //   leadingChildHeight:
-          //       InputDecorationStyle.search.toolbarHeight + categoriesHeight + 20,
+          //  InputDecorationStyle.search.toolbarHeight + categoriesHeight + 20,
           //   trailingChildHeight: InputDecorationStyle.search.toolbarHeight,
           //   labelTextBuilder: (final index) {
           //     final trainer =
-          //         trainers.elementAt(min((index + 1) & ~1, trainers.length - 1));
+          //     trainers.elementAt(min((index + 1) & ~1, trainers.length - 1));
           //     return Text(
           //       trainer.item1.trainerName.isNotEmpty
           //           ? trainer.item1.trainerName[0].toUpperCase()
@@ -150,7 +152,8 @@ class TrainersScreen extends HookConsumerWidget {
           //           ?.copyWith(color: theme.colorScheme.surface),
           //     );
           //   },
-          //   builder: (final context, final scrollController, final resetPosition) {
+          //  builder: (final context, final scrollController,
+          //  final resetPosition) {
           //     return
           SmartRefresher(
         controller: refresh.item0,
@@ -352,12 +355,11 @@ class TrainerCard extends ConsumerWidget {
                     imageUrl: trainer.item1.trainerPhoto,
                     height: avatarSize,
                     width: avatarSize,
-                    imageBuilder: (final context, final imageProvider) {
-                      return CircleAvatar(
-                        radius: avatarSize / 2,
-                        foregroundImage: imageProvider,
-                      );
-                    },
+                    imageBuilder: (final context, final imageProvider) =>
+                        CircleAvatar(
+                      radius: avatarSize / 2,
+                      foregroundImage: imageProvider,
+                    ),
                   ),
                 ),
                 Expanded(

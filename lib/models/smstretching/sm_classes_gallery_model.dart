@@ -7,8 +7,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:meta/meta.dart';
 import 'package:stretching/generated/localization.g.dart';
-import 'package:stretching/models_smstretching/sm_studio_model.dart';
-import 'package:stretching/models_smstretching/sm_trainer_model.dart';
+import 'package:stretching/models/smstretching/sm_studio_model.dart';
+import 'package:stretching/models/smstretching/sm_trainer_model.dart';
 import 'package:stretching/utils/enum_to_string.dart';
 import 'package:stretching/utils/json_converters.dart';
 
@@ -164,104 +164,95 @@ class SMClassesGalleryModel {
     final String? classInfo,
     final String? takeThis,
     final String? cctSlug,
-  }) {
-    return SMClassesGalleryModel(
-      id: id ?? this.id,
-      cctStatus: cctStatus ?? this.cctStatus,
-      classesName: classesName ?? this.classesName,
-      classesYId: classesYId ?? this.classesYId,
-      gallery: gallery ?? this.gallery,
-      cctAuthorId: cctAuthorId ?? this.cctAuthorId,
-      cctCreated: cctCreated ?? this.cctCreated,
-      cctModified: cctModified ?? this.cctModified,
-      classInfo: classInfo ?? this.classInfo,
-      takeThis: takeThis ?? this.takeThis,
-      cctSlug: cctSlug ?? this.cctSlug,
-    );
-  }
+  }) =>
+      SMClassesGalleryModel(
+        id: id ?? this.id,
+        cctStatus: cctStatus ?? this.cctStatus,
+        classesName: classesName ?? this.classesName,
+        classesYId: classesYId ?? this.classesYId,
+        gallery: gallery ?? this.gallery,
+        cctAuthorId: cctAuthorId ?? this.cctAuthorId,
+        cctCreated: cctCreated ?? this.cctCreated,
+        cctModified: cctModified ?? this.cctModified,
+        classInfo: classInfo ?? this.classInfo,
+        takeThis: takeThis ?? this.takeThis,
+        cctSlug: cctSlug ?? this.cctSlug,
+      );
 
   /// Convert this model to map with string keys.
-  Map<String, Object?> toMap() {
-    return <String, Object?>{
-      '_ID': id.toString(),
-      'cct_status': cctStatus,
-      'classes_name': classesName,
-      'classes_yid': classesYId.toString(),
-      'gallery': gallery,
-      'cct_author_id': cctAuthorId.toString(),
-      'cct_created': cctCreated.toString().split('.').first,
-      'cct_modified': cctModified.toString().split('.').first,
-      'class_info': classInfo,
-      'take_this': takeThis,
-      'cct_slug': cctSlug,
-    };
-  }
+  Map<String, Object?> toMap() => <String, Object?>{
+        '_ID': id.toString(),
+        'cct_status': cctStatus,
+        'classes_name': classesName,
+        'classes_yid': classesYId.toString(),
+        'gallery': gallery,
+        'cct_author_id': cctAuthorId.toString(),
+        'cct_created': cctCreated.toString().split('.').first,
+        'cct_modified': cctModified.toString().split('.').first,
+        'class_info': classInfo,
+        'take_this': takeThis,
+        'cct_slug': cctSlug,
+      };
 
   /// Convert the map with string keys to this model.
-  factory SMClassesGalleryModel.fromMap(final Map<String, Object?> map) {
-    return SMClassesGalleryModel(
-      id: int.parse(map['_ID']! as String),
-      cctStatus: map['cct_status']! as String,
-      classesName: map['classes_name']! as String,
-      classesYId: int.parse(map['classes_yid']! as String),
-      gallery: map['gallery']! as String,
-      cctAuthorId: int.parse(map['cct_author_id']! as String),
-      cctCreated: DateTime.parse(map['cct_created']! as String),
-      cctModified: DateTime.parse(map['cct_modified']! as String),
-      classInfo: map['class_info'] as String?,
-      takeThis: map['take_this'] as String?,
-      cctSlug: map['cct_slug']! as String,
-    );
-  }
+  factory SMClassesGalleryModel.fromMap(final Map<String, Object?> map) =>
+      SMClassesGalleryModel(
+        id: int.parse(map['_ID']! as String),
+        cctStatus: map['cct_status']! as String,
+        classesName: map['classes_name']! as String,
+        classesYId: int.parse(map['classes_yid']! as String),
+        gallery: map['gallery']! as String,
+        cctAuthorId: int.parse(map['cct_author_id']! as String),
+        cctCreated: DateTime.parse(map['cct_created']! as String),
+        cctModified: DateTime.parse(map['cct_modified']! as String),
+        classInfo: map['class_info'] as String?,
+        takeThis: map['take_this'] as String?,
+        cctSlug: map['cct_slug']! as String,
+      );
 
   /// Convert this model to a json string.
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory SMClassesGalleryModel.fromJson(final String source) {
-    return SMClassesGalleryModel.fromMap(
-      json.decode(source) as Map<String, Object?>,
-    );
-  }
+  factory SMClassesGalleryModel.fromJson(final String source) =>
+      SMClassesGalleryModel.fromMap(
+        json.decode(source) as Map<String, Object?>,
+      );
 
   @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is SMClassesGalleryModel &&
-            other.id == id &&
-            other.cctStatus == cctStatus &&
-            other.classesName == classesName &&
-            other.classesYId == classesYId &&
-            other.gallery == gallery &&
-            other.cctAuthorId == cctAuthorId &&
-            other.cctCreated == cctCreated &&
-            other.cctModified == cctModified &&
-            other.classInfo == classInfo &&
-            other.takeThis == takeThis &&
-            other.cctSlug == cctSlug;
-  }
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is SMClassesGalleryModel &&
+          other.id == id &&
+          other.cctStatus == cctStatus &&
+          other.classesName == classesName &&
+          other.classesYId == classesYId &&
+          other.gallery == gallery &&
+          other.cctAuthorId == cctAuthorId &&
+          other.cctCreated == cctCreated &&
+          other.cctModified == cctModified &&
+          other.classInfo == classInfo &&
+          other.takeThis == takeThis &&
+          other.cctSlug == cctSlug;
 
   @override
-  int get hashCode {
-    return id.hashCode ^
-        cctStatus.hashCode ^
-        classesName.hashCode ^
-        classesYId.hashCode ^
-        gallery.hashCode ^
-        cctAuthorId.hashCode ^
-        cctCreated.hashCode ^
-        cctModified.hashCode ^
-        classInfo.hashCode ^
-        takeThis.hashCode ^
-        cctSlug.hashCode;
-  }
+  int get hashCode =>
+      id.hashCode ^
+      cctStatus.hashCode ^
+      classesName.hashCode ^
+      classesYId.hashCode ^
+      gallery.hashCode ^
+      cctAuthorId.hashCode ^
+      cctCreated.hashCode ^
+      cctModified.hashCode ^
+      classInfo.hashCode ^
+      takeThis.hashCode ^
+      cctSlug.hashCode;
 
   @override
-  String toString() {
-    return 'SMClassesGalleryModel(id: $id, cctStatus: $cctStatus, '
-        'classesName: $classesName, classesYId: $classesYId, '
-        'gallery: $gallery, cctAuthorId: $cctAuthorId, '
-        'cctCreated: $cctCreated, cctModified: $cctModified, '
-        'classInfo: $classInfo, takeThis: $takeThis, cctSlug: $cctSlug)';
-  }
+  String toString() => 'SMClassesGalleryModel(id: $id, cctStatus: $cctStatus, '
+      'classesName: $classesName, classesYId: $classesYId, '
+      'gallery: $gallery, cctAuthorId: $cctAuthorId, '
+      'cctCreated: $cctCreated, cctModified: $cctModified, '
+      'classInfo: $classInfo, takeThis: $takeThis, cctSlug: $cctSlug)';
 }

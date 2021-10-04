@@ -117,10 +117,9 @@ class GenerateOptions {
   late String format;
 
   @override
-  String toString() {
-    return 'format: $format sourceDir: $sourceDir sourceFile: $sourceFile '
-        'outputDir: $outputDir outputFile: $outputFile';
-  }
+  String toString() =>
+      'format: $format sourceDir: $sourceDir sourceFile: $sourceFile '
+      'outputDir: $outputDir outputFile: $outputFile';
 }
 
 Future<void> handleLangFiles(final GenerateOptions options) async {

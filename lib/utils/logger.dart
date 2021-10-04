@@ -8,19 +8,17 @@ import 'package:logging/logging.dart' as logging;
 final Logger logger = _customLogger('S');
 
 /// The logger with a [name].
-Logger _customLogger(final String? name) {
-  return Logger(
-    output: name != null ? _DevLogOutput(name) : null,
-    level: Level.verbose,
-    filter: DevelopmentFilter(),
-    printer: PrettyPrinter(
-      methodCount: 1,
-      errorMethodCount: 10,
-      lineLength: 40,
-      printEmojis: false,
-    ),
-  );
-}
+Logger _customLogger(final String? name) => Logger(
+      output: name != null ? _DevLogOutput(name) : null,
+      level: Level.verbose,
+      filter: DevelopmentFilter(),
+      printer: PrettyPrinter(
+        methodCount: 1,
+        errorMethodCount: 10,
+        lineLength: 40,
+        printEmojis: false,
+      ),
+    );
 
 class _DevLogOutput extends LogOutput {
   _DevLogOutput(this.name);
@@ -62,11 +60,9 @@ class ChangedCatcherLogger extends CatcherLogger {
   @override
   void setup() {
     logging.Logger.root.level = logging.Level.ALL;
-    logging.Logger.root.onRecord.listen(
-      (final rec) {
-        // ignore: avoid_print
-        print(rec.message);
-      },
-    );
+    logging.Logger.root.onRecord.listen((final rec) {
+      // ignore: avoid_print
+      print(rec.message);
+    });
   }
 }

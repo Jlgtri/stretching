@@ -3,7 +3,7 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
-import 'package:stretching/models_smstretching/sm_studio_model.dart';
+import 'package:stretching/models/smstretching/sm_studio_model.dart';
 import 'package:stretching/utils/json_converters.dart';
 
 /// The converter of the [SMStudioOptionsModel].
@@ -90,37 +90,34 @@ class SMStudioOptionsModel {
     final String? pass,
     final String? keySite,
     final String? passSite,
-  }) {
-    return SMStudioOptionsModel(
-      studioId: studioId ?? this.studioId,
-      skladId: skladId ?? this.skladId,
-      kassaId: kassaId ?? this.kassaId,
-      kassirSiteId: kassirSiteId ?? this.kassirSiteId,
-      kassirMobileId: kassirMobileId ?? this.kassirMobileId,
-      categoryAbId: categoryAbId ?? this.categoryAbId,
-      key: key ?? this.key,
-      pass: pass ?? this.pass,
-      keySite: keySite ?? this.keySite,
-      passSite: passSite ?? this.passSite,
-    );
-  }
+  }) =>
+      SMStudioOptionsModel(
+        studioId: studioId ?? this.studioId,
+        skladId: skladId ?? this.skladId,
+        kassaId: kassaId ?? this.kassaId,
+        kassirSiteId: kassirSiteId ?? this.kassirSiteId,
+        kassirMobileId: kassirMobileId ?? this.kassirMobileId,
+        categoryAbId: categoryAbId ?? this.categoryAbId,
+        key: key ?? this.key,
+        pass: pass ?? this.pass,
+        keySite: keySite ?? this.keySite,
+        passSite: passSite ?? this.passSite,
+      );
 
   /// Convert this model to map with string keys.
-  Map<String, Object?> toMap() {
-    return <String, Object?>{
-      studioId.toString(): <String, Object?>{
-        'sklad_id': skladId.toString(),
-        'kassa_id': kassaId.toString(),
-        'kassir_site_id': kassirSiteId.toString(),
-        'kassir_mobile_id': kassirMobileId.toString(),
-        'category_ab_id': categoryAbId.toString(),
-        'key': key,
-        'pass': pass,
-        'key_site': keySite,
-        'pass_site': passSite,
-      }
-    };
-  }
+  Map<String, Object?> toMap() => <String, Object?>{
+        studioId.toString(): <String, Object?>{
+          'sklad_id': skladId.toString(),
+          'kassa_id': kassaId.toString(),
+          'kassir_site_id': kassirSiteId.toString(),
+          'kassir_mobile_id': kassirMobileId.toString(),
+          'category_ab_id': categoryAbId.toString(),
+          'key': key,
+          'pass': pass,
+          'key_site': keySite,
+          'pass_site': passSite,
+        }
+      };
 
   /// Convert the map with string keys to this model.
   factory SMStudioOptionsModel.fromMap(final Map<String, Object?> map) {
@@ -147,40 +144,37 @@ class SMStudioOptionsModel {
       SMStudioOptionsModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is SMStudioOptionsModel &&
-            other.studioId == studioId &&
-            other.skladId == skladId &&
-            other.kassaId == kassaId &&
-            other.kassirSiteId == kassirSiteId &&
-            other.kassirMobileId == kassirMobileId &&
-            other.categoryAbId == categoryAbId &&
-            other.key == key &&
-            other.pass == pass &&
-            other.keySite == keySite &&
-            other.passSite == passSite;
-  }
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is SMStudioOptionsModel &&
+          other.studioId == studioId &&
+          other.skladId == skladId &&
+          other.kassaId == kassaId &&
+          other.kassirSiteId == kassirSiteId &&
+          other.kassirMobileId == kassirMobileId &&
+          other.categoryAbId == categoryAbId &&
+          other.key == key &&
+          other.pass == pass &&
+          other.keySite == keySite &&
+          other.passSite == passSite;
 
   @override
-  int get hashCode {
-    return studioId.hashCode ^
-        skladId.hashCode ^
-        kassaId.hashCode ^
-        kassirSiteId.hashCode ^
-        kassirMobileId.hashCode ^
-        categoryAbId.hashCode ^
-        key.hashCode ^
-        pass.hashCode ^
-        keySite.hashCode ^
-        passSite.hashCode;
-  }
+  int get hashCode =>
+      studioId.hashCode ^
+      skladId.hashCode ^
+      kassaId.hashCode ^
+      kassirSiteId.hashCode ^
+      kassirMobileId.hashCode ^
+      categoryAbId.hashCode ^
+      key.hashCode ^
+      pass.hashCode ^
+      keySite.hashCode ^
+      passSite.hashCode;
 
   @override
-  String toString() {
-    return 'SMStudioOptionsModel(studioId: $studioId, skladId: $skladId, '
-        'kassaId: $kassaId, kassirSiteId: $kassirSiteId, '
-        'kassirMobileId: $kassirMobileId, categoryAbId: $categoryAbId, '
-        'key: $key, pass: $pass, keySite: $keySite, passSite: $passSite)';
-  }
+  String toString() =>
+      'SMStudioOptionsModel(studioId: $studioId, skladId: $skladId, '
+      'kassaId: $kassaId, kassirSiteId: $kassirSiteId, '
+      'kassirMobileId: $kassirMobileId, categoryAbId: $categoryAbId, '
+      'key: $key, pass: $pass, keySite: $keySite, passSite: $passSite)';
 }

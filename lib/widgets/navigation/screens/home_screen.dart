@@ -14,8 +14,8 @@ import 'package:stretching/api_yclients.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/refresh_content_hook.dart';
 import 'package:stretching/main.dart';
-import 'package:stretching/models_smstretching/sm_story_model.dart';
-import 'package:stretching/models_yclients/user_record_model.dart';
+import 'package:stretching/models/smstretching/sm_story_model.dart';
+import 'package:stretching/models/yclients/user_record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/firebase_providers.dart';
@@ -58,22 +58,20 @@ class SMStoryIdConverter implements JsonConverter<SMStoryModel?, int> {
 final StateNotifierProvider<SaveToHiveIterableNotifier<SMStoryModel, String>,
         Iterable<SMStoryModel>> homeWatchedStoriesProvider =
     StateNotifierProvider<SaveToHiveIterableNotifier<SMStoryModel, String>,
-        Iterable<SMStoryModel>>((final ref) {
-  return SaveToHiveIterableNotifier<SMStoryModel, String>(
+        Iterable<SMStoryModel>>(
+  (final ref) => SaveToHiveIterableNotifier<SMStoryModel, String>(
     hive: ref.watch(hiveProvider),
     saveName: 'home_stories',
     converter: StringToIterableConverter(
       OptionalIterableConverter(ref.watch(smStoryIdConverterProvider)),
     ),
     defaultValue: const Iterable<SMStoryModel>.empty(),
-  );
-});
+  ),
+);
 
 /// The scroll controller for the [StoryCardScreen] scrollable.
 final Provider<ScrollController> storiesScrollControllerProvider =
-    Provider<ScrollController>((final ref) {
-  return ScrollController();
-});
+    Provider<ScrollController>((final ref) => ScrollController());
 
 /// The [OpenContainer.openBuilder] provider of the [StoryCardScreen] for each
 /// [SMStoryModel].
@@ -191,56 +189,48 @@ class HomeScreen extends HookConsumerWidget {
                     middleColor: Colors.transparent,
                     useRootNavigator: true,
                     transitionDuration: const Duration(milliseconds: 500),
-                    openBuilder: (final context, final action) {
-                      return Scaffold(
-                        extendBodyBehindAppBar: true,
-                        appBar: mainAppBar(
-                          Theme.of(context),
-                          leading: const FontIconBackButton(),
-                        ),
-                        body: WebView(
-                          initialUrl: smAdvertisments.last.advLink,
-                          javascriptMode: JavascriptMode.unrestricted,
-                          navigationDelegate: (final navigation) {
-                            return navigation.url.startsWith(smStretchingUrl)
+                    openBuilder: (final context, final action) => Scaffold(
+                      extendBodyBehindAppBar: true,
+                      appBar: mainAppBar(
+                        Theme.of(context),
+                        leading: const FontIconBackButton(),
+                      ),
+                      body: WebView(
+                        initialUrl: smAdvertisments.last.advLink,
+                        javascriptMode: JavascriptMode.unrestricted,
+                        navigationDelegate: (final navigation) =>
+                            navigation.url.startsWith(smStretchingUrl)
                                 ? NavigationDecision.navigate
-                                : NavigationDecision.prevent;
-                          },
-                        ),
-                      );
-                    },
-                    closedBuilder: (final context, final action) {
-                      return ClipRRect(
+                                : NavigationDecision.prevent,
+                      ),
+                    ),
+                    closedBuilder: (final context, final action) => ClipRRect(
+                      borderRadius: const BorderRadius.all(Radius.circular(12)),
+                      child: InkWell(
+                        overlayColor: MaterialStateProperty.all(Colors.black12),
+                        highlightColor: Colors.black12,
                         borderRadius:
                             const BorderRadius.all(Radius.circular(12)),
-                        child: InkWell(
-                          overlayColor:
-                              MaterialStateProperty.all(Colors.black12),
-                          highlightColor: Colors.black12,
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(12)),
-                          onTap: action,
-                          child: CachedNetworkImage(
-                            height: 200,
-                            fit: BoxFit.fitWidth,
-                            imageUrl: smAdvertisments.last.advImage,
-                            imageBuilder: (final context, final imageProvider) {
-                              return Ink(
-                                decoration: BoxDecoration(
-                                  borderRadius: const BorderRadius.all(
-                                    Radius.circular(12),
-                                  ),
-                                  image: DecorationImage(
-                                    fit: BoxFit.cover,
-                                    image: imageProvider,
-                                  ),
-                                ),
-                              );
-                            },
+                        onTap: action,
+                        child: CachedNetworkImage(
+                          height: 200,
+                          fit: BoxFit.fitWidth,
+                          imageUrl: smAdvertisments.last.advImage,
+                          imageBuilder: (final context, final imageProvider) =>
+                              Ink(
+                            decoration: BoxDecoration(
+                              borderRadius: const BorderRadius.all(
+                                Radius.circular(12),
+                              ),
+                              image: DecorationImage(
+                                fit: BoxFit.cover,
+                                image: imageProvider,
+                              ),
+                            ),
                           ),
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -366,11 +356,10 @@ class StoryCardScreen extends HookConsumerWidget {
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
     final alreadyWatched = ref.watch(
-      homeWatchedStoriesProvider.select((final watchedStories) {
-        return watchedStories.any((final watchedStory) {
-          return watchedStory.media == story.media;
-        });
-      }),
+      homeWatchedStoriesProvider.select(
+        (final watchedStories) => watchedStories
+            .any((final watchedStory) => watchedStory.media == story.media),
+      ),
     );
 
     return OpenContainer<void>(
@@ -382,59 +371,56 @@ class StoryCardScreen extends HookConsumerWidget {
       closedColor: Colors.transparent,
       middleColor: Colors.transparent,
       transitionDuration: transitionDuration,
-      openBuilder: (final context, final action) {
-        return Scaffold(
-          body: Story(
-            onFlashBack: action,
-            onFlashForward: () async {
-              action();
-              if (!alreadyWatched) {
-                await ref.read(homeWatchedStoriesProvider.notifier).add(story);
-              }
-            },
-            progressSegmentPadding:
-                const EdgeInsets.symmetric(horizontal: 16).copyWith(top: 8),
-            progressSegmentBuilder: ({
-              required final context,
-              required final index,
-              required final progress,
-            }) {
-              return Container(
-                height: 2,
-                margin: const EdgeInsets.symmetric(horizontal: 2),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface.withOpacity(1 / 2),
-                  borderRadius: BorderRadius.circular(1),
-                ),
-                child: Material(
-                  elevation: 1,
-                  color: Colors.transparent,
-                  child: FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: progress,
-                    child: Material(color: theme.colorScheme.surface),
-                  ),
-                ),
-              );
-            },
-            stories: <StoryModel>[
-              PhotoStory(story.mediaLink),
-              if (story.storiesImgV2 != null)
-                for (final image in story.storiesImgV2!)
-                  if (image.url.endsWith('.mp4'))
-                    VideoStory(
-                      VideoPlayerController.network(image.url),
-                      onDownloaded: (final ref, final video) {
-                        (ref.read(storyDurationProvider).state)
-                            ?.call(video.duration);
-                      },
-                    )
-                  else
-                    PhotoStory(image.url)
-            ],
+      openBuilder: (final context, final action) => Scaffold(
+        body: Story(
+          onFlashBack: action,
+          onFlashForward: () async {
+            action();
+            if (!alreadyWatched) {
+              await ref.read(homeWatchedStoriesProvider.notifier).add(story);
+            }
+          },
+          progressSegmentPadding:
+              const EdgeInsets.symmetric(horizontal: 16).copyWith(top: 8),
+          progressSegmentBuilder: ({
+            required final context,
+            required final index,
+            required final progress,
+          }) =>
+              Container(
+            height: 2,
+            margin: const EdgeInsets.symmetric(horizontal: 2),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withOpacity(1 / 2),
+              borderRadius: BorderRadius.circular(1),
+            ),
+            child: Material(
+              elevation: 1,
+              color: Colors.transparent,
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: progress,
+                child: Material(color: theme.colorScheme.surface),
+              ),
+            ),
           ),
-        );
-      },
+          stories: <StoryModel>[
+            PhotoStory(story.mediaLink),
+            if (story.storiesImgV2 != null)
+              for (final image in story.storiesImgV2!)
+                if (image.url.endsWith('.mp4'))
+                  VideoStory(
+                    VideoPlayerController.network(image.url),
+                    onDownloaded: (final ref, final video) {
+                      (ref.read(storyDurationProvider).state)
+                          ?.call(video.duration);
+                    },
+                  )
+                else
+                  PhotoStory(image.url)
+          ],
+        ),
+      ),
       closedBuilder: (final context, final action) {
         ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
           ref.read(storiesCardsProvider(story.media)).state = action;

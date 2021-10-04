@@ -8,21 +8,21 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meta/meta.dart';
 import 'package:stretching/api_smstretching.dart';
+import 'package:stretching/models/smstretching/sm_abonement_model.dart';
+import 'package:stretching/models/smstretching/sm_studio_options_model.dart';
+import 'package:stretching/models/yclients/activity_model.dart';
+import 'package:stretching/models/yclients/client_model.dart';
+import 'package:stretching/models/yclients/company_model.dart';
+import 'package:stretching/models/yclients/good_model.dart';
+import 'package:stretching/models/yclients/good_transaction_model.dart';
+import 'package:stretching/models/yclients/record_model.dart';
+import 'package:stretching/models/yclients/storage_operation_model.dart';
+import 'package:stretching/models/yclients/trainer_model.dart';
+import 'package:stretching/models/yclients/transaction_model.dart';
+import 'package:stretching/models/yclients/user_abonement_model.dart';
+import 'package:stretching/models/yclients/user_model.dart';
+import 'package:stretching/models/yclients/user_record_model.dart';
 import 'package:stretching/models/yclients_response.dart';
-import 'package:stretching/models_smstretching/sm_abonement_model.dart';
-import 'package:stretching/models_smstretching/sm_studio_options_model.dart';
-import 'package:stretching/models_yclients/activity_model.dart';
-import 'package:stretching/models_yclients/client_model.dart';
-import 'package:stretching/models_yclients/company_model.dart';
-import 'package:stretching/models_yclients/good_model.dart';
-import 'package:stretching/models_yclients/good_transaction_model.dart';
-import 'package:stretching/models_yclients/record_model.dart';
-import 'package:stretching/models_yclients/storage_operation_model.dart';
-import 'package:stretching/models_yclients/trainer_model.dart';
-import 'package:stretching/models_yclients/transaction_model.dart';
-import 'package:stretching/models_yclients/user_abonement_model.dart';
-import 'package:stretching/models_yclients/user_model.dart';
-import 'package:stretching/models_yclients/user_record_model.dart';
 import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/user_provider.dart';
@@ -64,30 +64,28 @@ class YClientsAPI {
   Future<Response<YClientsResponse>> sendCode(
     final String phone,
     final int studioId,
-  ) {
-    return _dio.post<YClientsResponse>(
-      '$yClientsUrl/book_code/$studioId',
-      data: <String, Object?>{'phone': phone},
-    );
-  }
+  ) =>
+      _dio.post<YClientsResponse>(
+        '$yClientsUrl/book_code/$studioId',
+        data: <String, Object?>{'phone': phone},
+      );
 
   /// Verify the sent phone confirmation sms code in the YClients API.
   Future<Response<YClientsResponse>> verifyCode(
     final String phone,
     final String code,
-  ) {
-    return _dio.post<YClientsResponse>(
-      '$yClientsUrl/user/auth',
-      data: <String, Object?>{'phone': phone, 'code': code},
-      options: Options(
-        extra: YClientsRequestExtra<UserModel?>(
-          onData: (final map) => map != null
-              ? UserModel.fromMap(map as Map<String, Object?>)
-              : null,
-        ).toMap(),
-      ),
-    );
-  }
+  ) =>
+      _dio.post<YClientsResponse>(
+        '$yClientsUrl/user/auth',
+        data: <String, Object?>{'phone': phone, 'code': code},
+        options: Options(
+          extra: YClientsRequestExtra<UserModel?>(
+            onData: (final map) => map != null
+                ? UserModel.fromMap(map as Map<String, Object?>)
+                : null,
+          ).toMap(),
+        ),
+      );
 
   /// Creates a record for the specified user and [activityId].
   Future<Tuple2<int, String>> bookActivity({
@@ -229,21 +227,20 @@ class YClientsAPI {
     required final int documentId,
     required final int accountId,
     required final int amount,
-  }) {
-    return _sale(
-      companyId,
-      documentId,
-      data: <String, Object?>{
-        'payment': <String, Object?>{
-          'method': <String, Object?>{
-            'slug': 'account',
-            'account_id': accountId,
-          },
-          'amount': amount,
-        }
-      },
-    );
-  }
+  }) =>
+      _sale(
+        companyId,
+        documentId,
+        data: <String, Object?>{
+          'payment': <String, Object?>{
+            'method': <String, Object?>{
+              'slug': 'account',
+              'account_id': accountId,
+            },
+            'amount': amount,
+          }
+        },
+      );
 
   /// Sale by abonement.
   ///
@@ -257,21 +254,20 @@ class YClientsAPI {
     required final int documentId,
     required final int abonementId,
     required final String abonementNumber,
-  }) {
-    return _sale(
-      companyId,
-      documentId,
-      data: <String, Object?>{
-        'payment': <String, Object?>{
-          'method': <String, Object?>{
-            'slug': 'loyalty_abonement',
-            'loyalty_abonement_id': abonementId,
-          },
-          'number': abonementNumber,
-        }
-      },
-    );
-  }
+  }) =>
+      _sale(
+        companyId,
+        documentId,
+        data: <String, Object?>{
+          'payment': <String, Object?>{
+            'method': <String, Object?>{
+              'slug': 'loyalty_abonement',
+              'loyalty_abonement_id': abonementId,
+            },
+            'number': abonementNumber,
+          }
+        },
+      );
 
   /// Changes the visit in the YClients API.
   ///
@@ -523,13 +519,13 @@ class YClientsAPI {
         url,
         queryParameters: queryParameters,
         options: _options.copyWith(
-          extra: _extra.copyWith(
-            onData: (final data) {
-              return jsonConverter.fromJson(
-                (data! as Iterable).cast<Map<String, Object?>>(),
-              );
-            },
-          ).toMap(),
+          extra: _extra
+              .copyWith(
+                onData: (final data) => jsonConverter.fromJson(
+                  (data! as Iterable).cast<Map<String, Object?>>(),
+                ),
+              )
+              .toMap(),
         ),
       );
       for (final data in response.data!.data! as Iterable<Object?>) {
@@ -569,22 +565,22 @@ class YClientsAPI {
           url(data),
           queryParameters: queryParameters?.call(data),
           options: _options.copyWith(
-            extra: _extra.copyWith(
-              onData: (final data) {
-                return data! is List
-                    ? ((data as List).cast<Map<String, Object?>>())
-                        .map(jsonConverter.fromJson)
-                        .single
-                    : data is Iterable
-                        ? ((data as Iterable<Object>)
-                                .cast<Map<String, Object?>>())
-                            .map(jsonConverter.fromJson)
-                            .single
-                        : data is Map<String, Object?>
-                            ? jsonConverter.fromJson(data)
-                            : null;
-              },
-            ).toMap(),
+            extra: _extra
+                .copyWith(
+                  onData: (final data) => data! is List
+                      ? ((data as List).cast<Map<String, Object?>>())
+                          .map(jsonConverter.fromJson)
+                          .single
+                      : data is Iterable
+                          ? ((data as Iterable<Object>)
+                                  .cast<Map<String, Object?>>())
+                              .map(jsonConverter.fromJson)
+                              .single
+                          : data is Map<String, Object?>
+                              ? jsonConverter.fromJson(data)
+                              : null,
+                )
+                .toMap(),
           ),
         );
         yield response.data!.data! as T;
@@ -608,12 +604,11 @@ class YClientsAPI {
 // });
 
 /// The provider of the [YClientsAPI].
-final Provider<YClientsAPI> yClientsProvider =
-    Provider<YClientsAPI>((final ref) {
-  return YClientsAPI._(
+final Provider<YClientsAPI> yClientsProvider = Provider<YClientsAPI>(
+  (final ref) => YClientsAPI._(
     ref.watch(userProvider.select((final user) => user?.userToken)),
-  );
-});
+  ),
+);
 
 // /// The cities provider for YClients API.
 // ///
@@ -634,8 +629,7 @@ final Provider<YClientsAPI> yClientsProvider =
 final StateNotifierProvider<ContentNotifier<StudioModel>, Iterable<StudioModel>>
     studiosProvider =
     StateNotifierProvider<ContentNotifier<StudioModel>, Iterable<StudioModel>>(
-        (final ref) {
-  return ContentNotifier<StudioModel>(
+  (final ref) => ContentNotifier<StudioModel>(
     hive: ref.watch(hiveProvider),
     saveName: 'studios',
     converter: companyConverter,
@@ -653,14 +647,14 @@ final StateNotifierProvider<ContentNotifier<StudioModel>, Iterable<StudioModel>>
           .toList();
       return studios.isEmpty ? null : studios;
     },
-  );
-});
+  ),
+);
 
 /// The normalized trainers provider for YClients API.
 final Provider<Iterable<TrainerModel>> normalizedTrainersProvider =
-    Provider<Iterable<TrainerModel>>((final ref) {
-  return ref.watch(trainersProvider.select(normalizeTrainers));
-});
+    Provider<Iterable<TrainerModel>>(
+  (final ref) => ref.watch(trainersProvider.select(normalizeTrainers)),
+);
 
 /// The trainers provider for YClients API.
 ///
@@ -668,8 +662,8 @@ final Provider<Iterable<TrainerModel>> normalizedTrainersProvider =
 final StateNotifierProvider<ContentNotifier<TrainerModel>,
         Iterable<TrainerModel>> trainersProvider =
     StateNotifierProvider<ContentNotifier<TrainerModel>,
-        Iterable<TrainerModel>>((final ref) {
-  return ContentNotifier<TrainerModel>(
+        Iterable<TrainerModel>>(
+  (final ref) => ContentNotifier<TrainerModel>(
     hive: ref.watch(hiveProvider),
     saveName: 'trainers',
     converter: trainerConverter,
@@ -689,39 +683,29 @@ final StateNotifierProvider<ContentNotifier<TrainerModel>,
       ]).toList();
       return trainers.isEmpty ? null : trainers;
     },
-  );
-});
+  ),
+);
 
 /// Return sorted and valid trainers for this provider.
 Iterable<TrainerModel> normalizeTrainers(
   final Iterable<TrainerModel> value,
-) {
-  return value.toList()
-    ..removeWhere((final trainer) {
-      return trainer.specialization == 'Не удалять' ||
-          trainer.name.contains('Сотрудник');
-    })
-    ..removeWhere((final trainer) {
-      return <String>[
-        'https://api.yclients.com/images/no-master.png',
-        'https://api.yclients.com/images/no-master-sm.png'
-      ].contains(trainer.avatarBig);
-    })
-    ..sort((final trainerA, final trainerB) {
-      // int isDefault(final String link) => <String>[
-      //       'https://api.yclients.com/images/no-master.png',
-      //       'https://api.yclients.com/images/no-master-sm.png'
-      //     ].contains(link)
-      //         ? -1
-      //         : 0;
-      // final hasAvatar = isDefault(trainerB.avatarBig)
-      //     .compareTo(isDefault(trainerA.avatarBig));
-      // if (hasAvatar != 0) {
-      //   return hasAvatar;
-      // }
-      return trainerA.name.toLowerCase().compareTo(trainerB.name.toLowerCase());
-    });
-}
+) =>
+    value.toList()
+      ..removeWhere(
+        (final trainer) =>
+            trainer.specialization == 'Не удалять' ||
+            trainer.name.contains('Сотрудник'),
+      )
+      ..removeWhere(
+        (final trainer) => <String>[
+          'https://api.yclients.com/images/no-master.png',
+          'https://api.yclients.com/images/no-master-sm.png'
+        ].contains(trainer.avatarBig),
+      )
+      ..sort(
+        (final trainerA, final trainerB) =>
+            trainerA.name.toLowerCase().compareTo(trainerB.name.toLowerCase()),
+      );
 
 /// The schedule provider for YClients API.
 ///
@@ -729,8 +713,8 @@ Iterable<TrainerModel> normalizeTrainers(
 final StateNotifierProvider<ContentNotifier<ActivityModel>,
         Iterable<ActivityModel>> scheduleProvider =
     StateNotifierProvider<ContentNotifier<ActivityModel>,
-        Iterable<ActivityModel>>((final ref) {
-  return ContentNotifier<ActivityModel>(
+        Iterable<ActivityModel>>(
+  (final ref) => ContentNotifier<ActivityModel>(
     hive: ref.watch(hiveProvider),
     saveName: 'activities',
     converter: activityConverter,
@@ -751,8 +735,8 @@ final StateNotifierProvider<ContentNotifier<ActivityModel>,
       ]).toList();
       return activities.isEmpty ? null : activities;
     },
-  );
-});
+  ),
+);
 
 /// The schedule provider for YClients API.
 ///
@@ -760,8 +744,7 @@ final StateNotifierProvider<ContentNotifier<ActivityModel>,
 final StateNotifierProvider<ContentNotifier<GoodModel>, Iterable<GoodModel>>
     goodsProvider =
     StateNotifierProvider<ContentNotifier<GoodModel>, Iterable<GoodModel>>(
-        (final ref) {
-  return ContentNotifier<GoodModel>(
+  (final ref) => ContentNotifier<GoodModel>(
     hive: ref.watch(hiveProvider),
     saveName: 'goods',
     converter: goodConverter,
@@ -800,8 +783,8 @@ final StateNotifierProvider<ContentNotifier<GoodModel>, Iterable<GoodModel>>
       final goods = await StreamGroup.merge(studios.map(getGoods)).toList();
       return goods.isEmpty ? null : goods;
     },
-  );
-});
+  ),
+);
 
 /// The user abonements provider for YClients API.
 ///
@@ -814,20 +797,18 @@ final StateNotifierProvider<ContentNotifier<UserAbonementModel>,
     hive: ref.watch(hiveProvider),
     saveName: 'userAbonements',
     converter: abonementConverter,
-    refreshState: (final notifier) async {
-      return ref.read(userProvider) == null
-          ? const Iterable<UserAbonementModel>.empty()
-          : await (ref.read(yClientsProvider))
-              .getIterableData(
-                jsonConverter: const IterableConverter(abonementConverter),
-                url: '$yClientsUrl/user/loyalty/abonements',
-                onError: (final error) async {
-                  // debugger(message: error.message);
-                  logger.e(error.message, error, error.stackTrace);
-                },
-              )
-              .toList();
-    },
+    refreshState: (final notifier) async => ref.read(userProvider) == null
+        ? const Iterable<UserAbonementModel>.empty()
+        : await (ref.read(yClientsProvider))
+            .getIterableData(
+              jsonConverter: const IterableConverter(abonementConverter),
+              url: '$yClientsUrl/user/loyalty/abonements',
+              onError: (final error) async {
+                // debugger(message: error.message);
+                logger.e(error.message, error, error.stackTrace);
+              },
+            )
+            .toList(),
   );
   ref.listen<bool>(
     userProvider.select((final user) => user == null),
@@ -866,10 +847,11 @@ final StateNotifierProvider<ContentNotifier<UserRecordModel>,
           )
           .toList();
       final studios = ref.read(studiosProvider);
-      return userRecords.where((final userRecord) {
-        return userRecord.attendance == 2 &&
-            studios.any((final studio) => studio.id == userRecord.company.id);
-      });
+      return userRecords.where(
+        (final userRecord) =>
+            userRecord.attendance == 2 &&
+            studios.any((final studio) => studio.id == userRecord.company.id),
+      );
     },
   );
   ref.listen<bool>(
@@ -884,13 +866,14 @@ final StateNotifierProvider<ContentNotifier<UserRecordModel>,
 });
 
 /// The provider of whether to provide a discount to a user.
-final Provider<bool> discountProvider = Provider<bool>((final ref) {
-  return ref.watch(
-    userRecordsProvider.select((final userRecords) {
-      return !userRecords.any((final userRecord) => !userRecord.deleted);
-    }),
-  );
-});
+final Provider<bool> discountProvider = Provider<bool>(
+  (final ref) => ref.watch(
+    userRecordsProvider.select(
+      (final userRecords) =>
+          !userRecords.any((final userRecord) => !userRecord.deleted),
+    ),
+  ),
+);
 
 /// The class to handle the exception in the YClients API.
 @immutable

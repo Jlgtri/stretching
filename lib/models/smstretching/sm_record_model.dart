@@ -3,7 +3,7 @@
 import 'dart:convert';
 
 import 'package:meta/meta.dart';
-import 'package:stretching/models_yclients/activity_model.dart';
+import 'package:stretching/models/yclients/activity_model.dart';
 import 'package:stretching/utils/json_converters.dart';
 
 /// The type of payment on [SMRecordModel].
@@ -170,29 +170,28 @@ class SMRecordModel implements Comparable<SMRecordModel> {
     final bool? sendPush,
     final bool? isAbonement,
     final String? comment,
-  }) {
-    return SMRecordModel(
-      id: id ?? this.id,
-      activityId: activityId ?? this.activityId,
-      recordId: recordId ?? this.recordId,
-      companyId: companyId ?? this.companyId,
-      date: date ?? this.date,
-      dateEvent: dateEvent ?? this.dateEvent,
-      payment: payment ?? this.payment,
-      abonement: abonement ?? this.abonement,
-      userPhone: userPhone ?? this.userPhone,
-      userActive: userActive ?? this.userActive,
-      orderId: orderId ?? this.orderId,
-      mobile: mobile ?? this.mobile,
-      rating: rating ?? this.rating,
-      serviceId: serviceId ?? this.serviceId,
-      serviceName: serviceName ?? this.serviceName,
-      trenerName: trenerName ?? this.trenerName,
-      sendPush: sendPush ?? this.sendPush,
-      isAbonement: isAbonement ?? this.isAbonement,
-      comment: comment ?? this.comment,
-    );
-  }
+  }) =>
+      SMRecordModel(
+        id: id ?? this.id,
+        activityId: activityId ?? this.activityId,
+        recordId: recordId ?? this.recordId,
+        companyId: companyId ?? this.companyId,
+        date: date ?? this.date,
+        dateEvent: dateEvent ?? this.dateEvent,
+        payment: payment ?? this.payment,
+        abonement: abonement ?? this.abonement,
+        userPhone: userPhone ?? this.userPhone,
+        userActive: userActive ?? this.userActive,
+        orderId: orderId ?? this.orderId,
+        mobile: mobile ?? this.mobile,
+        rating: rating ?? this.rating,
+        serviceId: serviceId ?? this.serviceId,
+        serviceName: serviceName ?? this.serviceName,
+        trenerName: trenerName ?? this.trenerName,
+        sendPush: sendPush ?? this.sendPush,
+        isAbonement: isAbonement ?? this.isAbonement,
+        comment: comment ?? this.comment,
+      );
 
   /// Convert this model to map with string keys.
   ///
@@ -202,36 +201,36 @@ class SMRecordModel implements Comparable<SMRecordModel> {
   Map<String, Object?> toMap({
     final bool post = false,
     final bool edit = false,
-  }) {
-    return <String, Object?>{
-      if (!post && !edit) 'id': id.toString(),
-      if (!edit)
-        'activity_id': post || edit ? activityId : activityId.toString(),
-      if (!edit) 'record_id': post || edit ? recordId : recordId.toString(),
-      'company_id': post || edit ? companyId : companyId.toString(),
-      if (!edit) 'date': date.toString().split('.').first,
-      'date_event': dateEvent.toString().split('.').first,
-      'payment': post || edit ? payment.index : payment.index.toString(),
-      'abonement': post || edit ? abonement ?? 0 : (abonement ?? 0).toString(),
-      'user_phone': userPhone,
-      'user_active':
-          post || edit ? userActive.index : userActive.index.toString(),
-      if (!post && !edit || orderId != null)
-        'order_id': post || edit ? orderId ?? 0 : (orderId ?? 0).toString(),
-      'mobile': post || edit
-          ? boolToIntConverter.toJson(mobile)
-          : boolToIntConverter.toJson(mobile).toString(),
-      if (rating > 0) 'rating': post || edit ? rating : rating.toString(),
-      'service_id': post || edit ? serviceId : serviceId.toString(),
-      'service_name': serviceName,
-      'trener_name': trenerName,
-      if (!post && !edit)
-        'send_push': boolToIntConverter.toJson(sendPush).toString(),
-      if (!post && !edit)
-        'is_abonement': boolToIntConverter.toJson(isAbonement).toString(),
-      if (!post && !edit) 'comment': comment,
-    };
-  }
+  }) =>
+      <String, Object?>{
+        if (!post && !edit) 'id': id.toString(),
+        if (!edit)
+          'activity_id': post || edit ? activityId : activityId.toString(),
+        if (!edit) 'record_id': post || edit ? recordId : recordId.toString(),
+        'company_id': post || edit ? companyId : companyId.toString(),
+        if (!edit) 'date': date.toString().split('.').first,
+        'date_event': dateEvent.toString().split('.').first,
+        'payment': post || edit ? payment.index : payment.index.toString(),
+        'abonement':
+            post || edit ? abonement ?? 0 : (abonement ?? 0).toString(),
+        'user_phone': userPhone,
+        'user_active':
+            post || edit ? userActive.index : userActive.index.toString(),
+        if (!post && !edit || orderId != null)
+          'order_id': post || edit ? orderId ?? 0 : (orderId ?? 0).toString(),
+        'mobile': post || edit
+            ? boolToIntConverter.toJson(mobile)
+            : boolToIntConverter.toJson(mobile).toString(),
+        if (rating > 0) 'rating': post || edit ? rating : rating.toString(),
+        'service_id': post || edit ? serviceId : serviceId.toString(),
+        'service_name': serviceName,
+        'trener_name': trenerName,
+        if (!post && !edit)
+          'send_push': boolToIntConverter.toJson(sendPush).toString(),
+        if (!post && !edit)
+          'is_abonement': boolToIntConverter.toJson(isAbonement).toString(),
+        if (!post && !edit) 'comment': comment,
+      };
 
   /// Convert the map with string keys to this model.
   factory SMRecordModel.fromMap(final Map<String, Object?> map) {
@@ -272,61 +271,57 @@ class SMRecordModel implements Comparable<SMRecordModel> {
       SMRecordModel.fromMap(json.decode(source) as Map<String, Object?>);
 
   @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is SMRecordModel &&
-            other.id == id &&
-            other.activityId == activityId &&
-            other.recordId == recordId &&
-            other.companyId == companyId &&
-            other.date == date &&
-            other.dateEvent == dateEvent &&
-            other.payment == payment &&
-            other.abonement == abonement &&
-            other.userPhone == userPhone &&
-            other.userActive == userActive &&
-            other.orderId == orderId &&
-            other.mobile == mobile &&
-            other.rating == rating &&
-            other.serviceId == serviceId &&
-            other.serviceName == serviceName &&
-            other.trenerName == trenerName &&
-            other.sendPush == sendPush &&
-            other.isAbonement == isAbonement &&
-            other.comment == comment;
-  }
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is SMRecordModel &&
+          other.id == id &&
+          other.activityId == activityId &&
+          other.recordId == recordId &&
+          other.companyId == companyId &&
+          other.date == date &&
+          other.dateEvent == dateEvent &&
+          other.payment == payment &&
+          other.abonement == abonement &&
+          other.userPhone == userPhone &&
+          other.userActive == userActive &&
+          other.orderId == orderId &&
+          other.mobile == mobile &&
+          other.rating == rating &&
+          other.serviceId == serviceId &&
+          other.serviceName == serviceName &&
+          other.trenerName == trenerName &&
+          other.sendPush == sendPush &&
+          other.isAbonement == isAbonement &&
+          other.comment == comment;
 
   @override
-  int get hashCode {
-    return id.hashCode ^
-        activityId.hashCode ^
-        recordId.hashCode ^
-        companyId.hashCode ^
-        date.hashCode ^
-        dateEvent.hashCode ^
-        payment.hashCode ^
-        abonement.hashCode ^
-        userPhone.hashCode ^
-        userActive.hashCode ^
-        orderId.hashCode ^
-        mobile.hashCode ^
-        rating.hashCode ^
-        serviceId.hashCode ^
-        serviceName.hashCode ^
-        trenerName.hashCode ^
-        sendPush.hashCode ^
-        isAbonement.hashCode ^
-        comment.hashCode;
-  }
+  int get hashCode =>
+      id.hashCode ^
+      activityId.hashCode ^
+      recordId.hashCode ^
+      companyId.hashCode ^
+      date.hashCode ^
+      dateEvent.hashCode ^
+      payment.hashCode ^
+      abonement.hashCode ^
+      userPhone.hashCode ^
+      userActive.hashCode ^
+      orderId.hashCode ^
+      mobile.hashCode ^
+      rating.hashCode ^
+      serviceId.hashCode ^
+      serviceName.hashCode ^
+      trenerName.hashCode ^
+      sendPush.hashCode ^
+      isAbonement.hashCode ^
+      comment.hashCode;
 
   @override
-  String toString() {
-    return 'SMRecordModel(id: $id, activityId: $activityId, '
-        'recordId: $recordId, companyId: $companyId, date: $date, '
-        'dateEvent: $dateEvent, payment: $payment, abonement: $abonement, '
-        'userPhone: $userPhone, userActive: $userActive, orderId: $orderId, '
-        'mobile: $mobile, rating: $rating, serviceId: $serviceId, '
-        'serviceName: $serviceName, trenerName: $trenerName, '
-        'sendPush: $sendPush, isAbonement: $isAbonement, comment: $comment)';
-  }
+  String toString() => 'SMRecordModel(id: $id, activityId: $activityId, '
+      'recordId: $recordId, companyId: $companyId, date: $date, '
+      'dateEvent: $dateEvent, payment: $payment, abonement: $abonement, '
+      'userPhone: $userPhone, userActive: $userActive, orderId: $orderId, '
+      'mobile: $mobile, rating: $rating, serviceId: $serviceId, '
+      'serviceName: $serviceName, trenerName: $trenerName, '
+      'sendPush: $sendPush, isAbonement: $isAbonement, comment: $comment)';
 }

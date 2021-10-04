@@ -20,8 +20,8 @@ import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/refresh_content_hook.dart';
 import 'package:stretching/main.dart';
 import 'package:stretching/models/map_info_windows_options.dart';
-import 'package:stretching/models_smstretching/sm_studio_model.dart';
-import 'package:stretching/models_yclients/company_model.dart';
+import 'package:stretching/models/smstretching/sm_studio_model.dart';
+import 'package:stretching/models/yclients/company_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/content_provider.dart';
 import 'package:stretching/providers/firebase_providers.dart';
@@ -350,20 +350,19 @@ class StudiosScreen extends HookConsumerWidget {
         final child,
         final animation,
         final secondaryAnimation,
-      ) {
-        return SharedAxisTransition(
-          animation: animation,
-          secondaryAnimation: secondaryAnimation,
-          fillColor: Colors.transparent,
-          transitionType: SharedAxisTransitionType.scaled,
-          child: AnimatedOpacity(
-            opacity: !onMap.state ? 1 : 0,
-            duration: onMapSwitcherDuration,
-            curve: const Interval(0, 2 / 3, curve: Curves.ease),
-            child: child,
-          ),
-        );
-      },
+      ) =>
+          SharedAxisTransition(
+        animation: animation,
+        secondaryAnimation: secondaryAnimation,
+        fillColor: Colors.transparent,
+        transitionType: SharedAxisTransitionType.scaled,
+        child: AnimatedOpacity(
+          opacity: !onMap.state ? 1 : 0,
+          duration: onMapSwitcherDuration,
+          curve: const Interval(0, 2 / 3, curve: Curves.ease),
+          child: child,
+        ),
+      ),
       child: !onMap.state
           ? Padding(
               padding: const EdgeInsets.only(top: 80),
@@ -385,24 +384,22 @@ class StudiosScreen extends HookConsumerWidget {
                   primary: false,
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: studios.length,
-                  itemBuilder: (final context, final index) {
-                    return Padding(
-                      padding: studioCardMargin,
-                      child: StudioScreenCard(
-                        studios.elementAt(index),
-                        onNonMapTap: (final studio) async {
-                          await onMainStudioCardTap(studio.item0);
-                          await analytics.logEvent(
-                            name: FAKeys.studioOnMap,
-                            parameters: <String, String>{
-                              'type': 'list',
-                              'studio': translit(studio.item1.studioName),
-                            },
-                          );
-                        },
-                      ),
-                    );
-                  },
+                  itemBuilder: (final context, final index) => Padding(
+                    padding: studioCardMargin,
+                    child: StudioScreenCard(
+                      studios.elementAt(index),
+                      onNonMapTap: (final studio) async {
+                        await onMainStudioCardTap(studio.item0);
+                        await analytics.logEvent(
+                          name: FAKeys.studioOnMap,
+                          parameters: <String, String>{
+                            'type': 'list',
+                            'studio': translit(studio.item1.studioName),
+                          },
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
             )
@@ -433,17 +430,16 @@ class StudioScreenCard extends ConsumerWidget {
   static const Duration transitionDuration = Duration(milliseconds: 500);
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
-    return OpenContainer<void>(
-      tappable: false,
-      openElevation: 0,
-      closedElevation: 0,
-      openColor: Colors.transparent,
-      closedColor: Colors.transparent,
-      middleColor: Colors.transparent,
-      transitionDuration: transitionDuration,
-      openBuilder: (final context, final action) {
-        return ContentScreen(
+  Widget build(final BuildContext context, final WidgetRef ref) =>
+      OpenContainer<void>(
+        tappable: false,
+        openElevation: 0,
+        closedElevation: 0,
+        openColor: Colors.transparent,
+        closedColor: Colors.transparent,
+        middleColor: Colors.transparent,
+        transitionDuration: transitionDuration,
+        openBuilder: (final context, final action) => ContentScreen(
           type: NavigationScreen.studios,
           onBackButtonPressed: action,
           title: studio.item1.studioName,
@@ -469,11 +465,10 @@ class StudioScreenCard extends ConsumerWidget {
                         initialUrl:
                             smStretchingUrl + studio.item1.studioUrlAbout,
                         javascriptMode: JavascriptMode.unrestricted,
-                        navigationDelegate: (final navigation) {
-                          return navigation.url.startsWith(smStretchingUrl)
-                              ? NavigationDecision.navigate
-                              : NavigationDecision.prevent;
-                        },
+                        navigationDelegate: (final navigation) =>
+                            navigation.url.startsWith(smStretchingUrl)
+                                ? NavigationDecision.navigate
+                                : NavigationDecision.prevent,
                       ),
                     ),
                   ),
@@ -511,33 +506,31 @@ class StudioScreenCard extends ConsumerWidget {
               );
             },
           ),
-        );
-      },
-      closedBuilder: (final context, final action) {
-        Future<void> actionWithAnalytics() async {
-          action();
-          await analytics.logEvent(
-            name: FAKeys.studioScreen,
-            parameters: <String, String>{
-              'studio': translit(studio.item1.studioName)
-            },
-          );
-        }
+        ),
+        closedBuilder: (final context, final action) {
+          Future<void> actionWithAnalytics() async {
+            action();
+            await analytics.logEvent(
+              name: FAKeys.studioScreen,
+              parameters: <String, String>{
+                'studio': translit(studio.item1.studioName)
+              },
+            );
+          }
 
-        ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
-          ref.read(studiosCardsProvider(studio)).state = action;
-        });
-        return StudioCard(
-          studio,
-          onMap: onNonMapTap == null,
-          onTap: (final studio) => actionWithAnalytics(),
-          onAvatarTap: onNonMapTap != null
-              ? (final studio) => onNonMapTap?.call(studio)
-              : null,
-        );
-      },
-    );
-  }
+          ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
+            ref.read(studiosCardsProvider(studio)).state = action;
+          });
+          return StudioCard(
+            studio,
+            onMap: onNonMapTap == null,
+            onTap: (final studio) => actionWithAnalytics(),
+            onAvatarTap: onNonMapTap != null
+                ? (final studio) => onNonMapTap?.call(studio)
+                : null,
+          );
+        },
+      );
 
   @override
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
@@ -634,16 +627,15 @@ class StudioCard extends HookConsumerWidget {
                   imageUrl: studio.avatarUrl,
                   height: avatarSize(onMap: onMap) * mediaQuery.textScaleFactor,
                   width: avatarSize(onMap: onMap) * mediaQuery.textScaleFactor,
-                  imageBuilder: (final context, final imageProvider) {
-                    return GestureDetector(
-                      onTap: () => onAvatarTap?.call(studio),
-                      child: CircleAvatar(
-                        radius: (avatarSize(onMap: onMap) / 2) *
-                            mediaQuery.textScaleFactor,
-                        foregroundImage: imageProvider,
-                      ),
-                    );
-                  },
+                  imageBuilder: (final context, final imageProvider) =>
+                      GestureDetector(
+                    onTap: () => onAvatarTap?.call(studio),
+                    child: CircleAvatar(
+                      radius: (avatarSize(onMap: onMap) / 2) *
+                          mediaQuery.textScaleFactor,
+                      foregroundImage: imageProvider,
+                    ),
+                  ),
                 ),
               ),
 

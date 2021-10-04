@@ -99,43 +99,42 @@ extension NavigationScreenData on NavigationScreen {
   }
 
   /// The navigation bar item of this navigation screen type.
-  PersistentBottomNavBarItem navBarItem(final WidgetRef ref) {
-    return PersistentBottomNavBarItem(
-      title: title,
-      routeAndNavigatorSettings: RouteAndNavigatorSettings(
-        initialRoute: Routes.root.name,
-        navigatorKey: ref.watch(currentNavigatorProvider(this)),
-        navigatorObservers: <NavigatorObserver>[
-          ref.watch(routeObserverProvider(this))
-        ],
-        // onGenerateRoute: (final settings) {
-        //   var name = settings.name;
-        //   if (name == null || name.isEmpty) {
-        //     return null;
-        //   }
-        //   if (name.startsWith('/')) {
-        //     name = name.substring(1);
-        //   }
-        //   switch (name.split('/').first) {
-        //     case ContentRoutesData._self:
-        //       return MaterialPageRoute<Never>(
-        //         builder: (final context) => enumFromString(
-        //           ContentRoutes.values,
-        //           name!.split('/').last,
-        //         ).builder(context, settings.arguments),
-        //         settings: settings,
-        //       );
-        //   }
-        // },
-      ),
-      icon: Icon(icon, size: 18),
-      textStyle: const TextStyle(fontSize: 10),
-      activeColorPrimary: Colors.black,
-      activeColorSecondary: Colors.black,
-      inactiveColorPrimary: Colors.grey,
-      inactiveColorSecondary: Colors.grey,
-    );
-  }
+  PersistentBottomNavBarItem navBarItem(final WidgetRef ref) =>
+      PersistentBottomNavBarItem(
+        title: title,
+        routeAndNavigatorSettings: RouteAndNavigatorSettings(
+          initialRoute: Routes.root.name,
+          navigatorKey: ref.watch(currentNavigatorProvider(this)),
+          navigatorObservers: <NavigatorObserver>[
+            ref.watch(routeObserverProvider(this))
+          ],
+          // onGenerateRoute: (final settings) {
+          //   var name = settings.name;
+          //   if (name == null || name.isEmpty) {
+          //     return null;
+          //   }
+          //   if (name.startsWith('/')) {
+          //     name = name.substring(1);
+          //   }
+          //   switch (name.split('/').first) {
+          //     case ContentRoutesData._self:
+          //       return MaterialPageRoute<Never>(
+          //         builder: (final context) => enumFromString(
+          //           ContentRoutes.values,
+          //           name!.split('/').last,
+          //         ).builder(context, settings.arguments),
+          //         settings: settings,
+          //       );
+          //   }
+          // },
+        ),
+        icon: Icon(icon, size: 18),
+        textStyle: const TextStyle(fontSize: 10),
+        activeColorPrimary: Colors.black,
+        activeColorSecondary: Colors.black,
+        inactiveColorPrimary: Colors.grey,
+        inactiveColorSecondary: Colors.grey,
+      );
 
   /// The screen of this navigation screen type.
   Widget get screen {
@@ -187,17 +186,16 @@ class PersistentTabControllerConverter<T extends Enum>
 final ProviderFamily<ScrollController, NavigationScreen>
     navigationScrollControllerProvider =
     Provider.family<ScrollController, NavigationScreen>(
-        (final ref, final screen) {
-  return ScrollController();
-});
+  (final ref, final screen) => ScrollController(),
+);
 
 /// The provider of the current screen's navigator of the [navigationProvider].
 final ProviderFamily<GlobalKey<NavigatorState>, NavigationScreen>
     currentNavigatorProvider =
     Provider.family<GlobalKey<NavigatorState>, NavigationScreen>(
-        (final ref, final screen) {
-  return GlobalKey<NavigatorState>(debugLabel: screen.title);
-});
+  (final ref, final screen) =>
+      GlobalKey<NavigatorState>(debugLabel: screen.title),
+);
 
 /// The provider of the current transitioning state of the [navigationProvider].
 final StateProvider<bool> navigationTransitioningProvider =
@@ -211,9 +209,8 @@ final StateProvider<int> currentNavigationProvider =
 final StateNotifierProvider<NavigationNotifier, PersistentTabController>
     navigationProvider =
     StateNotifierProvider<NavigationNotifier, PersistentTabController>(
-        (final ref) {
-  return NavigationNotifier(ref);
-});
+  NavigationNotifier.new,
+);
 
 /// The notifier that contains the main app's navigation features.
 class NavigationNotifier
@@ -271,11 +268,6 @@ class NavigationRoot extends HookConsumerWidget {
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
-    useMemoized(() {
-      (ref.read(widgetsBindingProvider))
-        ..addObserver(ReviewRecordsEventHandler(context, ref))
-        ..addPostFrameCallback((final _) => ref.read(uniLinksProvider.future));
-    });
     final appBar = mainAppBar(theme);
     return Stack(
       alignment: Alignment.topCenter,
@@ -302,36 +294,34 @@ class NavigationRoot extends HookConsumerWidget {
           onWillPop: (final _) async =>
               (await showMaterialModalBottomSheet<bool?>(
                 context: context,
-                builder: (final context) {
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: <Widget>[
-                      BottomSheetHeader(title: TR.alertExitTitle.tr()),
-                      SingleChildScrollView(
-                        primary: false,
-                        controller: ModalScrollController.of(context),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 36,
-                          ),
-                          child: BottomButtons(
-                            firstText: TR.alertExitApprove.tr(),
-                            onFirstPressed: (final context) async {
-                              await SystemNavigator.pop();
-                              exit(0);
-                            },
-                            secondText: TR.alertExitDeny.tr(),
-                            onSecondPressed: (final context) async {
-                              await Navigator.of(context).maybePop();
-                              return false;
-                            },
-                          ),
+                builder: (final context) => Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    BottomSheetHeader(title: TR.alertExitTitle.tr()),
+                    SingleChildScrollView(
+                      primary: false,
+                      controller: ModalScrollController.of(context),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 36,
                         ),
-                      )
-                    ],
-                  );
-                },
+                        child: BottomButtons(
+                          firstText: TR.alertExitApprove.tr(),
+                          onFirstPressed: (final context) async {
+                            await SystemNavigator.pop();
+                            exit(0);
+                          },
+                          secondText: TR.alertExitDeny.tr(),
+                          onSecondPressed: (final context) async {
+                            await Navigator.of(context).maybePop();
+                            return false;
+                          },
+                        ),
+                      ),
+                    )
+                  ],
+                ),
               )) ??
               false,
           onItemSelected: (final index) async {
@@ -356,18 +346,16 @@ class NavigationRoot extends HookConsumerWidget {
           screens: <Widget>[
             for (final screen in NavigationScreen.values)
               KeyboardVisibilityBuilder(
-                builder: (final context, final isKeyboardVisible) {
-                  return Padding(
-                    padding: EdgeInsets.only(
-                      top: screen != NavigationScreen.profile
-                          ? appBar.preferredSize.height +
-                              mediaQuery.viewPadding.top
-                          : 0,
-                      bottom: isKeyboardVisible ? 0 : navBarHeight,
-                    ),
-                    child: screen.screen,
-                  );
-                },
+                builder: (final context, final isKeyboardVisible) => Padding(
+                  padding: EdgeInsets.only(
+                    top: screen != NavigationScreen.profile
+                        ? appBar.preferredSize.height +
+                            mediaQuery.viewPadding.top
+                        : 0,
+                    bottom: isKeyboardVisible ? 0 : navBarHeight,
+                  ),
+                  child: screen.screen,
+                ),
               ),
           ],
         ),

@@ -49,21 +49,20 @@ class FontIconData {
   final EdgeInsetsGeometry padding;
 
   /// Return the painter for this icon.
-  TextPainter getPainter([final IconThemeData? iconTheme]) {
-    return TextPainter(textDirection: TextDirection.ltr)
-      ..text = TextSpan(
-        text: String.fromCharCode(icon.codePoint),
-        style: TextStyle(
-          inherit: false,
-          letterSpacing: 0,
-          fontSize: height ?? iconTheme?.size,
-          color: color ?? iconTheme?.color,
-          fontFamily: icon.fontFamily,
-          package: icon.fontPackage,
-        ),
-      )
-      ..layout();
-  }
+  TextPainter getPainter([final IconThemeData? iconTheme]) =>
+      TextPainter(textDirection: TextDirection.ltr)
+        ..text = TextSpan(
+          text: String.fromCharCode(icon.codePoint),
+          style: TextStyle(
+            inherit: false,
+            letterSpacing: 0,
+            fontSize: height ?? iconTheme?.size,
+            color: color ?? iconTheme?.color,
+            fontFamily: icon.fontFamily,
+            package: icon.fontPackage,
+          ),
+        )
+        ..layout();
 
   /// Return the copy of this model.
   FontIconData copyWith({
@@ -75,51 +74,47 @@ class FontIconData {
     final BoxFit? fit,
     final AlignmentGeometry? selfAlignment,
     final EdgeInsetsGeometry? padding,
-  }) {
-    return FontIconData(
-      icon ?? this.icon,
-      width: width ?? this.width,
-      height: height ?? this.height,
-      color: color ?? this.color,
-      alignment: alignment ?? this.alignment,
-      fit: fit ?? this.fit,
-      selfAlignment: selfAlignment ?? this.selfAlignment,
-      padding: padding ?? this.padding,
-    );
-  }
+  }) =>
+      FontIconData(
+        icon ?? this.icon,
+        width: width ?? this.width,
+        height: height ?? this.height,
+        color: color ?? this.color,
+        alignment: alignment ?? this.alignment,
+        fit: fit ?? this.fit,
+        selfAlignment: selfAlignment ?? this.selfAlignment,
+        padding: padding ?? this.padding,
+      );
 
   @override
-  bool operator ==(final Object other) {
-    return identical(this, other) ||
-        other is FontIconData &&
-            other.icon == icon &&
-            other.width == width &&
-            other.height == height &&
-            other.color == color &&
-            other.alignment == alignment &&
-            other.fit == fit &&
-            other.selfAlignment == selfAlignment &&
-            other.padding == padding;
-  }
+  bool operator ==(final Object other) =>
+      identical(this, other) ||
+      other is FontIconData &&
+          other.icon == icon &&
+          other.width == width &&
+          other.height == height &&
+          other.color == color &&
+          other.alignment == alignment &&
+          other.fit == fit &&
+          other.selfAlignment == selfAlignment &&
+          other.padding == padding;
 
   @override
-  int get hashCode {
-    return icon.hashCode ^
-        width.hashCode ^
-        height.hashCode ^
-        color.hashCode ^
-        alignment.hashCode ^
-        fit.hashCode ^
-        selfAlignment.hashCode ^
-        padding.hashCode;
-  }
+  int get hashCode =>
+      icon.hashCode ^
+      width.hashCode ^
+      height.hashCode ^
+      color.hashCode ^
+      alignment.hashCode ^
+      fit.hashCode ^
+      selfAlignment.hashCode ^
+      padding.hashCode;
 
   @override
-  String toString() {
-    return 'FontIconData(icon: $icon, width: $width, height: $height, '
-        'color: $color, alignment: $alignment, fit: $fit, '
-        'selfAlignment: $selfAlignment, padding: $padding)';
-  }
+  String toString() =>
+      'FontIconData(icon: $icon, width: $width, height: $height, '
+      'color: $color, alignment: $alignment, fit: $fit, '
+      'selfAlignment: $selfAlignment, padding: $padding)';
 }
 
 /// The widget to stack icons on top of each other.
@@ -176,24 +171,22 @@ class MultiFontIcon extends StatelessWidget {
   // }
 
   @override
-  Widget build(final BuildContext context) {
-    return SizedBox(
-      width: width,
-      height: height,
-      child: Stack(
-        children: <Widget>[
-          for (final icon in icons)
-            Align(
-              alignment: icon.alignment,
-              child: Padding(
-                padding: icon.padding,
-                child: FontIcon(icon),
+  Widget build(final BuildContext context) => SizedBox(
+        width: width,
+        height: height,
+        child: Stack(
+          children: <Widget>[
+            for (final icon in icons)
+              Align(
+                alignment: icon.alignment,
+                child: Padding(
+                  padding: icon.padding,
+                  child: FontIcon(icon),
+                ),
               ),
-            ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
 
   @override
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
@@ -276,40 +269,38 @@ class FontIconButton extends StatelessWidget {
   final void Function()? onPressed;
 
   @override
-  Widget build(final BuildContext context) {
-    return Material(
-      color: backgroudColor,
-      shape: const CircleBorder(),
-      child: IconButton(
-        icon: icon,
-        color: color,
-        disabledColor: disabledColor,
-        tooltip: tooltip,
-        onPressed: onPressed,
-        padding: icon.data.padding,
-        alignment: icon.data.alignment,
-        visualDensity: VisualDensity.compact,
-        iconSize: icon.data.height != null || icon.data.width != null
-            ? max(icon.data.height ?? 0, icon.data.width ?? 0) *
-                (1 + splashMultiplier)
-            : 24,
-        constraints: constraints ??
-            (icon.data.height != null || icon.data.width != null
-                ? BoxConstraints(
-                      minHeight: icon.data.height ?? 0,
-                      maxHeight: icon.data.height ?? double.infinity,
-                      minWidth: icon.data.width ?? 0,
-                      maxWidth: icon.data.width ?? double.infinity,
-                    ) *
-                    (1 + splashMultiplier)
-                : null),
-        splashRadius: icon.data.height != null || icon.data.width != null
-            ? max(icon.data.height ?? 0, icon.data.width ?? 0) *
-                splashMultiplier
-            : null,
-      ),
-    );
-  }
+  Widget build(final BuildContext context) => Material(
+        color: backgroudColor,
+        shape: const CircleBorder(),
+        child: IconButton(
+          icon: icon,
+          color: color,
+          disabledColor: disabledColor,
+          tooltip: tooltip,
+          onPressed: onPressed,
+          padding: icon.data.padding,
+          alignment: icon.data.alignment,
+          visualDensity: VisualDensity.compact,
+          iconSize: icon.data.height != null || icon.data.width != null
+              ? max(icon.data.height ?? 0, icon.data.width ?? 0) *
+                  (1 + splashMultiplier)
+              : 24,
+          constraints: constraints ??
+              (icon.data.height != null || icon.data.width != null
+                  ? BoxConstraints(
+                        minHeight: icon.data.height ?? 0,
+                        maxHeight: icon.data.height ?? double.infinity,
+                        minWidth: icon.data.width ?? 0,
+                        maxWidth: icon.data.width ?? double.infinity,
+                      ) *
+                      (1 + splashMultiplier)
+                  : null),
+          splashRadius: icon.data.height != null || icon.data.width != null
+              ? max(icon.data.height ?? 0, icon.data.width ?? 0) *
+                  splashMultiplier
+              : null,
+        ),
+      );
 
   @override
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
@@ -347,24 +338,22 @@ class FontIconBackButton extends StatelessWidget {
   final void Function()? onPressed;
 
   @override
-  Widget build(final BuildContext context) {
-    return FontIconButton(
-      FontIcon(
-        FontIconData(
-          IconsCG.back,
-          color: color,
-          height: size,
-          width: size,
-          alignment: Alignment.center,
-          padding: const EdgeInsets.only(bottom: 4),
+  Widget build(final BuildContext context) => FontIconButton(
+        FontIcon(
+          FontIconData(
+            IconsCG.back,
+            color: color,
+            height: size,
+            width: size,
+            alignment: Alignment.center,
+            padding: const EdgeInsets.only(bottom: 4),
+          ),
         ),
-      ),
-      splashMultiplier: 7 / 10,
-      color: color,
-      tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-      onPressed: onPressed ?? Navigator.of(context).maybePop,
-    );
-  }
+        splashMultiplier: 7 / 10,
+        color: color,
+        tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+        onPressed: onPressed ?? Navigator.of(context).maybePop,
+      );
 
   @override
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {

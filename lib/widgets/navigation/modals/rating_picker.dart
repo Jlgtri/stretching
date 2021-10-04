@@ -11,7 +11,7 @@ import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/main.dart';
-import 'package:stretching/models_yclients/user_record_model.dart';
+import 'package:stretching/models/yclients/user_record_model.dart';
 import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/style.dart';
@@ -231,14 +231,13 @@ class RatingPicker extends HookConsumerWidget {
                               fadeInDuration: Duration.zero,
                               fadeOutDuration: Duration.zero,
                               imageBuilder:
-                                  (final context, final imageProvider) {
-                                return CircleAvatar(
-                                  foregroundImage: imageProvider,
-                                  radius: 45,
-                                  backgroundColor: Colors.transparent,
-                                  foregroundColor: Colors.transparent,
-                                );
-                              },
+                                  (final context, final imageProvider) =>
+                                      CircleAvatar(
+                                foregroundImage: imageProvider,
+                                radius: 45,
+                                backgroundColor: Colors.transparent,
+                                foregroundColor: Colors.transparent,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 10),

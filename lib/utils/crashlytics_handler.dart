@@ -27,9 +27,8 @@ class CrashlyticsHandler extends ReportHandler {
   final bool printLogs;
 
   @override
-  List<PlatformType> getSupportedPlatforms() {
-    return [PlatformType.android, PlatformType.iOS];
-  }
+  List<PlatformType> getSupportedPlatforms() =>
+      [PlatformType.android, PlatformType.iOS];
 
   @override
   Future<bool> handle(final Report error, final BuildContext? context) async {

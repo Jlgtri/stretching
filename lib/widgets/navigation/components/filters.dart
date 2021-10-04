@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:stretching/models_smstretching/sm_classes_gallery_model.dart';
+import 'package:stretching/models/smstretching/sm_classes_gallery_model.dart';
 
 /// Returns the widget that provides functionality for selecting and
 /// deselecting a [ClassCategory].
@@ -15,38 +15,37 @@ PreferredSizeWidget getSelectorWidget<T extends Object>({
   final double height = 36,
   final EdgeInsets padding = const EdgeInsets.only(top: 22, bottom: 26),
   final EdgeInsetsGeometry margin = const EdgeInsets.symmetric(horizontal: 4),
-}) {
-  return PreferredSize(
-    preferredSize: Size.fromHeight(height + padding.vertical),
-    child: Align(
-      alignment: Alignment.bottomLeft,
-      child: Padding(
-        padding: padding.copyWith(top: 0),
-        child: NotificationListener<ScrollNotification>(
-          onNotification: (final notification) => true,
-          child: SingleChildScrollView(
-            primary: false,
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: <Widget>[
-                for (final value in values)
-                  FilterButton(
-                    margin: margin,
-                    selected: selected(value),
-                    text: text(value),
-                    onSelected: (final selectedValue) =>
-                        onSelected(value, selectedValue),
-                  ),
-              ],
+}) =>
+    PreferredSize(
+      preferredSize: Size.fromHeight(height + padding.vertical),
+      child: Align(
+        alignment: Alignment.bottomLeft,
+        child: Padding(
+          padding: padding.copyWith(top: 0),
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (final notification) => true,
+            child: SingleChildScrollView(
+              primary: false,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: <Widget>[
+                  for (final value in values)
+                    FilterButton(
+                      margin: margin,
+                      selected: selected(value),
+                      text: text(value),
+                      onSelected: (final selectedValue) =>
+                          onSelected(value, selectedValue),
+                    ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
 
 /// The button that checks a filter.
 class FilterButton extends StatelessWidget {
@@ -116,14 +115,13 @@ class FilterButton extends StatelessWidget {
                 memCacheHeight: 32,
                 fadeInDuration: Duration.zero,
                 fadeOutDuration: Duration.zero,
-                imageBuilder: (final context, final imageProvider) {
-                  return CircleAvatar(
-                    backgroundColor: Colors.transparent,
-                    foregroundColor: Colors.transparent,
-                    radius: 16,
-                    foregroundImage: imageProvider,
-                  );
-                },
+                imageBuilder: (final context, final imageProvider) =>
+                    CircleAvatar(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.transparent,
+                  radius: 16,
+                  foregroundImage: imageProvider,
+                ),
               )
             : null,
         backgroundColor: backgroundColor,

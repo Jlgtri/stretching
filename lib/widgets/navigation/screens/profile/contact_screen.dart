@@ -59,54 +59,53 @@ class ContactScreenState extends ConsumerState<ContactScreen>
       final String title,
       final String iconUrl,
       final String url,
-    ) {
-      return Align(
-        child: MaterialButton(
-          onPressed: () => launch(url),
-          shape: RoundedRectangleBorder(
-            borderRadius: const BorderRadius.all(Radius.circular(4)) *
-                mediaQuery.textScaleFactor,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              Container(
-                height: 50 * mediaQuery.textScaleFactor,
-                width: 50 * mediaQuery.textScaleFactor,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: const BorderRadius.all(Radius.circular(4)),
-                  border: Border.all(color: theme.hintColor),
+    ) =>
+        Align(
+          child: MaterialButton(
+            onPressed: () => launch(url),
+            shape: RoundedRectangleBorder(
+              borderRadius: const BorderRadius.all(Radius.circular(4)) *
+                  mediaQuery.textScaleFactor,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Container(
+                  height: 50 * mediaQuery.textScaleFactor,
+                  width: 50 * mediaQuery.textScaleFactor,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: const BorderRadius.all(Radius.circular(4)),
+                    border: Border.all(color: theme.hintColor),
+                  ),
+                  alignment: Alignment.center,
+                  child: Image.asset(
+                    iconUrl,
+                    height: 32 * mediaQuery.textScaleFactor,
+                    width: 32 * mediaQuery.textScaleFactor,
+                  ),
                 ),
-                alignment: Alignment.center,
-                child: Image.asset(
-                  iconUrl,
-                  height: 32 * mediaQuery.textScaleFactor,
-                  width: 32 * mediaQuery.textScaleFactor,
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: theme.textTheme.headline6,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textScaleFactor: mediaQuery.textScaleFactor.clamp(0, 1.1),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                title,
-                style: theme.textTheme.headline6,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textScaleFactor: mediaQuery.textScaleFactor.clamp(0, 1.1),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      );
-    }
+        );
 
-    final phoneFormatter = useMemoized(() {
-      return MaskTextInputFormatter(
+    final phoneFormatter = useMemoized(
+      () => MaskTextInputFormatter(
         initialText: supportPhoneNumber.toString(),
         mask: '# ### ### ## ##',
         filter: {'#': RegExp(r'\d')},
-      );
-    });
+      ),
+    );
 
     return WillPopScope(
       onWillPop: () async {

@@ -57,7 +57,7 @@
 //     final theme = Theme.of(context);
 //     final mediaQuery = MediaQuery.of(context);
 //     final scrollController = useScrollController();
-//     final scrollNotificationExample = useRef<ScrollUpdateNotification?>(null);
+//    final scrollNotificationExample = useRef<ScrollUpdateNotification?>(null);
 //     final isHeightReset = useRef<bool>(false);
 //     return DraggableScrollbar.semicircle(
 //       controller: scrollController,
@@ -152,7 +152,7 @@
 //           ),
 //         )
 //         ..add(IntProperty('itemsCount', itemsCount))
-//         ..add(ObjectFlagProperty<ScrollWidgetBuilder>.has('builder', builder))
+//        ..add(ObjectFlagProperty<ScrollWidgetBuilder>.has('builder', builder))
 //         ..add(DoubleProperty('leadingChildHeight', leadingChildHeight))
 //         ..add(DoubleProperty('trailingChildHeight', trailingChildHeight)),
 //     );

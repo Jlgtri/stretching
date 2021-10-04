@@ -185,13 +185,11 @@ class OptionalLocaleConverter implements JsonConverter<Locale?, String?> {
   const OptionalLocaleConverter._();
 
   @override
-  Locale? fromJson(final Object? data) {
-    return data is Locale?
-        ? data
-        : data is String
-            ? data.toLanguageTag()
-            : null;
-  }
+  Locale? fromJson(final Object? data) => data is Locale?
+      ? data
+      : data is String
+          ? data.toLanguageTag()
+          : null;
 
   @override
   String? toJson(final Locale? locale) => locale?.toLanguageTag();
@@ -206,9 +204,8 @@ class LocaleConverter implements JsonConverter<Locale, String> {
   const LocaleConverter._();
 
   @override
-  Locale fromJson(final Object? data) {
-    return data is Locale ? data : (data! as String).toLanguageTag();
-  }
+  Locale fromJson(final Object? data) =>
+      data is Locale ? data : (data! as String).toLanguageTag();
 
   @override
   String toJson(final Locale locale) => locale.toLanguageTag();
@@ -250,14 +247,12 @@ class IterableConverter<T extends Object, S extends Object>
   final JsonConverter<T, S> converter;
 
   @override
-  Iterable<T> fromJson(final Object? data) {
-    return data is Iterable<T>
-        ? data
-        : (data! as Iterable<dynamic>)
-            .cast<S>()
-            .map(converter.fromJson)
-            .cast<T>();
-  }
+  Iterable<T> fromJson(final Object? data) => data is Iterable<T>
+      ? data
+      : (data! as Iterable<dynamic>)
+          .cast<S>()
+          .map(converter.fromJson)
+          .cast<T>();
 
   @override
   Iterable<S> toJson(final Iterable<T> iterable) =>
@@ -274,11 +269,8 @@ class StringConverter<T extends Object, S extends Object>
   final JsonConverter<T, S> converter;
 
   @override
-  T fromJson(final Object? data) {
-    return data is T
-        ? data
-        : converter.fromJson(json.decode(data! as String) as S);
-  }
+  T fromJson(final Object? data) =>
+      data is T ? data : converter.fromJson(json.decode(data! as String) as S);
 
   @override
   String toJson(final T data) => json.encode(converter.toJson(data));
@@ -294,13 +286,11 @@ class StringToIterableConverter<T extends Object, S extends Object>
   final JsonConverter<Iterable<T>, Iterable<S>> converter;
 
   @override
-  Iterable<T> fromJson(final Object? data) {
-    return data is Iterable<T>
-        ? data
-        : converter.fromJson(
-            (json.decode(data! as String) as Iterable<dynamic>).cast<S>(),
-          );
-  }
+  Iterable<T> fromJson(final Object? data) => data is Iterable<T>
+      ? data
+      : converter.fromJson(
+          (json.decode(data! as String) as Iterable<dynamic>).cast<S>(),
+        );
 
   @override
   String toJson(final Iterable<T> data) =>
@@ -317,13 +307,11 @@ class OptionalStringConverter<T extends Object?>
   final JsonConverter<T?, Object?> converter;
 
   @override
-  T? fromJson(final Object? data) {
-    return data is T
-        ? data
-        : data is String
-            ? converter.fromJson(json.decode(data))
-            : null;
-  }
+  T? fromJson(final Object? data) => data is T
+      ? data
+      : data is String
+          ? converter.fromJson(json.decode(data))
+          : null;
 
   @override
   String? toJson(final T? data) =>
@@ -366,9 +354,8 @@ class PermissionConverter implements JsonConverter<Permission, int> {
   const PermissionConverter._();
 
   @override
-  Permission fromJson(final Object? data) {
-    return data is Permission ? data : Permission.byValue(data! as int);
-  }
+  Permission fromJson(final Object? data) =>
+      data is Permission ? data : Permission.byValue(data! as int);
 
   @override
   int toJson(final Permission permission) => permission.value;

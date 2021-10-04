@@ -219,13 +219,12 @@ class Story extends HookConsumerWidget {
                       child: index == currentIndex.value
                           ? AnimatedBuilder(
                               animation: animationController,
-                              builder: (final context, final child) {
-                                return progressSegmentBuilder(
-                                  context: context,
-                                  index: index,
-                                  progress: animationController.value,
-                                );
-                              },
+                              builder: (final context, final child) =>
+                                  progressSegmentBuilder(
+                                context: context,
+                                index: index,
+                                progress: animationController.value,
+                              ),
                             )
                           : progressSegmentBuilder(
                               context: context,
@@ -345,13 +344,12 @@ class PhotoStory extends StoryModel {
   final Duration duration;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
-    return CachedNetworkImage(
-      imageUrl: url,
-      fit: BoxFit.cover,
-      placeholder: (final context, final url) => const PlaceholderStory(),
-    );
-  }
+  Widget build(final BuildContext context, final WidgetRef ref) =>
+      CachedNetworkImage(
+        imageUrl: url,
+        fit: BoxFit.cover,
+        placeholder: (final context, final url) => const PlaceholderStory(),
+      );
 }
 
 /// The widget for showing a video story.

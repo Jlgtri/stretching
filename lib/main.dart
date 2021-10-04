@@ -19,11 +19,12 @@ import 'package:stretching/const.dart';
 import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
-import 'package:stretching/models_smstretching/sm_activity_price_model.dart';
+import 'package:stretching/models/smstretching/sm_activity_price_model.dart';
 import 'package:stretching/providers/appsflyer_provider.dart';
 import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/providers/other_providers.dart';
+import 'package:stretching/providers/uni_links_provider.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/utils/crashlytics_handler.dart';
 import 'package:stretching/utils/logger.dart';
@@ -76,10 +77,10 @@ final StateProvider<bool> splashProvider =
     StateProvider<bool>((final ref) => true);
 
 /// Returns true if the app was successfully inited.
-final Provider<bool> initedProvider = Provider<bool>((final ref) {
-  return ref.watch(smActivityPriceProvider) !=
-      const SMActivityPriceModel.zero();
-});
+final Provider<bool> initedProvider = Provider<bool>(
+  (final ref) =>
+      ref.watch(smActivityPriceProvider) != const SMActivityPriceModel.zero(),
+);
 
 /// If the [RefreshConfiguration] header should display a connection error.
 final StateProvider<bool> connectionErrorProvider =
@@ -110,14 +111,21 @@ class RootScreen extends HookConsumerWidget {
             SystemChannels.textInput.invokeMethod<void>('TextInput.hide'),
             ez.delegate.load(ez.currentLocale!),
             ref.read(locationProvider.last),
-            ref.read(orientationProvider.last),
             ref.read(messagingProvider.future),
             ref.read(appsflyerProvider.future),
             // Future.delayed(const Duration(seconds: 15)),
           ]);
           ref.read(locationServicesProvider);
+
+          widgetsBinding
+            ..addObserver(ReviewRecordsEventHandler(ref))
+            ..addPostFrameCallback(
+              (final _) => ref.read(uniLinksProvider.future),
+            );
+
           final currentLocale = ez.currentLocale;
-          if (currentLocale != null) {
+          if (currentLocale != null &&
+              ref.read(localeProvider) != currentLocale) {
             await (ref.read(localeProvider.notifier))
                 .setStateAsync(currentLocale);
           }
@@ -182,7 +190,10 @@ class RootScreen extends HookConsumerWidget {
             },
             builder: (final context, final child) {
               final theme = Theme.of(context);
-              final mediaQuery = MediaQuery.of(context);
+              var mediaQuery = MediaQuery.of(context);
+              mediaQuery = mediaQuery.copyWith(
+                textScaleFactor: mediaQuery.textScaleFactor.clamp(0.5, 1.3),
+              );
               final textStyle =
                   theme.textTheme.bodyText2!.copyWith(color: theme.hintColor);
               final emojiStyle =
@@ -191,47 +202,50 @@ class RootScreen extends HookConsumerWidget {
                 ref.read(rootThemeProvider).state = theme;
                 ref.read(rootMediaQueryProvider).state = mediaQuery;
               });
-              return RefreshConfiguration(
-                // Header height is 60, header trigger height is 75,
-                // so max overscroll extent should be 25
-                maxOverScrollExtent: 25,
-                headerTriggerDistance: 75,
-                headerBuilder: () => Consumer(
-                  builder: (final context, final ref, final child) {
-                    final connectionError =
-                        ref.watch(connectionErrorProvider).state;
-                    return ClassicHeader(
-                      completeDuration:
-                          const Duration(seconds: 1, milliseconds: 500),
-                      textStyle: textStyle,
-                      idleText: TR.miscPullToRefreshIdle.tr(),
-                      releaseText: TR.miscPullToRefreshRelease.tr(),
-                      refreshingText: TR.miscPullToRefreshRefreshing.tr(),
-                      completeText: connectionError
-                          ? TR.miscPullToRefreshCompleteInternetError.tr()
-                          : TR.miscPullToRefreshComplete.tr(),
-                      idleIcon: EmojiText(
-                        '😉',
-                        style: emojiStyle,
-                        textScaleFactor: mediaQuery.textScaleFactor,
-                      ),
-                      releaseIcon: EmojiText(
-                        '🔥',
-                        style: emojiStyle,
-                        textScaleFactor: mediaQuery.textScaleFactor,
-                      ),
-                      // refreshingIcon: EmojiText('🤘', style: emojiStyle),
-                      completeIcon: connectionError
-                          ? const FontIcon(FontIconData(IconsCG.globe))
-                          : EmojiText(
-                              '❤',
-                              style: emojiStyle,
-                              textScaleFactor: mediaQuery.textScaleFactor,
-                            ),
-                    );
-                  },
+              return MediaQuery(
+                data: mediaQuery,
+                child: RefreshConfiguration(
+                  // Header height is 60, header trigger height is 75,
+                  // so max overscroll extent should be 25
+                  maxOverScrollExtent: 25,
+                  headerTriggerDistance: 75,
+                  headerBuilder: () => Consumer(
+                    builder: (final context, final ref, final child) {
+                      final connectionError =
+                          ref.watch(connectionErrorProvider).state;
+                      return ClassicHeader(
+                        completeDuration:
+                            const Duration(seconds: 1, milliseconds: 500),
+                        textStyle: textStyle,
+                        idleText: TR.miscPullToRefreshIdle.tr(),
+                        releaseText: TR.miscPullToRefreshRelease.tr(),
+                        refreshingText: TR.miscPullToRefreshRefreshing.tr(),
+                        completeText: connectionError
+                            ? TR.miscPullToRefreshCompleteInternetError.tr()
+                            : TR.miscPullToRefreshComplete.tr(),
+                        idleIcon: EmojiText(
+                          '😉',
+                          style: emojiStyle,
+                          textScaleFactor: mediaQuery.textScaleFactor,
+                        ),
+                        releaseIcon: EmojiText(
+                          '🔥',
+                          style: emojiStyle,
+                          textScaleFactor: mediaQuery.textScaleFactor,
+                        ),
+                        // refreshingIcon: EmojiText('🤘', style: emojiStyle),
+                        completeIcon: connectionError
+                            ? const FontIcon(FontIconData(IconsCG.globe))
+                            : EmojiText(
+                                '❤',
+                                style: emojiStyle,
+                                textScaleFactor: mediaQuery.textScaleFactor,
+                              ),
+                      );
+                    },
+                  ),
+                  child: child!,
                 ),
-                child: child!,
               );
             },
           ),
@@ -303,50 +317,47 @@ extension RoutesData on Routes {
           return const AuthorizationScreen();
         };
       case Routes.root:
-        return (final context) {
-          return Consumer(
-            builder: (final context, final ref, final child) {
-              final error = ref.watch(errorProvider).state;
-              if (error != null) {
-                final dynamic exception = error.item1.error;
-                if (exception is DioError) {
-                  final dynamic dioError = exception.error;
-                  if (dioError is SocketException) {
-                    if (!ref.watch(initedProvider)) {
-                      return const ConnectionErrorScreen();
-                    } else {
-                      final connectionError = ref.read(connectionErrorProvider);
-                      if (!connectionError.state) {
-                        (ref.read(widgetsBindingProvider))
-                            .addPostFrameCallback((final _) async {
-                          connectionError.state = true;
-                          await Future<void>.delayed(
-                            const Duration(seconds: 5),
-                          );
-                          connectionError.state = false;
-                        });
+        return (final context) => Consumer(
+              builder: (final context, final ref, final child) {
+                final error = ref.watch(errorProvider).state;
+                if (error != null) {
+                  final dynamic exception = error.item1.error;
+                  if (exception is DioError) {
+                    final dynamic dioError = exception.error;
+                    if (dioError is SocketException) {
+                      if (!ref.watch(initedProvider)) {
+                        return const ConnectionErrorScreen();
+                      } else {
+                        final connectionError =
+                            ref.read(connectionErrorProvider);
+                        if (!connectionError.state) {
+                          (ref.read(widgetsBindingProvider))
+                              .addPostFrameCallback((final _) async {
+                            connectionError.state = true;
+                            await Future<void>.delayed(
+                              const Duration(seconds: 5),
+                            );
+                            connectionError.state = false;
+                          });
+                        }
                       }
                     }
                   }
-                  // else {
-                  //   (ref.read(widgetsBindingProvider))
-                  //       .addPostFrameCallback((final _) {
-                  //     Navigator.of(context, rootNavigator: true)
-                  //         .popUntil(ModalRoute.withName(name));
-                  //   });
-                  // }
+                  if (!ref.watch(initedProvider)) {
+                    (ref.read(widgetsBindingProvider))
+                        .addPostFrameCallback((final _) {
+                      Navigator.of(context, rootNavigator: true)
+                          .popUntil(ModalRoute.withName(name));
+                    });
+                    return ErrorScreen(error.item0, error.item1);
+                  }
                 }
-                if (!ref.watch(initedProvider)) {
-                  return ErrorScreen(error.item0, error.item1);
-                }
-              }
 
-              return ref.watch(splashProvider).state
-                  ? const SizedBox.shrink()
-                  : const NavigationRoot();
-            },
-          );
-        };
+                return ref.watch(splashProvider).state
+                    ? const SizedBox.shrink()
+                    : const NavigationRoot();
+              },
+            );
     }
   }
 

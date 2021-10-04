@@ -94,13 +94,10 @@ class ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
                         : '',
                 label: TR.profileEditFirstName.tr(),
                 keyboardType: TextInputType.name,
-                validator: (final value) {
-                  return (value ?? '').isNotEmpty &&
-                          RegExp(r'[^\p{L}]', unicode: true)
-                              .hasMatch(value ?? '')
-                      ? TR.profileEditFirstNameError.tr()
-                      : null;
-                },
+                validator: (final value) => (value ?? '').isNotEmpty &&
+                        RegExp(r'[^\p{L}]', unicode: true).hasMatch(value ?? '')
+                    ? TR.profileEditFirstNameError.tr()
+                    : null,
                 onSaved: (final value) => firstName.value = value,
               ),
 
@@ -110,12 +107,10 @@ class ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
                 initialValue: userName.length > 1 ? userName.first : '',
                 label: TR.profileEditSurname.tr(),
                 keyboardType: TextInputType.name,
-                validator: (final value) {
-                  return RegExp(r'[^\p{L}]', unicode: true)
-                          .hasMatch(value ?? '')
-                      ? TR.profileEditSurnameError.tr()
-                      : null;
-                },
+                validator: (final value) =>
+                    RegExp(r'[^\p{L}]', unicode: true).hasMatch(value ?? '')
+                        ? TR.profileEditSurnameError.tr()
+                        : null,
                 onSaved: (final value) => surname.value = value,
               ),
 
@@ -125,12 +120,10 @@ class ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
                 initialValue: userName.length > 2 ? userName.elementAt(2) : '',
                 label: TR.profileEditMiddleName.tr(),
                 keyboardType: TextInputType.name,
-                validator: (final value) {
-                  return RegExp(r'[^\p{L}]', unicode: true)
-                          .hasMatch(value ?? '')
-                      ? TR.profileEditMiddleNameError.tr()
-                      : null;
-                },
+                validator: (final value) =>
+                    RegExp(r'[^\p{L}]', unicode: true).hasMatch(value ?? '')
+                        ? TR.profileEditMiddleNameError.tr()
+                        : null,
                 onSaved: (final value) => middleName.value = value,
               ),
 
@@ -275,12 +268,10 @@ class ProfileEditField extends HookWidget {
         if (!hasFocus.value) {
           controller.text = text.value = text.value.splitMapJoin(
             RegExp(r'\s+'),
-            onNonMatch: (final nonMatch) {
-              return nonMatch.isNotEmpty
-                  ? nonMatch.substring(0, 1).toUpperCase() +
-                      nonMatch.substring(1).toLowerCase()
-                  : '';
-            },
+            onNonMatch: (final nonMatch) => nonMatch.isNotEmpty
+                ? nonMatch.substring(0, 1).toUpperCase() +
+                    nonMatch.substring(1).toLowerCase()
+                : '',
             onMatch: (final m) => ' ',
           );
         }

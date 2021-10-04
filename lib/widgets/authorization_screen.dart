@@ -16,8 +16,8 @@ import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/models/yclients/user_model.dart';
 import 'package:stretching/models/yclients_response.dart';
-import 'package:stretching/models_yclients/user_model.dart';
 import 'package:stretching/providers/firebase_providers.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/style.dart';
@@ -44,13 +44,13 @@ class AuthorizationScreen extends HookConsumerWidget {
     final isMounted = useIsMounted();
 
     final enteringPhone = useState<bool>(true);
-    final phoneFormatter = useMemoized(() {
-      return MaskTextInputFormatter(
+    final phoneFormatter = useMemoized(
+      () => MaskTextInputFormatter(
         initialText: phonePrefix,
         mask: '$phonePrefix### ### ## ##',
         filter: {'#': RegExp(r'\d')},
-      );
-    });
+      ),
+    );
 
     final currentPhone = useState<String?>(null);
     final currentCode = useState<String?>(null);
@@ -166,7 +166,6 @@ class AuthorizationScreen extends HookConsumerWidget {
     return FocusWrapper(
       unfocussableKeys: <GlobalKey>[phoneKey, codeKey],
       child: Scaffold(
-        // ignore: use_build_context_synchronously
         appBar: cancelAppBar(
           theme,
           onPressed: navigator.maybePop,
@@ -186,14 +185,13 @@ class AuthorizationScreen extends HookConsumerWidget {
               final child,
               final animation,
               final secondaryAnimation,
-            ) {
-              return SharedAxisTransition(
-                animation: animation,
-                secondaryAnimation: secondaryAnimation,
-                transitionType: SharedAxisTransitionType.horizontal,
-                child: child,
-              );
-            },
+            ) =>
+                SharedAxisTransition(
+              animation: animation,
+              secondaryAnimation: secondaryAnimation,
+              transitionType: SharedAxisTransitionType.horizontal,
+              child: child,
+            ),
             child: Padding(
               key: ValueKey(enteringPhone.value),
               padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -287,11 +285,10 @@ class AuthorizationScreen extends HookConsumerWidget {
                         ],
                         onChanged: (final value) {},
 
-                        beforeTextPaste: (final text) {
-                          return text != null &&
-                              text.length == pinCodeLength &&
-                              int.tryParse(text) != null;
-                        },
+                        beforeTextPaste: (final text) =>
+                            text != null &&
+                            text.length == pinCodeLength &&
+                            int.tryParse(text) != null,
                       ),
                     )
                   ]

@@ -42,15 +42,14 @@ T enumFromString<T extends Enum>(
   final Iterable<T> enumValues,
   final String value, {
   final T Function()? orElse,
-}) {
-  return enumValues.singleWhere(
-    (final enumItem) {
-      final eNum = enumToString(enumItem, withUnderscores: false);
-      return eNum == value || eNum.withUnderscores() == value;
-    },
-    orElse: orElse,
-  );
-}
+}) =>
+    enumValues.singleWhere(
+      (final enumItem) {
+        final eNum = enumToString(enumItem, withUnderscores: false);
+        return eNum == value || eNum.withUnderscores() == value;
+      },
+      orElse: orElse,
+    );
 
 /// Convert [enum] to the list of strings
 ///
@@ -71,12 +70,11 @@ T enumFromString<T extends Enum>(
 Iterable<String> enumToList<T extends Enum>(
   final Iterable<T> enumValues, {
   final bool withUnderscores = true,
-}) {
-  return <String>[
-    for (final enumValue in enumValues)
-      enumToString(enumValue, withUnderscores: withUnderscores)
-  ];
-}
+}) =>
+    <String>[
+      for (final enumValue in enumValues)
+        enumToString(enumValue, withUnderscores: withUnderscores)
+    ];
 
 /// Get a list of [enum] values from a list of strings.
 ///
@@ -104,12 +102,11 @@ Iterable<String> enumToList<T extends Enum>(
 Iterable<T> enumFromList<T extends Enum>(
   final Iterable<T> enumValues,
   final Iterable<String> stringValues,
-) {
-  return <T>[
-    for (final stringValue in stringValues)
-      enumFromString(enumValues, stringValue)
-  ];
-}
+) =>
+    <T>[
+      for (final stringValue in stringValues)
+        enumFromString(enumValues, stringValue)
+    ];
 
 /// Extension on [String] for convertation
 extension _ToStringWithUnderscores on String {

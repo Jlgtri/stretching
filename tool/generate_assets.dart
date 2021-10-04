@@ -5,45 +5,43 @@ import 'package:path/path.dart';
 
 // ignore_for_file: sort_constructors_first
 
-ArgParser get _parser {
-  return ArgParser()
-    ..addOption(
-      'source-dir',
-      abbr: 's',
-      defaultsTo: 'assets',
-      help: 'The path to assets folder.',
-    )
-    ..addOption(
-      'output-file',
-      abbr: 'o',
-      defaultsTo: 'lib/codegen_assets.g.dart',
-      help: 'Output file path (with name).',
-    )
-    ..addOption(
-      'class-name',
-      abbr: 'c',
-      defaultsTo: 'CodeGenAssets',
-      help: 'Use a valid DartClassName.',
-    )
-    ..addMultiOption(
-      'exclude',
-      abbr: 'e',
-      help: 'Exclude files or folders with a regex match. '
-          'Input separated by comma.',
-    )
-    ..addFlag(
-      'add-hidden',
-      abbr: 'h',
-      help: 'Adds hidden files if this file is true.',
-    )
-    ..addFlag(
-      'import-comments',
-      abbr: 'i',
-      defaultsTo: true,
-      help: 'The flag that switches adding import comments '
-          'in the generated file.',
-    );
-}
+ArgParser get _parser => ArgParser()
+  ..addOption(
+    'source-dir',
+    abbr: 's',
+    defaultsTo: 'assets',
+    help: 'The path to assets folder.',
+  )
+  ..addOption(
+    'output-file',
+    abbr: 'o',
+    defaultsTo: 'lib/codegen_assets.g.dart',
+    help: 'Output file path (with name).',
+  )
+  ..addOption(
+    'class-name',
+    abbr: 'c',
+    defaultsTo: 'CodeGenAssets',
+    help: 'Use a valid DartClassName.',
+  )
+  ..addMultiOption(
+    'exclude',
+    abbr: 'e',
+    help: 'Exclude files or folders with a regex match. '
+        'Input separated by comma.',
+  )
+  ..addFlag(
+    'add-hidden',
+    abbr: 'h',
+    help: 'Adds hidden files if this file is true.',
+  )
+  ..addFlag(
+    'import-comments',
+    abbr: 'i',
+    defaultsTo: true,
+    help: 'The flag that switches adding import comments '
+        'in the generated file.',
+  );
 
 Future<void> main(final Iterable<String> args) async {
   /// Show help.
@@ -152,8 +150,9 @@ Future<void> main(final Iterable<String> args) async {
   for (final file in files) {
     if (_previousDirectory?.path != file.parent.path &&
         file.parent.path != options.sourceDir.path) {
-      // ignore: always_put_control_body_on_new_line
-      if (files.indexOf(file) > 0) output.writeln();
+      if (files.indexOf(file) > 0) {
+        output.writeln();
+      }
       _previousDirectory = file.parent;
       output.writeln(formatLine(_previousDirectory.path));
     }
@@ -194,18 +193,16 @@ class Options {
   /// The flag to whether to show comments on files import.
   final bool importComments;
 
-  factory Options.fromParser(final ArgResults results) {
-    return Options(
-      sourceDir: Directory(results['source-dir']! as String),
-      outputFile: File(results['output-file']! as String),
-      className: results['class-name']! as String,
-      exclude: RegExp(
-        <String>[
-          ...results['exclude'] as Iterable<String>,
-          if (!(results['add-hidden'] as bool)) r'^\.'
-        ].join('|'),
-      ),
-      importComments: results['import-comments']! as bool,
-    );
-  }
+  factory Options.fromParser(final ArgResults results) => Options(
+        sourceDir: Directory(results['source-dir']! as String),
+        outputFile: File(results['output-file']! as String),
+        className: results['class-name']! as String,
+        exclude: RegExp(
+          <String>[
+            ...results['exclude'] as Iterable<String>,
+            if (!(results['add-hidden'] as bool)) r'^\.'
+          ].join('|'),
+        ),
+        importComments: results['import-comments']! as bool,
+      );
 }
