@@ -115,6 +115,7 @@ class RootScreen extends HookConsumerWidget {
             ref.read(appsflyerProvider.future),
             // Future.delayed(const Duration(seconds: 15)),
           ]);
+          ref.read(locationServicesProvider);
           final currentLocale = ez.currentLocale;
           if (currentLocale != null) {
             await (ref.read(localeProvider.notifier))

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
@@ -6,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:native_device_orientation/native_device_orientation.dart';
-import 'package:rxdart/rxdart.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/providers/hive_provider.dart';
@@ -62,6 +62,17 @@ final StreamProvider<Position> locationProvider =
     intervalDuration: const Duration(seconds: 10),
     timeLimit: const Duration(days: 365),
   );
+});
+
+/// Thhe provider of the current device's location.
+final StreamProvider<ServiceStatus> locationServicesProvider =
+    StreamProvider<ServiceStatus>((final ref) {
+  return Geolocator.getServiceStatusStream()
+    ..listen((final status) {
+      if (status == ServiceStatus.enabled) {
+        ref.refresh(locationProvider);
+      }
+    });
 });
 
 /// The style for the Google Map.
