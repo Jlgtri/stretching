@@ -3,6 +3,7 @@
 // ignore_for_file: public_member_api_docs, lines_longer_than_80_chars
 
 abstract class TR {
+
   static const String alertExitTitle = 'alert.exit.title';
   static const String alertExitApprove = 'alert.exit.approve';
   static const String alertExitDeny = 'alert.exit.deny';
@@ -21,6 +22,7 @@ abstract class TR {
 
   static const String errorTitle = 'error.title';
   static const String errorDescription = 'error.description';
+  static const String errorTimeDescription = 'error.time_description';
   static const String errorDescriptionBold = 'error.description_bold';
   static const String errorButton = 'error.button';
   static const String error = 'error';
@@ -50,12 +52,9 @@ abstract class TR {
 
   static const String miscPullToRefreshIdle = 'misc.pull_to_refresh.idle';
   static const String miscPullToRefreshRelease = 'misc.pull_to_refresh.release';
-  static const String miscPullToRefreshRefreshing =
-      'misc.pull_to_refresh.refreshing';
-  static const String miscPullToRefreshComplete =
-      'misc.pull_to_refresh.complete';
-  static const String miscPullToRefreshCompleteInternetError =
-      'misc.pull_to_refresh.complete_internet_error';
+  static const String miscPullToRefreshRefreshing = 'misc.pull_to_refresh.refreshing';
+  static const String miscPullToRefreshComplete = 'misc.pull_to_refresh.complete';
+  static const String miscPullToRefreshCompleteInternetError = 'misc.pull_to_refresh.complete_internet_error';
   static const String miscPullToRefresh = 'misc.pull_to_refresh';
   static const String misc = 'misc';
 
@@ -103,12 +102,10 @@ abstract class TR {
   static const String activitiesSearchCancel = 'activities.search_cancel';
   static const String activities12h = 'activities.12h';
 
-  static const String activitiesDurationMinuteShort =
-      'activities.duration.minute_short';
+  static const String activitiesDurationMinuteShort = 'activities.duration.minute_short';
 
   static const String activitiesDurationMinute = 'activities.duration.minute';
-  static const String activitiesDurationHourShort =
-      'activities.duration.hour_short';
+  static const String activitiesDurationHourShort = 'activities.duration.hour_short';
 
   static const String activitiesDurationHour = 'activities.duration.hour';
   static const String activitiesDuration = 'activities.duration';
@@ -119,21 +116,16 @@ abstract class TR {
   static const String activitiesWaitingList = 'activities.waiting_list';
   static const String activitiesEmpty = 'activities.empty';
   static const String activitiesEmptyFilter = 'activities.empty_filter';
-  static const String activitiesEmptyFilterReset =
-      'activities.empty_filter_reset';
+  static const String activitiesEmptyFilterReset = 'activities.empty_filter_reset';
+  static const String activitiesEmptyDates = 'activities.empty_dates';
+  static const String activitiesEmptyApi = 'activities.empty_api';
 
-  static const String activitiesActivityImportantInfo =
-      'activities.activity.important_info';
-  static const String activitiesActivityBookOnScreen =
-      'activities.activity.book_on_screen';
-  static const String activitiesActivityCancelBook =
-      'activities.activity.cancel_book';
-  static const String activitiesActivityCancelBook12h =
-      'activities.activity.cancel_book_12h';
-  static const String activitiesActivityAddToCalendar =
-      'activities.activity.add_to_calendar';
-  static const String activitiesActivityAddToWishlist =
-      'activities.activity.add_to_wishlist';
+  static const String activitiesActivityImportantInfo = 'activities.activity.important_info';
+  static const String activitiesActivityBookOnScreen = 'activities.activity.book_on_screen';
+  static const String activitiesActivityCancelBook = 'activities.activity.cancel_book';
+  static const String activitiesActivityCancelBook12h = 'activities.activity.cancel_book_12h';
+  static const String activitiesActivityAddToCalendar = 'activities.activity.add_to_calendar';
+  static const String activitiesActivityAddToWishlist = 'activities.activity.add_to_wishlist';
   static const String activitiesActivity = 'activities.activity';
   static const String activities = 'activities';
 
@@ -163,18 +155,15 @@ abstract class TR {
 
   static const String profileHistoryEmptyTitle = 'profile.history_empty.title';
   static const String profileHistoryEmptyBody = 'profile.history_empty.body';
-  static const String profileHistoryEmptyButton =
-      'profile.history_empty.button';
+  static const String profileHistoryEmptyButton = 'profile.history_empty.button';
   static const String profileHistoryEmpty = 'profile.history_empty';
 
   static const String profileEditFirstName = 'profile.edit.first_name';
-  static const String profileEditFirstNameError =
-      'profile.edit.first_name_error';
+  static const String profileEditFirstNameError = 'profile.edit.first_name_error';
   static const String profileEditSurname = 'profile.edit.surname';
   static const String profileEditSurnameError = 'profile.edit.surname_error';
   static const String profileEditMiddleName = 'profile.edit.middle_name';
-  static const String profileEditMiddleNameError =
-      'profile.edit.middle_name_error';
+  static const String profileEditMiddleNameError = 'profile.edit.middle_name_error';
   static const String profileEditPhone = 'profile.edit.phone';
   static const String profileEditPhoneError = 'profile.edit.phone_error';
   static const String profileEditEmail = 'profile.edit.email';
@@ -183,62 +172,45 @@ abstract class TR {
   static const String profileEdit = 'profile.edit';
   static const String profile = 'profile';
 
-  static const String abonementNonMatchReasonNone =
-      'abonement_non_match_reason.none';
-  static const String abonementNonMatchReasonWrongTime =
-      'abonement_non_match_reason.wrong_time';
-  static const String abonementNonMatchReasonWrongStudio =
-      'abonement_non_match_reason.wrong_studio';
-  static const String abonementNonMatchReasonWrongTimeAndStudio =
-      'abonement_non_match_reason.wrong_time_and_studio';
+  static const String abonementNonMatchReasonNone = 'abonement_non_match_reason.none';
+  static const String abonementNonMatchReasonWrongTime = 'abonement_non_match_reason.wrong_time';
+  static const String abonementNonMatchReasonWrongStudio = 'abonement_non_match_reason.wrong_studio';
+  static const String abonementNonMatchReasonWrongTimeAndStudio = 'abonement_non_match_reason.wrong_time_and_studio';
   static const String abonementNonMatchReason = 'abonement_non_match_reason';
 
-  static const String promptBookRegularDiscount =
-      'prompt_book.regular_discount';
+  static const String promptBookRegularDiscount = 'prompt_book.regular_discount';
   static const String promptBookRegular = 'prompt_book.regular';
   static const String promptBookAbonement = 'prompt_book.abonement';
   static const String promptBookAbonementPrice = 'prompt_book.abonement_price';
   static const String promptBookAbonementAd = 'prompt_book.abonement_ad';
   static const String promptBook = 'prompt_book';
 
-  static const String paymentPickerAbonementTitle =
-      'payment_picker.abonement_title';
-  static const String paymentPickerRegularTitle =
-      'payment_picker.regular_title';
-  static const String paymentPickerCountPerWeek =
-      'payment_picker.count_per_week';
+  static const String paymentPickerAbonementTitle = 'payment_picker.abonement_title';
+  static const String paymentPickerRegularTitle = 'payment_picker.regular_title';
+  static const String paymentPickerCountPerWeek = 'payment_picker.count_per_week';
   static const String paymentPickerTimeOfDay = 'payment_picker.time_of_day';
-  static const String paymentPickerTimeOfDayAll =
-      'payment_picker.time_of_day_all';
+  static const String paymentPickerTimeOfDayAll = 'payment_picker.time_of_day_all';
   static const String paymentPickerStudioPick = 'payment_picker.studio_pick';
-  static const String paymentPickerStudioPickText =
-      'payment_picker.studio_pick_text';
+  static const String paymentPickerStudioPickText = 'payment_picker.studio_pick_text';
   static const String paymentPickerStudioAll = 'payment_picker.studio_all';
-  static const String paymentPickerSubscriptionTermTitle =
-      'payment_picker.subscription_term_title';
+  static const String paymentPickerSubscriptionTermTitle = 'payment_picker.subscription_term_title';
 
-  static const String paymentPickerSubscriptionTermWeeks =
-      'payment_picker.subscription_term_weeks';
+  static const String paymentPickerSubscriptionTermWeeks = 'payment_picker.subscription_term_weeks';
 
-  static const String paymentPickerSubscriptionTermFreezes =
-      'payment_picker.subscription_term_freezes';
+  static const String paymentPickerSubscriptionTermFreezes = 'payment_picker.subscription_term_freezes';
   static const String paymentPickerNotFound = 'payment_picker.not_found';
   static const String paymentPickerEmailTitle = 'payment_picker.email_title';
-  static const String paymentPickerEmailApplication =
-      'payment_picker.email_application';
+  static const String paymentPickerEmailApplication = 'payment_picker.email_application';
   static const String paymentPickerEmailError = 'payment_picker.email_error';
-  static const String paymentPickerPaymentAbonement =
-      'payment_picker.payment_abonement';
-  static const String paymentPickerPaymentRegular =
-      'payment_picker.payment_regular';
+  static const String paymentPickerPaymentAbonement = 'payment_picker.payment_abonement';
+  static const String paymentPickerPaymentRegular = 'payment_picker.payment_regular';
   static const String paymentPicker = 'payment_picker';
 
   static const String successfulBookRegular = 'successful_book.regular';
   static const String successfulBookAbonement = 'successful_book.abonement';
   static const String successfulBookInfo = 'successful_book.info';
   static const String successfulBookCalendar = 'successful_book.calendar';
-  static const String successfulBookCalendarTrainer =
-      'successful_book.calendar_trainer';
+  static const String successfulBookCalendarTrainer = 'successful_book.calendar_trainer';
   static const String successfulBookBackToMain = 'successful_book.back_to_main';
   static const String successfulBook = 'successful_book';
 
@@ -247,12 +219,9 @@ abstract class TR {
   static const String failedBookGeneralButton = 'failed_book.general.button';
   static const String failedBookGeneral = 'failed_book.general';
 
-  static const String failedBookAlreadyAppliedTitle =
-      'failed_book.already_applied.title';
-  static const String failedBookAlreadyAppliedInfo =
-      'failed_book.already_applied.info';
-  static const String failedBookAlreadyAppliedButton =
-      'failed_book.already_applied.button';
+  static const String failedBookAlreadyAppliedTitle = 'failed_book.already_applied.title';
+  static const String failedBookAlreadyAppliedInfo = 'failed_book.already_applied.info';
+  static const String failedBookAlreadyAppliedButton = 'failed_book.already_applied.button';
   static const String failedBookAlreadyApplied = 'failed_book.already_applied';
 
   static const String failedBookFullTitle = 'failed_book.full.title';
@@ -278,8 +247,7 @@ abstract class TR {
 
   static const String cancelBookAbonementTitle = 'cancel_book.abonement.title';
   static const String cancelBookAbonementBody = 'cancel_book.abonement.body';
-  static const String cancelBookAbonementButton =
-      'cancel_book.abonement.button';
+  static const String cancelBookAbonementButton = 'cancel_book.abonement.button';
   static const String cancelBookAbonement = 'cancel_book.abonement';
   static const String cancelBook = 'cancel_book';
 

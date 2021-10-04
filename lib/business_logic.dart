@@ -165,15 +165,12 @@ class BusinessLogic {
     ySalePrice = activityPrice.ySalePrice.optionValue.toInt();
   }
 
-  late final YClientsAPI _yClients;
   late final SMStretchingAPI _smStretching;
+  late final YClientsAPI _yClients;
   late final ServerTimeNotifier _smServerTimeNotifier;
 
-  /// The current regular price of the [ActivityModel].
-  late final int regularPrice;
-
-  /// The current price with discount of the [ActivityModel].
-  late final int ySalePrice;
+  /// The current server time.
+  DateTime get serverTime => _smServerTimeNotifier.state;
 
   /// The current [SMAbonementModel] available.
   late final Iterable<SMAbonementModel> smAbonements;
@@ -184,8 +181,11 @@ class BusinessLogic {
   /// The current [GoodModel] available.
   late final Iterable<GoodModel> goods;
 
-  /// The current server time.
-  DateTime get serverTime => _smServerTimeNotifier.state;
+  /// The current regular price of the [ActivityModel].
+  late final int regularPrice;
+
+  /// The current price with discount of the [ActivityModel].
+  late final int ySalePrice;
 
   /// Book the [activity] for the user.
   ///
@@ -1000,27 +1000,23 @@ Future<void> refreshAllProviders(final ProviderContainer container) async {
   container.read(errorProvider).state = null;
   container.read(splashProvider).state = true;
   await container.read(smStudiosOptionsProvider.notifier).refresh();
-  try {
-    await Future.wait(<Future<Object?>>[
-      /// YClients API
-      container.read(studiosProvider.notifier).refresh(),
-      container.read(trainersProvider.notifier).refresh(),
-      container.read(scheduleProvider.notifier).refresh(),
-      container.read(goodsProvider.notifier).refresh(),
-      // container.read(userAbonementsProvider.notifier).refresh(),
-      // container.read(userRecordsProvider.notifier).refresh(),
+  await Future.wait(<Future<Object?>>[
+    /// YClients API
+    container.read(studiosProvider.notifier).refresh(),
+    container.read(trainersProvider.notifier).refresh(),
+    container.read(scheduleProvider.notifier).refresh(),
+    container.read(goodsProvider.notifier).refresh(),
+    // container.read(userAbonementsProvider.notifier).refresh(),
+    // container.read(userRecordsProvider.notifier).refresh(),
 
-      /// SMStretching API
-      container.read(smAdvertismentsProvider.notifier).refresh(),
-      container.read(smStoriesProvider.notifier).refresh(),
-      container.read(smAbonementsProvider.notifier).refresh(),
-      container.read(smStudiosProvider.notifier).refresh(),
-      container.read(smTrainersProvider.notifier).refresh(),
-      container.read(smClassesGalleryProvider.notifier).refresh(),
-      // container.read(smUserDepositProvider.future),
-      // container.read(smUserAbonementsProvider.notifier).refresh(),
-    ]);
-  } finally {
-    container.read(splashProvider).state = false;
-  }
+    /// SMStretching API
+    container.read(smAdvertismentsProvider.notifier).refresh(),
+    container.read(smStoriesProvider.notifier).refresh(),
+    container.read(smAbonementsProvider.notifier).refresh(),
+    container.read(smStudiosProvider.notifier).refresh(),
+    container.read(smTrainersProvider.notifier).refresh(),
+    container.read(smClassesGalleryProvider.notifier).refresh(),
+    // container.read(smUserDepositProvider.future),
+    // container.read(smUserAbonementsProvider.notifier).refresh(),
+  ]);
 }

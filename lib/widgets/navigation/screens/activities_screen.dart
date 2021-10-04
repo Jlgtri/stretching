@@ -373,6 +373,14 @@ class ActivitiesScreen extends HookConsumerWidget {
     final scrollController = ref
         .watch(navigationScrollControllerProvider(NavigationScreen.schedule));
     final activities = ref.watch(filteredActivitiesProvider);
+    final areActivitiesPresent = ref.watch(
+      combinedActivitiesProvider
+          .select((final activitites) => activities.isNotEmpty),
+    );
+    final areDaysPresent = ref.watch(
+      activitiesDaysProvider
+          .select((final activityDays) => activityDays.isNotEmpty),
+    );
     final refresh = useRefreshController(
       extraRefresh: () async {
         while (ref.read(connectionErrorProvider).state) {
@@ -455,14 +463,15 @@ class ActivitiesScreen extends HookConsumerWidget {
                 ),
 
                 /// Date Picker
-                SliverPadding(
-                  padding: const EdgeInsets.only(top: 4, bottom: 12),
-                  sliver: SliverPersistentHeader(
-                    floating: true,
-                    pinned: true,
-                    delegate: ActivitiesScreenDayPicker(context),
+                if (areDaysPresent)
+                  SliverPadding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 12),
+                    sliver: SliverPersistentHeader(
+                      floating: true,
+                      pinned: true,
+                      delegate: ActivitiesScreenDayPicker(context),
+                    ),
                   ),
-                ),
 
                 /// Cards
                 if (activities.isNotEmpty)
@@ -535,26 +544,38 @@ class ActivitiesScreen extends HookConsumerWidget {
 
                 /// Empty
                 else
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Column(
-                      children: <Widget>[
-                        const SizedBox(height: 75),
-                        EmojiText(
-                          '😣',
-                          style: const TextStyle(fontSize: 30),
-                          textScaleFactor: mediaQuery.textScaleFactor,
-                        ),
-                        const SizedBox(height: 16),
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(maxWidth: 262),
-                          child: Text(
-                            TR.activitiesEmpty.tr(),
-                            style: theme.textTheme.subtitle2,
-                            textAlign: TextAlign.center,
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 45),
+                    sliver: SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Column(
+                        children: <Widget>[
+                          if (!areDaysPresent) const SizedBox(height: 50),
+                          const SizedBox(height: 75),
+                          EmojiText(
+                            '😣',
+                            style: const TextStyle(fontSize: 30),
+                            textScaleFactor: mediaQuery.textScaleFactor,
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 16),
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: mediaQuery.textScaleFactor <= 1
+                                  ? 262
+                                  : double.infinity,
+                            ),
+                            child: Text(
+                              !areDaysPresent
+                                  ? TR.activitiesEmptyDates.tr()
+                                  : !areActivitiesPresent
+                                      ? TR.activitiesEmptyApi.tr()
+                                      : TR.activitiesEmpty.tr(),
+                              style: theme.textTheme.subtitle2,
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
               ],
@@ -2456,44 +2477,48 @@ class ActivitiesScreenDayPicker extends SliverPersistentHeaderDelegate {
     final BuildContext context,
     final double shrinkOffset,
     final bool overlapsContent,
-  ) =>
-      Material(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: spacing / 2),
-          child: Consumer(
-            builder: (final context, final ref, final child) {
-              final day = ref.watch(activitiesDayProvider).state;
-              final activitiesDays = ref.watch(activitiesDaysProvider);
-              return ListView.builder(
-                primary: false,
-                shrinkWrap: true,
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: spacing / 2),
-                itemCount: activitiesDays.length,
-                itemExtent: ActivitiesDateFilterCard.size(
-                      Theme.of(context),
-                      MediaQuery.of(context).textScaleFactor,
-                    ).width +
-                    spacing,
-                itemBuilder: (final context, final index) {
-                  final date = activitiesDays.elementAt(index);
-                  return Padding(
+  ) {
+    final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
+    return Material(
+      color: theme.scaffoldBackgroundColor,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: spacing / 2),
+        child: Consumer(
+          builder: (final context, final ref, final child) {
+            final activitiesDays = ref.watch(activitiesDaysProvider);
+            return ListView.builder(
+              primary: false,
+              shrinkWrap: true,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: spacing / 2),
+              itemCount: activitiesDays.length,
+              itemExtent: ActivitiesDateFilterCard.size(
+                    theme,
+                    mediaQuery.textScaleFactor,
+                  ).width +
+                  spacing,
+              itemBuilder: (final context, final index) {
+                final date = activitiesDays.elementAt(index);
+                return Consumer(
+                  builder: (final context, final ref, final child) => Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: spacing / 2),
                     child: ActivitiesDateFilterCard(
                       date,
-                      selected: day == date,
+                      selected: ref.watch(activitiesDayProvider).state == date,
                       onSelected: () =>
                           ref.read(activitiesDayProvider).state = date,
                     ),
-                  );
-                },
-              );
-            },
-          ),
+                  ),
+                );
+              },
+            );
+          },
         ),
-      );
+      ),
+    );
+  }
 
   @override
   bool shouldRebuild(final ActivitiesScreenDayPicker oldDelegate) => false;

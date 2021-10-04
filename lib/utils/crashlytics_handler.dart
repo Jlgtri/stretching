@@ -1,5 +1,6 @@
 import 'package:catcher/catcher.dart';
 import 'package:catcher/model/platform_type.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:stretching/utils/logger.dart';
@@ -33,9 +34,6 @@ class CrashlyticsHandler extends ReportHandler {
   @override
   Future<bool> handle(final Report error, final BuildContext? context) async {
     try {
-      if (printLogs) {
-        logger.i('Sending crashlytics report');
-      }
       final crashlytics = FirebaseCrashlytics.instance;
       await crashlytics.setCrashlyticsCollectionEnabled(true);
       await crashlytics.log(_getLogMessage(error));
@@ -46,9 +44,6 @@ class CrashlyticsHandler extends ReportHandler {
           error.error,
           error.stackTrace as StackTrace,
         );
-      }
-      if (printLogs) {
-        logger.i('Crashlytics report sent');
       }
       return true;
     } on Exception catch (exception) {
@@ -61,23 +56,47 @@ class CrashlyticsHandler extends ReportHandler {
 
   String _getLogMessage(final Report report) {
     final buffer = StringBuffer();
-    if (enableDeviceParameters) {
-      buffer.write('||| Device parameters ||| ');
-      for (final entry in report.deviceParameters.entries) {
-        buffer.write('${entry.key}: ${entry.value} ');
+    var firstLine = true;
+    void log(final String title, [final Map<String, Object?>? data]) {
+      if (data?.isNotEmpty ?? true) {
+        if (firstLine) {
+          firstLine = false;
+        } else {
+          buffer.writeln();
+        }
+        buffer.writeln(title);
+        if (data != null) {
+          for (final entry in data.entries) {
+            buffer.writeln('${entry.key}: ${entry.value}');
+          }
+        }
       }
+    }
+
+    if (enableDeviceParameters) {
+      log('Device parameters:', report.deviceParameters);
     }
     if (enableApplicationParameters) {
-      buffer.write('||| Application parameters ||| ');
-      for (final entry in report.applicationParameters.entries) {
-        buffer.write('${entry.key}: ${entry.value} ');
-      }
+      log('Application parameters:', report.applicationParameters);
     }
     if (enableCustomParameters) {
-      buffer.write('||| Custom parameters ||| ');
-      for (final entry in report.customParameters.entries) {
-        buffer.write('${entry.key}: ${entry.value} ');
-      }
+      log('Custom parameters:', report.customParameters);
+    }
+    final dynamic error = report.error;
+    if (error is DioError) {
+      final dynamic dioError = error.error;
+      final response = error.response;
+      log('API ${dioError.runtimeType.toString()}:', <String, Object?>{
+        'Method': error.requestOptions.method,
+        'URL': error.requestOptions.path,
+        'Data': error.requestOptions.data,
+        'Headers': error.requestOptions.headers,
+        'Extra': error.requestOptions.extra,
+        if (response != null) ...<String, Object?>{
+          '\nResponse (${response.statusMessage} [${response.statusCode}])':
+              response.data,
+        },
+      });
     }
     return buffer.toString();
   }

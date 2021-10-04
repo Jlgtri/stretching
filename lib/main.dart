@@ -130,7 +130,11 @@ class RootScreen extends HookConsumerWidget {
                 .setStateAsync(currentLocale);
           }
         } finally {
-          await refreshAllProviders(ProviderScope.containerOf(context));
+          try {
+            await refreshAllProviders(ProviderScope.containerOf(context));
+          } finally {
+            splash.state = false;
+          }
         }
       }),
       preserveState: false,

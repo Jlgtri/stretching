@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:animations/animations.dart';
 import 'package:catcher/catcher.dart';
 import 'package:catcher/model/platform_type.dart';
@@ -6,6 +8,7 @@ import 'package:dio/dio.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stretching/business_logic.dart';
@@ -94,6 +97,17 @@ class ErrorScreen extends HookConsumerWidget {
       child: isContactScreen.value
           ? ContactScreen(onBackButton: () => isContactScreen.value = false)
           : Scaffold(
+              appBar: AppBar(
+                toolbarHeight: 0,
+                backgroundColor: Colors.transparent,
+                systemOverlayStyle: SystemUiOverlayStyle(
+                  statusBarColor: Colors.transparent,
+                  statusBarBrightness: theme.brightness,
+                  statusBarIconBrightness: theme.brightness == Brightness.light
+                      ? Brightness.dark
+                      : Brightness.light,
+                ),
+              ),
               body: Align(
                 child: SingleChildScrollView(
                   primary: true,
@@ -114,7 +128,16 @@ class ErrorScreen extends HookConsumerWidget {
                       const SizedBox(height: 40),
                       Text.rich(
                         TextSpan(
-                          text: TR.errorDescription.tr(),
+                          text: () {
+                            final dynamic error = report.error;
+                            if (error is DioError) {
+                              final dynamic dioError = error.error;
+                              if (dioError is HandshakeException) {
+                                return TR.errorTimeDescription.tr();
+                              }
+                            }
+                            return TR.errorDescription.tr();
+                          }(),
                           children: <InlineSpan>[
                             TextSpan(
                               text: TR.errorDescriptionBold.tr(),
@@ -157,13 +180,16 @@ class ErrorScreen extends HookConsumerWidget {
 }
 
 /// The screen to display an error in the app.
-class ConnectionErrorScreen extends ConsumerWidget {
+class ConnectionErrorScreen extends HookConsumerWidget {
   /// The screen to display an error in the app.
   const ConnectionErrorScreen({final Key? key}) : super(key: key);
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
+    final isMounted = useIsMounted();
+    final isLoading = useState<bool>(false);
     return Scaffold(
       appBar: cancelAppBar(theme, leading: const SizedBox.shrink()),
       body: Align(
@@ -179,6 +205,7 @@ class ConnectionErrorScreen extends ConsumerWidget {
                   TR.connectionErrorTitle.tr(),
                   style: theme.textTheme.headline2,
                   textAlign: TextAlign.center,
+                  textScaleFactor: mediaQuery.textScaleFactor.clamp(0, 1.2),
                 ),
               ),
               Padding(
@@ -191,15 +218,30 @@ class ConnectionErrorScreen extends ConsumerWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  icon: const Padding(
-                    padding: EdgeInsets.only(right: 4),
+                  icon: Padding(
+                    padding: const EdgeInsets.only(right: 4, bottom: 2),
                     child: FontIcon(
-                      FontIconData(IconsCG.repeat, height: 16),
+                      FontIconData(
+                        IconsCG.repeat,
+                        height: 16 * mediaQuery.textScaleFactor,
+                      ),
                     ),
                   ),
                   style: TextButtonStyle.light.fromTheme(theme),
-                  onPressed: () =>
-                      refreshAllProviders(ProviderScope.containerOf(context)),
+                  onPressed: !isLoading.value
+                      ? () async {
+                          isLoading.value = true;
+                          try {
+                            await refreshAllProviders(
+                              ProviderScope.containerOf(context),
+                            );
+                          } finally {
+                            if (isMounted()) {
+                              isLoading.value = false;
+                            }
+                          }
+                        }
+                      : null,
                 ),
               ),
               const SizedBox(height: 100),

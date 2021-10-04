@@ -75,7 +75,10 @@ class __RefreshControllerHookState extends HookState<
 
     _refreshController = RefreshController();
     Future<void> onRefresh() async {
-      if (_mounted && hook.requestRefresh && !_requestedRefresh) {
+      if (_mounted &&
+          hook.requestRefresh &&
+          !_requestedRefresh &&
+          !_refreshController.isRefresh) {
         await _refreshController.requestRefresh(
           needMove: false,
           curve: Curves.ease,
@@ -88,6 +91,7 @@ class __RefreshControllerHookState extends HookState<
       if (_mounted &&
           hook.requestRefresh &&
           !_requestedRefresh &&
+          _refreshController.isRefresh &&
           notifiersLoaded.values.all()) {
         _refreshController.refreshCompleted();
       }
@@ -120,9 +124,13 @@ class __RefreshControllerHookState extends HookState<
         await Future.wait(<Future<void>>[
           for (final notifier in hook.notifiers) notifier.refresh(),
         ]);
+      } on Exception catch (_) {
+        if (_mounted) {
+          _refreshController.refreshFailed();
+        }
       } finally {
         _requestedRefresh = false;
-        if (_mounted) {
+        if (_mounted && _refreshController.isRefresh) {
           _refreshController.refreshCompleted();
         }
       }
