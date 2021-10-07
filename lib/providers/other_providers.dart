@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:package_info/package_info.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/providers/hive_provider.dart';
@@ -123,3 +124,8 @@ class ServerTimeNotifier extends StateNotifier<DateTime> {
       ..start();
   }
 }
+
+/// The provider of the device's [PackageInfo].
+final Provider<PackageInfo> packageInfoProvider = Provider<PackageInfo>(
+  (final ref) => throw UnimplementedError('Provider was not initialised.'),
+);

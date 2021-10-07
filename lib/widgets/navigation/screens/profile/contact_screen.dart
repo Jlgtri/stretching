@@ -12,6 +12,7 @@ import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/hook_consumer_stateful_widget.dart';
 import 'package:stretching/providers/hide_appbar_provider.dart';
+import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/widgets/appbars.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
@@ -54,6 +55,8 @@ class ContactScreenState extends ConsumerState<ContactScreen>
   Widget build(final BuildContext context) {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
+
+    final packageInfo = ref.watch(packageInfoProvider);
 
     Widget messenger(
       final String title,
@@ -129,8 +132,7 @@ class ContactScreenState extends ConsumerState<ContactScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: <Widget>[
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 36)
-                        .copyWith(top: 72),
+                    padding: const EdgeInsets.symmetric(horizontal: 36),
                     child: GestureDetector(
                       onTap: () => launch('tel:$supportPhoneNumber'),
                       child: Text(
@@ -213,7 +215,6 @@ class ContactScreenState extends ConsumerState<ContactScreen>
                       ),
                     ),
                   ),
-                  const SizedBox(height: 120),
                 ],
               ),
             ),
@@ -228,7 +229,7 @@ class ContactScreenState extends ConsumerState<ContactScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Text(
-                TR.miscVersion.tr(args: <String>[currentVersion]),
+                TR.miscVersion.tr(args: <String>[packageInfo.version]),
                 style: theme.textTheme.headline6,
               ),
             ],

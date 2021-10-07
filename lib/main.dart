@@ -12,6 +12,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:package_info/package_info.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/business_logic.dart';
@@ -61,7 +62,9 @@ Future<void> main() async {
           smServerTimeProvider
               .overrideWithValue(ServerTimeNotifier(DateTime.now())),
           smActivityPriceProvider
-              .overrideWithValue(const SMActivityPriceModel.zero())
+              .overrideWithValue(const SMActivityPriceModel.zero()),
+          packageInfoProvider
+              .overrideWithValue(await PackageInfo.fromPlatform()),
         ],
         child: const RootScreen(),
       ),
@@ -216,7 +219,7 @@ class RootScreen extends HookConsumerWidget {
                   headerBuilder: () => Consumer(
                     builder: (final context, final ref, final child) {
                       final connectionError =
-                          ref.watch(connectionErrorProvider);
+                          ref.watch(connectionErrorProvider).state;
                       return ClassicHeader(
                         completeDuration:
                             const Duration(seconds: 1, milliseconds: 500),
@@ -224,19 +227,19 @@ class RootScreen extends HookConsumerWidget {
                         idleText: TR.miscPullToRefreshIdle.tr(),
                         releaseText: TR.miscPullToRefreshRelease.tr(),
                         refreshingText: TR.miscPullToRefreshRefreshing.tr(),
-                        completeText: connectionError.state
+                        completeText: connectionError
                             ? TR.miscPullToRefreshCompleteInternetError.tr()
                             : TR.miscPullToRefreshComplete.tr(),
-                        failedText: connectionError.state
+                        failedText: connectionError
                             ? TR.miscPullToRefreshCompleteInternetError.tr()
                             : TR.miscPullToRefreshError.tr(),
-                        failedIcon: connectionError.state
+                        failedIcon: connectionError
                             ? const FontIcon(FontIconData(IconsCG.globe))
                             : EmojiText('😣', style: emojiStyle),
                         idleIcon: EmojiText('😉', style: emojiStyle),
                         releaseIcon: EmojiText('🔥', style: emojiStyle),
                         // refreshingIcon: EmojiText('🤘', style: emojiStyle),
-                        completeIcon: connectionError.state
+                        completeIcon: connectionError
                             ? const FontIcon(FontIconData(IconsCG.globe))
                             : EmojiText('❤', style: emojiStyle),
                         outerBuilder: (final child) => Padding(

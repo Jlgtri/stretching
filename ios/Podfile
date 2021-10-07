@@ -62,7 +62,6 @@ def fix_deployment_target(pod_installer)
       newTarget = deploymentMap[config.name]
       if oldTarget == newTarget
         next
-      end
       puts "    #{config.name} deployment target: #{oldTarget} => #{newTarget}"
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = newTarget
     end
