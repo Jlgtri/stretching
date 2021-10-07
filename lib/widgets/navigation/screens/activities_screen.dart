@@ -187,8 +187,8 @@ final StateProvider<SpecificDay> activitiesDayProvider =
     StateProvider<SpecificDay>((final ref) {
   final now = (ref.watch(activitiesCurrentTimeProvider)).when(
     data: (final currentTime) => currentTime,
-    loading: DateTime.now,
-    error: (final error, final stackTrace) => DateTime.now(),
+    loading: (final currentTime) => DateTime.now(),
+    error: (final error, final stackTrace, final currentTime) => DateTime.now(),
   );
   final day = ref.watch(
     activitiesDaysProvider.select((final days) {
@@ -238,8 +238,9 @@ final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
     activitiesCurrentTimeProvider.select(
       (final currentTime) => currentTime.when(
         data: (final currentTime) => currentTime,
-        loading: DateTime.now,
-        error: (final error, final stackTrace) => DateTime.now(),
+        loading: (final currentTime) => DateTime.now(),
+        error: (final error, final stackTrace, final currentTime) =>
+            DateTime.now(),
       ),
     ),
   );
@@ -340,8 +341,8 @@ final Provider<Iterable<SpecificDay>> activitiesDaysProvider =
     activitiesCurrentTimeProvider.select(
       (final currentTime) => currentTime.when(
         data: result,
-        loading: result,
-        error: (final error, final stackTrace) => result(),
+        loading: (final currentTime) => result(),
+        error: (final error, final stackTrace, final currentTime) => result(),
       ),
     ),
   );
@@ -354,8 +355,9 @@ final Provider<bool> areActivitiesPresentProvider = Provider<bool>((final ref) {
     activitiesCurrentTimeProvider.select(
       (final currentTime) => currentTime.when(
         data: (final currentTime) => currentTime,
-        loading: DateTime.now,
-        error: (final error, final stackTrace) => DateTime.now(),
+        loading: (final currentTime) => DateTime.now(),
+        error: (final error, final stackTrace, final currentTime) =>
+            DateTime.now(),
       ),
     ),
   );
@@ -838,8 +840,9 @@ class ActivityCardContainer extends HookConsumerWidget {
         (final currentTime) => activity.item0.date.difference(
           currentTime.when(
             data: (final currentTime) => currentTime,
-            loading: DateTime.now,
-            error: (final error, final stackTrace) => DateTime.now(),
+            loading: (final currentTime) => DateTime.now(),
+            error: (final error, final stackTrace, final currentTime) =>
+                DateTime.now(),
           ),
         ),
       ),
@@ -1435,8 +1438,9 @@ class ActivityCardExtraData extends HookConsumerWidget {
         (final currentTime) {
           final time = currentTime.when(
             data: (final currentTime) => currentTime,
-            loading: DateTime.now,
-            error: (final error, final stackTrace) => DateTime.now(),
+            loading: (final currentTime) => DateTime.now(),
+            error: (final error, final stackTrace, final currentTime) =>
+                DateTime.now(),
           );
           return date.year == time.year &&
               date.month == time.month &&
@@ -1450,8 +1454,9 @@ class ActivityCardExtraData extends HookConsumerWidget {
         (final currentTime) => activity.item0.date.difference(
           currentTime.when(
             data: (final currentTime) => currentTime,
-            loading: DateTime.now,
-            error: (final error, final stackTrace) => DateTime.now(),
+            loading: (final currentTime) => DateTime.now(),
+            error: (final error, final stackTrace, final currentTime) =>
+                DateTime.now(),
           ),
         ),
       ),
@@ -1686,8 +1691,9 @@ class ActivityScreenCard extends ConsumerWidget {
         (final currentTime) => activity.item0.date.difference(
           currentTime.when(
             data: (final currentTime) => currentTime,
-            loading: DateTime.now,
-            error: (final error, final stackTrace) => DateTime.now(),
+            loading: (final currentTime) => DateTime.now(),
+            error: (final error, final stackTrace, final currentTime) =>
+                DateTime.now(),
           ),
         ),
       ),

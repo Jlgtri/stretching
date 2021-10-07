@@ -179,7 +179,7 @@ class StudiosScreen extends HookConsumerWidget {
             //   infoWindowOptions.value = null;
             // },
             markers: mapMarker.when(
-              data: (final marker) => <Marker>{
+              data: (final icon) => <Marker>{
                 for (final studio in studios)
                   Marker(
                     markerId: MarkerId(studio.item0.id.toString()),
@@ -188,12 +188,12 @@ class StudiosScreen extends HookConsumerWidget {
                       studio.item0.coordinateLon,
                     ),
                     flat: true,
-                    icon: marker,
+                    icon: icon,
                     onTap: () => moveToStudioOnMap(studio.item0),
                   )
               },
-              loading: () => <Marker>{},
-              error: (final error, final stackTrace) => <Marker>{},
+              loading: (final icon) => <Marker>{},
+              error: (final error, final stackTrace, final icon) => <Marker>{},
             ),
             onTap: (final position) => infoWindowOptions.value = null,
             onCameraMove: (final position) async {
@@ -724,8 +724,12 @@ class StudioCard extends HookConsumerWidget {
                               ),
                             );
                           },
-                          loading: SizedBox.shrink,
-                          error: (final error, final stackTrace) =>
+                          loading: (final position) => const SizedBox.shrink(),
+                          error: (
+                            final error,
+                            final stackTrace,
+                            final position,
+                          ) =>
                               const SizedBox.shrink(),
                         ),
                       ),

@@ -623,7 +623,6 @@ class DepositCard extends ConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final mediaQuery = MediaQuery.of(context);
     return (ref.watch(smUserDepositProvider)).when(
       data: (final userDeposit) {
         num deposit = userDeposit;
@@ -690,8 +689,9 @@ class DepositCard extends ConsumerWidget {
           ),
         );
       },
-      loading: SizedBox.shrink,
-      error: (final error, final stackTrace) => const SizedBox.shrink(),
+      loading: (final userDeposit) => const SizedBox.shrink(),
+      error: (final error, final stackTrace, final userDeposit) =>
+          const SizedBox.shrink(),
     );
   }
 }

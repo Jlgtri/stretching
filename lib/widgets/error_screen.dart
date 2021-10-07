@@ -77,7 +77,6 @@ class ErrorScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final mediaQuery = MediaQuery.of(context);
     final isContactScreen = useState<bool>(false);
     return PageTransitionSwitcher(
       duration: const Duration(milliseconds: 500),
