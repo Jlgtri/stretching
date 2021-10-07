@@ -1818,7 +1818,7 @@ class ActivityScreenCard extends ConsumerWidget {
 }
 
 /// The card for the date picker on [ActivitiesScreen].
-class ActivitiesDateFilterCard extends ConsumerWidget {
+class ActivitiesDateFilterCard extends HookConsumerWidget {
   /// The card for the date picker on [ActivitiesScreen].
   const ActivitiesDateFilterCard(
     final this.day, {
@@ -1837,8 +1837,7 @@ class ActivitiesDateFilterCard extends ConsumerWidget {
   final void Function() onSelected;
 
   /// The margin of this widget.
-  static const EdgeInsets padding =
-      EdgeInsets.symmetric(vertical: 4, horizontal: 10);
+  static const EdgeInsets padding = EdgeInsets.all(4);
 
   /// The size of this widget.
   static Size size(
@@ -1861,6 +1860,9 @@ class ActivitiesDateFilterCard extends ConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final weekFormat = useMemoized(
+      () => DateFormat.E(ref.watch(localeProvider).toString()),
+    );
     return InkWell(
       onTap: !selected ? onSelected : null,
       borderRadius: const BorderRadius.all(Radius.circular(8)),
@@ -1876,9 +1878,7 @@ class ActivitiesDateFilterCard extends ConsumerWidget {
             children: <Widget>[
               /// Weekday
               Text(
-                DateFormat.E(ref.watch(localeProvider).toString()).format(
-                  DateTime(day.item0, day.item1, day.item2),
-                ),
+                weekFormat.format(DateTime(day.item0, day.item1, day.item2)),
                 style: theme.textTheme.overline?.copyWith(
                   color: selected ? theme.colorScheme.surface : theme.hintColor,
                 ),

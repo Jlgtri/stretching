@@ -438,7 +438,10 @@ class TrainerScreen extends HookWidget {
       // ),
       carouselHeight: 400,
       paragraphs: <ContentParagraph>[
-        ContentParagraph(body: trainer.item1.shortlyAbout)
+        ContentParagraph(
+          expandable: false,
+          body: trainer.item1.shortlyAbout,
+        )
       ],
       carousel: videoPlayerController == null ||
               !videoPlayerController.value.isInitialized
