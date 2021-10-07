@@ -51,6 +51,9 @@ class YClientsAPI {
               'User ${userToken ?? yClientsAdminToken}',
         },
         extra: const YClientsRequestExtra().toMap(),
+        sendTimeout: 5000,
+        connectTimeout: 10000,
+        receiveTimeout: 30000,
       ),
     );
     _dio.interceptors

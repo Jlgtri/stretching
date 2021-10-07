@@ -105,8 +105,8 @@ final StreamProvider<DateTime> timeProvider = StreamProvider<DateTime>(
 /// The notifier of the current server time.
 class ServerTimeNotifier extends StateNotifier<DateTime> {
   /// The notifier of the current server time.
-  ServerTimeNotifier(final DateTime initialServerTime)
-      : super(initialServerTime) {
+  ServerTimeNotifier([final DateTime? initialServerTime])
+      : super(initialServerTime ?? DateTime.now()) {
     _timer.start();
   }
   final Stopwatch _timer = Stopwatch();

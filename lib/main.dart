@@ -59,12 +59,11 @@ Future<void> main() async {
       child: ProviderScope(
         overrides: <Override>[
           hiveProvider.overrideWithValue(await Hive.openBox<String>('storage')),
-          smServerTimeProvider
-              .overrideWithValue(ServerTimeNotifier(DateTime.now())),
-          smActivityPriceProvider
-              .overrideWithValue(const SMActivityPriceModel.zero()),
           packageInfoProvider
               .overrideWithValue(await PackageInfo.fromPlatform()),
+          smServerTimeProvider.overrideWithValue(ServerTimeNotifier()),
+          smActivityPriceProvider
+              .overrideWithValue(const SMActivityPriceModel.zero()),
         ],
         child: const RootScreen(),
       ),
