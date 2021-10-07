@@ -37,21 +37,30 @@ AppBar cancelAppBar(
       automaticallyImplyLeading: false,
       leading: leading,
       actions: <Widget>[
-        if (onPressed != null)
-          TextButton(
-            onPressed: onPressed,
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.all(8),
-              primary: theme.colorScheme.onSurface,
-            ),
-            child: Text(
-              TR.tooltipsCancel.tr(),
-              style: theme.textTheme.button
-                  ?.copyWith(color: theme.colorScheme.onSurface),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          )
+        if (onPressed != null) ...<Widget>[
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Flexible(
+                child: TextButton(
+                  onPressed: onPressed,
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.all(8),
+                    primary: theme.colorScheme.onSurface,
+                  ),
+                  child: Text(
+                    TR.tooltipsCancel.tr(),
+                    style: theme.textTheme.button
+                        ?.copyWith(color: theme.colorScheme.onSurface),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 8),
+        ]
       ],
     );
 

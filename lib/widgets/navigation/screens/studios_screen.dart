@@ -193,7 +193,7 @@ class StudiosScreen extends HookConsumerWidget {
                   )
               },
               loading: () => <Marker>{},
-              error: (final e, final st) => <Marker>{},
+              error: (final error, final stackTrace) => <Marker>{},
             ),
             onTap: (final position) => infoWindowOptions.value = null,
             onCameraMove: (final position) async {
@@ -725,7 +725,8 @@ class StudioCard extends HookConsumerWidget {
                             );
                           },
                           loading: SizedBox.shrink,
-                          error: (final e, final st) => const SizedBox.shrink(),
+                          error: (final error, final stackTrace) =>
+                              const SizedBox.shrink(),
                         ),
                       ),
                   ],

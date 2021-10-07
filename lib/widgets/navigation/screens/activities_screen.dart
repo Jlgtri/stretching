@@ -185,13 +185,21 @@ final StateNotifierProvider<SaveToHiveIterableNotifier<ActivityTime, String>,
 /// The current selected day of activities.
 final StateProvider<SpecificDay> activitiesDayProvider =
     StateProvider<SpecificDay>((final ref) {
-  final days = ref.watch(activitiesDaysProvider);
-  return days.isNotEmpty
-      ? days.first
-      : () {
-          final now = DateTime.now();
-          return Tuple3(now.year, now.month, now.day);
-        }();
+  final now = (ref.watch(activitiesCurrentTimeProvider)).when(
+    data: (final currentTime) => currentTime,
+    loading: DateTime.now,
+    error: (final error, final stackTrace) => DateTime.now(),
+  );
+  final day = ref.watch(
+    activitiesDaysProvider.select((final days) {
+      for (final day in days) {
+        if (day == Tuple3(now.year, now.month, now.day)) {
+          return day;
+        }
+      }
+    }),
+  );
+  return day ?? Tuple3(now.year, now.month, now.day);
 });
 
 /// The provider of search query on [ActivitiesScreen].
@@ -231,7 +239,7 @@ final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
       (final currentTime) => currentTime.when(
         data: (final currentTime) => currentTime,
         loading: DateTime.now,
-        error: (final e, final st) => DateTime.now(),
+        error: (final error, final stackTrace) => DateTime.now(),
       ),
     ),
   );
@@ -328,10 +336,14 @@ final Provider<Iterable<SpecificDay>> activitiesDaysProvider =
     );
   }
 
-  return (ref.watch(activitiesCurrentTimeProvider)).when(
-    data: result,
-    loading: result,
-    error: (final e, final st) => result(),
+  return ref.watch(
+    activitiesCurrentTimeProvider.select(
+      (final currentTime) => currentTime.when(
+        data: result,
+        loading: result,
+        error: (final error, final stackTrace) => result(),
+      ),
+    ),
   );
 });
 
@@ -343,7 +355,7 @@ final Provider<bool> areActivitiesPresentProvider = Provider<bool>((final ref) {
       (final currentTime) => currentTime.when(
         data: (final currentTime) => currentTime,
         loading: DateTime.now,
-        error: (final e, final st) => DateTime.now(),
+        error: (final error, final stackTrace) => DateTime.now(),
       ),
     ),
   );
@@ -510,7 +522,6 @@ class ActivitiesScreen extends HookConsumerWidget {
                             style: TextButtonStyle.light.fromTheme(theme),
                             onPressed: () async {
                               await resetFilters(ref);
-                              // dayController.jumpTo(0);
                               ref.refresh(activitiesDayProvider);
                             },
                             child: Text(
@@ -824,11 +835,11 @@ class ActivityCardContainer extends HookConsumerWidget {
     final isLoading = ref.watch(activityCardLoadingProvider(activity.item0.id));
     final timeLeftBeforeStart = ref.watch(
       activitiesCurrentTimeProvider.select(
-        (final tempNow) => activity.item0.date.difference(
-          tempNow.when(
-            data: (final tempNow) => tempNow,
+        (final currentTime) => activity.item0.date.difference(
+          currentTime.when(
+            data: (final currentTime) => currentTime,
             loading: DateTime.now,
-            error: (final e, final st) => DateTime.now(),
+            error: (final error, final stackTrace) => DateTime.now(),
           ),
         ),
       ),
@@ -1425,7 +1436,7 @@ class ActivityCardExtraData extends HookConsumerWidget {
           final time = currentTime.when(
             data: (final currentTime) => currentTime,
             loading: DateTime.now,
-            error: (final e, final st) => DateTime.now(),
+            error: (final error, final stackTrace) => DateTime.now(),
           );
           return date.year == time.year &&
               date.month == time.month &&
@@ -1440,7 +1451,7 @@ class ActivityCardExtraData extends HookConsumerWidget {
           currentTime.when(
             data: (final currentTime) => currentTime,
             loading: DateTime.now,
-            error: (final e, final st) => DateTime.now(),
+            error: (final error, final stackTrace) => DateTime.now(),
           ),
         ),
       ),
@@ -1676,7 +1687,7 @@ class ActivityScreenCard extends ConsumerWidget {
           currentTime.when(
             data: (final currentTime) => currentTime,
             loading: DateTime.now,
-            error: (final e, final st) => DateTime.now(),
+            error: (final error, final stackTrace) => DateTime.now(),
           ),
         ),
       ),
@@ -2542,7 +2553,8 @@ class ActivitiesScreenDayPicker extends SliverPersistentHeaderDelegate {
     final bool overlapsContent,
   ) {
     final theme = Theme.of(context);
-    final mediaQuery = MediaQuery.of(context);
+    final textScaleFactor = MediaQuery.of(context).textScaleFactor;
+    final cardSize = ActivitiesDateFilterCard.size(theme, textScaleFactor);
     return Material(
       color: theme.scaffoldBackgroundColor,
       child: Padding(
@@ -2556,11 +2568,7 @@ class ActivitiesScreenDayPicker extends SliverPersistentHeaderDelegate {
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: spacing / 2),
               itemCount: activitiesDays.length,
-              itemExtent: ActivitiesDateFilterCard.size(
-                    theme,
-                    mediaQuery.textScaleFactor,
-                  ).width +
-                  spacing,
+              itemExtent: cardSize.width + spacing,
               itemBuilder: (final context, final index) {
                 final date = activitiesDays.elementAt(index);
                 return Consumer(
@@ -2569,7 +2577,10 @@ class ActivitiesScreenDayPicker extends SliverPersistentHeaderDelegate {
                         const EdgeInsets.symmetric(horizontal: spacing / 2),
                     child: ActivitiesDateFilterCard(
                       date,
-                      selected: ref.watch(activitiesDayProvider).state == date,
+                      selected: ref.watch(
+                        activitiesDayProvider.notifier
+                            .select((final notifier) => notifier.state == date),
+                      ),
                       onSelected: () =>
                           ref.read(activitiesDayProvider).state = date,
                     ),

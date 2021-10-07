@@ -180,7 +180,25 @@ class AuthorizationScreen extends HookConsumerWidget {
           primary: false,
           child: PageTransitionSwitcher(
             duration: const Duration(seconds: 1),
-            layoutBuilder: (final entries) => Stack(children: entries),
+            layoutBuilder: (final entries) => Stack(
+              children: entries.isNotEmpty
+                  ? <Widget>[
+                      AnimatedOpacity(
+                        opacity: enteringPhone.value ? 1 : 0,
+                        duration: const Duration(seconds: 1),
+                        curve: !enteringPhone.value
+                            ? const Interval(0, 2 / 3, curve: Curves.ease)
+                            : const Interval(0, 0),
+                        child: IntrinsicHeight(
+                          child: Stack(
+                            children: entries.sublist(0, entries.length - 1),
+                          ),
+                        ),
+                      ),
+                      entries.last,
+                    ]
+                  : entries,
+            ),
             transitionBuilder: (
               final child,
               final animation,

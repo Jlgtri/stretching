@@ -61,8 +61,8 @@ class SMStretchingAPI {
           HttpHeaders.authorizationHeader:
               'smstretchingstudio:$smStretchingHeaderToken'
         },
-        sendTimeout: 5000,
-        connectTimeout: 10000,
+        sendTimeout: 10000,
+        connectTimeout: 30000,
         receiveTimeout: 30000,
       ),
     );
