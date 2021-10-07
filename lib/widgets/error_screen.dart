@@ -115,11 +115,7 @@ class ErrorScreen extends HookConsumerWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      EmojiText(
-                        '😣',
-                        style: const TextStyle(fontSize: 32),
-                        textScaleFactor: mediaQuery.textScaleFactor,
-                      ),
+                      const EmojiText('😣', style: TextStyle(fontSize: 32)),
                       const SizedBox(height: 14),
                       Text(
                         TR.errorTitle.tr(),

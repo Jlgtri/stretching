@@ -126,6 +126,9 @@ class UserRecordModel implements Comparable<UserRecordModel> {
   /// The id of the activity that correspondes to this record.
   final int activityId;
 
+  /// If this record was yanked when booking.
+  bool get yanked => attendance != 2;
+
   /// Return the copy of this model.
   UserRecordModel copyWith({
     final int? id,

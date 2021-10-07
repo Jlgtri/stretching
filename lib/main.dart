@@ -216,7 +216,7 @@ class RootScreen extends HookConsumerWidget {
                   headerBuilder: () => Consumer(
                     builder: (final context, final ref, final child) {
                       final connectionError =
-                          ref.watch(connectionErrorProvider).state;
+                          ref.watch(connectionErrorProvider);
                       return ClassicHeader(
                         completeDuration:
                             const Duration(seconds: 1, milliseconds: 500),
@@ -224,27 +224,25 @@ class RootScreen extends HookConsumerWidget {
                         idleText: TR.miscPullToRefreshIdle.tr(),
                         releaseText: TR.miscPullToRefreshRelease.tr(),
                         refreshingText: TR.miscPullToRefreshRefreshing.tr(),
-                        completeText: connectionError
+                        completeText: connectionError.state
                             ? TR.miscPullToRefreshCompleteInternetError.tr()
                             : TR.miscPullToRefreshComplete.tr(),
-                        idleIcon: EmojiText(
-                          '😉',
-                          style: emojiStyle,
-                          textScaleFactor: mediaQuery.textScaleFactor,
-                        ),
-                        releaseIcon: EmojiText(
-                          '🔥',
-                          style: emojiStyle,
-                          textScaleFactor: mediaQuery.textScaleFactor,
-                        ),
-                        // refreshingIcon: EmojiText('🤘', style: emojiStyle),
-                        completeIcon: connectionError
+                        failedText: connectionError.state
+                            ? TR.miscPullToRefreshCompleteInternetError.tr()
+                            : TR.miscPullToRefreshError.tr(),
+                        failedIcon: connectionError.state
                             ? const FontIcon(FontIconData(IconsCG.globe))
-                            : EmojiText(
-                                '❤',
-                                style: emojiStyle,
-                                textScaleFactor: mediaQuery.textScaleFactor,
-                              ),
+                            : EmojiText('😣', style: emojiStyle),
+                        idleIcon: EmojiText('😉', style: emojiStyle),
+                        releaseIcon: EmojiText('🔥', style: emojiStyle),
+                        // refreshingIcon: EmojiText('🤘', style: emojiStyle),
+                        completeIcon: connectionError.state
+                            ? const FontIcon(FontIconData(IconsCG.globe))
+                            : EmojiText('❤', style: emojiStyle),
+                        outerBuilder: (final child) => Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          child: child,
+                        ),
                       );
                     },
                   ),

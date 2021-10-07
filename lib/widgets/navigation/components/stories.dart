@@ -349,6 +349,8 @@ class PhotoStory extends StoryModel {
         imageUrl: url,
         fit: BoxFit.cover,
         placeholder: (final context, final url) => const PlaceholderStory(),
+        errorWidget: (final context, final url, final dynamic error) =>
+            const SizedBox.shrink(),
       );
 }
 

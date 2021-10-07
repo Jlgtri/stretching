@@ -399,7 +399,7 @@ class ProfileScreen extends HookConsumerWidget {
 }
 
 /// The card for displaying a [CombinedAbonementModel].
-class BuyAbonementCard extends ConsumerWidget {
+class BuyAbonementCard extends HookConsumerWidget {
   /// The card for displaying a [CombinedAbonementModel].
   const BuyAbonementCard({required final this.onPressed, final Key? key})
       : super(key: key);
@@ -410,7 +410,6 @@ class BuyAbonementCard extends ConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final mediaQuery = MediaQuery.of(context);
     const gradient = LinearGradient(
       colors: <Color>[Color(0xFFD353F0), Color(0xFF18D1EE)], //0xFFD353F0
       begin: Alignment.topRight,
@@ -426,13 +425,9 @@ class BuyAbonementCard extends ConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(top: 4, right: 8),
-            child: EmojiText(
-              '⚡️',
-              style: const TextStyle(fontSize: 20),
-              textScaleFactor: mediaQuery.textScaleFactor,
-            ),
+          const Padding(
+            padding: EdgeInsets.only(top: 4, right: 8),
+            child: EmojiText('⚡️', style: TextStyle(fontSize: 20)),
           ),
           Expanded(
             child: Column(
@@ -658,15 +653,11 @@ class DepositCard extends ConsumerWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
+              const Padding(
+                padding: EdgeInsets.only(top: 4),
                 child: SizedBox(
                   width: 36,
-                  child: EmojiText(
-                    '✌️',
-                    style: const TextStyle(fontSize: 22),
-                    textScaleFactor: mediaQuery.textScaleFactor,
-                  ),
+                  child: EmojiText('✌️', style: TextStyle(fontSize: 22)),
                 ),
               ),
               Expanded(

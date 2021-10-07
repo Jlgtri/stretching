@@ -849,7 +849,6 @@ final StateNotifierProvider<ContentNotifier<UserRecordModel>,
       final studios = ref.read(studiosProvider);
       return userRecords.where(
         (final userRecord) =>
-            userRecord.attendance == 2 &&
             studios.any((final studio) => studio.id == userRecord.company.id),
       );
     },

@@ -9,98 +9,205 @@ class EmojiTextSpan extends TextSpan {
   EmojiTextSpan({
     required final String text,
     final TextStyle? style,
-    final Iterable<InlineSpan>? children,
     final double emojiFontMultiplier = 1,
     final String? emojiPath,
+    final String? emojiPackage,
   }) : super(
           style: style,
-          children: _parse(style, text, emojiFontMultiplier, emojiPath)
-            ..addAll(children ?? <InlineSpan>[]),
-        );
+          children: () {
+            final spans = <InlineSpan>[];
+            final emojiStyle = style?.copyWith(
+              fontSize: style.fontSize != null
+                  ? style.fontSize! * emojiFontMultiplier
+                  : null,
+            );
 
-  static List<InlineSpan> _parse(
-    final TextStyle? _style,
-    final String text,
-    final double emojiFontMultiplier,
-    final String? emojiPath,
-  ) {
-    final spans = <InlineSpan>[];
-    final emojiStyle = (_style ?? const TextStyle()).copyWith(
-      fontSize: (_style?.fontSize ?? 14) * emojiFontMultiplier,
-    );
-    text.splitMapJoin(
-      emojiRegex,
-      onMatch: (final m) {
-        final emojiStr = m.input.substring(m.start, m.end);
-        final unicode = emojiToUnicode(emojiStr);
-        assert(unicode?.isNotEmpty ?? false, 'Emoji could not be converted');
-        spans.add(
-          WidgetSpan(
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: emojiStyle.letterSpacing ?? 1,
-                vertical: emojiStyle.height ?? 2,
-              ),
-              child: Image.asset(
-                join(emojiPath ?? join('assets', 'emoji'), '$unicode.png'),
-                height: emojiStyle.fontSize,
-                errorBuilder: (final context, final e, final st) {
-                  logger.w('Emoji $emojiStr, $unicode not found');
-                  return Text(emojiStr, style: _style);
-                },
-              ),
-            ),
-          ),
+            text.splitMapJoin(
+              emojiRegex,
+              onMatch: (final m) {
+                final emojiStr = m.input.substring(m.start, m.end);
+                final unicode = emojiToUnicode(emojiStr);
+                assert(
+                  unicode?.isNotEmpty ?? false,
+                  'Emoji could not be converted',
+                );
+                spans.add(
+                  WidgetSpan(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: emojiStyle?.letterSpacing ?? 0,
+                        vertical: emojiStyle?.height ?? 0,
+                      ),
+                      child: Image.asset(
+                        join(
+                          emojiPath ?? join('assets', 'emoji'),
+                          '$unicode.png',
+                        ),
+                        height: emojiStyle?.fontSize,
+                        package: emojiPackage,
+                        errorBuilder:
+                            (final context, final error, final stackTrace) {
+                          logger.w('Emoji $emojiStr, $unicode not found');
+                          return Text(emojiStr, style: emojiStyle);
+                        },
+                      ),
+                    ),
+                  ),
+                );
+                return emojiStr;
+              },
+              onNonMatch: (final s) {
+                spans.add(TextSpan(text: s, style: emojiStyle));
+                return '';
+              },
+            );
+            return spans;
+          }(),
         );
-        return emojiStr;
-      },
-      onNonMatch: (final s) {
-        spans.add(TextSpan(text: s, style: _style));
-        return '';
-      },
-    );
-    return spans;
-  }
 }
 
 /// A widget rendered with custom emojis.
-class EmojiText extends RichText {
+class EmojiText extends StatelessWidget {
   /// A widget rendered with custom emojis.
-  EmojiText(
-    final String text, {
-    final TextStyle? style,
-    final double emojiFontMultiplier = 1,
-    final String? emojiPath,
-    final TextAlign textAlign = TextAlign.start,
-    final TextDirection? textDirection,
-    final bool softWrap = true,
-    final TextOverflow overflow = TextOverflow.clip,
-    final double textScaleFactor = 1,
-    final int? maxLines,
-    final Locale? locale,
-    final StrutStyle? strutStyle,
-    final TextWidthBasis textWidthBasis = TextWidthBasis.parent,
-    final TextHeightBehavior? textHeightBehavior,
+  const EmojiText(
+    final this.text, {
+    final this.style,
+    final this.emojiFontMultiplier = 1,
+    final this.emojiPath,
+    final this.emojiPackage,
+    final this.textAlign,
+    final this.textDirection,
+    final this.softWrap,
+    final this.overflow,
+    final this.semanticsLabel,
+    final this.textScaleFactor,
+    final this.maxLines,
+    final this.locale,
+    final this.strutStyle,
+    final this.textWidthBasis,
+    final this.textHeightBehavior,
     final Key? key,
-  }) : super(
-          key: key,
-          text: EmojiTextSpan(
-            text: text,
-            emojiFontMultiplier: emojiFontMultiplier,
-            style: style,
-            emojiPath: emojiPath,
+  }) : super(key: key);
+
+  /// The text with emojis to convert in this widget.
+  final String text;
+
+  /// The style of this widget.
+  final TextStyle? style;
+
+  /// The size multiplier of the emojis compared to text.
+  final double emojiFontMultiplier;
+
+  /// The path to load emojis from.
+  final String? emojiPath;
+
+  /// The package to load emojis from.
+  final String? emojiPackage;
+
+  /// The align of the text in this widget.
+  final TextAlign? textAlign;
+
+  /// The direction of the text in this widget.
+  final TextDirection? textDirection;
+
+  /// Whether the text should break at soft line breaks.
+  final bool? softWrap;
+
+  /// How visual overflow should be handled.
+  final TextOverflow? overflow;
+
+  /// An alternative semantics label for this text.
+  final String? semanticsLabel;
+
+  /// The number of font pixels for each logical pixel.
+  final double? textScaleFactor;
+
+  /// The maximum count of lines of this widget.
+  final int? maxLines;
+
+  /// The locale of this widget.
+  final Locale? locale;
+
+  /// The minimum vertical layout metrics.
+  final StrutStyle? strutStyle;
+
+  /// Defines how to measure the width of the rendered text
+  final TextWidthBasis? textWidthBasis;
+
+  /// Defines how the paragraph will apply [TextStyle.height] to the ascent of
+  /// the first line and descent of the last line.
+  final TextHeightBehavior? textHeightBehavior;
+
+  @override
+  Widget build(final BuildContext context) {
+    final defaultTextStyle = DefaultTextStyle.of(context);
+    var effectiveTextStyle = style;
+    if (effectiveTextStyle == null || effectiveTextStyle.inherit) {
+      effectiveTextStyle = defaultTextStyle.style.merge(style);
+    }
+    if (MediaQuery.boldTextOverride(context)) {
+      effectiveTextStyle = effectiveTextStyle
+          .merge(const TextStyle(fontWeight: FontWeight.bold));
+    }
+    final result = RichText(
+      textAlign: textAlign ?? defaultTextStyle.textAlign ?? TextAlign.start,
+      textDirection: textDirection,
+      locale: locale,
+      softWrap: softWrap ?? defaultTextStyle.softWrap,
+      overflow:
+          overflow ?? effectiveTextStyle.overflow ?? defaultTextStyle.overflow,
+      textScaleFactor: textScaleFactor ?? MediaQuery.textScaleFactorOf(context),
+      maxLines: maxLines ?? defaultTextStyle.maxLines,
+      strutStyle: strutStyle,
+      textWidthBasis: textWidthBasis ?? defaultTextStyle.textWidthBasis,
+      textHeightBehavior: textHeightBehavior ??
+          defaultTextStyle.textHeightBehavior ??
+          DefaultTextHeightBehavior.of(context),
+      text: EmojiTextSpan(
+        style: effectiveTextStyle,
+        text: text,
+        emojiFontMultiplier: emojiFontMultiplier,
+        emojiPackage: emojiPackage,
+        emojiPath: emojiPath,
+      ),
+    );
+
+    return semanticsLabel != null
+        ? Semantics(
+            textDirection: textDirection,
+            label: semanticsLabel,
+            child: ExcludeSemantics(child: result),
+          )
+        : result;
+  }
+
+  @override
+  void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(
+      properties
+        ..add(StringProperty('text', text))
+        ..add(StringProperty('semanticsLabel', semanticsLabel))
+        ..add(StringProperty('emojiPackage', emojiPackage))
+        ..add(EnumProperty<TextDirection?>('textDirection', textDirection))
+        ..add(DoubleProperty('emojiFontMultiplier', emojiFontMultiplier))
+        ..add(
+          DiagnosticsProperty<TextHeightBehavior?>(
+            'textHeightBehavior',
+            textHeightBehavior,
           ),
-          textAlign: textAlign,
-          textDirection: textDirection,
-          softWrap: softWrap,
-          overflow: overflow,
-          textScaleFactor: textScaleFactor,
-          maxLines: maxLines,
-          strutStyle: strutStyle,
-          textWidthBasis: textWidthBasis,
-          textHeightBehavior: textHeightBehavior,
-          locale: locale,
-        );
+        )
+        ..add(EnumProperty<TextOverflow>('overflow', overflow))
+        ..add(IntProperty('maxLines', maxLines))
+        ..add(DiagnosticsProperty<Locale?>('locale', locale))
+        ..add(EnumProperty<TextAlign>('textAlign', textAlign))
+        ..add(DiagnosticsProperty<StrutStyle?>('strutStyle', strutStyle))
+        ..add(DiagnosticsProperty<TextStyle?>('style', style))
+        ..add(StringProperty('emojiPath', emojiPath))
+        ..add(EnumProperty<TextWidthBasis>('textWidthBasis', textWidthBasis))
+        ..add(DoubleProperty('textScaleFactor', textScaleFactor))
+        ..add(DiagnosticsProperty<bool>('softWrap', softWrap)),
+    );
+  }
 }
 
 /// Converts emoji to unicode 😀 => "1F600"

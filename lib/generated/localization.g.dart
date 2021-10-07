@@ -55,6 +55,7 @@ abstract class TR {
   static const String miscPullToRefreshRefreshing = 'misc.pull_to_refresh.refreshing';
   static const String miscPullToRefreshComplete = 'misc.pull_to_refresh.complete';
   static const String miscPullToRefreshCompleteInternetError = 'misc.pull_to_refresh.complete_internet_error';
+  static const String miscPullToRefreshError = 'misc.pull_to_refresh.error';
   static const String miscPullToRefresh = 'misc.pull_to_refresh';
   static const String misc = 'misc';
 
@@ -101,6 +102,7 @@ abstract class TR {
   static const String activitiesSearch = 'activities.search';
   static const String activitiesSearchCancel = 'activities.search_cancel';
   static const String activities12h = 'activities.12h';
+  static const String activitiesCardError = 'activities.card_error';
 
   static const String activitiesDurationMinuteShort = 'activities.duration.minute_short';
 
@@ -124,6 +126,7 @@ abstract class TR {
   static const String activitiesActivityBookOnScreen = 'activities.activity.book_on_screen';
   static const String activitiesActivityCancelBook = 'activities.activity.cancel_book';
   static const String activitiesActivityCancelBook12h = 'activities.activity.cancel_book_12h';
+  static const String activitiesActivityCancelError = 'activities.activity.cancel_error';
   static const String activitiesActivityAddToCalendar = 'activities.activity.add_to_calendar';
   static const String activitiesActivityAddToWishlist = 'activities.activity.add_to_wishlist';
   static const String activitiesActivity = 'activities.activity';

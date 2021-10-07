@@ -261,7 +261,6 @@ class TrainersScreen extends HookConsumerWidget {
                       EmojiText(
                         areTrainersPresent ? '🤔' : '🧘‍♀️',
                         style: const TextStyle(fontSize: 30),
-                        textScaleFactor: mediaQuery.textScaleFactor,
                       ),
                       const SizedBox(height: 10),
                       Text(
@@ -359,6 +358,9 @@ class TrainerCard extends ConsumerWidget {
                       radius: avatarSize / 2,
                       foregroundImage: imageProvider,
                     ),
+                    errorWidget:
+                        (final context, final url, final dynamic error) =>
+                            const SizedBox.shrink(),
                   ),
                 ),
                 Expanded(

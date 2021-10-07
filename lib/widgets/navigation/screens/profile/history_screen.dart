@@ -224,7 +224,7 @@ class HistoryScreenState extends ConsumerState<HistoryScreen>
                           child: BottomButtons<dynamic>(
                             inverse: true,
                             firstText: TR.profileHistoryEmptyButton.tr(),
-                            onFirstPressed: (final context) async {
+                            onFirstPressed: (final context, final ref) async {
                               (ref.read(navigationProvider)).jumpToTab(
                                 NavigationScreen.schedule.index,
                               );

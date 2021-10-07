@@ -4,20 +4,16 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:persistent_bottom_nav_bar/persistent-tab-view.dart';
-import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/main.dart';
 import 'package:stretching/providers/hide_appbar_provider.dart';
 import 'package:stretching/providers/hive_provider.dart';
-import 'package:stretching/providers/other_providers.dart';
-import 'package:stretching/providers/uni_links_provider.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/utils/enum_to_string.dart';
 import 'package:stretching/utils/json_converters.dart';
@@ -308,12 +304,12 @@ class NavigationRoot extends HookConsumerWidget {
                         ),
                         child: BottomButtons(
                           firstText: TR.alertExitApprove.tr(),
-                          onFirstPressed: (final context) async {
+                          onFirstPressed: (final context, final ref) async {
                             await SystemNavigator.pop();
                             exit(0);
                           },
                           secondText: TR.alertExitDeny.tr(),
-                          onSecondPressed: (final context) async {
+                          onSecondPressed: (final context, final ref) async {
                             await Navigator.of(context).maybePop();
                             return false;
                           },
@@ -363,13 +359,10 @@ class NavigationRoot extends HookConsumerWidget {
         /// Custom AppBar
         Consumer(
           builder: (final context, final ref, final child) {
-            final hideAppbar = ref.watch(
-              hideAppBarProvider(
-                NavigationScreen.values.elementAt(
-                  ref.watch(currentNavigationProvider).state,
-                ),
-              ),
-            );
+            final currentScreenIndex =
+                ref.watch(currentNavigationProvider).state;
+            final currentScreen = NavigationScreen.values[currentScreenIndex];
+            final hideAppbar = ref.watch(hideAppBarProvider(currentScreen));
             return IgnorePointer(
               ignoring: hideAppbar.state,
               child: AnimatedOpacity(
@@ -394,13 +387,10 @@ class NavigationRoot extends HookConsumerWidget {
             alignment: Alignment.bottomCenter,
             child: Container(height: navBarHeight, color: Colors.transparent),
           ),
-          builder: (final context, final ref, final child) {
-            final isTransitioning = ref.watch(navigationTransitioningProvider);
-            return IgnorePointer(
-              ignoring: !isTransitioning.state,
-              child: child,
-            );
-          },
+          builder: (final context, final ref, final child) => IgnorePointer(
+            ignoring: !ref.watch(navigationTransitioningProvider).state,
+            child: child,
+          ),
         )
       ],
     );

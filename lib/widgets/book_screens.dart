@@ -221,7 +221,7 @@ class PromptBookScreen extends HookWidget {
                         )
                       ],
                     ),
-                    onFirstPressed: (final context) async {
+                    onFirstPressed: (final context, final ref) async {
                       isLoading.value = true;
                       isExtraLoading.value = false;
                       try {
@@ -234,7 +234,7 @@ class PromptBookScreen extends HookWidget {
                         }
                       }
                     },
-                    onSecondPressed: (final context) async {
+                    onSecondPressed: (final context, final ref) async {
                       isLoading.value = true;
                       isExtraLoading.value = false;
                       try {
@@ -370,8 +370,9 @@ class SuccessfulBookScreen extends ConsumerWidget {
                   child: BottomButtons<dynamic>(
                     firstText: TR.successfulBookCalendar.tr(),
                     secondText: TR.successfulBookBackToMain.tr(),
-                    onFirstPressed: (final context) => activity.add2Calendar(),
-                    onSecondPressed: (final context) {
+                    onFirstPressed: (final context, final ref) =>
+                        activity.add2Calendar(),
+                    onSecondPressed: (final context, final ref) {
                       (ref.read(navigationProvider))
                           .jumpToTab(NavigationScreen.home.index);
                       Navigator.of(context, rootNavigator: true)

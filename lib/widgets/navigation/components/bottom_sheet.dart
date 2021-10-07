@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/style.dart';
@@ -195,10 +196,13 @@ class BottomSheetBase extends StatelessWidget {
 }
 
 /// The callback to call when bottom sheet button was pressed.
-typedef OnBottomButton<T> = FutureOr<T> Function(BuildContext);
+typedef OnBottomButton<T> = FutureOr<T> Function(
+  BuildContext context,
+  WidgetRef ref,
+);
 
 /// The buttons that are persistent at the bottom of the screen.
-class BottomButtons<T> extends StatelessWidget {
+class BottomButtons<T> extends ConsumerWidget {
   /// The buttons that are persistent at the bottom of the screen.
   const BottomButtons({
     final this.firstText = '',
@@ -245,7 +249,7 @@ class BottomButtons<T> extends StatelessWidget {
   final bool inverse;
 
   @override
-  Widget build(final BuildContext context) {
+  Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
     final darkStyle = (TextButtonStyle.dark.fromTheme(theme)).copyWith(
       foregroundColor: MaterialStateProperty.all(theme.colorScheme.surface),
@@ -262,7 +266,7 @@ class BottomButtons<T> extends StatelessWidget {
             opacity: onFirstPressed == null ? 1 / 4 : 1,
             child: TextButton(
               onPressed: onFirstPressed != null
-                  ? () => onFirstPressed!(context)
+                  ? () => onFirstPressed!(context, ref)
                   : null,
               style: (!inverse ? darkStyle : lightStyle).copyWith(
                 shape: firstTitleText.isNotEmpty
@@ -340,7 +344,7 @@ class BottomButtons<T> extends StatelessWidget {
           Flexible(
             child: TextButton(
               onPressed: onSecondPressed != null
-                  ? () => onSecondPressed!(context)
+                  ? () => onSecondPressed!(context, ref)
                   : null,
               style: (!inverse ? lightStyle : darkStyle).copyWith(
                 shape: secondTitleText.isNotEmpty

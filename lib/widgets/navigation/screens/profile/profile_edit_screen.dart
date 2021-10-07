@@ -161,7 +161,7 @@ class ProfileEditScreenState extends ConsumerState<ProfileEditScreen>
                 padding: const EdgeInsets.only(top: 12),
                 child: BottomButtons(
                   firstText: TR.profileEditConfirm.tr(),
-                  onFirstPressed: (final context) async {
+                  onFirstPressed: (final context, final ref) async {
                     final form = formKey.currentState;
                     if (form != null && form.validate()) {
                       form.save();

@@ -449,7 +449,8 @@ class StudioScreenCard extends ConsumerWidget {
               inverse: true,
               direction: Axis.horizontal,
               firstText: TR.studiosFind.tr(),
-              onFirstPressed: (final context) => Navigator.of(context).push(
+              onFirstPressed: (final context, final ref) =>
+                  Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (final builder) => Padding(
                     padding: const EdgeInsets.only(
@@ -503,6 +504,8 @@ class StudioScreenCard extends ConsumerWidget {
                 alignment: Alignment.topCenter,
                 width: MediaQuery.of(context).size.width,
                 height: 280,
+                errorWidget: (final context, final url, final dynamic error) =>
+                    const SizedBox.shrink(),
               );
             },
           ),
@@ -636,6 +639,9 @@ class StudioCard extends HookConsumerWidget {
                       foregroundImage: imageProvider,
                     ),
                   ),
+                  errorWidget:
+                      (final context, final url, final dynamic error) =>
+                          const SizedBox.shrink(),
                 ),
               ),
 

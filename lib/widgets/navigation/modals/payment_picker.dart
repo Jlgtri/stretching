@@ -588,7 +588,7 @@ class PaymentPickerScreen extends HookConsumerWidget {
                 onFirstPressed: emailController.text.isNotEmpty &&
                         emailError.value.isEmpty &&
                         !isLoading.value
-                    ? (final context) async {
+                    ? (final context, final ref) async {
                         isLoading.value = true;
                         try {
                           await (ref.read(paymentEmailProvider.notifier))

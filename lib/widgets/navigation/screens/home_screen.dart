@@ -109,7 +109,6 @@ class HomeScreen extends HookConsumerWidget {
           if (!userRecord.deleted && userRecord.activityId == activity.item0.id)
             userRecord: activity
     };
-    final serverTime = ref.watch(smServerTimeProvider);
     final refresh = useRefreshController(
       extraRefresh: () async {
         while (ref.read(connectionErrorProvider).state) {
@@ -228,6 +227,9 @@ class HomeScreen extends HookConsumerWidget {
                               ),
                             ),
                           ),
+                          errorWidget:
+                              (final context, final url, final dynamic error) =>
+                                  const SizedBox.shrink(),
                         ),
                       ),
                     ),
@@ -257,15 +259,10 @@ class HomeScreen extends HookConsumerWidget {
               padding: const EdgeInsets.only(top: 12),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (final context, final index) {
-                    final recordEntry = userRecords.entries.elementAt(index);
-                    return ActivityCardContainer(
-                      recordEntry.value,
-                      onMain: true,
-                      timeLeftBeforeStart:
-                          recordEntry.key.date.difference(serverTime),
-                    );
-                  },
+                  (final context, final index) => ActivityCardContainer(
+                    userRecords.entries.elementAt(index).value,
+                    onMain: true,
+                  ),
                   childCount: userRecords.length,
                 ),
               ),
@@ -278,11 +275,7 @@ class HomeScreen extends HookConsumerWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    EmojiText(
-                      '🤸',
-                      style: const TextStyle(fontSize: 36),
-                      textScaleFactor: mediaQuery.textScaleFactor,
-                    ),
+                    const EmojiText('🤸', style: TextStyle(fontSize: 36)),
                     const SizedBox(height: 12),
                     ConstrainedBox(
                       constraints: BoxConstraints(

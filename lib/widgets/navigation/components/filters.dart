@@ -122,6 +122,8 @@ class FilterButton extends StatelessWidget {
                   radius: 16,
                   foregroundImage: imageProvider,
                 ),
+                errorWidget: (final context, final url, final dynamic error) =>
+                    const SizedBox.shrink(),
               )
             : null,
         backgroundColor: backgroundColor,

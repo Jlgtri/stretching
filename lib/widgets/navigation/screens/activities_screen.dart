@@ -479,20 +479,7 @@ class ActivitiesScreen extends HookConsumerWidget {
                     delegate: SliverChildBuilderDelegate(
                       (final context, final index) {
                         final activity = activities.elementAt(index);
-                        return ActivityCardContainer(
-                          activity,
-                          timeLeftBeforeStart: ref.watch(
-                            activitiesCurrentTimeProvider.select(
-                              (final tempNow) => activity.item0.date.difference(
-                                tempNow.when(
-                                  data: (final tempNow) => tempNow,
-                                  loading: DateTime.now,
-                                  error: (final e, final st) => DateTime.now(),
-                                ),
-                              ),
-                            ),
-                          ),
-                        );
+                        return ActivityCardContainer(activity);
                       },
                       childCount: activities.length,
                     ),
@@ -506,11 +493,7 @@ class ActivitiesScreen extends HookConsumerWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         const SizedBox(height: 32),
-                        EmojiText(
-                          '😣',
-                          style: const TextStyle(fontSize: 30),
-                          textScaleFactor: mediaQuery.textScaleFactor,
-                        ),
+                        const EmojiText('😣', style: TextStyle(fontSize: 30)),
                         const SizedBox(height: 16),
                         ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 284),
@@ -552,11 +535,7 @@ class ActivitiesScreen extends HookConsumerWidget {
                         children: <Widget>[
                           if (!areDaysPresent) const SizedBox(height: 50),
                           const SizedBox(height: 75),
-                          EmojiText(
-                            '😣',
-                            style: const TextStyle(fontSize: 30),
-                            textScaleFactor: mediaQuery.textScaleFactor,
-                          ),
+                          const EmojiText('😣', style: TextStyle(fontSize: 30)),
                           const SizedBox(height: 16),
                           ConstrainedBox(
                             constraints: BoxConstraints(
@@ -817,8 +796,8 @@ class ActivitiesSearchField extends ConsumerWidget {
 
 /// The loader of the [ActivityCardContainer] for the each
 /// [ActivityCardContainer.activity].
-final StateProviderFamily<bool, ActivityModel> activityCardLoadingProvider =
-    StateProvider.family<bool, ActivityModel>(
+final StateProviderFamily<bool, int> activityCardLoadingProvider =
+    StateProvider.family<bool, int>(
   (final ref, final activity) => false,
 );
 
@@ -827,7 +806,6 @@ class ActivityCardContainer extends HookConsumerWidget {
   /// The transition between [ActivityCard] and [ActivityScreenCard].
   const ActivityCardContainer(
     final this.activity, {
-    required final this.timeLeftBeforeStart,
     final this.onMain = false,
     final Key? key,
   }) : super(key: key);
@@ -835,17 +813,26 @@ class ActivityCardContainer extends HookConsumerWidget {
   /// The activity to display in this widget.
   final CombinedActivityModel activity;
 
-  /// The amount of time left before this [activity] is starting.
-  final Duration timeLeftBeforeStart;
-
   /// If this card is placed on main.
   final bool onMain;
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final navigator = Navigator.of(context, rootNavigator: true);
-    final isLoading = ref.watch(activityCardLoadingProvider(activity.item0));
+    final navigator = Navigator.of(context);
+    final rootNavigator = Navigator.of(context, rootNavigator: true);
+    final isLoading = ref.watch(activityCardLoadingProvider(activity.item0.id));
+    final timeLeftBeforeStart = ref.watch(
+      activitiesCurrentTimeProvider.select(
+        (final tempNow) => activity.item0.date.difference(
+          tempNow.when(
+            data: (final tempNow) => tempNow,
+            loading: DateTime.now,
+            error: (final e, final st) => DateTime.now(),
+          ),
+        ),
+      ),
+    );
     final isMounted = useIsMounted();
 
     Future<void> logFirebase(final String name) => analytics.logEvent(
@@ -884,10 +871,13 @@ class ActivityCardContainer extends HookConsumerWidget {
                     const SizedBox(height: 24),
                     BottomButtons<dynamic>(
                       firstText: button,
-                      onFirstPressed: (final context) {
-                        navigator.popUntil(Routes.root.withName);
-                        (ref.read(navigationProvider))
-                            .jumpToTab(NavigationScreen.profile.index);
+                      onFirstPressed: (final context, final ref) async {
+                        try {
+                          (ref.read(navigationProvider))
+                              .jumpToTab(NavigationScreen.profile.index);
+                        } finally {
+                          await Navigator.of(context).maybePop();
+                        }
                       },
                     ),
                   ],
@@ -921,6 +911,7 @@ class ActivityCardContainer extends HookConsumerWidget {
               continue all;
             all:
             case ActivityPaidBy.none:
+              navigator.popUntil(Routes.root.withName);
               await ref.read(userRecordsProvider.notifier).refresh();
           }
           return true;
@@ -934,9 +925,7 @@ class ActivityCardContainer extends HookConsumerWidget {
           case CancelBookExceptionType.timeHacking:
         }
       } finally {
-        if (isMounted()) {
-          isLoading.state = false;
-        }
+        isLoading.state = false;
       }
       return false;
     }
@@ -948,7 +937,7 @@ class ActivityCardContainer extends HookConsumerWidget {
         final businessLogic = ref.read(businessLogicProvider);
         final result = await businessLogic.book(
           timeout: bookTimeout,
-          navigator: navigator,
+          navigator: rootNavigator,
           user: ref.read(userProvider)!,
           activity: activity,
           useDiscount: ref.read(discountProvider),
@@ -960,7 +949,7 @@ class ActivityCardContainer extends HookConsumerWidget {
             ]);
             return businessLogic.book(
               prevRecord: record,
-              navigator: navigator,
+              navigator: rootNavigator,
               user: ref.read(userProvider)!,
               activity: activity,
               useDiscount: ref.read(discountProvider),
@@ -986,7 +975,7 @@ class ActivityCardContainer extends HookConsumerWidget {
           case BookResult.discount:
           case BookResult.regular:
             await ref.read(userRecordsProvider.notifier).refresh();
-            await navigator.push<void>(
+            await rootNavigator.push<void>(
               MaterialPageRoute(
                 builder: (final context) => SuccessfulBookScreen(
                   activity: activity,
@@ -995,6 +984,8 @@ class ActivityCardContainer extends HookConsumerWidget {
                 ),
               ),
             );
+            navigator.popUntil(Routes.root.withName);
+            rootNavigator.popUntil(Routes.root.withName);
         }
         return true;
       } on BookException catch (exception) {
@@ -1003,7 +994,7 @@ class ActivityCardContainer extends HookConsumerWidget {
           await Future.wait(<Future<void>>[
             if (exception.type == BookExceptionType.alreadyApplied)
               ref.read(userRecordsProvider.notifier).refresh(),
-            navigator.push<void>(
+            rootNavigator.push<void>(
               MaterialPageRoute(
                 builder: (final context) => ResultBookScreen(
                   showBackButton: exception.type == BookExceptionType.payment,
@@ -1014,15 +1005,15 @@ class ActivityCardContainer extends HookConsumerWidget {
                       ? () {
                           (ref.read(navigationProvider))
                               .jumpToTab(NavigationScreen.home.index);
-                          Navigator.of(context, rootNavigator: true)
-                              .popUntil(Routes.root.withName);
+                          navigator.popUntil(Routes.root.withName);
+                          rootNavigator.popUntil(Routes.root.withName);
                         }
                       : exception.type == BookExceptionType.alreadyApplied ||
                               exception.type == BookExceptionType.full
-                          ? () => Navigator.of(context, rootNavigator: true)
-                                  .popUntil(
-                                Routes.root.withName,
-                              )
+                          ? () {
+                              navigator.popUntil(Routes.root.withName);
+                              rootNavigator.popUntil(Routes.root.withName);
+                            }
                           : null,
                 ),
               ),
@@ -1030,9 +1021,7 @@ class ActivityCardContainer extends HookConsumerWidget {
           ]);
         }
       } finally {
-        if (isMounted()) {
-          isLoading.state = false;
-        }
+        isLoading.state = false;
       }
       return false;
     }
@@ -1058,7 +1047,7 @@ class ActivityCardContainer extends HookConsumerWidget {
           );
         }
 
-        await navigator.push(
+        await rootNavigator.push(
           MaterialPageRoute<void>(
             builder: (final context) => ResultBookScreen(
               emoji: '🧘',
@@ -1077,9 +1066,7 @@ class ActivityCardContainer extends HookConsumerWidget {
           ),
         );
       } finally {
-        if (isMounted()) {
-          isLoading.state = false;
-        }
+        isLoading.state = false;
       }
     }
 
@@ -1097,13 +1084,13 @@ class ActivityCardContainer extends HookConsumerWidget {
           activity,
           onMain: onMain,
           onOpenButtonPressed: action,
-          timeLeftBeforeStart: timeLeftBeforeStart,
-          onPressed: (final appliedRecord) => !isLoading.state
+          onPressed: (final appliedRecord) => !isLoading.state && isMounted()
               ? ref.read(userProvider) == null
                   ? () => Navigator.of(context, rootNavigator: true)
                       .pushNamed(Routes.auth.name)
                   : appliedRecord != null
-                      ? timeLeftBeforeStart.inHours < 12
+                      ? !appliedRecord.yanked &&
+                              timeLeftBeforeStart.inHours < 12
                           ? null
                           : () => cancelBook(appliedRecord, fullscreen: false)
                       : activity.item0.recordsLeft <= 0
@@ -1116,26 +1103,26 @@ class ActivityCardContainer extends HookConsumerWidget {
         builder: (final context, final ref, final child) => Loader(
           falsePop: true,
           isLoading:
-              ref.watch(activityCardLoadingProvider(activity.item0)).state,
+              ref.watch(activityCardLoadingProvider(activity.item0.id)).state,
           child: ActivityScreenCard(
             activity,
             onMain: onMain,
             onBackButtonPressed: action,
-            timeLeftBeforeStart: timeLeftBeforeStart,
-            onPressed: (final appliedRecord) => isMounted() && !isLoading.state
+            onPressed: (final appliedRecord) => !isLoading.state && isMounted()
                 ? ref.read(userProvider) == null
                     ? () => Navigator.of(context, rootNavigator: true)
                         .pushNamed(Routes.auth.name)
                     : appliedRecord != null
-                        ? timeLeftBeforeStart.inHours < 12
+                        ? !appliedRecord.yanked &&
+                                timeLeftBeforeStart.inHours < 12
                             ? null
                             : () async {
-                                if (onMain &&
-                                    await cancelBook(
-                                      appliedRecord,
-                                      fullscreen: true,
-                                    )) {
-                                  await navigator.maybePop();
+                                await cancelBook(
+                                  appliedRecord,
+                                  fullscreen: true,
+                                );
+                                if (onMain) {
+                                  await rootNavigator.maybePop();
                                 }
                               }
                         : activity.item0.recordsLeft <= 0
@@ -1153,12 +1140,6 @@ class ActivityCardContainer extends HookConsumerWidget {
     super.debugFillProperties(
       properties
         ..add(DiagnosticsProperty<CombinedActivityModel>('activity', activity))
-        ..add(
-          DiagnosticsProperty<Duration>(
-            'timeLeftBeforeStart',
-            timeLeftBeforeStart,
-          ),
-        )
         ..add(DiagnosticsProperty<bool>('onMain', onMain)),
     );
   }
@@ -1169,7 +1150,6 @@ class ActivityCard extends ConsumerWidget {
   /// The activity card to display on [ActivitiesScreen].
   const ActivityCard(
     final this.activity, {
-    required final this.timeLeftBeforeStart,
     required final this.onPressed,
     required final this.onOpenButtonPressed,
     final this.onMain = false,
@@ -1178,9 +1158,6 @@ class ActivityCard extends ConsumerWidget {
 
   /// The activity to display in this widget.
   final CombinedActivityModel activity;
-
-  /// The amount of time left before this [activity] is starting.
-  final Duration timeLeftBeforeStart;
 
   /// The callback with found record that returns a callback on this card.
   final void Function()? Function(UserRecordModel? appliedRecord) onPressed;
@@ -1207,6 +1184,7 @@ class ActivityCard extends ConsumerWidget {
       }),
     );
 
+    final _onPressed = onPressed(appliedRecord);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Material(
@@ -1287,6 +1265,9 @@ class ActivityCard extends ConsumerWidget {
                           radius: 20 * mediaQuery.textScaleFactor,
                           foregroundImage: imageProvider,
                         ),
+                        errorWidget:
+                            (final context, final url, final dynamic error) =>
+                                const SizedBox.shrink(),
                       ),
                     )
                   ],
@@ -1327,7 +1308,6 @@ class ActivityCard extends ConsumerWidget {
                             activity.item1.item1.studioName,
                             style:
                                 theme.textTheme.caption?.copyWith(color: grey),
-                            textScaleFactor: mediaQuery.textScaleFactor,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -1338,10 +1318,7 @@ class ActivityCard extends ConsumerWidget {
                         child: Align(
                           alignment: Alignment.bottomLeft,
                           child: Opacity(
-                            opacity: appliedRecord != null &&
-                                    timeLeftBeforeStart.inHours < 12
-                                ? 1 / 2
-                                : 1,
+                            opacity: _onPressed == null ? 1 / 2 : 1,
                             child: SizedBox(
                               height: 24,
                               width: onMain ? 120 : 160,
@@ -1362,7 +1339,7 @@ class ActivityCard extends ConsumerWidget {
                                   ),
                                   tapTargetSize: MaterialTapTargetSize.padded,
                                 ),
-                                onPressed: onPressed(appliedRecord),
+                                onPressed: _onPressed,
                                 child: Text(
                                   appliedRecord != null
                                       ? TR.activitiesCancel.tr()
@@ -1380,112 +1357,12 @@ class ActivityCard extends ConsumerWidget {
                     ],
                   ),
                 ),
-                ConstrainedBox(
-                  constraints: BoxConstraints(
-                    maxWidth: 90 * mediaQuery.textScaleFactor,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: onMain
-                        ? MainAxisAlignment.spaceBetween
-                        : MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: <Widget>[
-                      /// Extra Data on Main
-                      if (onMain)
-                        Consumer(
-                          builder: (final context, final ref, final child) {
-                            final locale = ref.watch(localeProvider);
-                            final serverTime = ref.watch(smServerTimeProvider);
-                            final isToday = activity.item0.date.year ==
-                                    serverTime.year &&
-                                activity.item0.date.month == serverTime.month &&
-                                activity.item0.date.day == serverTime.day;
-                            final weekDay = DateFormat.EEEE(locale.toString())
-                                .format(activity.item0.date);
-                            return Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: <Widget>[
-                                /// Activity Date
-                                Container(
-                                  width: isToday ? 70 : 90,
-                                  alignment: Alignment.center,
-                                  margin: const EdgeInsets.only(bottom: 10),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 6,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: isToday
-                                        ? theme.colorScheme.onSurface
-                                        : theme.colorScheme.primary,
-                                    borderRadius: const BorderRadius.all(
-                                      Radius.circular(4),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    isToday
-                                        ? TR.homeClassesToday.tr()
-                                        : DateFormat.MMMMd(locale.toString())
-                                            .format(activity.item0.date),
-                                    style: theme.textTheme.overline?.copyWith(
-                                      color: theme.colorScheme.surface,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-
-                                /// Activity Weekday
-                                if (!isToday)
-                                  Text(
-                                    weekDay.isNotEmpty
-                                        ? weekDay
-                                                .substring(0, 1)
-                                                .toUpperCase() +
-                                            weekDay.substring(1).toLowerCase()
-                                        : '',
-                                    style: theme.textTheme.overline,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  )
-                              ],
-                            );
-                          },
-                        ),
-
-                      /// If it is too late too cancel the activity.
-                      if (appliedRecord != null &&
-                          timeLeftBeforeStart.inHours < 12)
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: <Widget>[
-                            if (!onMain)
-                              EmojiText(
-                                '⏱',
-                                style: TextStyle(color: theme.hintColor),
-                                textScaleFactor: mediaQuery.textScaleFactor,
-                              ),
-                            Text(
-                              TR.activities12h.tr(),
-                              textAlign: TextAlign.center,
-                              style: theme.textTheme.overline,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              textScaleFactor: 1,
-                            ),
-                          ],
-                        )
-                      else if (!onMain)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 32),
-                          child: ActivityCardRecordsCount(
-                            activity.item0.recordsLeft,
-                            showDefault: false,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
+                const SizedBox(width: 8),
+                ActivityCardExtraData(
+                  activity,
+                  appliedRecord: appliedRecord,
+                  onMain: onMain,
+                )
               ],
             ),
           ),
@@ -1500,12 +1377,6 @@ class ActivityCard extends ConsumerWidget {
       properties
         ..add(DiagnosticsProperty<CombinedActivityModel>('activity', activity))
         ..add(
-          DiagnosticsProperty<Duration>(
-            'timeLeftBeforeStart',
-            timeLeftBeforeStart,
-          ),
-        )
-        ..add(
           ObjectFlagProperty<void Function()? Function(UserRecordModel?)>.has(
             'onPressed',
             onPressed,
@@ -1519,6 +1390,187 @@ class ActivityCard extends ConsumerWidget {
         )
         ..add(DiagnosticsProperty<bool>('onMain', onMain)),
     );
+  }
+}
+
+/// The extra data for the [ActivityCard].
+class ActivityCardExtraData extends HookConsumerWidget {
+  /// The extra data for the [ActivityCard].
+  const ActivityCardExtraData(
+    final this.activity, {
+    required final this.appliedRecord,
+    required final this.onMain,
+    final Key? key,
+  }) : super(key: key);
+
+  /// The activity to display in this widget.
+  final CombinedActivityModel activity;
+
+  /// The applied record for [activity].
+  final UserRecordModel? appliedRecord;
+
+  /// The same as [ActivityCard.onMain].
+  final bool onMain;
+
+  @override
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final date = activity.item0.date;
+    final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
+
+    final locale = ref.watch(localeProvider);
+    final isToday = ref.watch(
+      activitiesCurrentTimeProvider.select(
+        (final currentTime) {
+          final time = currentTime.when(
+            data: (final currentTime) => currentTime,
+            loading: DateTime.now,
+            error: (final e, final st) => DateTime.now(),
+          );
+          return date.year == time.year &&
+              date.month == time.month &&
+              date.day == time.day;
+        },
+      ),
+    );
+
+    final timeLeftBeforeStart = ref.watch(
+      activitiesCurrentTimeProvider.select(
+        (final currentTime) => activity.item0.date.difference(
+          currentTime.when(
+            data: (final currentTime) => currentTime,
+            loading: DateTime.now,
+            error: (final e, final st) => DateTime.now(),
+          ),
+        ),
+      ),
+    );
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: 90 * mediaQuery.textScaleFactor,
+      ),
+      child: Column(
+        mainAxisAlignment:
+            onMain ? MainAxisAlignment.spaceBetween : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: <Widget>[
+          if (appliedRecord != null) ...<Widget>[
+            /// Extra Data on Main
+            if (onMain)
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: <Widget>[
+                  /// Activity Date
+                  Material(
+                    color: appliedRecord!.yanked
+                        ? theme.colorScheme.error
+                        : isToday
+                            ? theme.colorScheme.onSurface
+                            : theme.colorScheme.primary,
+                    borderRadius: const BorderRadius.all(
+                      Radius.circular(4),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ) *
+                          mediaQuery.textScaleFactor,
+                      child: Text(
+                        isToday
+                            ? TR.homeClassesToday.tr()
+                            : DateFormat.MMMMd(locale.toString())
+                                .format(activity.item0.date),
+                        style: theme.textTheme.overline?.copyWith(
+                          color: theme.colorScheme.surface,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  /// Activity Weekday or Error
+                  if (appliedRecord!.yanked)
+                    Flexible(
+                      child: Text(
+                        TR.activitiesCardError.tr(),
+                        style: theme.textTheme.overline
+                            ?.copyWith(color: theme.colorScheme.error),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.end,
+                      ),
+                    )
+                  else if (!isToday)
+                    Text(
+                      () {
+                        var weekDay =
+                            DateFormat.EEEE(locale.toString()).format(date);
+                        if (weekDay.isNotEmpty) {
+                          weekDay = weekDay.substring(0, 1).toUpperCase() +
+                              weekDay.substring(1).toLowerCase();
+                        }
+                        return weekDay;
+                      }(),
+                      style: theme.textTheme.overline,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                    )
+                ],
+              ),
+
+            /// If it is too late too cancel the activity.
+            if (!appliedRecord!.yanked && timeLeftBeforeStart.inHours < 12)
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  if (!onMain)
+                    EmojiText(
+                      '⏱',
+                      style: TextStyle(color: theme.hintColor),
+                    ),
+                  Flexible(
+                    child: Text(
+                      TR.activities12h.tr(),
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.overline,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      textScaleFactor: 1,
+                    ),
+                  ),
+                ],
+              )
+          ] else if (!onMain)
+            Padding(
+              padding: const EdgeInsets.only(left: 32),
+              child: ActivityCardRecordsCount(
+                activity.item0.recordsLeft,
+                showDefault: false,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(
+      properties
+        ..add(DiagnosticsProperty<CombinedActivityModel>('activity', activity))
+        ..add(
+          DiagnosticsProperty<UserRecordModel>(
+            'appliedRecord',
+            appliedRecord,
+          ),
+        ),
+    );
+    properties.add(DiagnosticsProperty<bool>('onMain', onMain));
   }
 }
 
@@ -1540,7 +1592,6 @@ class ActivityCardRecordsCount extends StatelessWidget {
   @override
   Widget build(final BuildContext context) {
     final theme = Theme.of(context);
-    final mediaQuery = MediaQuery.of(context);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
@@ -1551,7 +1602,7 @@ class ActivityCardRecordsCount extends StatelessWidget {
                 : recordsCount <= 3
                     ? '🔥'
                     : '',
-            textScaleFactor: mediaQuery.textScaleFactor,
+            style: theme.textTheme.overline,
           ),
         if (recordsCount <= 3 || showDefault)
           Flexible(
@@ -1581,7 +1632,6 @@ class ActivityScreenCard extends ConsumerWidget {
   /// The fullscreen version of the [ActivityCard].
   const ActivityScreenCard(
     final this.activity, {
-    required final this.timeLeftBeforeStart,
     required final this.onPressed,
     required final this.onBackButtonPressed,
     final this.onMain = false,
@@ -1590,9 +1640,6 @@ class ActivityScreenCard extends ConsumerWidget {
 
   /// The activity to display in this widget.
   final CombinedActivityModel activity;
-
-  /// The amount of time left before this [activity] is starting.
-  final Duration timeLeftBeforeStart;
 
   /// The callback with found record that returns a callback on this card.
   final void Function()? Function(UserRecordModel? appliedRecord) onPressed;
@@ -1622,6 +1669,18 @@ class ActivityScreenCard extends ConsumerWidget {
             );
       return '$date | $time ($duration)';
     }
+
+    final timeLeftBeforeStart = ref.watch(
+      activitiesCurrentTimeProvider.select(
+        (final currentTime) => activity.item0.date.difference(
+          currentTime.when(
+            data: (final currentTime) => currentTime,
+            loading: DateTime.now,
+            error: (final e, final st) => DateTime.now(),
+          ),
+        ),
+      ),
+    );
 
     final appliedRecord = ref.watch(
       userRecordsProvider.select((final userRecords) {
@@ -1657,6 +1716,8 @@ class ActivityScreenCard extends ConsumerWidget {
             CachedNetworkImage(
           imageUrl: images.elementAt(index),
           fit: BoxFit.cover,
+          errorWidget: (final context, final url, final dynamic error) =>
+              const SizedBox.shrink(),
         ),
       ),
       paragraphs: <ContentParagraph>[
@@ -1681,34 +1742,42 @@ class ActivityScreenCard extends ConsumerWidget {
           onFirstPressed: () {
             final _onPressed = onPressed(appliedRecord);
             return _onPressed != null
-                ? (final dynamic _) => _onPressed.call()
+                ? (final dynamic _, final dynamic __) => _onPressed.call()
                 : null;
           }(),
-          secondText: appliedRecord != null
+          secondText: appliedRecord != null && !appliedRecord.yanked
               ? TR.activitiesActivityAddToCalendar.tr()
               : '',
-          onSecondPressed: appliedRecord != null
-              ? (final context) => activity.add2Calendar()
+          onSecondPressed: appliedRecord != null && !appliedRecord.yanked
+              ? (final context, final ref) => activity.add2Calendar()
               : null,
         ),
       ],
-      bottomNavigationBar:
-          appliedRecord != null && timeLeftBeforeStart.inHours < 12
-              ? Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      Text(
-                        TR.activitiesActivityCancelBook12h.tr(),
-                        style: theme.textTheme.headline6
-                            ?.copyWith(color: theme.hintColor),
-                        textAlign: TextAlign.center,
+      bottomNavigationBar: appliedRecord != null &&
+              (timeLeftBeforeStart.inHours < 12 || appliedRecord.yanked)
+          ? Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16)
+                  .copyWith(bottom: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Flexible(
+                    child: Text(
+                      appliedRecord.yanked
+                          ? TR.activitiesActivityCancelError.tr()
+                          : TR.activitiesActivityCancelBook12h.tr(),
+                      style: theme.textTheme.headline6?.copyWith(
+                        color: appliedRecord.yanked
+                            ? theme.colorScheme.error
+                            : theme.hintColor,
                       ),
-                    ],
+                      textAlign: TextAlign.center,
+                    ),
                   ),
-                )
-              : null,
+                ],
+              ),
+            )
+          : null,
       children: <Widget>[
         Padding(
           padding: const EdgeInsets.only(top: 16),
@@ -1755,7 +1824,7 @@ class ActivityScreenCard extends ConsumerWidget {
                   ),
                   errorWidget:
                       (final context, final url, final dynamic error) =>
-                          const FontIcon(FontIconData(IconsCG.logo)),
+                          const SizedBox.shrink(),
                 ),
                 title: Text(
                   activity.item2.item1.trainerName,
@@ -1794,12 +1863,6 @@ class ActivityScreenCard extends ConsumerWidget {
     super.debugFillProperties(
       properties
         ..add(DiagnosticsProperty<CombinedActivityModel>('activity', activity))
-        ..add(
-          DiagnosticsProperty<Duration>(
-            'timeLeftBeforeStart',
-            timeLeftBeforeStart,
-          ),
-        )
         ..add(
           ObjectFlagProperty<void Function()? Function(UserRecordModel?)>.has(
             'onPressed',
@@ -2375,6 +2438,9 @@ class ActivitiesSearchResults extends ConsumerWidget {
                       image: DecorationImage(image: imageProvider),
                     ),
                   ),
+                  errorWidget:
+                      (final context, final url, final dynamic error) =>
+                          const SizedBox.shrink(),
                 )
               : null,
           title: Text(
@@ -2388,7 +2454,7 @@ class ActivitiesSearchResults extends ConsumerWidget {
       );
     }
 
-    final navigator = Navigator.of(context);
+    final rootNavigator = Navigator.of(context);
     return ListView.builder(
       primary: false,
       itemCount: categories.length + trainers.length + studios.length,
@@ -2406,7 +2472,7 @@ class ActivitiesSearchResults extends ConsumerWidget {
               if (!notifier.state.contains(studio)) {
                 await notifier.add(studio);
               }
-              await navigator.maybePop();
+              await rootNavigator.maybePop();
               ref.read(activitiesSearchProvider).state = '';
             },
           );
@@ -2421,7 +2487,7 @@ class ActivitiesSearchResults extends ConsumerWidget {
               if (!notifier.state.contains(trainer)) {
                 await notifier.add(trainer);
               }
-              await navigator.maybePop();
+              await rootNavigator.maybePop();
               ref.read(activitiesSearchProvider).state = '';
             },
           );
@@ -2438,7 +2504,7 @@ class ActivitiesSearchResults extends ConsumerWidget {
               if (!notifier.state.contains(category)) {
                 await notifier.add(category);
               }
-              await navigator.maybePop();
+              await rootNavigator.maybePop();
               ref.read(activitiesSearchProvider).state = '';
             },
           );
