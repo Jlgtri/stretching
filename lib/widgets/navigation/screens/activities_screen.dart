@@ -1642,7 +1642,7 @@ class ActivityScreenCard extends ConsumerWidget {
       trailing: Padding(
         padding: const EdgeInsets.only(left: 12, top: 8),
         child: SizedBox(
-          width: 54 * mediaQuery.textScaleFactor,
+          width: 56 * mediaQuery.textScaleFactor,
           child: ActivityCardRecordsCount(activity.item0.recordsLeft),
         ),
       ),
@@ -1656,10 +1656,7 @@ class ActivityScreenCard extends ConsumerWidget {
         itemBuilder: (final context, final index, final realIndex) =>
             CachedNetworkImage(
           imageUrl: images.elementAt(index),
-          fit: BoxFit.fitHeight,
-          alignment: Alignment.topCenter,
-          width: MediaQuery.of(context).size.width,
-          height: 280,
+          fit: BoxFit.cover,
         ),
       ),
       paragraphs: <ContentParagraph>[
@@ -1691,7 +1688,7 @@ class ActivityScreenCard extends ConsumerWidget {
               ? TR.activitiesActivityAddToCalendar.tr()
               : '',
           onSecondPressed: appliedRecord != null
-              ? (final context) => activity.addToCalendar()
+              ? (final context) => activity.add2Calendar()
               : null,
         ),
       ],

@@ -1,16 +1,17 @@
 name: stretching
 description: Stretching remake from scratch.
-version: 2.0.1+21
+version: 2.0.1+22
 
 # The following line prevents the package from being accidentally published to
 # pub.dev using `pub publish`. This is preferred for private packages.
 publish_to: none # Remove this line if you wish to publish to pub.dev
 
 environment:
-  sdk: '>=2.15.0-42.0.dev <3.0.0'
-  flutter: '>=2.6.0-0.0.pre'
+  sdk: ">=2.15.0-42.0.dev <3.0.0"
+  flutter: ">=2.6.0-0.0.pre"
 
 dependencies:
+  add_2_calendar: ^2.1.2
   animations: ^2.0.1
   appsflyer_sdk: ^6.3.5+3
   async: ^2.8.2
@@ -155,9 +156,9 @@ flutter_icons:
 flutter_native_splash:
   # color: '#ffffff'
   image: assets/splash/logo.png
-  image_dark: assets/splash/logo.png
+  # image_dark: assets/splash/logo.png
   background_image: assets/splash/background.png
-  background_image_dark: assets/splash/background.png
+  # background_image_dark: assets/splash/background.png
   fullscreen: true
   # android_gravity: center
   # ios_content_mode: center

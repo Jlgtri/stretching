@@ -1,46 +1,52 @@
 PODS:
-  - appsflyer_sdk (6.2.0):
-    - AppsFlyerFramework (= 6.3.5)
+  - add_2_calendar (0.0.1):
     - Flutter
-  - AppsFlyerFramework (6.3.5):
-    - AppsFlyerFramework/Main (= 6.3.5)
-  - AppsFlyerFramework/Main (6.3.5)
+  - appsflyer_sdk (6.2.0):
+    - AppsFlyerFramework (= 6.4.0)
+    - Flutter
+  - AppsFlyerFramework (6.4.0):
+    - AppsFlyerFramework/Main (= 6.4.0)
+  - AppsFlyerFramework/Main (6.4.0)
+  - cached_video_player (0.0.2):
+    - Flutter
+    - KTVHTTPCache (~> 2.0.0)
   - catcher (0.0.1):
     - Flutter
+  - CocoaAsyncSocket (7.6.5)
   - device_calendar (0.0.1):
     - Flutter
   - device_info_plus (0.0.1):
     - Flutter
-  - Firebase/Analytics (8.6.0):
+  - Firebase/Analytics (8.7.0):
     - Firebase/Core
-  - Firebase/Core (8.6.0):
+  - Firebase/Core (8.7.0):
     - Firebase/CoreOnly
-    - FirebaseAnalytics (~> 8.6.0)
-  - Firebase/CoreOnly (8.6.0):
-    - FirebaseCore (= 8.6.0)
-  - Firebase/Crashlytics (8.6.0):
+    - FirebaseAnalytics (~> 8.7.0)
+  - Firebase/CoreOnly (8.7.0):
+    - FirebaseCore (= 8.7.0)
+  - Firebase/Crashlytics (8.7.0):
     - Firebase/CoreOnly
-    - FirebaseCrashlytics (~> 8.6.0)
-  - Firebase/Messaging (8.6.0):
+    - FirebaseCrashlytics (~> 8.7.0)
+  - Firebase/Messaging (8.7.0):
     - Firebase/CoreOnly
-    - FirebaseMessaging (~> 8.6.0)
-  - firebase_analytics (8.3.2):
-    - Firebase/Analytics (= 8.6.0)
+    - FirebaseMessaging (~> 8.7.0)
+  - firebase_analytics (8.3.3):
+    - Firebase/Analytics (= 8.7.0)
     - firebase_core
     - Flutter
-  - firebase_core (1.6.0):
-    - Firebase/CoreOnly (= 8.6.0)
+  - firebase_core (1.7.0):
+    - Firebase/CoreOnly (= 8.7.0)
     - Flutter
-  - firebase_crashlytics (2.2.1):
-    - Firebase/Crashlytics (= 8.6.0)
+  - firebase_crashlytics (2.2.2):
+    - Firebase/Crashlytics (= 8.7.0)
     - firebase_core
     - Flutter
-  - firebase_messaging (10.0.7):
-    - Firebase/Messaging (= 8.6.0)
+  - firebase_messaging (10.0.8):
+    - Firebase/Messaging (= 8.7.0)
     - firebase_core
     - Flutter
-  - FirebaseAnalytics (8.6.0):
-    - FirebaseAnalytics/AdIdSupport (= 8.6.0)
+  - FirebaseAnalytics (8.7.0):
+    - FirebaseAnalytics/AdIdSupport (= 8.7.0)
     - FirebaseCore (~> 8.0)
     - FirebaseInstallations (~> 8.0)
     - GoogleUtilities/AppDelegateSwizzler (~> 7.4)
@@ -48,37 +54,37 @@ PODS:
     - GoogleUtilities/Network (~> 7.4)
     - "GoogleUtilities/NSData+zlib (~> 7.4)"
     - nanopb (~> 2.30908.0)
-  - FirebaseAnalytics/AdIdSupport (8.6.0):
+  - FirebaseAnalytics/AdIdSupport (8.7.0):
     - FirebaseCore (~> 8.0)
     - FirebaseInstallations (~> 8.0)
-    - GoogleAppMeasurement (= 8.6.0)
+    - GoogleAppMeasurement (= 8.7.0)
     - GoogleUtilities/AppDelegateSwizzler (~> 7.4)
     - GoogleUtilities/MethodSwizzler (~> 7.4)
     - GoogleUtilities/Network (~> 7.4)
     - "GoogleUtilities/NSData+zlib (~> 7.4)"
     - nanopb (~> 2.30908.0)
-  - FirebaseCore (8.6.0):
+  - FirebaseCore (8.7.0):
     - FirebaseCoreDiagnostics (~> 8.0)
     - GoogleUtilities/Environment (~> 7.4)
     - GoogleUtilities/Logger (~> 7.4)
-  - FirebaseCoreDiagnostics (8.7.0):
+  - FirebaseCoreDiagnostics (8.8.0):
     - GoogleDataTransport (~> 9.0)
     - GoogleUtilities/Environment (~> 7.4)
     - GoogleUtilities/Logger (~> 7.4)
     - nanopb (~> 2.30908.0)
-  - FirebaseCrashlytics (8.6.0):
+  - FirebaseCrashlytics (8.7.0):
     - FirebaseCore (~> 8.0)
     - FirebaseInstallations (~> 8.0)
     - GoogleDataTransport (~> 9.0)
     - GoogleUtilities/Environment (~> 7.4)
     - nanopb (~> 2.30908.0)
     - PromisesObjC (< 3.0, >= 1.2)
-  - FirebaseInstallations (8.7.0):
+  - FirebaseInstallations (8.8.0):
     - FirebaseCore (~> 8.0)
     - GoogleUtilities/Environment (~> 7.4)
     - GoogleUtilities/UserDefaults (~> 7.4)
     - PromisesObjC (< 3.0, >= 1.2)
-  - FirebaseMessaging (8.6.0):
+  - FirebaseMessaging (8.7.0):
     - FirebaseCore (~> 8.0)
     - FirebaseInstallations (~> 8.0)
     - GoogleDataTransport (~> 9.0)
@@ -105,14 +111,14 @@ PODS:
   - google_maps_flutter (0.0.1):
     - Flutter
     - GoogleMaps
-  - GoogleAppMeasurement (8.6.0):
-    - GoogleAppMeasurement/AdIdSupport (= 8.6.0)
+  - GoogleAppMeasurement (8.7.0):
+    - GoogleAppMeasurement/AdIdSupport (= 8.7.0)
     - GoogleUtilities/AppDelegateSwizzler (~> 7.4)
     - GoogleUtilities/MethodSwizzler (~> 7.4)
     - GoogleUtilities/Network (~> 7.4)
     - "GoogleUtilities/NSData+zlib (~> 7.4)"
     - nanopb (~> 2.30908.0)
-  - GoogleAppMeasurement/AdIdSupport (8.6.0):
+  - GoogleAppMeasurement/AdIdSupport (8.7.0):
     - GoogleUtilities/AppDelegateSwizzler (~> 7.4)
     - GoogleUtilities/MethodSwizzler (~> 7.4)
     - GoogleUtilities/Network (~> 7.4)
@@ -122,10 +128,10 @@ PODS:
     - GoogleUtilities/Environment (~> 7.2)
     - nanopb (~> 2.30908.0)
     - PromisesObjC (< 3.0, >= 1.2)
-  - GoogleMaps (5.1.0):
-    - GoogleMaps/Maps (= 5.1.0)
-  - GoogleMaps/Base (5.1.0)
-  - GoogleMaps/Maps (5.1.0):
+  - GoogleMaps (4.2.0):
+    - GoogleMaps/Maps (= 4.2.0)
+  - GoogleMaps/Base (4.2.0)
+  - GoogleMaps/Maps (4.2.0):
     - GoogleMaps/Base
   - GoogleUtilities/AppDelegateSwizzler (7.5.2):
     - GoogleUtilities/Environment
@@ -146,6 +152,10 @@ PODS:
     - GoogleUtilities/Logger
   - GoogleUtilities/UserDefaults (7.5.2):
     - GoogleUtilities/Logger
+  - KTVCocoaHTTPServer (1.0.0):
+    - CocoaAsyncSocket
+  - KTVHTTPCache (2.0.1):
+    - KTVCocoaHTTPServer
   - nanopb (2.30908.0):
     - nanopb/decode (= 2.30908.0)
     - nanopb/encode (= 2.30908.0)
@@ -172,13 +182,13 @@ PODS:
     - Flutter
   - url_launcher (0.0.1):
     - Flutter
-  - video_player (0.0.1):
-    - Flutter
   - webview_flutter_wkwebview (0.0.1):
     - Flutter
 
 DEPENDENCIES:
+  - add_2_calendar (from `.symlinks/plugins/add_2_calendar/ios`)
   - appsflyer_sdk (from `.symlinks/plugins/appsflyer_sdk/ios`)
+  - cached_video_player (from `.symlinks/plugins/cached_video_player/ios`)
   - catcher (from `.symlinks/plugins/catcher/ios`)
   - device_calendar (from `.symlinks/plugins/device_calendar/ios`)
   - device_info_plus (from `.symlinks/plugins/device_info_plus/ios`)
@@ -202,12 +212,12 @@ DEPENDENCIES:
   - sqflite (from `.symlinks/plugins/sqflite/ios`)
   - uni_links (from `.symlinks/plugins/uni_links/ios`)
   - url_launcher (from `.symlinks/plugins/url_launcher/ios`)
-  - video_player (from `.symlinks/plugins/video_player/ios`)
   - webview_flutter_wkwebview (from `.symlinks/plugins/webview_flutter_wkwebview/ios`)
 
 SPEC REPOS:
   trunk:
     - AppsFlyerFramework
+    - CocoaAsyncSocket
     - Firebase
     - FirebaseAnalytics
     - FirebaseCore
@@ -220,13 +230,19 @@ SPEC REPOS:
     - GoogleDataTransport
     - GoogleMaps
     - GoogleUtilities
+    - KTVCocoaHTTPServer
+    - KTVHTTPCache
     - nanopb
     - PromisesObjC
     - Toast
 
 EXTERNAL SOURCES:
+  add_2_calendar:
+    :path: ".symlinks/plugins/add_2_calendar/ios"
   appsflyer_sdk:
     :path: ".symlinks/plugins/appsflyer_sdk/ios"
+  cached_video_player:
+    :path: ".symlinks/plugins/cached_video_player/ios"
   catcher:
     :path: ".symlinks/plugins/catcher/ios"
   device_calendar:
@@ -273,28 +289,29 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/uni_links/ios"
   url_launcher:
     :path: ".symlinks/plugins/url_launcher/ios"
-  video_player:
-    :path: ".symlinks/plugins/video_player/ios"
   webview_flutter_wkwebview:
     :path: ".symlinks/plugins/webview_flutter_wkwebview/ios"
 
 SPEC CHECKSUMS:
-  appsflyer_sdk: b5dc59a4f6ec5703c62a85a26da35ea28c571bbe
-  AppsFlyerFramework: fa7e2e8234e6d285256bcb948eb2b77aee84ba81
+  add_2_calendar: e9d68636aed37fb18e12f5a3d74c2e0589487af0
+  appsflyer_sdk: 89d419de32a784e7e1503fb272d380f1c8987049
+  AppsFlyerFramework: 9c37252d3edce38257afc065ad48a48c0f004000
+  cached_video_player: 3c7f810b292db65c0d3bb1ed780f207af483234b
   catcher: 67a006a3c121c4bbf1202d1e5ea186afb7ef4a18
+  CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   device_calendar: 23b28a5f1ab3bf77e34542fb1167e1b8b29a98f5
   device_info_plus: e5c5da33f982a436e103237c0c85f9031142abed
-  Firebase: 21ac9f28b09a8bdfc005f34c984fca84e7e8786d
-  firebase_analytics: 039357074df292fb8a58e119206762d10483a8ec
-  firebase_core: c21ac09a8d23afd3594b56ed786bad12e5266bba
-  firebase_crashlytics: b0581024be6112af8821de61e5a37fdb292373f0
-  firebase_messaging: 0fddeca6fcfee0bed23c66210391d782af8f8d0e
-  FirebaseAnalytics: 8f32ae54ad42754f503354782575c4ddfc1425c3
-  FirebaseCore: 620b677f70f5470a8e59cb77f3ddc666f6f09785
-  FirebaseCoreDiagnostics: b63732f581a1c6a453ec7241f9ab60b3a5bd3450
-  FirebaseCrashlytics: 58f8ecea7c799c61c50e8111d2e438424a8a1d2e
-  FirebaseInstallations: ede6fb72bb6337914e5888b399271259d0c4910c
-  FirebaseMessaging: ce0a5ee974f7bfe83b6cc5acce88c2d969e37c41
+  Firebase: bc9325d5ee2041524bac78a5213d0e530c651309
+  firebase_analytics: 72e3c5d712e43eeb0cb6f194f7cc10bc81e7d3fe
+  firebase_core: f5ac1f2726a2bd0468cea0161eddeea3d83d7e3e
+  firebase_crashlytics: 7d9a2a04c1c756f62137ca97f8972790e7be8678
+  firebase_messaging: cfee8830477d2f1875e027a65cce7f6239ebf583
+  FirebaseAnalytics: 52768800c2add1d84b751420cb4caaf8195f2c41
+  FirebaseCore: f4804c1d3f4bbbefc88904d15653038f2c99ddf7
+  FirebaseCoreDiagnostics: fe77f42da6329d6d83d21fd9d621a6b704413bfc
+  FirebaseCrashlytics: 6fac03d1eef054833b71c929c93ab95c12989728
+  FirebaseInstallations: 2563cb18a723ef9c6ef18318a49519b75dce613c
+  FirebaseMessaging: 93227dd71d7888e200baef65043f81acb2b6596e
   Flutter: 50d75fe2f02b26cc09d224853bb45737f8b3214a
   flutter_keyboard_visibility: 0339d06371254c3eb25eeb90ba8d17dca8f9c069
   flutter_mailer: 2ef5a67087bc8c6c4cefd04a178bf1ae2c94cd83
@@ -303,10 +320,12 @@ SPEC CHECKSUMS:
   FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
   geolocator_apple: b741765c55dc21950e3e106e8b3584e55cf81ce5
   google_maps_flutter: abdb8dee6c52d4be36ad131ee6ebfacd14417c5a
-  GoogleAppMeasurement: 2c0c6e2a7ab3fe730ade6379f732bdefb46f50b0
+  GoogleAppMeasurement: 2be61ce546ad074dbe4dd545f222ac6033bb1d9e
   GoogleDataTransport: 85fd18ff3019bb85d3f2c551d04c481dedf71fc9
-  GoogleMaps: 086ae1dab659eaa7339bdb30fc88e2f44e7c597c
+  GoogleMaps: eb03e327edfd70b06de1e6e321653f73712df7ad
   GoogleUtilities: 8de2a97a17e15b6b98e38e8770e2d129a57c0040
+  KTVCocoaHTTPServer: df8d7b861e603ff8037e9b2138aca2563a6b768d
+  KTVHTTPCache: 588c3eb16f6bd1e6fde1e230dabfb7bd4e490a4d
   nanopb: a0ba3315591a9ae0a16a309ee504766e90db0c96
   native_device_orientation: 3b4cfc9565a7b879cc4fde282b3e27745e852d0d
   package_info: 873975fc26034f0b863a300ad47e7f1ac6c7ec62
@@ -319,9 +338,8 @@ SPEC CHECKSUMS:
   Toast: 91b396c56ee72a5790816f40d3a94dd357abc196
   uni_links: d97da20c7701486ba192624d99bffaaffcfc298a
   url_launcher: b6e016d912f04be9f5bf6e8e82dc599b7ba59649
-  video_player: ecd305f42e9044793efd34846e1ce64c31ea6fcb
   webview_flutter_wkwebview: 44aa025fbcf6730d808f1e0d86a5af5ac25fa8de
 
-PODFILE CHECKSUM: 7368163408c647b7eb699d0d788ba6718e18fb8d
+PODFILE CHECKSUM: aa9e938408e37e9d3868946e2e32005372bc9141
 
 COCOAPODS: 1.10.1

@@ -160,6 +160,7 @@ class ContentScreenState extends ConsumerState<ContentScreen>
         persistentFooterButtons:
             widget.persistentFooterButtons.toList(growable: false),
         body: CustomScrollView(
+          physics: const ClampingScrollPhysics(),
           slivers: <Widget>[
             /// Carousel with indicator and actions
             SliverAppBar(

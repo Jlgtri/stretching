@@ -1,5 +1,5 @@
 import 'dart:math';
-
+import 'package:add_2_calendar/add_2_calendar.dart' as add_2_cal;
 import 'package:darq/darq.dart';
 import 'package:device_calendar/device_calendar.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -232,6 +232,22 @@ extension CombinedActivityModelData on CombinedActivityModel {
       DeviceCalendarPlugin();
 
   /// Add this activity to calendar.
+  Future<bool> add2Calendar() => add_2_cal.Add2Calendar.addEvent2Cal(
+        add_2_cal.Event(
+          title: '${item0.service.title}, '
+              '${item1.item1.studioName}',
+          description: TR.successfulBookCalendarTrainer.tr(
+            args: <String>[
+              item2.item1.trainerName,
+            ],
+          ),
+          location: item1.item1.studioAddress,
+          startDate: item0.date,
+          endDate: item0.date.add(item0.length),
+        ),
+      );
+
+  /// Add this activity to calendar.
   ///
   /// Steps:
   ///   1. Request Calendar permission.
@@ -313,8 +329,8 @@ extension CombinedActivityModelData on CombinedActivityModel {
     var eventCreated = false;
     if (events != null) {
       for (final event in events) {
-        if (event.start == startDate &&
-            event.end == endDate &&
+        if (event.start?.toUtc() == startDate.toUtc() &&
+            event.end?.toUtc() == endDate.toUtc() &&
             event.title == title) {
           if (description != event.description ||
               !listEquals(reminders, event.reminders) ||

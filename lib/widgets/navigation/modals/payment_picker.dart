@@ -62,7 +62,6 @@ Future<void> showPaymentPickerBottomSheet(
           primary: false,
           shrinkWrap: true,
           controller: ModalScrollController.of(context),
-          cacheExtent: double.infinity,
           slivers: <Widget>[
             SliverAppBar(
               primary: false,

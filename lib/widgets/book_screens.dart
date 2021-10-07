@@ -370,7 +370,7 @@ class SuccessfulBookScreen extends ConsumerWidget {
                   child: BottomButtons<dynamic>(
                     firstText: TR.successfulBookCalendar.tr(),
                     secondText: TR.successfulBookBackToMain.tr(),
-                    onFirstPressed: (final context) => activity.addToCalendar(),
+                    onFirstPressed: (final context) => activity.add2Calendar(),
                     onSecondPressed: (final context) {
                       (ref.read(navigationProvider))
                           .jumpToTab(NavigationScreen.home.index);
@@ -597,7 +597,6 @@ Future<void> showRefundedModalBottomSheet({
         primary: false,
         shrinkWrap: true,
         controller: ModalScrollController.of(context),
-        cacheExtent: double.infinity,
         slivers: <Widget>[
           SliverAppBar(
             primary: false,

@@ -162,7 +162,6 @@ class TrainersScreen extends HookConsumerWidget {
         scrollController: scrollController,
         child: CustomScrollView(
           shrinkWrap: true,
-          cacheExtent: double.infinity,
           controller: scrollController,
           slivers: <Widget>[
             const SliverPadding(padding: EdgeInsets.only(top: 20)),
@@ -417,8 +416,8 @@ class TrainerScreen extends HookWidget {
         final controller =
             VideoPlayerController.network(trainer.item1.mediaPhoto);
         await controller.initialize();
-        await controller.setLooping(true);
         await controller.play();
+        await controller.setLooping(true);
         return controller;
       }),
     );
@@ -441,7 +440,8 @@ class TrainerScreen extends HookWidget {
       paragraphs: <ContentParagraph>[
         ContentParagraph(body: trainer.item1.shortlyAbout)
       ],
-      carousel: videoPlayerController == null
+      carousel: videoPlayerController == null ||
+              !videoPlayerController.value.isInitialized
           ? const Center(child: CircularProgressIndicator.adaptive())
           : FittedBox(
               fit: BoxFit.cover,

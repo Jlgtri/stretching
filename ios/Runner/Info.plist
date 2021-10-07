@@ -4,6 +4,8 @@
 	<dict>
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
+		<key>CFBundleDisplayName</key>
+		<string>SMSTRETCHING</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
@@ -15,17 +17,45 @@
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>
-		<string>$(FLUTTER_BUILD_NAME)</string>
+		<string>$(MARKETING_VERSION)</string>
 		<key>CFBundleSignature</key>
 		<string>????</string>
 		<key>CFBundleVersion</key>
-		<string>$(FLUTTER_BUILD_NUMBER)</string>
+		<string>$(CURRENT_PROJECT_VERSION)</string>
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
+		<key>NSAppTransportSecurity</key>
+		<dict>
+			<key>NSAllowsArbitraryLoads</key>
+			<true/>
+		</dict>
+		<key>NSCalendarsUsageDescription</key>
+		<string>Это поможет запускать полезный функционал, анализировать проблемы и предоставлять лучший сервис для вас.</string>
+		<key>NSContactsUsageDescription</key>
+		<string>Это поможет запускать полезный функционал, анализировать проблемы и предоставлять лучший сервис для вас.</string>
+		<key>NSLocationAlwaysUsageDescription</key>
+		<string>Это поможет запускать полезный функционал, анализировать проблемы и предоставлять лучший сервис для вас.</string>
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Это поможет запускать полезный функционал, анализировать проблемы и предоставлять лучший сервис для вас.</string>
+		<key>NSMotionUsageDescription</key>
+		<string>Это поможет запускать полезный функционал, анализировать проблемы и предоставлять лучший сервис для вас.</string>
+		<key>NSSpeechRecognitionUsageDescription</key>
+		<string>Это поможет запускать полезный функционал, анализировать проблемы и предоставлять лучший сервис для вас.</string>
+		<key>NSUserTrackingUsageDescription</key>
+		<string>Это поможет запускать полезный функционал, анализировать проблемы и предоставлять лучший сервис для вас.</string>
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>fetch</string>
+			<string>remote-notification</string>
+		</array>
 		<key>UILaunchStoryboardName</key>
 		<string>LaunchScreen</string>
 		<key>UIMainStoryboardFile</key>
 		<string>Main</string>
+		<key>UIStatusBarHidden</key>
+		<true/>
+		<key>UIStatusBarStyle</key>
+		<string>UIStatusBarStyleDefault</string>
 		<key>UISupportedInterfaceOrientations</key>
 		<array>
 			<string>UIInterfaceOrientationPortrait</string>
@@ -34,30 +64,12 @@
 		<array>
 			<string>UIInterfaceOrientationPortrait</string>
 			<string>UIInterfaceOrientationPortraitUpsideDown</string>
+			<string>UIInterfaceOrientationLandscapeLeft</string>
+			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
 		<key>UIViewControllerBasedStatusBarAppearance</key>
 		<false/>
-		<key>UIStatusBarHidden</key>
-		<true/>
-		<key>NSLocationAlwaysUsageDescription</key>
-        <string>Needed to access location</string>
-        <key>NSLocationWhenInUseUsageDescription</key>
-        <string>Needed to access location</string>
-		<key>NSLocationWhenInUseUsageDescription</key>
-		<string>This app needs access to location when open.</string>
-		<key>NSLocationAlwaysUsageDescription</key>
-		<string>This app needs access to location when in the background.</string>
-		<key>NSCalendarsUsageDescription</key>
+		<key>kTCCServiceMediaLibrary</key>
 		<string>Это поможет запускать полезный функционал, анализировать проблемы и предоставлять лучший сервис для вас.</string>
-		<key>CFBundleLocalizations</key>
-		<array>
-			<string>en</string>
-			<string>ru</string>
-		</array>
-		<key>NSAppTransportSecurity</key>
-		<dict>
-			<key>NSAllowsArbitraryLoads</key>
-			<true/>
-		</dict>
 	</dict>
 </plist>
