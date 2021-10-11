@@ -255,14 +255,15 @@ class RootScreen extends HookConsumerWidget {
               return MediaQuery(
                 data: mediaQuery,
                 child: RefreshConfiguration(
-                  maxOverScrollExtent: 20,
-                  headerTriggerDistance: 60,
+                  maxOverScrollExtent: 0,
+                  headerTriggerDistance: 50 * mediaQuery.textScaleFactor,
+                  topHitBoundary: 10 * mediaQuery.textScaleFactor,
                   headerBuilder: () => Consumer(
                     builder: (final context, final ref, final child) {
                       final connectionError =
                           ref.watch(connectionErrorProvider).state;
                       return ClassicHeader(
-                        height: 40,
+                        height: 60 * mediaQuery.textScaleFactor,
                         completeDuration:
                             const Duration(seconds: 1, milliseconds: 500),
                         textStyle: textStyle,
@@ -285,7 +286,7 @@ class RootScreen extends HookConsumerWidget {
                             ? const FontIcon(FontIconData(IconsCG.globe))
                             : EmojiText('❤', style: emojiStyle),
                         outerBuilder: (final child) => Container(
-                          height: 40,
+                          height: 40 * mediaQuery.textScaleFactor,
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           child: child,
                         ),
