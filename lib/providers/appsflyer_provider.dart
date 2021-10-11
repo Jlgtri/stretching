@@ -8,11 +8,12 @@ import 'package:stretching/secrets.dart';
 /// The provider of the [AppsflyerSdk].
 final FutureProvider<AppsflyerSdk> appsflyerProvider =
     FutureProvider<AppsflyerSdk>((final ref) async {
-  final packageInfo = ref.watch(packageInfoProvider);
   final appsflyer = AppsflyerSdk(
     AppsFlyerOptions(
       afDevKey: appsflyerDevKey,
-      appId: Platform.isIOS ? appsflyerIOSAppId : packageInfo.packageName,
+      appId: Platform.isIOS
+          ? appsflyerIOSAppId
+          : ref.watch(packageInfoProvider).packageName,
     ),
   );
   await appsflyer.initSdk(

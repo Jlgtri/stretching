@@ -14,6 +14,7 @@ import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/main.dart';
 import 'package:stretching/providers/hide_appbar_provider.dart';
 import 'package:stretching/providers/hive_provider.dart';
+import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/providers/user_provider.dart';
 import 'package:stretching/utils/enum_to_string.dart';
 import 'package:stretching/utils/json_converters.dart';
@@ -124,9 +125,10 @@ extension NavigationScreenData on NavigationScreen {
           //   }
           // },
         ),
-        icon: Icon(icon, size: 18),
-        textStyle: const TextStyle(fontSize: 10),
-        activeColorPrimary: Colors.black,
+        icon: Icon(icon, size: 20),
+        textStyle: ((ref.watch(rootThemeProvider).state)?.textTheme.headline5)
+            ?.copyWith(fontSize: 10, height: 12 / 10),
+        activeColorPrimary: Colors.transparent,
         activeColorSecondary: Colors.black,
         inactiveColorPrimary: Colors.grey,
         inactiveColorSecondary: Colors.grey,
@@ -272,18 +274,19 @@ class NavigationRoot extends HookConsumerWidget {
         PersistentTabView(
           context,
           controller: ref.watch(navigationProvider),
-          navBarStyle: NavBarStyle.style8,
+          navBarStyle: NavBarStyle.simple,
           bottomScreenMargin: 0,
           navBarHeight: navBarHeight,
-          padding: const NavBarPadding.only(bottom: 10),
+          decoration: const NavBarDecoration(borderRadius: BorderRadius.zero),
+          padding: const NavBarPadding.only(bottom: 8),
           itemAnimationProperties: const ItemAnimationProperties(
             duration: transitionDuration,
             curve: Curves.ease,
           ),
           screenTransitionAnimation: const ScreenTransitionAnimation(
             animateTabTransition: true,
-            curve: Curves.easeInOut,
             duration: transitionDuration,
+            curve: Curves.easeInOut,
           ),
           backgroundColor: theme.colorScheme.surface,
           onWillPop: (final _) async =>

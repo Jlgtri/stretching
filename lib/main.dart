@@ -38,8 +38,14 @@ import 'package:stretching/widgets/navigation/navigation_root.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 Future<void> main() async {
-  await Hive.initFlutter();
-  await Firebase.initializeApp();
+  await Future.wait<void>(<Future<void>>[
+    Hive.initFlutter(),
+    Firebase.initializeApp(),
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: SystemUiOverlay.values,
+    ),
+  ]);
   Catcher(
     debugConfig: CatcherOptions(
       ErrorPageReportMode(),

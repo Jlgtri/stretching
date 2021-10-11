@@ -442,110 +442,111 @@ class StudioScreenCard extends ConsumerWidget {
   static const Duration transitionDuration = Duration(milliseconds: 500);
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) =>
-      OpenContainer<void>(
-        tappable: false,
-        openElevation: 0,
-        closedElevation: 0,
-        openColor: Colors.transparent,
-        closedColor: Colors.transparent,
-        middleColor: Colors.transparent,
-        transitionDuration: transitionDuration,
-        openBuilder: (final context, final action) => ContentScreen(
-          type: NavigationScreen.studios,
-          onBackButtonPressed: action,
-          title: studio.item1.studioName,
-          subtitle: studio.item1.studioAddress,
-          persistentFooterButtons: <Widget>[
-            BottomButtons<void>(
-              inverse: true,
-              direction: Axis.horizontal,
-              firstText: TR.studiosFind.tr(),
-              onFirstPressed: (final context, final ref) =>
-                  Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (final builder) => Padding(
-                    padding: const EdgeInsets.only(
-                      bottom: NavigationRoot.navBarHeight,
+  Widget build(final BuildContext context, final WidgetRef ref) {
+    final mediaQuery = MediaQuery.of(context);
+    return OpenContainer<void>(
+      tappable: false,
+      openElevation: 0,
+      closedElevation: 0,
+      openColor: Colors.transparent,
+      closedColor: Colors.transparent,
+      middleColor: Colors.transparent,
+      transitionDuration: transitionDuration,
+      openBuilder: (final context, final action) => ContentScreen(
+        type: NavigationScreen.studios,
+        onBackButtonPressed: action,
+        title: studio.item1.studioName,
+        subtitle: studio.item1.studioAddress,
+        persistentFooterButtons: <Widget>[
+          BottomButtons<void>(
+            inverse: true,
+            direction: Axis.horizontal,
+            firstText: TR.studiosFind.tr(),
+            onFirstPressed: (final context, final ref) =>
+                Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (final builder) => Padding(
+                  padding: const EdgeInsets.only(
+                    bottom: NavigationRoot.navBarHeight,
+                  ),
+                  child: Scaffold(
+                    extendBodyBehindAppBar: true,
+                    appBar: mainAppBar(
+                      Theme.of(context),
+                      leading: const FontIconBackButton(),
                     ),
-                    child: Scaffold(
-                      extendBodyBehindAppBar: true,
-                      appBar: mainAppBar(
-                        Theme.of(context),
-                        leading: const FontIconBackButton(),
-                      ),
-                      body: WebView(
-                        initialUrl:
-                            smStretchingUrl + studio.item1.studioUrlAbout,
-                        javascriptMode: JavascriptMode.unrestricted,
-                        navigationDelegate: (final navigation) =>
-                            navigation.url.startsWith(smStretchingUrl)
-                                ? NavigationDecision.navigate
-                                : NavigationDecision.prevent,
-                      ),
+                    body: WebView(
+                      initialUrl: smStretchingUrl + studio.item1.studioUrlAbout,
+                      javascriptMode: JavascriptMode.unrestricted,
+                      navigationDelegate: (final navigation) =>
+                          navigation.url.startsWith(smStretchingUrl)
+                              ? NavigationDecision.navigate
+                              : NavigationDecision.prevent,
                     ),
                   ),
                 ),
               ),
             ),
-          ],
-          paragraphs: <ContentParagraph>[
-            ContentParagraph(
-              title: TR.studiosTimetable.tr(),
-              body: studio.item0.schedule.replaceAll('; ', '\n').trim(),
-              expandable: false,
-            ),
-            ContentParagraph(
-              title: TR.studiosAbout.tr(),
-              body: studio.item1.about,
-              expandable: false,
-            ),
-          ],
-          carousel: CarouselSlider.builder(
-            options: CarouselOptions(
-              height: 280,
-              viewportFraction: 1,
-              enableInfiniteScroll: studio.item1.mediaGallerySite.length > 1,
-            ),
-            itemCount: studio.item1.mediaGallerySite.length,
-            itemBuilder: (final context, final index, final realIndex) {
-              final media = studio.item1.mediaGallerySite.elementAt(index);
-              return CachedNetworkImage(
-                imageUrl: media.url,
-                fit: BoxFit.fitHeight,
-                alignment: Alignment.topCenter,
-                width: MediaQuery.of(context).size.width,
-                height: 280,
-                errorWidget: (final context, final url, final dynamic error) =>
-                    const SizedBox.shrink(),
-              );
-            },
           ),
-        ),
-        closedBuilder: (final context, final action) {
-          Future<void> actionWithAnalytics() async {
-            action();
-            await analytics.logEvent(
-              name: FAKeys.studioScreen,
-              parameters: <String, String>{
-                'studio': translit(studio.item1.studioName)
-              },
+        ],
+        paragraphs: <ContentParagraph>[
+          ContentParagraph(
+            title: TR.studiosTimetable.tr(),
+            body: studio.item0.schedule.replaceAll('; ', '\n').trim(),
+            expandable: false,
+          ),
+          ContentParagraph(
+            title: TR.studiosAbout.tr(),
+            body: studio.item1.about,
+            expandable: false,
+          ),
+        ],
+        carousel: CarouselSlider.builder(
+          options: CarouselOptions(
+            height: 280 + mediaQuery.viewPadding.top,
+            viewportFraction: 1,
+            enableInfiniteScroll: studio.item1.mediaGallerySite.length > 1,
+          ),
+          itemCount: studio.item1.mediaGallerySite.length,
+          itemBuilder: (final context, final index, final realIndex) {
+            final media = studio.item1.mediaGallerySite.elementAt(index);
+            return CachedNetworkImage(
+              imageUrl: media.url,
+              fit: BoxFit.fitHeight,
+              alignment: Alignment.topCenter,
+              width: MediaQuery.of(context).size.width,
+              height: 280,
+              errorWidget: (final context, final url, final dynamic error) =>
+                  const SizedBox.shrink(),
             );
-          }
-
-          ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
-            ref.read(studiosCardsProvider(studio)).state = action;
-          });
-          return StudioCard(
-            studio,
-            onMap: onNonMapTap == null,
-            onTap: (final studio) => actionWithAnalytics(),
-            onAvatarTap: onNonMapTap != null
-                ? (final studio) => onNonMapTap?.call(studio)
-                : null,
+          },
+        ),
+      ),
+      closedBuilder: (final context, final action) {
+        Future<void> actionWithAnalytics() async {
+          action();
+          await analytics.logEvent(
+            name: FAKeys.studioScreen,
+            parameters: <String, String>{
+              'studio': translit(studio.item1.studioName)
+            },
           );
-        },
-      );
+        }
+
+        ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
+          ref.read(studiosCardsProvider(studio)).state = action;
+        });
+        return StudioCard(
+          studio,
+          onMap: onNonMapTap == null,
+          onTap: (final studio) => actionWithAnalytics(),
+          onAvatarTap: onNonMapTap != null
+              ? (final studio) => onNonMapTap?.call(studio)
+              : null,
+        );
+      },
+    );
+  }
 
   @override
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {

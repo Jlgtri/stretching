@@ -11,6 +11,7 @@ import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:stretching/api_smstretching.dart';
 import 'package:stretching/api_yclients.dart';
 import 'package:stretching/business_logic.dart';
+import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
 import 'package:stretching/hooks/refresh_content_hook.dart';
@@ -65,10 +66,10 @@ class ProfileScreen extends HookConsumerWidget {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
     final navigator = Navigator.of(context, rootNavigator: true);
+
     final scrollController =
         ref.watch(navigationScrollControllerProvider(NavigationScreen.profile));
     final userDeposit = ref.watch(smUserDepositProvider);
-
     final abonements = ref.watch(combinedAbonementsProvider);
     List<Widget> createCards() => <Widget>[
           for (var index = 0; index < abonements.length; index++)
@@ -421,6 +422,7 @@ class BuyAbonementCard extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
+    final mediaQuery = MediaQuery.of(context);
     const gradient = LinearGradient(
       colors: <Color>[Color(0xFFD353F0), Color(0xFF18D1EE)], //0xFFD353F0
       begin: Alignment.topRight,
@@ -436,9 +438,13 @@ class BuyAbonementCard extends HookConsumerWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Padding(
-            padding: EdgeInsets.only(top: 4, right: 8),
-            child: EmojiText('⚡️', style: TextStyle(fontSize: 20)),
+          Padding(
+            padding: const EdgeInsets.only(top: 4, right: 8),
+            child: Image.asset(
+              AssetsCG.emoji26a1,
+              width: 20 * mediaQuery.textScaleFactor,
+              height: 20 * mediaQuery.textScaleFactor,
+            ),
           ),
           Expanded(
             child: Column(

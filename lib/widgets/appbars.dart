@@ -18,10 +18,10 @@ AppBar cancelAppBar(
       shadowColor: Colors.transparent,
       systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarBrightness: theme.brightness,
         statusBarIconBrightness: theme.brightness == Brightness.light
             ? Brightness.dark
             : Brightness.light,
+        statusBarBrightness: theme.brightness,
       ),
       elevation: 0,
       centerTitle: true,
@@ -71,10 +71,10 @@ AppBar mainAppBar(final ThemeData theme, {final Widget? leading}) => AppBar(
       leading: leading,
       systemOverlayStyle: SystemUiOverlayStyle(
         statusBarColor: theme.appBarTheme.backgroundColor,
+        statusBarIconBrightness: theme.brightness,
         statusBarBrightness: theme.brightness == Brightness.light
             ? Brightness.dark
             : Brightness.light,
-        statusBarIconBrightness: theme.brightness,
       ),
       title: FontIcon(
         FontIconData(

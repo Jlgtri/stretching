@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:animations/animations.dart';
 import 'package:badges/badges.dart';
@@ -229,10 +228,13 @@ final Provider<int> activitiesFiltersCountProvider = Provider<int>(
 final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
     Provider<Iterable<CombinedActivityModel>>((final ref) {
   final day = ref.watch(activitiesDayProvider).state;
-  final time = ref.watch(activitiesTimeFilterProvider);
-  final categories = ref.watch(activitiesCategoriesFilterProvider);
-  final studios = ref.watch(activitiesStudiosFilterProvider);
-  final trainers = ref.watch(activitiesTrainersFilterProvider);
+  final time = ref.watch(activitiesTimeFilterProvider).toList(growable: false);
+  final categories =
+      ref.watch(activitiesCategoriesFilterProvider).toList(growable: false);
+  final studios =
+      ref.watch(activitiesStudiosFilterProvider).toList(growable: false);
+  final trainers =
+      ref.watch(activitiesTrainersFilterProvider).toList(growable: false);
   final now = (ref.watch(activitiesCurrentTimeProvider)).when(
     data: (final currentTime) => currentTime,
     loading: (final currentTime) => DateTime.now(),
@@ -581,79 +583,81 @@ class ActivitiesStudiosPickerDropdown extends HookConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Flexible(
-              child: DropdownBelow<CombinedStudioModel?>(
-                isDense: true,
-                elevation: 12,
-                boxHeight: 30 * mediaQuery.textScaleFactor,
-                boxWidth: 160 * mediaQuery.textScaleFactor,
-                itemWidth: 160 * mediaQuery.textScaleFactor,
-                icon: FontIcon(
-                  FontIconData(
-                    IconsCG.angleDown,
-                    height: 10 * mediaQuery.textScaleFactor,
-                    color: theme.hintColor,
-                  ),
-                ),
-                boxPadding: const EdgeInsets.only(bottom: 8),
-                boxDecoration: const BoxDecoration(
-                  borderRadius: BorderRadius.all(Radius.circular(8)),
-                ),
-                itemTextstyle: theme.textTheme.bodyText1,
-                boxTextstyle: theme.textTheme.bodyText1?.copyWith(
-                  color: theme.appBarTheme.foregroundColor,
-                ),
-                hint: Align(
-                  child: Text(
-                    selectedStudios.isNotEmpty
-                        ? selectedStudios.first.item1.studioName
-                        : TR.activitiesAllStudios.tr(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                value:
-                    selectedStudios.length == 1 ? selectedStudios.single : null,
-                items: <DropdownMenuItem<CombinedStudioModel?>>[
-                  DropdownMenuItem<CombinedStudioModel?>(
-                    child: Align(
-                      child: Text(
-                        TR.activitiesAllStudios.tr(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownBelow<CombinedStudioModel?>(
+                  elevation: 12,
+                  boxHeight: 30 * mediaQuery.textScaleFactor,
+                  boxWidth: 160 * mediaQuery.textScaleFactor,
+                  itemWidth: 160 * mediaQuery.textScaleFactor,
+                  icon: FontIcon(
+                    FontIconData(
+                      IconsCG.angleDown,
+                      height: 10 * mediaQuery.textScaleFactor,
+                      color: theme.hintColor,
                     ),
                   ),
-                  for (final studio in ref.watch(combinedStudiosProvider))
-                    DropdownMenuItem<CombinedStudioModel>(
-                      value: studio,
+                  boxPadding: const EdgeInsets.only(bottom: 8),
+                  boxDecoration: const BoxDecoration(
+                    borderRadius: BorderRadius.all(Radius.circular(8)),
+                  ),
+                  itemTextstyle: theme.textTheme.bodyText1,
+                  boxTextstyle: theme.textTheme.bodyText1?.copyWith(
+                    color: theme.appBarTheme.foregroundColor,
+                  ),
+                  hint: Align(
+                    child: Text(
+                      selectedStudios.isNotEmpty
+                          ? selectedStudios.first.item1.studioName
+                          : TR.activitiesAllStudios.tr(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  value: selectedStudios.length == 1
+                      ? selectedStudios.single
+                      : null,
+                  items: <DropdownMenuItem<CombinedStudioModel?>>[
+                    DropdownMenuItem<CombinedStudioModel?>(
                       child: Align(
                         child: Text(
-                          studio.item1.studioName,
+                          TR.activitiesAllStudios.tr(),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ),
-                ],
-                onChanged: (final studio) async {
-                  final filteredStudiosNotifier =
-                      ref.read(activitiesStudiosFilterProvider.notifier);
-                  if (studio != null) {
-                    await filteredStudiosNotifier.setStateAsync([studio]);
-                    final classes = ref.read(combinedClassesProvider).where(
-                          (final _class) => studio.item1.studioTags
-                              .toCategories()
-                              .contains(_class.item0),
-                        );
-                    final categoriesNotifiter =
-                        ref.read(activitiesCategoriesFilterProvider.notifier);
-                    await categoriesNotifiter.setStateAsync(
-                      categoriesNotifiter.state.where(classes.contains),
-                    );
-                  } else {
-                    await filteredStudiosNotifier.clear();
-                  }
-                },
+                    for (final studio in ref.watch(combinedStudiosProvider))
+                      DropdownMenuItem<CombinedStudioModel>(
+                        value: studio,
+                        child: Align(
+                          child: Text(
+                            studio.item1.studioName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                  ],
+                  onChanged: (final studio) async {
+                    final filteredStudiosNotifier =
+                        ref.read(activitiesStudiosFilterProvider.notifier);
+                    if (studio != null) {
+                      await filteredStudiosNotifier.setStateAsync([studio]);
+                      final classes = ref.read(combinedClassesProvider).where(
+                            (final _class) => studio.item1.studioTags
+                                .toCategories()
+                                .contains(_class.item0),
+                          );
+                      final categoriesNotifiter =
+                          ref.read(activitiesCategoriesFilterProvider.notifier);
+                      await categoriesNotifiter.setStateAsync(
+                        categoriesNotifiter.state.where(classes.contains),
+                      );
+                    } else {
+                      await filteredStudiosNotifier.clear();
+                    }
+                  },
+                ),
               ),
             ),
           ],
@@ -1718,7 +1722,7 @@ class ActivityScreenCard extends ConsumerWidget {
       ),
       carousel: CarouselSlider.builder(
         options: CarouselOptions(
-          height: 280,
+          height: 280 + mediaQuery.viewPadding.top,
           viewportFraction: 1,
           enableInfiniteScroll: images.length > 1,
         ),
