@@ -217,14 +217,13 @@ Future<void> resetFilters(final WidgetRef ref) async {
 }
 
 /// The provider of count of activities filters.
-final Provider<int> activitiesFiltersCountProvider = Provider<int>((final ref) {
-  int len(final Iterable<Object> iterable) => iterable.length;
-  return (ref.watch(activitiesTimeFilterProvider.select(len)) +
-          ref.watch(activitiesCategoriesFilterProvider.select(len)) +
-          // ref.watch(activitiesStudiosFilterProvider.select(len)) +
-          ref.watch(activitiesTrainersFilterProvider.select(len)))
-      .toInt();
-});
+final Provider<int> activitiesFiltersCountProvider = Provider<int>(
+  (final ref) =>
+      ref.watch(activitiesTimeFilterProvider).length +
+      ref.watch(activitiesCategoriesFilterProvider).length +
+      // ref.watch(activitiesStudiosFilterProvider).length +
+      ref.watch(activitiesTrainersFilterProvider).length,
+);
 
 /// The provider of filtered activities.
 final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
@@ -672,7 +671,9 @@ class ActivitiesFiltersCounter extends ConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final filtersCount = ref.watch(activitiesFiltersCountProvider);
+    final filtersCount = ref.watch(
+      activitiesFiltersCountProvider.select((final count) => count),
+    );
     return Badge(
       padding: const EdgeInsets.all(4),
       animationType: BadgeAnimationType.scale,

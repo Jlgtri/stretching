@@ -656,7 +656,27 @@ final StateNotifierProvider<ContentNotifier<StudioModel>, Iterable<StudioModel>>
 /// The normalized trainers provider for YClients API.
 final Provider<Iterable<TrainerModel>> normalizedTrainersProvider =
     Provider<Iterable<TrainerModel>>(
-  (final ref) => ref.watch(trainersProvider.select(normalizeTrainers)),
+  (final ref) => ref.watch(
+    trainersProvider.select(
+      (final trainers) => trainers.toList()
+        ..removeWhere(
+          (final trainer) =>
+              trainer.specialization == 'Не удалять' ||
+              trainer.name.contains('Сотрудник'),
+        )
+        ..removeWhere(
+          (final trainer) => <String>[
+            'https://api.yclients.com/images/no-master.png',
+            'https://api.yclients.com/images/no-master-sm.png'
+          ].contains(trainer.avatarBig),
+        )
+        ..sort(
+          (final trainerA, final trainerB) => trainerA.name
+              .toLowerCase()
+              .compareTo(trainerB.name.toLowerCase()),
+        ),
+    ),
+  ),
 );
 
 /// The trainers provider for YClients API.
@@ -688,27 +708,6 @@ final StateNotifierProvider<ContentNotifier<TrainerModel>,
     },
   ),
 );
-
-/// Return sorted and valid trainers for this provider.
-Iterable<TrainerModel> normalizeTrainers(
-  final Iterable<TrainerModel> value,
-) =>
-    value.toList()
-      ..removeWhere(
-        (final trainer) =>
-            trainer.specialization == 'Не удалять' ||
-            trainer.name.contains('Сотрудник'),
-      )
-      ..removeWhere(
-        (final trainer) => <String>[
-          'https://api.yclients.com/images/no-master.png',
-          'https://api.yclients.com/images/no-master-sm.png'
-        ].contains(trainer.avatarBig),
-      )
-      ..sort(
-        (final trainerA, final trainerB) =>
-            trainerA.name.toLowerCase().compareTo(trainerB.name.toLowerCase()),
-      );
 
 /// The schedule provider for YClients API.
 ///
