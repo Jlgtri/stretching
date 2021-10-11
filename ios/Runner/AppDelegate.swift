@@ -16,18 +16,14 @@ import AppTrackingTransparency
     didFinishLaunchingWithOptions launchOptions:
       [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    if #available(iOS 14, *) {
-      ATTrackingManager.requestTrackingAuthorization { (status) in }
-    }
-
-    // Google Maps
-    GMSServices.provideAPIKey("AIzaSyCVMlMklgY5YNPuxWJ_HE0TZqWlOMGtMO0")
-
     // AppsFlyer
     AppsFlyerLib.shared().appsFlyerDevKey = "xRGTsJR6oxkKskbJzu95hV"
     AppsFlyerLib.shared().appleAppID = "com.itrack.smstretching499566"
     AppsFlyerLib.shared().delegate = self
     AppsFlyerLib.shared().waitForATTUserAuthorization(timeoutInterval: 60)
+
+    // Google Maps
+    GMSServices.provideAPIKey("AIzaSyCVMlMklgY5YNPuxWJ_HE0TZqWlOMGtMO0")
 
     // Firebase
     FirebaseApp.configure()
@@ -63,6 +59,10 @@ import AppTrackingTransparency
   }
 
   override func applicationDidBecomeActive(_ application: UIApplication) {
+    if #available(iOS 14, *) {
+      ATTrackingManager.requestTrackingAuthorization { (status) in }
+    }
+
     // Start the SDK (start the IDFA timeout set above, for iOS 14 or later)
     AppsFlyerLib.shared().start()
   }
