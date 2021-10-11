@@ -285,9 +285,8 @@ final StreamProvider<DateTime> activitiesCurrentTimeProvider =
   var previousActivitiesDates = const <DateTime>[];
   for (;;) {
     final now = DateTime.now();
-    final _activititesDates = activititesDates
-        .where((final day) => day.isAfter(now))
-        .toList(growable: false);
+    final _activititesDates = (activititesDates
+        .where((final day) => day.isAfter(now))).toList(growable: false);
     if (!listEquals(previousActivitiesDates, _activititesDates)) {
       previousActivitiesDates = _activititesDates;
       previousDate = Tuple3(now.year, now.month, now.day);
@@ -346,7 +345,7 @@ final Provider<bool> areActivitiesPresentProvider = Provider<bool>((final ref) {
     loading: (final currentTime) => DateTime.now(),
     error: (final error, final stackTrace, final currentTime) => DateTime.now(),
   );
-  final day = ref.watch(activitiesDayProvider).state;
+  final day = ref.watch(activitiesDayProvider.select((final day) => day.state));
   return ref.watch(
     combinedActivitiesProvider.select(
       (final activities) => activities.any(
@@ -373,6 +372,7 @@ class ActivitiesScreen extends HookConsumerWidget {
     final scrollController = ref
         .watch(navigationScrollControllerProvider(NavigationScreen.schedule));
     final activities = ref.watch(filteredActivitiesProvider);
+    final areDayActivitiesPresent = ref.watch(areActivitiesPresentProvider);
     final areActivitiesPresent = ref.watch(
       combinedActivitiesProvider
           .select((final activities) => activities.isNotEmpty),
@@ -485,7 +485,7 @@ class ActivitiesScreen extends HookConsumerWidget {
                   )
 
                 /// Empty Filter
-                else if (ref.watch(areActivitiesPresentProvider))
+                else if (areDayActivitiesPresent)
                   SliverFillRemaining(
                     hasScrollBody: false,
                     child: Column(
