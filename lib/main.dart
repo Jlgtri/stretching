@@ -255,15 +255,14 @@ class RootScreen extends HookConsumerWidget {
               return MediaQuery(
                 data: mediaQuery,
                 child: RefreshConfiguration(
-                  // Header height is 60, header trigger height is 75,
-                  // so max overscroll extent should be 25
-                  maxOverScrollExtent: 25,
-                  headerTriggerDistance: 75,
+                  maxOverScrollExtent: 20,
+                  headerTriggerDistance: 60,
                   headerBuilder: () => Consumer(
                     builder: (final context, final ref, final child) {
                       final connectionError =
                           ref.watch(connectionErrorProvider).state;
                       return ClassicHeader(
+                        height: 40,
                         completeDuration:
                             const Duration(seconds: 1, milliseconds: 500),
                         textStyle: textStyle,
@@ -285,7 +284,8 @@ class RootScreen extends HookConsumerWidget {
                         completeIcon: connectionError
                             ? const FontIcon(FontIconData(IconsCG.globe))
                             : EmojiText('❤', style: emojiStyle),
-                        outerBuilder: (final child) => Padding(
+                        outerBuilder: (final child) => Container(
+                          height: 40,
                           padding: const EdgeInsets.symmetric(horizontal: 14),
                           child: child,
                         ),

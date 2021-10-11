@@ -388,6 +388,9 @@ class ProfileScreen extends HookConsumerWidget {
                           textStyle: MaterialStateProperty.all(
                             theme.textTheme.headline3,
                           ),
+                          overlayColor: MaterialStateProperty.all(
+                            theme.colorScheme.onSurface.withOpacity(1 / 5),
+                          ),
                           foregroundColor: MaterialStateProperty.all(
                             screen == ProfileNavigationScreen.root
                                 ? theme.hintColor
