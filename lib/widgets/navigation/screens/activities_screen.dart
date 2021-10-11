@@ -895,7 +895,7 @@ class ActivityCardContainer extends HookConsumerWidget {
             case ActivityPaidBy.deposit:
             case ActivityPaidBy.regular:
               ref.refresh(smUserDepositProvider);
-              await ref.read(smUserDepositProvider.future);
+              unawaited(ref.read(smUserDepositProvider.future));
               await showRefundedModalBottomSheet(
                 context: context,
                 title: TR.cancelBookDepositTitle.tr(),
@@ -906,7 +906,7 @@ class ActivityCardContainer extends HookConsumerWidget {
               );
               continue all;
             case ActivityPaidBy.abonement:
-              await ref.read(userAbonementsProvider.notifier).refresh();
+              unawaited(ref.read(userAbonementsProvider.notifier).refresh());
               await showRefundedModalBottomSheet(
                 context: context,
                 title: TR.cancelBookAbonementTitle.tr(),
@@ -918,8 +918,8 @@ class ActivityCardContainer extends HookConsumerWidget {
               continue all;
             all:
             case ActivityPaidBy.none:
+              unawaited(ref.read(userRecordsProvider.notifier).refresh());
               navigator.popUntil(Routes.root.withName);
-              await ref.read(userRecordsProvider.notifier).refresh();
           }
           return true;
         }

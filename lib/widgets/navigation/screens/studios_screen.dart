@@ -71,7 +71,6 @@ class StudiosScreen extends HookConsumerWidget {
     final devicePixelRatio =
         Platform.isAndroid ? mediaQuery.devicePixelRatio : 1;
 
-    final onMap = ref.watch(studiosOnMapProvider);
     final studios = ref.watch(combinedStudiosProvider);
     final mapMarker = ref.watch(
       mapMarkerProvider(
@@ -85,6 +84,15 @@ class StudiosScreen extends HookConsumerWidget {
 
     final isMounted = useIsMounted();
     final isTransitioning = useState<bool>(false);
+    final isMapCreated = useState<bool>(ref.read(studiosOnMapProvider).state);
+    final onMap = ref.watch(
+      studiosOnMapProvider.select((final onMap) {
+        if (onMap.state && !isMapCreated.value) {
+          isMapCreated.value = onMap.state;
+        }
+        return onMap;
+      }),
+    );
     final mapController = useState<GoogleMapController?>(null);
     final infoWindowOptions =
         useState<Tuple2<InfoWindowOptions, ScreenCoordinate>?>(null);
@@ -166,52 +174,55 @@ class StudiosScreen extends HookConsumerWidget {
       duration: onMapSwitcherDuration,
       layoutBuilder: (final entries) => Stack(
         children: <Widget>[
-          GoogleMap(
-            initialCameraPosition: _initialCameraPosition,
-            compassEnabled: false,
-            myLocationButtonEnabled: false,
-            zoomControlsEnabled: false,
-            rotateGesturesEnabled: false,
-            tiltGesturesEnabled: false,
-            mapToolbarEnabled: false,
-            // onCameraMoveStarted: () {
-            //   infoWindowOffset.value = Offset.zero;
-            //   infoWindowOptions.value = null;
-            // },
-            markers: mapMarker.when(
-              data: (final icon) => <Marker>{
-                for (final studio in studios)
-                  Marker(
-                    markerId: MarkerId(studio.item0.id.toString()),
-                    position: LatLng(
-                      studio.item0.coordinateLat,
-                      studio.item0.coordinateLon,
-                    ),
-                    flat: true,
-                    icon: icon,
-                    onTap: () => moveToStudioOnMap(studio.item0),
-                  )
+          if (isMapCreated.value)
+            GoogleMap(
+              initialCameraPosition: _initialCameraPosition,
+              compassEnabled: false,
+              myLocationButtonEnabled: false,
+              zoomControlsEnabled: false,
+              rotateGesturesEnabled: false,
+              tiltGesturesEnabled: false,
+              mapToolbarEnabled: false,
+              // onCameraMoveStarted: () {
+              //   infoWindowOffset.value = Offset.zero;
+              //   infoWindowOptions.value = null;
+              // },
+              markers: mapMarker.when(
+                data: (final icon) => <Marker>{
+                  for (final studio in studios)
+                    Marker(
+                      markerId: MarkerId(studio.item0.id.toString()),
+                      position: LatLng(
+                        studio.item0.coordinateLat,
+                        studio.item0.coordinateLon,
+                      ),
+                      flat: true,
+                      icon: icon,
+                      onTap: () => moveToStudioOnMap(studio.item0),
+                    )
+                },
+                loading: (final icon) => <Marker>{},
+                error: (final error, final stackTrace, final icon) =>
+                    <Marker>{},
+              ),
+              onTap: (final position) => infoWindowOptions.value = null,
+              onCameraMove: (final position) async {
+                final info = infoWindowOptions.value;
+                final controller = mapController.value;
+                if (info != null && controller != null) {
+                  infoWindowOptions.value = Tuple2(
+                    info.item0,
+                    await controller
+                        .getScreenCoordinate(info.item0.coordinates),
+                  );
+                }
               },
-              loading: (final icon) => <Marker>{},
-              error: (final error, final stackTrace, final icon) => <Marker>{},
+              onMapCreated: (final controller) async {
+                final style = await ref.read(mapStyleProvider.future);
+                await controller.setMapStyle(style);
+                mapController.value = controller;
+              },
             ),
-            onTap: (final position) => infoWindowOptions.value = null,
-            onCameraMove: (final position) async {
-              final info = infoWindowOptions.value;
-              final controller = mapController.value;
-              if (info != null && controller != null) {
-                infoWindowOptions.value = Tuple2(
-                  info.item0,
-                  await controller.getScreenCoordinate(info.item0.coordinates),
-                );
-              }
-            },
-            onMapCreated: (final controller) async {
-              final style = await ref.read(mapStyleProvider.future);
-              await controller.setMapStyle(style);
-              mapController.value = controller;
-            },
-          ),
 
           /// Location FAB
           Positioned(

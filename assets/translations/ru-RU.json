@@ -204,7 +204,7 @@
   "payment_picker": {
     "abonement_title": "Собери план",
     "regular_title": "Разовое посещение за {}",
-    "count_per_week": "Количество занятий в неделю",
+    "count_per_week": "Количество занятий",
     "time_of_day": "В какое время хочешь заниматься?",
     "time_of_day_all": "В любое",
     "studio_pick": "Выбери студию",
