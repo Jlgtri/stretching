@@ -47,7 +47,7 @@ Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
     final navigation = ref.read(navigationProvider);
     Future<void> clearNavigator() async {
       final screen = NavigationScreen.values.elementAt(navigation.index);
-      final navigator = ref.read(currentNavigatorProvider(screen)).currentState;
+      final navigator = ref.read(navigatorProvider(screen)).currentState;
       while (await navigator?.maybePop() ?? false) {
         await Future<void>.delayed(NavigationRoot.transitionDuration);
       }
@@ -130,7 +130,7 @@ Future<void> _onUri(final ProviderRefBase ref, final Uri? uri) async {
                   ),
                 );
                 ref.read(trainersCardsProvider(filteredTrainer)).state?.call();
-                await Future<void>.delayed(TrainerCard.transitionDuration);
+                await Future<void>.delayed(TrainerContainer.transitionDuration);
                 break;
               }
             }

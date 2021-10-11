@@ -43,7 +43,7 @@ class UserAbonementModel implements Comparable<UserAbonementModel> {
     required final this.status,
     required final this.isUnitedBalance,
     required final this.unitedBalanceServicesCount,
-    required final this.balanceContainer,
+    // required final this.balanceContainer,
     required final this.type,
   });
 
@@ -92,7 +92,9 @@ class UserAbonementModel implements Comparable<UserAbonementModel> {
 
   /// The object that contains a list of
   /// [UserAbonementBalanceContainerLinkModel].
-  final UserAbonementBalanceContainerModel balanceContainer;
+  ///
+  /// YANKED: Has different responses in YClientsAPI.
+  // final UserAbonementBalanceContainerModel balanceContainer;
 
   /// The extra data provided for this abonement.
   final UserAbonementTypeModel type;
@@ -112,7 +114,7 @@ class UserAbonementModel implements Comparable<UserAbonementModel> {
     final UserAbonementStatusModel? status,
     final bool? isUnitedBalance,
     final int? unitedBalanceServicesCount,
-    final UserAbonementBalanceContainerModel? balanceContainer,
+    // final UserAbonementBalanceContainerModel? balanceContainer,
     final UserAbonementTypeModel? type,
   }) =>
       UserAbonementModel(
@@ -130,7 +132,7 @@ class UserAbonementModel implements Comparable<UserAbonementModel> {
         isUnitedBalance: isUnitedBalance ?? this.isUnitedBalance,
         unitedBalanceServicesCount:
             unitedBalanceServicesCount ?? this.unitedBalanceServicesCount,
-        balanceContainer: balanceContainer ?? this.balanceContainer,
+        // balanceContainer: balanceContainer ?? this.balanceContainer,
         type: type ?? this.type,
       );
 
@@ -149,7 +151,7 @@ class UserAbonementModel implements Comparable<UserAbonementModel> {
         'status': status.toMap(),
         'is_united_balance': isUnitedBalance,
         'united_balance_services_count': unitedBalanceServicesCount,
-        'balance_container': balanceContainer.toMap(),
+        // 'balance_container': balanceContainer.toMap(),
         'type': type.toMap(),
       };
 
@@ -174,9 +176,9 @@ class UserAbonementModel implements Comparable<UserAbonementModel> {
         isUnitedBalance: map['is_united_balance']! as bool,
         unitedBalanceServicesCount:
             map['united_balance_services_count']! as int,
-        balanceContainer: UserAbonementBalanceContainerModel.fromMap(
-          map['balance_container']! as Map<String, Object?>,
-        ),
+        // balanceContainer: UserAbonementBalanceContainerModel.fromMap(
+        // map['balance_container']! as Map<String, Object?>,
+        // ),
         type: UserAbonementTypeModel.fromMap(
           map['type']! as Map<String, Object?>,
         ),
@@ -219,7 +221,7 @@ class UserAbonementModel implements Comparable<UserAbonementModel> {
           other.status == status &&
           other.isUnitedBalance == isUnitedBalance &&
           other.unitedBalanceServicesCount == unitedBalanceServicesCount &&
-          other.balanceContainer == balanceContainer &&
+          // other.balanceContainer == balanceContainer &&
           other.type == type;
 
   @override
@@ -237,7 +239,7 @@ class UserAbonementModel implements Comparable<UserAbonementModel> {
       status.hashCode ^
       isUnitedBalance.hashCode ^
       unitedBalanceServicesCount.hashCode ^
-      balanceContainer.hashCode ^
+      // balanceContainer.hashCode ^
       type.hashCode;
 
   @override
@@ -248,138 +250,140 @@ class UserAbonementModel implements Comparable<UserAbonementModel> {
       'periodUnitId: $periodUnitId, expirationDate: $expirationDate, '
       'status: $status, isUnitedBalance: $isUnitedBalance, '
       'unitedBalanceServicesCount: $unitedBalanceServicesCount, '
-      'balanceContainer: $balanceContainer, type: $type)';
+      'balanceContainer: YANKED, type: $type)';
 }
 
-/// The balance container of the [UserAbonementModel].
+// /// The balance container of the [UserAbonementModel].
+// @immutable
+// class UserAbonementBalanceContainerModel {
+//   /// The balance container of the [UserAbonementModel].
+//   const UserAbonementBalanceContainerModel({required final this.links});
+
+//   /// The links of this container.
+//   final Iterable<UserAbonementBalanceContainerLinkModel> links;
+
+//   /// Return the copy of this model.
+//   UserAbonementBalanceContainerModel copyWith({
+//     final Iterable<UserAbonementBalanceContainerLinkModel>? links,
+//   }) =>
+//       UserAbonementBalanceContainerModel(links: links ?? this.links);
+
+//   /// Convert this model to map with string keys.
+//   Map<String, Object?> toMap() => <String, Object?>{
+//         'links':
+//             links.map((final link) => link.toMap()).toList(growable: false),
+//       };
+
+//   /// Convert the map with string keys to this model.
+//   factory UserAbonementBalanceContainerModel.fromMap(
+//     final Map<String, Object?> map,
+//   ) =>
+//       UserAbonementBalanceContainerModel(
+//         links: <UserAbonementBalanceContainerLinkModel>[
+//           for (final map in map['links']! as Iterable<Object?>)
+//             if (map is Map<String, Object?>)
+//               UserAbonementBalanceContainerLinkModel.fromMap(map)
+//         ],
+//       );
+
+//   /// Convert this model to a json string.
+//   String toJson() => json.encode(toMap());
+
+//   /// Convert the json string to this model.
+//   factory UserAbonementBalanceContainerModel.fromJson(final String source) =>
+//       UserAbonementBalanceContainerModel.fromMap(
+//         json.decode(source) as Map<String, Object?>,
+//       );
+
+//   @override
+//   bool operator ==(final Object other) =>
+//       identical(this, other) ||
+//       other is UserAbonementBalanceContainerModel && other.links == links;
+
+//   @override
+//   int get hashCode => links.hashCode;
+
+//   @override
+//   String toString() => 'UserAbonementBalanceContainerModel(links: $links)';
+// }
+
+// /// The link of the [UserAbonementBalanceContainerModel].
+// ///
+// /// Contains the information about [UserAbonementModel] balance.
+// @immutable
+// class UserAbonementBalanceContainerLinkModel {
+//   /// The link of the [UserAbonementBalanceContainerModel].
+//   ///
+//   /// Contains the information about [UserAbonementModel] balance.
+//   const UserAbonementBalanceContainerLinkModel({
+//     required final this.count,
+//     required final this.service,
+//   });
+
+//   /// The count of this link.
+//   final int count;
+
+//   /// This service of this link.
+//   final UserAbonementBalanceContainerLinkServiceModel? service;
+
+//   /// Return the copy of this model.
+//   UserAbonementBalanceContainerLinkModel copyWith({
+//     final int? count,
+//     final UserAbonementBalanceContainerLinkServiceModel? service,
+//   }) =>
+//       UserAbonementBalanceContainerLinkModel(
+//         count: count ?? this.count,
+//         service: service ?? this.service,
+//       );
+
+//   /// Convert this model to map with string keys.
+//   Map<String, Object?> toMap() =>
+//       <String, Object?>{'count': count, 'service': service?.toMap()};
+
+//   /// Convert the map with string keys to this model.
+//   factory UserAbonementBalanceContainerLinkModel.fromMap(
+//     final Map<String, Object?> map,
+//   ) =>
+//       UserAbonementBalanceContainerLinkModel(
+//         count: map['count']! as int,
+//         service: map['service'] != null
+//             ? UserAbonementBalanceContainerLinkServiceModel.fromMap(
+//                 map['service']! as Map<String, Object?>,
+//               )
+//             : null,
+//       );
+
+//   /// Convert this model to a json string.
+//   String toJson() => json.encode(toMap());
+
+//   /// Convert the json string to this model.
+//   factory UserAbonementBalanceContainerLinkModel.fromJson(
+//     final String source,
+//   ) =>
+//       UserAbonementBalanceContainerLinkModel.fromMap(
+//         json.decode(source) as Map<String, Object?>,
+//       );
+
+//   @override
+//   bool operator ==(final Object other) =>
+//       identical(this, other) ||
+//       other is UserAbonementBalanceContainerLinkModel &&
+//           other.count == count &&
+//           other.service == service;
+
+//   @override
+//   int get hashCode => count.hashCode ^ service.hashCode;
+
+//   @override
+//   String toString() => 'UserAbonementBalanceContainerLinkModel(count: $count, '
+//       'service: $service)';
+// }
+
+/// The service of the [UserAbonementBalanceContainerLinkModel].
 @immutable
-class UserAbonementBalanceContainerModel {
-  /// The balance container of the [UserAbonementModel].
-  const UserAbonementBalanceContainerModel({required final this.links});
-
-  /// The links of this container.
-  final Iterable<UserAbonementBalanceContainerLinkModel> links;
-
-  /// Return the copy of this model.
-  UserAbonementBalanceContainerModel copyWith({
-    final Iterable<UserAbonementBalanceContainerLinkModel>? links,
-  }) =>
-      UserAbonementBalanceContainerModel(links: links ?? this.links);
-
-  /// Convert this model to map with string keys.
-  Map<String, Object?> toMap() => <String, Object?>{
-        'links':
-            links.map((final link) => link.toMap()).toList(growable: false),
-      };
-
-  /// Convert the map with string keys to this model.
-  factory UserAbonementBalanceContainerModel.fromMap(
-    final Map<String, Object?> map,
-  ) =>
-      UserAbonementBalanceContainerModel(
-        links: <UserAbonementBalanceContainerLinkModel>[
-          for (final map in map['links']! as Iterable<Object?>)
-            if (map is Map<String, Object?>)
-              UserAbonementBalanceContainerLinkModel.fromMap(map)
-        ],
-      );
-
-  /// Convert this model to a json string.
-  String toJson() => json.encode(toMap());
-
-  /// Convert the json string to this model.
-  factory UserAbonementBalanceContainerModel.fromJson(final String source) =>
-      UserAbonementBalanceContainerModel.fromMap(
-        json.decode(source) as Map<String, Object?>,
-      );
-
-  @override
-  bool operator ==(final Object other) =>
-      identical(this, other) ||
-      other is UserAbonementBalanceContainerModel && other.links == links;
-
-  @override
-  int get hashCode => links.hashCode;
-
-  @override
-  String toString() => 'UserAbonementBalanceContainerModel(links: $links)';
-}
-
-/// The link of the [UserAbonementBalanceContainerModel].
-///
-/// Contains the information about [UserAbonementModel] balance.
-@immutable
-class UserAbonementBalanceContainerLinkModel {
-  /// The link of the [UserAbonementBalanceContainerModel].
-  ///
-  /// Contains the information about [UserAbonementModel] balance.
-  const UserAbonementBalanceContainerLinkModel({
-    required final this.count,
-    required final this.category,
-  });
-
-  /// The count of this link.
-  final int count;
-
-  /// This category of this link.
-  final UserAbonementBalanceContainerLinkCategoryModel category;
-
-  /// Return the copy of this model.
-  UserAbonementBalanceContainerLinkModel copyWith({
-    final int? count,
-    final UserAbonementBalanceContainerLinkCategoryModel? category,
-  }) =>
-      UserAbonementBalanceContainerLinkModel(
-        count: count ?? this.count,
-        category: category ?? this.category,
-      );
-
-  /// Convert this model to map with string keys.
-  Map<String, Object?> toMap() =>
-      <String, Object?>{'count': count, 'category': category.toMap()};
-
-  /// Convert the map with string keys to this model.
-  factory UserAbonementBalanceContainerLinkModel.fromMap(
-    final Map<String, Object?> map,
-  ) =>
-      UserAbonementBalanceContainerLinkModel(
-        count: map['count']! as int,
-        category: UserAbonementBalanceContainerLinkCategoryModel.fromMap(
-          map['category']! as Map<String, Object?>,
-        ),
-      );
-
-  /// Convert this model to a json string.
-  String toJson() => json.encode(toMap());
-
-  /// Convert the json string to this model.
-  factory UserAbonementBalanceContainerLinkModel.fromJson(
-    final String source,
-  ) =>
-      UserAbonementBalanceContainerLinkModel.fromMap(
-        json.decode(source) as Map<String, Object?>,
-      );
-
-  @override
-  bool operator ==(final Object other) =>
-      identical(this, other) ||
-      other is UserAbonementBalanceContainerLinkModel &&
-          other.count == count &&
-          other.category == category;
-
-  @override
-  int get hashCode => count.hashCode ^ category.hashCode;
-
-  @override
-  String toString() => 'UserAbonementBalanceContainerLinkModel(count: $count, '
-      'category: $category)';
-}
-
-/// The category of the [UserAbonementBalanceContainerLinkModel].
-@immutable
-class UserAbonementBalanceContainerLinkCategoryModel {
-  /// The category of the [UserAbonementBalanceContainerLinkModel].
-  const UserAbonementBalanceContainerLinkCategoryModel({
+class UserAbonementBalanceContainerLinkServiceModel {
+  /// The service of the [UserAbonementBalanceContainerLinkModel].
+  const UserAbonementBalanceContainerLinkServiceModel({
     required final this.id,
     required final this.categoryId,
     required final this.title,
@@ -395,12 +399,12 @@ class UserAbonementBalanceContainerLinkCategoryModel {
   final String title;
 
   /// Return the copy of this model.
-  UserAbonementBalanceContainerLinkCategoryModel copyWith({
+  UserAbonementBalanceContainerLinkServiceModel copyWith({
     final int? id,
     final int? categoryId,
     final String? title,
   }) =>
-      UserAbonementBalanceContainerLinkCategoryModel(
+      UserAbonementBalanceContainerLinkServiceModel(
         id: id ?? this.id,
         categoryId: categoryId ?? this.categoryId,
         title: title ?? this.title,
@@ -414,10 +418,10 @@ class UserAbonementBalanceContainerLinkCategoryModel {
       };
 
   /// Convert the map with string keys to this model.
-  factory UserAbonementBalanceContainerLinkCategoryModel.fromMap(
+  factory UserAbonementBalanceContainerLinkServiceModel.fromMap(
     final Map<String, Object?> map,
   ) =>
-      UserAbonementBalanceContainerLinkCategoryModel(
+      UserAbonementBalanceContainerLinkServiceModel(
         id: map['id']! as int,
         categoryId: map['category_id']! as int,
         title: map['title']! as String,
@@ -427,17 +431,17 @@ class UserAbonementBalanceContainerLinkCategoryModel {
   String toJson() => json.encode(toMap());
 
   /// Convert the json string to this model.
-  factory UserAbonementBalanceContainerLinkCategoryModel.fromJson(
+  factory UserAbonementBalanceContainerLinkServiceModel.fromJson(
     final String source,
   ) =>
-      UserAbonementBalanceContainerLinkCategoryModel.fromMap(
+      UserAbonementBalanceContainerLinkServiceModel.fromMap(
         json.decode(source) as Map<String, Object?>,
       );
 
   @override
   bool operator ==(final Object other) =>
       identical(this, other) ||
-      other is UserAbonementBalanceContainerLinkCategoryModel &&
+      other is UserAbonementBalanceContainerLinkServiceModel &&
           other.id == id &&
           other.categoryId == categoryId &&
           other.title == title;
@@ -446,8 +450,7 @@ class UserAbonementBalanceContainerLinkCategoryModel {
   int get hashCode => id.hashCode ^ categoryId.hashCode ^ title.hashCode;
 
   @override
-  String toString() =>
-      'UserAbonementBalanceContainerLinkCategoryModel(id: $id, '
+  String toString() => 'UserAbonementBalanceContainerLinkServiceModel(id: $id, '
       'categoryId: $categoryId, title: $title)';
 }
 
@@ -537,7 +540,7 @@ class UserAbonementTypeModel {
     required final this.isAllowEmptyCode,
     required final this.isUnitedBalance,
     required final this.unitedBalanceServicesCount,
-    required final this.balanceContainer,
+    // required final this.balanceContainer,
   });
 
   /// The id of this type in the YClients API.
@@ -562,8 +565,11 @@ class UserAbonementTypeModel {
   final bool isUnitedBalance;
   final int unitedBalanceServicesCount;
 
-  /// The balance container of this type.
-  final UserAbonementBalanceContainerModel balanceContainer;
+  /// The object that contains a list of
+  /// [UserAbonementBalanceContainerLinkModel].
+  ///
+  /// YANKED: Has different responses in YClientsAPI.
+  // final UserAbonementBalanceContainerModel balanceContainer;
 
   /// Return the copy of this model.
   UserAbonementTypeModel copyWith({
@@ -577,7 +583,7 @@ class UserAbonementTypeModel {
     final bool? isAllowEmptyCode,
     final bool? isUnitedBalance,
     final int? unitedBalanceServicesCount,
-    final UserAbonementBalanceContainerModel? balanceContainer,
+    // final UserAbonementBalanceContainerModel? balanceContainer,
   }) =>
       UserAbonementTypeModel(
         id: id ?? this.id,
@@ -591,7 +597,7 @@ class UserAbonementTypeModel {
         isUnitedBalance: isUnitedBalance ?? this.isUnitedBalance,
         unitedBalanceServicesCount:
             unitedBalanceServicesCount ?? this.unitedBalanceServicesCount,
-        balanceContainer: balanceContainer ?? this.balanceContainer,
+        // balanceContainer: balanceContainer ?? this.balanceContainer,
       );
 
   /// Convert this model to map with string keys.
@@ -606,7 +612,7 @@ class UserAbonementTypeModel {
         'is_allow_empty_code': isAllowEmptyCode,
         'is_united_balance': isUnitedBalance,
         'united_balance_services_count': unitedBalanceServicesCount,
-        'balance_container': balanceContainer.toMap(),
+        // 'balance_container': balanceContainer.toMap(),
       };
 
   /// Convert the map with string keys to this model.
@@ -623,9 +629,9 @@ class UserAbonementTypeModel {
         isUnitedBalance: map['is_united_balance']! as bool,
         unitedBalanceServicesCount:
             map['united_balance_services_count']! as int,
-        balanceContainer: UserAbonementBalanceContainerModel.fromMap(
-          map['balance_container']! as Map<String, Object?>,
-        ),
+        // balanceContainer: UserAbonementBalanceContainerModel.fromMap(
+        //   map['balance_container']! as Map<String, Object?>,
+        // ),
       );
 
   /// Convert this model to a json string.
@@ -650,8 +656,9 @@ class UserAbonementTypeModel {
           other.freezeLimit == freezeLimit &&
           other.isAllowEmptyCode == isAllowEmptyCode &&
           other.isUnitedBalance == isUnitedBalance &&
-          other.unitedBalanceServicesCount == unitedBalanceServicesCount &&
-          other.balanceContainer == balanceContainer;
+          other.unitedBalanceServicesCount == unitedBalanceServicesCount
+      // && other.balanceContainer == balanceContainer
+      ;
 
   @override
   int get hashCode =>
@@ -664,8 +671,9 @@ class UserAbonementTypeModel {
       freezeLimit.hashCode ^
       isAllowEmptyCode.hashCode ^
       isUnitedBalance.hashCode ^
-      unitedBalanceServicesCount.hashCode ^
-      balanceContainer.hashCode;
+      unitedBalanceServicesCount.hashCode
+      // ^ balanceContainer.hashCode
+      ;
 
   @override
   String toString() =>
@@ -675,5 +683,5 @@ class UserAbonementTypeModel {
       'isAllowEmptyCode: $isAllowEmptyCode, '
       'isUnitedBalance: $isUnitedBalance, '
       'unitedBalanceServicesCount: $unitedBalanceServicesCount, '
-      'balanceContainer: $balanceContainer)';
+      'balanceContainer: YANKED)';
 }

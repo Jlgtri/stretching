@@ -29,7 +29,6 @@ import 'package:stretching/providers/other_providers.dart';
 import 'package:stretching/utils/enum_to_string.dart';
 import 'package:stretching/utils/logger.dart';
 import 'package:stretching/widgets/book_screens.dart';
-import 'package:stretching/widgets/error_screen.dart';
 import 'package:stretching/widgets/navigation/modals/payment_picker.dart';
 import 'package:tinkoff_acquiring/tinkoff_acquiring.dart' hide Route;
 
@@ -984,39 +983,4 @@ class BusinessLogic {
     );
     return Tuple2(request, await acquiring.init(request));
   }
-}
-
-/// Refreshes all api providers.
-Future<void> refreshAllProviders(final ProviderContainer container) async {
-  final serverTime = await smStretching.getServerTime();
-  final activityPrice = await smStretching.getActivityPrice();
-  if (serverTime == null || activityPrice == null) {
-    return;
-  }
-  container.updateOverrides(<Override>[
-    smServerTimeProvider.overrideWithValue(ServerTimeNotifier(serverTime)),
-    smActivityPriceProvider.overrideWithValue(activityPrice)
-  ]);
-  container.read(errorProvider).state = null;
-  container.read(splashProvider).state = true;
-  await container.read(smStudiosOptionsProvider.notifier).refresh();
-  await Future.wait(<Future<Object?>>[
-    /// YClients API
-    container.read(studiosProvider.notifier).refresh(),
-    container.read(trainersProvider.notifier).refresh(),
-    container.read(scheduleProvider.notifier).refresh(),
-    container.read(goodsProvider.notifier).refresh(),
-    // container.read(userAbonementsProvider.notifier).refresh(),
-    // container.read(userRecordsProvider.notifier).refresh(),
-
-    /// SMStretching API
-    container.read(smAdvertismentsProvider.notifier).refresh(),
-    container.read(smStoriesProvider.notifier).refresh(),
-    container.read(smAbonementsProvider.notifier).refresh(),
-    container.read(smStudiosProvider.notifier).refresh(),
-    container.read(smTrainersProvider.notifier).refresh(),
-    container.read(smClassesGalleryProvider.notifier).refresh(),
-    // container.read(smUserDepositProvider.future),
-    // container.read(smUserAbonementsProvider.notifier).refresh(),
-  ]);
 }

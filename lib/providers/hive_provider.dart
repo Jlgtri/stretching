@@ -40,14 +40,13 @@ class SaveToHiveNotifier<T extends Object, S extends Object>
     required final T defaultValue,
     final T? Function(T)? onValueCreated,
   }) : super(
-          onValueCreated?.call(
-                hive.containsKey(saveName)
-                    ? converter.fromJson(hive.get(saveName)!)
-                    : defaultValue,
-              ) ??
-              (hive.containsKey(saveName)
-                  ? converter.fromJson(hive.get(saveName)!)
-                  : defaultValue),
+          () {
+            var value = defaultValue;
+            if (hive.containsKey(saveName)) {
+              value = converter.fromJson(hive.get(saveName)!);
+            }
+            return onValueCreated?.call(value) ?? value;
+          }(),
         );
 
   /// The reference to the Hive database.
@@ -97,11 +96,11 @@ class OptionalSaveToHiveNotifier<T extends Object?, S extends Object?>
     final T? defaultValue,
     final T? Function(T?)? onValueCreated,
   }) : super(
-          onValueCreated != null
-              ? onValueCreated(
-                  converter.fromJson(hive.get(saveName)) ?? defaultValue,
-                )
-              : converter.fromJson(hive.get(saveName)) ?? defaultValue,
+          () {
+            final value =
+                converter.fromJson(hive.get(saveName)) ?? defaultValue;
+            return onValueCreated?.call(value) ?? value;
+          }(),
         );
 
   /// The reference to the Hive database.
@@ -157,14 +156,13 @@ class SaveToHiveIterableNotifier<T extends Object, S extends Object>
     required final Iterable<T> defaultValue,
     final Iterable<T>? Function(Iterable<T>)? onValueCreated,
   }) : super(
-          onValueCreated?.call(
-                hive.containsKey(saveName)
-                    ? converter.fromJson(hive.get(saveName)!).cast<T>()
-                    : defaultValue,
-              ) ??
-              (hive.containsKey(saveName)
-                  ? converter.fromJson(hive.get(saveName)!).cast<T>()
-                  : defaultValue),
+          () {
+            var value = defaultValue;
+            if (hive.containsKey(saveName)) {
+              value = converter.fromJson(hive.get(saveName)!).cast<T>();
+            }
+            return onValueCreated?.call(value) ?? value;
+          }(),
         );
 
   /// The reference to the [Hive] database.

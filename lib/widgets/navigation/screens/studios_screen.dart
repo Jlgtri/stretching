@@ -365,7 +365,7 @@ class StudiosScreen extends HookConsumerWidget {
       ),
       child: !onMap.state
           ? Padding(
-              padding: const EdgeInsets.only(top: 80),
+              padding: const EdgeInsets.only(top: 72),
               child: SmartRefresher(
                 key: refreshKey,
                 controller: refresh.item0,
@@ -382,7 +382,8 @@ class StudiosScreen extends HookConsumerWidget {
                 child: ListView.builder(
                   controller: scrollController,
                   primary: false,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16)
+                      .copyWith(top: 8),
                   itemCount: studios.length,
                   itemBuilder: (final context, final index) => Padding(
                     padding: studioCardMargin,

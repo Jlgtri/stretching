@@ -100,7 +100,7 @@ extension NavigationScreenData on NavigationScreen {
         title: title,
         routeAndNavigatorSettings: RouteAndNavigatorSettings(
           initialRoute: Routes.root.name,
-          navigatorKey: ref.watch(currentNavigatorProvider(this)),
+          navigatorKey: ref.watch(navigatorProvider(this)),
           navigatorObservers: <NavigatorObserver>[
             ref.watch(routeObserverProvider(this))
           ],
@@ -185,9 +185,9 @@ final ProviderFamily<ScrollController, NavigationScreen>
   (final ref, final screen) => ScrollController(),
 );
 
-/// The provider of the current screen's navigator of the [navigationProvider].
+/// The provider of the navigator of the each [NavigationScreen].
 final ProviderFamily<GlobalKey<NavigatorState>, NavigationScreen>
-    currentNavigatorProvider =
+    navigatorProvider =
     Provider.family<GlobalKey<NavigatorState>, NavigationScreen>(
   (final ref, final screen) =>
       GlobalKey<NavigatorState>(debugLabel: screen.title),
@@ -272,11 +272,10 @@ class NavigationRoot extends HookConsumerWidget {
         PersistentTabView(
           context,
           controller: ref.watch(navigationProvider),
-          navBarStyle: NavBarStyle.style6,
+          navBarStyle: NavBarStyle.style8,
           bottomScreenMargin: 0,
           navBarHeight: navBarHeight,
           padding: const NavBarPadding.only(bottom: 10),
-          // hideNavigationBar: ref.watch(hideNavigationProvider).state,
           itemAnimationProperties: const ItemAnimationProperties(
             duration: transitionDuration,
             curve: Curves.ease,

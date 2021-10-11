@@ -15,7 +15,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:package_info/package_info.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'package:stretching/api_smstretching.dart';
-import 'package:stretching/business_logic.dart';
+import 'package:stretching/api_yclients.dart';
 import 'package:stretching/const.dart';
 import 'package:stretching/generated/assets.g.dart';
 import 'package:stretching/generated/icons.g.dart';
@@ -61,9 +61,11 @@ Future<void> main() async {
           hiveProvider.overrideWithValue(await Hive.openBox<String>('storage')),
           packageInfoProvider
               .overrideWithValue(await PackageInfo.fromPlatform()),
-          smServerTimeProvider.overrideWithValue(ServerTimeNotifier()),
+          smServerTimeProvider.overrideWithValue(
+            ServerTimeNotifier(await smStretching.getServerTime()),
+          ),
           smActivityPriceProvider
-              .overrideWithValue(const SMActivityPriceModel.zero()),
+              .overrideWithValue((await smStretching.getActivityPrice())!),
         ],
         child: const RootScreen(),
       ),
@@ -88,6 +90,58 @@ final Provider<bool> initedProvider = Provider<bool>(
 final StateProvider<bool> connectionErrorProvider =
     StateProvider<bool>((final ref) => false);
 
+/// The provider of the basic functionality.
+final FutureProvider<void> initProvider =
+    FutureProvider<void>((final ref) async {
+  // await ref.read(hiveProvider).clear();
+  try {
+    await Future.wait(<Future<void>>[
+      SystemChrome.setPreferredOrientations(
+        <DeviceOrientation>[DeviceOrientation.portraitUp],
+      ),
+      SystemChannels.textInput.invokeMethod<void>('TextInput.hide'),
+      ref.read(locationProvider.last),
+      ref.read(messagingProvider.future),
+      ref.read(appsflyerProvider.future),
+      // Future.delayed(const Duration(seconds: 15)),
+    ]);
+  } finally {
+    ref.read(locationServicesProvider);
+    ref.read(widgetsBindingProvider)
+      ..addObserver(ReviewRecordsEventHandler(ref))
+      ..addPostFrameCallback(
+        (final _) => ref.read(uniLinksProvider.future),
+      );
+  }
+});
+
+/// The provider of the [SMStretchingAPI] and [YClientsAPI].
+final FutureProvider<void> apiProvider =
+    FutureProvider<void>((final ref) async {
+  ref.read(errorProvider).state = null;
+  ref.read(splashProvider).state = true;
+  await ref.read(smStudiosOptionsProvider.notifier).refresh();
+  await Future.wait(<Future<Object?>>[
+    /// YClients API
+    ref.read(studiosProvider.notifier).refresh(),
+    ref.read(trainersProvider.notifier).refresh(),
+    ref.read(scheduleProvider.notifier).refresh(),
+    ref.read(goodsProvider.notifier).refresh(),
+    // container.read(userAbonementsProvider.notifier).refresh(),
+    // container.read(userRecordsProvider.notifier).refresh(),
+
+    /// SMStretching API
+    ref.read(smAdvertismentsProvider.notifier).refresh(),
+    ref.read(smStoriesProvider.notifier).refresh(),
+    ref.read(smAbonementsProvider.notifier).refresh(),
+    ref.read(smStudiosProvider.notifier).refresh(),
+    ref.read(smTrainersProvider.notifier).refresh(),
+    ref.read(smClassesGalleryProvider.notifier).refresh(),
+    // container.read(smUserDepositProvider.future),
+    // container.read(smUserAbonementsProvider.notifier).refresh(),
+  ]);
+});
+
 /// The root widget of the app.
 class RootScreen extends HookConsumerWidget {
   /// The root widget of the app.
@@ -105,41 +159,25 @@ class RootScreen extends HookConsumerWidget {
       useMemoized(() async {
         splash.state = true;
         try {
-          // await ref.read(hiveProvider).clear();
-          await Future.wait(<Future<void>>[
-            SystemChrome.setPreferredOrientations(
-              <DeviceOrientation>[DeviceOrientation.portraitUp],
-            ),
-            SystemChannels.textInput.invokeMethod<void>('TextInput.hide'),
-            ez.delegate.load(ez.currentLocale!),
-            ref.read(locationProvider.last),
-            ref.read(messagingProvider.future),
-            ref.read(appsflyerProvider.future),
-            // Future.delayed(const Duration(seconds: 15)),
-          ]);
-          ref.read(locationServicesProvider);
-
-          widgetsBinding
-            ..addObserver(ReviewRecordsEventHandler(ref))
-            ..addPostFrameCallback(
-              (final _) => ref.read(uniLinksProvider.future),
-            );
-
-          final currentLocale = ez.currentLocale;
-          if (currentLocale != null &&
-              ref.read(localeProvider) != currentLocale) {
-            await (ref.read(localeProvider.notifier))
-                .setStateAsync(currentLocale);
-          }
+          await ez.delegate.load(ez.currentLocale!);
+          await ref.read(initProvider.future);
         } finally {
           try {
-            await refreshAllProviders(ProviderScope.containerOf(context));
+            final currentLocale = ez.currentLocale;
+            if (currentLocale != null &&
+                ref.read(localeProvider) != currentLocale) {
+              await (ref.read(localeProvider.notifier))
+                  .setStateAsync(currentLocale);
+            }
           } finally {
-            splash.state = false;
+            try {
+              await ref.read(apiProvider.future);
+            } finally {
+              splash.state = false;
+            }
           }
         }
       }),
-      preserveState: false,
     );
 
     return Directionality(

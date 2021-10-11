@@ -11,9 +11,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:stretching/business_logic.dart';
 import 'package:stretching/generated/icons.g.dart';
 import 'package:stretching/generated/localization.g.dart';
+import 'package:stretching/main.dart';
 import 'package:stretching/style.dart';
 import 'package:stretching/widgets/appbars.dart';
 import 'package:stretching/widgets/components/emoji_text.dart';
@@ -227,9 +227,8 @@ class ConnectionErrorScreen extends HookConsumerWidget {
                       ? () async {
                           isLoading.value = true;
                           try {
-                            await refreshAllProviders(
-                              ProviderScope.containerOf(context),
-                            );
+                            ref.refresh(apiProvider);
+                            await ref.read(apiProvider.future);
                           } finally {
                             if (isMounted()) {
                               isLoading.value = false;

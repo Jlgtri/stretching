@@ -351,12 +351,9 @@ class StoryCardScreen extends HookConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    final alreadyWatched = ref.watch(
-      homeWatchedStoriesProvider.select(
-        (final watchedStories) => watchedStories
-            .any((final watchedStory) => watchedStory.media == story.media),
-      ),
-    );
+    final alreadyWatched = ref
+        .watch(homeWatchedStoriesProvider)
+        .any((final watchedStory) => watchedStory.media == story.media);
 
     return OpenContainer<void>(
       tappable: false,

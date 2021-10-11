@@ -26,6 +26,7 @@ import 'package:stretching/style.dart';
 import 'package:stretching/utils/json_converters.dart';
 import 'package:stretching/widgets/components/emoji_text.dart';
 import 'package:stretching/widgets/components/focus_wrapper.dart';
+import 'package:stretching/widgets/components/limit_loading_count.dart';
 import 'package:stretching/widgets/content_screen.dart';
 import 'package:stretching/widgets/navigation/components/filters.dart';
 import 'package:stretching/widgets/navigation/navigation_root.dart';
@@ -50,37 +51,30 @@ final StateProvider<String> searchTrainersProvider =
     StateProvider<String>((final ref) => '');
 
 /// Provider of the normalized trainers with applied filters.
+///
+/// First of all, removes all undesired trainers from yClients trainers.
+/// Secondly, applies a text search by trainer's name.
+/// Thirdly, applies a filter by trainer's categories.
+/// And finally, removes dublicates.
 final Provider<Iterable<CombinedTrainerModel>> filteredTrainersProvider =
-    Provider<Iterable<CombinedTrainerModel>>(
-  (final ref) => ref.watch(
-    /// Apply a filter to trainers.
-    ///
-    /// First of all, removes all undesired trainers from yClients trainers.
-    /// Secondly, applies a text search by trainer's name.
-    /// Thirdly, applies a filter by trainer's categories.
-    /// And finally, removes dublicates.
-    trainersProvider.select((final trainers) {
-      final categories = ref.watch(trainersCategoriesFilterProvider);
-      final search = ref.watch(searchTrainersProvider).state;
-      return (ref.watch(combinedTrainersProvider))
-          .where(
-            (final trainer) =>
-                (search.isEmpty ||
-                    (trainer.item1.trainerName.toLowerCase())
-                        .contains(search.toLowerCase())) &&
-                (categories.isEmpty ||
-                    ((trainer.item1.classesType?.toCategories())
-                            ?.any(categories.contains) ??
-                        false)),
-          )
-          .distinct(
-            (final trainer) => trainer.item1.trainerName.toLowerCase(),
-          );
-    }),
-  ),
-);
+    Provider<Iterable<CombinedTrainerModel>>((final ref) {
+  final categories = ref.watch(trainersCategoriesFilterProvider);
+  final search = ref.watch(searchTrainersProvider).state;
+  return (ref.watch(combinedTrainersProvider))
+      .where(
+        (final trainer) =>
+            (search.isEmpty ||
+                (trainer.item1.trainerName.toLowerCase())
+                    .contains(search.toLowerCase())) &&
+            (categories.isEmpty ||
+                ((trainer.item1.classesType?.toCategories())
+                        ?.any(categories.contains) ??
+                    false)),
+      )
+      .distinct((final trainer) => trainer.item1.trainerName.toLowerCase());
+});
 
-/// The [OpenContainer.openBuilder] provider of the [TrainerCard] for each
+/// The [OpenContainer.openBuilder] provider of the [TrainerContainer] for each
 /// [CombinedTrainerModel].
 final StateProviderFamily<void Function()?, CombinedTrainerModel>
     trainersCardsProvider =
@@ -92,6 +86,9 @@ final StateProviderFamily<void Function()?, CombinedTrainerModel>
 class TrainersScreen extends HookConsumerWidget {
   /// The screen for the [NavigationScreen.trainers].
   const TrainersScreen({final Key? key}) : super(key: key);
+
+  /// The maximum count of simultaneously loading trainers.
+  static const int limitLoading = 10;
 
   /// The height of the categories picker widget.
   static const double categoriesHeight = 80;
@@ -129,8 +126,9 @@ class TrainersScreen extends HookConsumerWidget {
     final areTrainersPresent = ref.watch(
       combinedTrainersProvider.select((final trainers) => trainers.isNotEmpty),
     );
-    final scrollController = ref
-        .watch(navigationScrollControllerProvider(NavigationScreen.trainers));
+    final scrollController = ref.watch(
+      navigationScrollControllerProvider(NavigationScreen.trainers),
+    );
 
     return FocusWrapper(
       unfocussableKeys: <GlobalKey>[searchKey],
@@ -222,9 +220,9 @@ class TrainersScreen extends HookConsumerWidget {
                   final categoriesNotifier = ref.read(
                     trainersCategoriesFilterProvider.notifier,
                   );
-                  value
-                      ? categoriesNotifier.add(category)
-                      : categoriesNotifier.remove(category);
+                  (value
+                      ? categoriesNotifier.add
+                      : categoriesNotifier.remove)(category);
                 },
               ),
             ),
@@ -245,7 +243,7 @@ class TrainersScreen extends HookConsumerWidget {
                       alignment: index.isEven
                           ? Alignment.centerRight
                           : Alignment.centerLeft,
-                      child: TrainerCard(trainers.elementAt(index)),
+                      child: TrainerContainer(trainers.elementAt(index)),
                     ),
                     childCount: trainers.length,
                   ),
@@ -282,14 +280,14 @@ class TrainersScreen extends HookConsumerWidget {
   }
 }
 
-/// The card to display a trainer.
+/// The card to display a [trainer].
 ///
 /// Initially shows just a card, but opens [TrainerScreen] when pressed.
-class TrainerCard extends ConsumerWidget {
-  /// The card to display a trainer.
+class TrainerContainer extends ConsumerWidget {
+  /// The card to display a [trainer].
   ///
   /// Initially shows just a card, but opens [TrainerScreen] when pressed.
-  const TrainerCard(
+  const TrainerContainer(
     final this.trainer, {
     final Key? key,
   }) : super(key: key);
@@ -299,6 +297,46 @@ class TrainerCard extends ConsumerWidget {
 
   /// The [OpenContainer.transitionDuration] of this widget.
   static const Duration transitionDuration = Duration(milliseconds: 500);
+
+  @override
+  Widget build(final BuildContext context, final WidgetRef ref) =>
+      OpenContainer<void>(
+        tappable: false,
+        openElevation: 0,
+        closedElevation: 0,
+        openColor: Colors.transparent,
+        closedColor: Colors.transparent,
+        middleColor: Colors.transparent,
+        transitionDuration: transitionDuration,
+        openBuilder: (final context, final action) =>
+            TrainerScreen(trainer, onBackButtonPressed: action),
+        closedBuilder: (final context, final action) =>
+            TrainerCard(trainer, onPressed: action),
+      );
+
+  @override
+  void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(
+      properties
+        ..add(DiagnosticsProperty<CombinedTrainerModel>('trainer', trainer)),
+    );
+  }
+}
+
+/// The card to display a [trainer].
+class TrainerCard extends HookConsumerWidget {
+  /// The card to display a [trainer].
+  const TrainerCard(
+    final this.trainer, {
+    required final this.onPressed,
+    final Key? key,
+  }) : super(key: key);
+
+  /// The trainer to display in this card.
+  final CombinedTrainerModel trainer;
+
+  /// The callback on press of the back button.
+  final void Function() onPressed;
 
   /// The font of the name of the trainer of this widget.
   static TextStyle? trainerFont(final TextTheme textTheme) =>
@@ -326,60 +364,71 @@ class TrainerCard extends ConsumerWidget {
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    return OpenContainer<void>(
-      tappable: false,
-      openElevation: 0,
-      closedElevation: 0,
-      openColor: Colors.transparent,
-      closedColor: Colors.transparent,
-      middleColor: Colors.transparent,
-      transitionDuration: transitionDuration,
-      openBuilder: (final context, final action) =>
-          TrainerScreen(trainer, onBackButtonPressed: action),
-      closedBuilder: (final context, final action) {
-        ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
-          ref.read(trainersCardsProvider(trainer)).state = action;
-        });
-        return InkWell(
-          onTap: action,
-          child: Padding(
-            padding: padding,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                Padding(
-                  padding: avatarPadding,
-                  child: CachedNetworkImage(
-                    imageUrl: trainer.item1.trainerPhoto,
-                    height: avatarSize,
-                    width: avatarSize,
-                    imageBuilder: (final context, final imageProvider) =>
-                        CircleAvatar(
-                      radius: avatarSize / 2,
-                      foregroundImage: imageProvider,
-                    ),
-                    errorWidget:
-                        (final context, final url, final dynamic error) =>
-                            const SizedBox.shrink(),
-                  ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: Text(
-                      trainer.item1.trainerName,
-                      style: trainerFont(theme.textTheme),
-                      maxLines: maxLines,
-                      overflow: TextOverflow.ellipsis,
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ],
+    useMemoized(() {
+      final trainerContainer = ref.read(trainersCardsProvider(trainer));
+      ref.read(widgetsBindingProvider).addPostFrameCallback((final _) {
+        trainerContainer.state = onPressed;
+      });
+    });
+    final loaded = ref.watch(
+      loadedData(NavigationScreen.trainers).select(
+        (final loadedData) =>
+            loadedData.state.contains(trainer.item1.trainerPhoto),
+      ),
+    );
+    final loadingTrainersCount = ref.watch(
+      loadingData(NavigationScreen.trainers).select(
+        (final loadingData) => loadingData.state.length,
+      ),
+    );
+    return InkWell(
+      onTap: onPressed,
+      child: Padding(
+        padding: padding,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Padding(
+              padding: avatarPadding,
+              child: loaded ||
+                      (loadingTrainersCount <= TrainersScreen.limitLoading)
+                  ? CachedNetworkImage(
+                      imageUrl: trainer.item1.trainerPhoto,
+                      height: avatarSize,
+                      width: avatarSize,
+                      fit: BoxFit.cover,
+                      progressIndicatorBuilder: (
+                        final context,
+                        final url,
+                        final progress,
+                      ) =>
+                          LimitLoadingCount(url, NavigationScreen.trainers),
+                      imageBuilder: (final context, final imageProvider) =>
+                          CircleAvatar(
+                        radius: avatarSize / 2,
+                        foregroundImage: imageProvider,
+                      ),
+                      errorWidget:
+                          (final context, final url, final dynamic error) =>
+                              const SizedBox.shrink(),
+                    )
+                  : const SizedBox(width: avatarSize, height: avatarSize),
             ),
-          ),
-        );
-      },
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  trainer.item1.trainerName,
+                  style: trainerFont(theme.textTheme),
+                  maxLines: maxLines,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -387,6 +436,7 @@ class TrainerCard extends ConsumerWidget {
   void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
     super.debugFillProperties(
       properties
+        ..add(ObjectFlagProperty<void Function()>.has('onPressed', onPressed))
         ..add(DiagnosticsProperty<CombinedTrainerModel>('trainer', trainer)),
     );
   }

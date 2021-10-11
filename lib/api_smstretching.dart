@@ -684,7 +684,7 @@ final StateNotifierProvider<SaveToHiveIterableNotifier<UserRecordModel, String>,
 class ReviewRecordsEventHandler extends WidgetsBindingObserver {
   /// The event handler for push a review screen to user when a record finishes.
   ReviewRecordsEventHandler(final this._ref);
-  final WidgetRef _ref;
+  final ProviderRefBase _ref;
 
   @override
   Future<void> didChangeAppLifecycleState(final AppLifecycleState state) async {

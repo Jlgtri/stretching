@@ -67,6 +67,7 @@ class ProfileScreen extends HookConsumerWidget {
     final navigator = Navigator.of(context, rootNavigator: true);
     final scrollController =
         ref.watch(navigationScrollControllerProvider(NavigationScreen.profile));
+    final userDeposit = ref.watch(smUserDepositProvider);
 
     final abonements = ref.watch(combinedAbonementsProvider);
     List<Widget> createCards() => <Widget>[
@@ -136,6 +137,9 @@ class ProfileScreen extends HookConsumerWidget {
         case ProfileNavigationScreen.root:
           await ref.read(userProvider.notifier).setStateAsync(null);
           ref.read(navigationProvider).jumpToTab(NavigationScreen.home.index);
+          final homeNavigator =
+              ref.read(navigatorProvider(NavigationScreen.home)).currentState;
+          homeNavigator?.popUntil(Routes.root.withName);
           return;
       }
 
@@ -258,9 +262,16 @@ class ProfileScreen extends HookConsumerWidget {
           padding: const EdgeInsets.symmetric(vertical: 16),
           children: <Widget>[
             /// Deposit
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-              child: DepositCard(),
+            ...?userDeposit.when(
+              data: (final userDeposit) => <Widget>[
+                if (userDeposit > 0)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: DepositCard(userDeposit),
+                  )
+              ],
+              error: (final error, final stackTrace, final userDeposit) => null,
+              loading: (final userDeposit) => null,
             ),
 
             /// Abonements
@@ -618,80 +629,84 @@ class AbonementCard extends ConsumerWidget {
 /// The card for displaying a [CombinedAbonementModel].
 class DepositCard extends ConsumerWidget {
   /// The card for displaying a [CombinedAbonementModel].
-  const DepositCard({final Key? key}) : super(key: key);
+  const DepositCard(final this.userDeposit, {final Key? key}) : super(key: key);
+
+  /// The deposit value to display in this widget.
+  final int userDeposit;
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
     final theme = Theme.of(context);
-    return (ref.watch(smUserDepositProvider)).when(
-      data: (final userDeposit) {
-        num deposit = userDeposit;
-        var leftCount = 0;
-        final prices = ref.watch(smActivityPriceProvider);
-        if (deposit > 0 && ref.watch(discountProvider)) {
-          deposit -= prices.ySalePrice.optionValue;
-          leftCount++;
-        }
-        leftCount += (deposit / prices.regularPrice.optionValue).truncate();
-        if (leftCount == 0) {
-          return const SizedBox.shrink();
-        }
-        return Container(
-          constraints: const BoxConstraints(minHeight: 80),
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: <Color>[Color(0xFFC665F3), Color(0xFFE75566)],
-              stops: <double>[0, 1],
-              begin: Alignment.centerRight,
-              end: Alignment.centerLeft,
+    final prices = ref.watch(smActivityPriceProvider);
+    final discount = ref.watch(discountProvider);
+    num deposit = userDeposit;
+    var leftCount = 0;
+    if (deposit > 0 && discount) {
+      deposit -= prices.ySalePrice.optionValue;
+      leftCount++;
+    }
+    leftCount += (deposit / prices.regularPrice.optionValue).truncate();
+    if (leftCount == 0) {
+      return const SizedBox.shrink();
+    }
+    return Container(
+      constraints: const BoxConstraints(minHeight: 80),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: <Color>[Color(0xFFC665F3), Color(0xFFE75566)],
+          stops: <double>[0, 1],
+          begin: Alignment.centerRight,
+          end: Alignment.centerLeft,
+        ),
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+      ),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: SizedBox(
+              width: 36,
+              child: EmojiText('✌️', style: TextStyle(fontSize: 22)),
             ),
-            borderRadius: BorderRadius.all(Radius.circular(12)),
           ),
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const Padding(
-                padding: EdgeInsets.only(top: 4),
-                child: SizedBox(
-                  width: 36,
-                  child: EmojiText('✌️', style: TextStyle(fontSize: 22)),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                /// Title
+                Text(
+                  TR.depositTitle.plural(leftCount),
+                  style: theme.textTheme.bodyText1
+                      ?.copyWith(color: theme.colorScheme.onPrimary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    /// Title
-                    Text(
-                      TR.depositTitle.plural(leftCount),
-                      style: theme.textTheme.bodyText1
-                          ?.copyWith(color: theme.colorScheme.onPrimary),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
+                const SizedBox(height: 6),
 
-                    /// Info
-                    Flexible(
-                      child: Text(
-                        TR.depositInfo.plural(leftCount),
-                        style: theme.textTheme.overline
-                            ?.copyWith(color: theme.colorScheme.onPrimary),
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ],
+                /// Info
+                Flexible(
+                  child: Text(
+                    TR.depositInfo.plural(leftCount),
+                    style: theme.textTheme.overline
+                        ?.copyWith(color: theme.colorScheme.onPrimary),
+                  ),
+                )
+              ],
+            ),
           ),
-        );
-      },
-      loading: (final userDeposit) => const SizedBox.shrink(),
-      error: (final error, final stackTrace, final userDeposit) =>
-          const SizedBox.shrink(),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void debugFillProperties(final DiagnosticPropertiesBuilder properties) {
+    super.debugFillProperties(
+      properties..add(DiagnosticsProperty<num>('userDeposit', userDeposit)),
     );
   }
 }

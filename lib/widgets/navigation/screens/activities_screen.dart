@@ -234,15 +234,10 @@ final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
   final categories = ref.watch(activitiesCategoriesFilterProvider);
   final studios = ref.watch(activitiesStudiosFilterProvider);
   final trainers = ref.watch(activitiesTrainersFilterProvider);
-  final now = ref.watch(
-    activitiesCurrentTimeProvider.select(
-      (final currentTime) => currentTime.when(
-        data: (final currentTime) => currentTime,
-        loading: (final currentTime) => DateTime.now(),
-        error: (final error, final stackTrace, final currentTime) =>
-            DateTime.now(),
-      ),
-    ),
+  final now = (ref.watch(activitiesCurrentTimeProvider)).when(
+    data: (final currentTime) => currentTime,
+    loading: (final currentTime) => DateTime.now(),
+    error: (final error, final stackTrace, final currentTime) => DateTime.now(),
   );
   return ref.watch(
     /// First of all, checks if any activities are present.
@@ -337,30 +332,21 @@ final Provider<Iterable<SpecificDay>> activitiesDaysProvider =
     );
   }
 
-  return ref.watch(
-    activitiesCurrentTimeProvider.select(
-      (final currentTime) => currentTime.when(
-        data: result,
-        loading: (final currentTime) => result(),
-        error: (final error, final stackTrace, final currentTime) => result(),
-      ),
-    ),
+  return (ref.watch(activitiesCurrentTimeProvider)).when(
+    data: result,
+    loading: (final currentTime) => result(),
+    error: (final error, final stackTrace, final currentTime) => result(),
   );
 });
 
 /// If the activities are present for the current selected day.
 final Provider<bool> areActivitiesPresentProvider = Provider<bool>((final ref) {
-  final day = ref.watch(activitiesDayProvider).state;
-  final now = ref.watch(
-    activitiesCurrentTimeProvider.select(
-      (final currentTime) => currentTime.when(
-        data: (final currentTime) => currentTime,
-        loading: (final currentTime) => DateTime.now(),
-        error: (final error, final stackTrace, final currentTime) =>
-            DateTime.now(),
-      ),
-    ),
+  final now = (ref.watch(activitiesCurrentTimeProvider)).when(
+    data: (final currentTime) => currentTime,
+    loading: (final currentTime) => DateTime.now(),
+    error: (final error, final stackTrace, final currentTime) => DateTime.now(),
   );
+  final day = ref.watch(activitiesDayProvider).state;
   return ref.watch(
     combinedActivitiesProvider.select(
       (final activities) => activities.any(
@@ -491,10 +477,9 @@ class ActivitiesScreen extends HookConsumerWidget {
                 if (activities.isNotEmpty)
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
-                      (final context, final index) {
-                        final activity = activities.elementAt(index);
-                        return ActivityCardContainer(activity);
-                      },
+                      (final context, final index) => ActivityCardContainer(
+                        activities.elementAt(index),
+                      ),
                       childCount: activities.length,
                     ),
                   )
@@ -589,83 +574,91 @@ class ActivitiesStudiosPickerDropdown extends HookConsumerWidget {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
     final selectedStudios = ref.watch(activitiesStudiosFilterProvider);
-    return Container(
+    return Material(
       color: theme.appBarTheme.backgroundColor,
-      width: double.infinity,
-      alignment: Alignment.center,
-      padding: const EdgeInsets.only(bottom: 4),
-      child: DropdownBelow<CombinedStudioModel?>(
-        isDense: true,
-        elevation: 12,
-        boxHeight: 30 * mediaQuery.textScaleFactor,
-        boxWidth: 160 * mediaQuery.textScaleFactor,
-        itemWidth: 160 * mediaQuery.textScaleFactor,
-        icon: FontIcon(
-          FontIconData(
-            IconsCG.angleDown,
-            height: 10 * mediaQuery.textScaleFactor,
-            color: theme.hintColor,
-          ),
-        ),
-        boxPadding: const EdgeInsets.only(bottom: 8),
-        boxDecoration: const BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(8)),
-        ),
-        itemTextstyle: theme.textTheme.bodyText1,
-        boxTextstyle: theme.textTheme.bodyText1?.copyWith(
-          color: theme.appBarTheme.foregroundColor,
-        ),
-        hint: Align(
-          child: Text(
-            selectedStudios.isNotEmpty
-                ? selectedStudios.first.item1.studioName
-                : TR.activitiesAllStudios.tr(),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-        value: selectedStudios.length == 1 ? selectedStudios.single : null,
-        items: <DropdownMenuItem<CombinedStudioModel?>>[
-          DropdownMenuItem<CombinedStudioModel?>(
-            child: Align(
-              child: Text(
-                TR.activitiesAllStudios.tr(),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ),
-          for (final studio in ref.watch(combinedStudiosProvider))
-            DropdownMenuItem<CombinedStudioModel>(
-              value: studio,
-              child: Align(
-                child: Text(
-                  studio.item1.studioName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Flexible(
+              child: DropdownBelow<CombinedStudioModel?>(
+                isDense: true,
+                elevation: 12,
+                boxHeight: 30 * mediaQuery.textScaleFactor,
+                boxWidth: 160 * mediaQuery.textScaleFactor,
+                itemWidth: 160 * mediaQuery.textScaleFactor,
+                icon: FontIcon(
+                  FontIconData(
+                    IconsCG.angleDown,
+                    height: 10 * mediaQuery.textScaleFactor,
+                    color: theme.hintColor,
+                  ),
                 ),
+                boxPadding: const EdgeInsets.only(bottom: 8),
+                boxDecoration: const BoxDecoration(
+                  borderRadius: BorderRadius.all(Radius.circular(8)),
+                ),
+                itemTextstyle: theme.textTheme.bodyText1,
+                boxTextstyle: theme.textTheme.bodyText1?.copyWith(
+                  color: theme.appBarTheme.foregroundColor,
+                ),
+                hint: Align(
+                  child: Text(
+                    selectedStudios.isNotEmpty
+                        ? selectedStudios.first.item1.studioName
+                        : TR.activitiesAllStudios.tr(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                value:
+                    selectedStudios.length == 1 ? selectedStudios.single : null,
+                items: <DropdownMenuItem<CombinedStudioModel?>>[
+                  DropdownMenuItem<CombinedStudioModel?>(
+                    child: Align(
+                      child: Text(
+                        TR.activitiesAllStudios.tr(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  for (final studio in ref.watch(combinedStudiosProvider))
+                    DropdownMenuItem<CombinedStudioModel>(
+                      value: studio,
+                      child: Align(
+                        child: Text(
+                          studio.item1.studioName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                ],
+                onChanged: (final studio) async {
+                  final filteredStudiosNotifier =
+                      ref.read(activitiesStudiosFilterProvider.notifier);
+                  if (studio != null) {
+                    await filteredStudiosNotifier.setStateAsync([studio]);
+                    final classes = ref.read(combinedClassesProvider).where(
+                          (final _class) => studio.item1.studioTags
+                              .toCategories()
+                              .contains(_class.item0),
+                        );
+                    final categoriesNotifiter =
+                        ref.read(activitiesCategoriesFilterProvider.notifier);
+                    await categoriesNotifiter.setStateAsync(
+                      categoriesNotifiter.state.where(classes.contains),
+                    );
+                  } else {
+                    await filteredStudiosNotifier.clear();
+                  }
+                },
               ),
             ),
-        ],
-        onChanged: (final studio) async {
-          final filteredStudiosNotifier =
-              ref.read(activitiesStudiosFilterProvider.notifier);
-          if (studio != null) {
-            await filteredStudiosNotifier.setStateAsync([studio]);
-            final classes = ref.read(combinedClassesProvider).where(
-                  (final _class) => studio.item1.studioTags
-                      .toCategories()
-                      .contains(_class.item0),
-                );
-            final categoriesNotifiter =
-                ref.read(activitiesCategoriesFilterProvider.notifier);
-            await categoriesNotifiter.setStateAsync(
-              categoriesNotifiter.state.where(classes.contains),
-            );
-          } else {
-            await filteredStudiosNotifier.clear();
-          }
-        },
+          ],
+        ),
       ),
     );
   }
@@ -738,10 +731,10 @@ class ActivitiesCategoriesPicker extends ConsumerWidget {
         ),
       ),
     );
+    final categories = ref.watch(activitiesCategoriesFilterProvider);
     return getSelectorWidget<CombinedClassesModel>(
       text: (final smClassGallery) => smClassGallery.item0.translation,
-      selected: (final value) =>
-          ref.read(activitiesCategoriesFilterProvider).contains(value),
+      selected: categories.contains,
       values: classes,
       onSelected: (final category, final value) {
         final categoriesNotifier = ref.read(
@@ -979,16 +972,16 @@ class ActivityCardContainer extends HookConsumerWidget {
             await ref.read(smUserDepositProvider.future);
             continue all;
           case BookResult.newAbonement:
-            await ref.read(smUserAbonementsProvider.notifier).refresh();
+            unawaited(ref.read(smUserAbonementsProvider.notifier).refresh());
             continue abonement;
           abonement:
           case BookResult.abonement:
-            await ref.read(userAbonementsProvider.notifier).refresh();
+            unawaited(ref.read(userAbonementsProvider.notifier).refresh());
             continue all;
           all:
           case BookResult.discount:
           case BookResult.regular:
-            await ref.read(userRecordsProvider.notifier).refresh();
+            unawaited(ref.read(userRecordsProvider.notifier).refresh());
             await rootNavigator.push<void>(
               MaterialPageRoute(
                 builder: (final context) => SuccessfulBookScreen(
