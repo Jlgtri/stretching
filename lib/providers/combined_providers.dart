@@ -98,9 +98,11 @@ typedef CombinedStudioModel
 extension CombinedStudioModelData on CombinedStudioModel {
   /// Return the avatar from this studios.
   String get avatarUrl {
+    final media =
+        item1.mediaGallerySite.where((final media) => media.url != null);
     String? url;
-    if (item1.mediaGallerySite.isNotEmpty) {
-      url = item1.mediaGallerySite.first.url;
+    if (media.isNotEmpty) {
+      url = media.first.url;
     }
     return url ?? (item0.photos.isNotEmpty ? item0.photos.first : item0.logo);
   }
