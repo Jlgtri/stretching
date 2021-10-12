@@ -46,6 +46,7 @@ import 'package:stretching/utils/logger.dart';
 import 'package:stretching/widgets/book_screens.dart';
 import 'package:stretching/widgets/components/emoji_text.dart';
 import 'package:stretching/widgets/components/font_icon.dart';
+import 'package:stretching/widgets/components/limit_loading_count.dart';
 import 'package:stretching/widgets/content_screen.dart';
 import 'package:stretching/widgets/navigation/components/bottom_sheet.dart';
 import 'package:stretching/widgets/navigation/components/filters.dart';
@@ -184,20 +185,27 @@ final StateNotifierProvider<SaveToHiveIterableNotifier<ActivityTime, String>,
 /// The current selected day of activities.
 final StateProvider<SpecificDay> activitiesDayProvider =
     StateProvider<SpecificDay>((final ref) {
-  final now = (ref.watch(activitiesCurrentTimeProvider)).maybeWhen(
-    data: (final currentTime) => currentTime,
-    orElse: DateTime.now,
+  final specificDay = ref.watch(
+    activitiesCurrentTimeProvider.select(
+      (final currentTime) => currentTime.maybeWhen(
+        data: (final now) => Tuple3(now.year, now.month, now.day),
+        orElse: () {
+          final now = DateTime.now();
+          return Tuple3(now.year, now.month, now.day);
+        },
+      ),
+    ),
   );
   final day = ref.watch(
     activitiesDaysProvider.select((final days) {
       for (final day in days) {
-        if (day == Tuple3(now.year, now.month, now.day)) {
+        if (day == specificDay) {
           return day;
         }
       }
     }),
   );
-  return day ?? Tuple3(now.year, now.month, now.day);
+  return day ?? specificDay;
 });
 
 /// The provider of search query on [ActivitiesScreen].
@@ -358,6 +366,9 @@ final Provider<bool> areActivitiesPresentProvider = Provider<bool>((final ref) {
 class ActivitiesScreen extends HookConsumerWidget {
   /// The screen for the [NavigationScreen.trainers].
   const ActivitiesScreen({final Key? key}) : super(key: key);
+
+  /// The count of maximum simultaneous loading [ActivityCard].
+  static const int maxLoadingCount = 3;
 
   @override
   Widget build(final BuildContext context, final WidgetRef ref) {
@@ -803,7 +814,7 @@ class ActivitiesSearchField extends ConsumerWidget {
 /// [ActivityCardContainer.activity].
 final StateProviderFamily<bool, int> activityCardLoadingProvider =
     StateProvider.family<bool, int>(
-  (final ref, final activity) => false,
+  (final ref, final activityId) => false,
 );
 
 /// The transition between [ActivityCard] and [ActivityScreenCard].
@@ -826,7 +837,15 @@ class ActivityCardContainer extends HookConsumerWidget {
     final theme = Theme.of(context);
     final navigator = Navigator.of(context);
     final rootNavigator = Navigator.of(context, rootNavigator: true);
+    final isMounted = useIsMounted();
     final isLoading = ref.watch(activityCardLoadingProvider(activity.item0.id));
+    final isLoadingList = ref.watch(
+      loadingDataProvider(NavigationScreen.schedule).select(
+        (final loadingData) =>
+            loadingData.state.contains(activity.item0.id) ||
+            loadingData.state.length >= ActivitiesScreen.maxLoadingCount,
+      ),
+    );
     final timeLeftBeforeStart = ref.watch(
       activitiesCurrentTimeProvider.select(
         (final currentTime) => activity.item0.date.difference(
@@ -839,7 +858,6 @@ class ActivityCardContainer extends HookConsumerWidget {
         ),
       ),
     );
-    final isMounted = useIsMounted();
 
     Future<void> logFirebase(final String name) => analytics.logEvent(
           name: name,
@@ -855,6 +873,9 @@ class ActivityCardContainer extends HookConsumerWidget {
       final UserRecordModel appliedRecord, {
       required final bool fullscreen,
     }) async {
+      final loadingData =
+          ref.read(loadingDataProvider(NavigationScreen.schedule));
+      loadingData.state = <Object>[...loadingData.state, activity.item0.id];
       isLoading.state = true;
       try {
         await logFirebase(
@@ -864,7 +885,7 @@ class ActivityCardContainer extends HookConsumerWidget {
           recordId: appliedRecord.id,
           recordDate: appliedRecord.date,
           userPhone: ref.read(userProvider)!.phone,
-          discount: ref.read(discountProvider),
+          discount: ref.read(onCancelDiscountProvider),
         );
         if (smRecord != null) {
           Widget refundedBody(final String body, final String button) =>
@@ -917,7 +938,9 @@ class ActivityCardContainer extends HookConsumerWidget {
               continue all;
             all:
             case ActivityPaidBy.none:
-              unawaited(ref.read(userRecordsProvider.notifier).refresh());
+              if (loadingData.state.length == 1) {
+                unawaited(ref.read(userRecordsProvider.notifier).refresh());
+              }
               navigator.popUntil(Routes.root.withName);
           }
           return true;
@@ -926,17 +949,26 @@ class ActivityCardContainer extends HookConsumerWidget {
         logger.e(exception.type, exception);
         switch (exception.type) {
           case CancelBookExceptionType.notFound:
-            await ref.read(userRecordsProvider.notifier).refresh();
+            if (loadingData.state.length == 1) {
+              await ref.read(userRecordsProvider.notifier).refresh();
+            }
             break;
           case CancelBookExceptionType.timeHacking:
         }
       } finally {
         isLoading.state = false;
+        loadingData.state = <Object>[
+          for (final data in loadingData.state)
+            if (data != activity.item0.id) data
+        ];
       }
       return false;
     }
 
     Future<bool> book({required final bool fullscreen}) async {
+      final loadingData =
+          ref.read(loadingDataProvider(NavigationScreen.schedule));
+      loadingData.state = <Object>[...loadingData.state, activity.item0.id];
       isLoading.state = true;
       try {
         await logFirebase(fullscreen ? FAKeys.bookScreen : FAKeys.book);
@@ -947,6 +979,7 @@ class ActivityCardContainer extends HookConsumerWidget {
           user: ref.read(userProvider)!,
           activity: activity,
           useDiscount: ref.read(discountProvider),
+          useDiscountOnCancel: ref.read(onCancelDiscountProvider),
           abonements: ref.read(combinedAbonementsProvider),
           updateAndTryAgain: isMounted()
               ? (final record) async {
@@ -960,6 +993,7 @@ class ActivityCardContainer extends HookConsumerWidget {
                     user: ref.read(userProvider)!,
                     activity: activity,
                     useDiscount: ref.read(discountProvider),
+                    useDiscountOnCancel: ref.read(onCancelDiscountProvider),
                     abonements: ref.read(combinedAbonementsProvider),
                   );
                 }
@@ -982,7 +1016,9 @@ class ActivityCardContainer extends HookConsumerWidget {
           all:
           case BookResult.discount:
           case BookResult.regular:
-            unawaited(ref.read(userRecordsProvider.notifier).refresh());
+            if (loadingData.state.length == 1) {
+              unawaited(ref.read(userRecordsProvider.notifier).refresh());
+            }
             await rootNavigator.push<void>(
               MaterialPageRoute(
                 builder: (final context) => SuccessfulBookScreen(
@@ -1001,6 +1037,7 @@ class ActivityCardContainer extends HookConsumerWidget {
         if (exception.type != BookExceptionType.dismiss) {
           await Future.wait(<Future<void>>[
             if (isMounted() &&
+                loadingData.state.length == 1 &&
                 exception.type == BookExceptionType.alreadyApplied)
               ref.read(userRecordsProvider.notifier).refresh(),
             rootNavigator.push<void>(
@@ -1031,11 +1068,18 @@ class ActivityCardContainer extends HookConsumerWidget {
         }
       } finally {
         isLoading.state = false;
+        loadingData.state = <Object>[
+          for (final data in loadingData.state)
+            if (data != activity.item0.id) data
+        ];
       }
       return false;
     }
 
     Future<void> addToWishList({required final bool fullscreen}) async {
+      final loadingData =
+          ref.read(loadingDataProvider(NavigationScreen.schedule));
+      loadingData.state = <Object>[...loadingData.state, activity.item0.id];
       isLoading.state = true;
       try {
         await logFirebase(fullscreen ? FAKeys.wishlistScreen : FAKeys.wishlist);
@@ -1076,6 +1120,10 @@ class ActivityCardContainer extends HookConsumerWidget {
         );
       } finally {
         isLoading.state = false;
+        loadingData.state = <Object>[
+          for (final data in loadingData.state)
+            if (data != activity.item0.id) data
+        ];
       }
     }
 
@@ -1093,19 +1141,21 @@ class ActivityCardContainer extends HookConsumerWidget {
           activity,
           onMain: onMain,
           onOpenButtonPressed: action,
-          onPressed: (final appliedRecord) => !isLoading.state && isMounted()
-              ? ref.read(userProvider) == null
-                  ? () => Navigator.of(context, rootNavigator: true)
-                      .pushNamed(Routes.auth.name)
-                  : appliedRecord != null
-                      ? !appliedRecord.yanked &&
-                              timeLeftBeforeStart.inHours < 12
-                          ? null
-                          : () => cancelBook(appliedRecord, fullscreen: false)
-                      : activity.item0.recordsLeft <= 0
-                          ? () => addToWishList(fullscreen: false)
-                          : () => book(fullscreen: false)
-              : null,
+          onPressed: (final appliedRecord) =>
+              (!isLoadingList && !isLoading.state) && isMounted()
+                  ? ref.read(userProvider) == null
+                      ? () => Navigator.of(context, rootNavigator: true)
+                          .pushNamed(Routes.auth.name)
+                      : appliedRecord != null
+                          ? !appliedRecord.yanked &&
+                                  timeLeftBeforeStart.inHours < 12
+                              ? null
+                              : () =>
+                                  cancelBook(appliedRecord, fullscreen: false)
+                          : activity.item0.recordsLeft <= 0
+                              ? () => addToWishList(fullscreen: false)
+                              : () => book(fullscreen: false)
+                  : null,
         ),
       ),
       openBuilder: (final context, final action) => Consumer(
@@ -1117,27 +1167,28 @@ class ActivityCardContainer extends HookConsumerWidget {
             activity,
             onMain: onMain,
             onBackButtonPressed: action,
-            onPressed: (final appliedRecord) => !isLoading.state && isMounted()
-                ? ref.read(userProvider) == null
-                    ? () => Navigator.of(context, rootNavigator: true)
-                        .pushNamed(Routes.auth.name)
-                    : appliedRecord != null
-                        ? !appliedRecord.yanked &&
-                                timeLeftBeforeStart.inHours < 12
-                            ? null
-                            : () async {
-                                await cancelBook(
-                                  appliedRecord,
-                                  fullscreen: true,
-                                );
-                                if (onMain) {
-                                  await rootNavigator.maybePop();
-                                }
-                              }
-                        : activity.item0.recordsLeft <= 0
-                            ? () => addToWishList(fullscreen: true)
-                            : () => book(fullscreen: true)
-                : null,
+            onPressed: (final appliedRecord) =>
+                !isLoadingList && !isLoading.state && isMounted()
+                    ? ref.read(userProvider) == null
+                        ? () => Navigator.of(context, rootNavigator: true)
+                            .pushNamed(Routes.auth.name)
+                        : appliedRecord != null
+                            ? !appliedRecord.yanked &&
+                                    timeLeftBeforeStart.inHours < 12
+                                ? null
+                                : () async {
+                                    await cancelBook(
+                                      appliedRecord,
+                                      fullscreen: true,
+                                    );
+                                    if (onMain) {
+                                      await rootNavigator.maybePop();
+                                    }
+                                  }
+                            : activity.item0.recordsLeft <= 0
+                                ? () => addToWishList(fullscreen: true)
+                                : () => book(fullscreen: true)
+                    : null,
           ),
         ),
       ),
@@ -2560,7 +2611,10 @@ class ActivitiesScreenDayPicker extends SliverPersistentHeaderDelegate {
         padding: const EdgeInsets.symmetric(vertical: spacing / 2),
         child: Consumer(
           builder: (final context, final ref, final child) {
-            final activitiesDays = ref.watch(activitiesDaysProvider);
+            final activitiesDays = ref.watch(
+              activitiesDaysProvider
+                  .select((final activitiesDays) => activitiesDays),
+            );
             return ListView.builder(
               primary: false,
               shrinkWrap: true,

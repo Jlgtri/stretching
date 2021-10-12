@@ -891,6 +891,16 @@ final Provider<bool> discountProvider = Provider<bool>(
   ),
 );
 
+/// The provider of whether to provide a discount on cancel to a user.
+final Provider<bool> onCancelDiscountProvider = Provider<bool>(
+  (final ref) => ref.watch(
+    userRecordsProvider.select(
+      (final userRecords) =>
+          userRecords.count((final userRecord) => !userRecord.deleted) <= 1,
+    ),
+  ),
+);
+
 /// The class to handle the exception in the YClients API.
 @immutable
 class YClientsException implements Exception {

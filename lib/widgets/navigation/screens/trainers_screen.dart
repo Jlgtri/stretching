@@ -371,14 +371,14 @@ class TrainerCard extends HookConsumerWidget {
       });
     });
     final loaded = ref.watch(
-      loadedData(NavigationScreen.trainers).select(
-        (final loadedData) =>
-            loadedData.state.contains(trainer.item1.trainerPhoto),
+      loadedDataProvider(NavigationScreen.trainers).select(
+        (final loadedDataProvider) =>
+            loadedDataProvider.state.contains(trainer.item1.trainerPhoto),
       ),
     );
     final loadingTrainersCount = ref.watch(
-      loadingData(NavigationScreen.trainers).select(
-        (final loadingData) => loadingData.state.length,
+      loadingDataProvider(NavigationScreen.trainers).select(
+        (final loadingDataProvider) => loadingDataProvider.state.length,
       ),
     );
     return InkWell(
