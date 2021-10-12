@@ -69,7 +69,13 @@ class ProfileScreen extends HookConsumerWidget {
 
     final scrollController =
         ref.watch(navigationScrollControllerProvider(NavigationScreen.profile));
-    final userDeposit = ref.watch(smUserDepositProvider);
+    final userDeposit = ref.watch(
+      smUserDepositProvider.select(
+        (final userDeposit) =>
+            userDeposit.whenOrNull(data: (final userDeposit) => userDeposit),
+      ),
+    );
+    final prevUserDeposit = usePrevious(userDeposit);
     final abonements = ref.watch(combinedAbonementsProvider);
     List<Widget> createCards() => <Widget>[
           for (var index = 0; index < abonements.length; index++)
@@ -263,38 +269,36 @@ class ProfileScreen extends HookConsumerWidget {
           padding: const EdgeInsets.symmetric(vertical: 16),
           children: <Widget>[
             /// Deposit
-            ...?userDeposit.when(
-              data: (final userDeposit) => <Widget>[
-                if (userDeposit > 0)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: DepositCard(userDeposit),
-                  )
-              ],
-              error: (final error, final stackTrace, final userDeposit) => null,
-              loading: (final userDeposit) => null,
-            ),
+            if ((userDeposit ?? (prevUserDeposit ?? 0)) > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: DepositCard(userDeposit ?? prevUserDeposit!),
+              )
+            else
+              // Fixes undesired disposal for underlying widgets.
+              const SizedBox.shrink(),
 
             /// Abonements
-            if (abonementsCards.value.isNotEmpty) ...<Widget>[
+            if (abonements.isNotEmpty) ...<Widget>[
               TCard(
                 lockYAxis: true,
-                slideSpeed: abonementsCards.value.length == 1 ? 0 : 12,
-                size: Size.fromHeight(
-                  100 * mediaQuery.textScaleFactor + 14,
-                ),
+                slideSpeed: abonements.length == 1 ? 0 : 12,
+                size: abonements.isNotEmpty
+                    ? Size.fromHeight(100 * mediaQuery.textScaleFactor + 14)
+                    : Size.zero,
                 delaySlideFor: 150,
-                onEnd: () => cardController.forward(
-                  direction: SwipDirection.Right,
-                ),
-                onForward: (final direction, final info) =>
-                    // ignore: avoid_dynamic_calls
-                    cardController.reset(
-                  cards: abonementsCards.value = <Widget>[
-                    ...abonementsCards.value.sublist(1),
-                    abonementsCards.value.first,
-                  ],
-                ),
+                onEnd: () {
+                  cardController.forward(direction: SwipDirection.Right);
+                },
+                onForward: (final direction, final info) {
+                  // ignore: avoid_dynamic_calls
+                  cardController.reset(
+                    cards: abonementsCards.value = <Widget>[
+                      ...abonementsCards.value.sublist(1),
+                      abonementsCards.value.first,
+                    ],
+                  );
+                },
                 controller: cardController,
                 cards: abonementsCards.value,
               ),

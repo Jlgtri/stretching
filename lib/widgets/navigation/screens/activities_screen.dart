@@ -184,10 +184,9 @@ final StateNotifierProvider<SaveToHiveIterableNotifier<ActivityTime, String>,
 /// The current selected day of activities.
 final StateProvider<SpecificDay> activitiesDayProvider =
     StateProvider<SpecificDay>((final ref) {
-  final now = (ref.watch(activitiesCurrentTimeProvider)).when(
+  final now = (ref.watch(activitiesCurrentTimeProvider)).maybeWhen(
     data: (final currentTime) => currentTime,
-    loading: (final currentTime) => DateTime.now(),
-    error: (final error, final stackTrace, final currentTime) => DateTime.now(),
+    orElse: DateTime.now,
   );
   final day = ref.watch(
     activitiesDaysProvider.select((final days) {
@@ -235,10 +234,9 @@ final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
       ref.watch(activitiesStudiosFilterProvider).toList(growable: false);
   final trainers =
       ref.watch(activitiesTrainersFilterProvider).toList(growable: false);
-  final now = (ref.watch(activitiesCurrentTimeProvider)).when(
+  final now = (ref.watch(activitiesCurrentTimeProvider)).maybeWhen(
     data: (final currentTime) => currentTime,
-    loading: (final currentTime) => DateTime.now(),
-    error: (final error, final stackTrace, final currentTime) => DateTime.now(),
+    orElse: DateTime.now,
   );
   return ref.watch(
     /// First of all, checks if any activities are present.
@@ -332,19 +330,15 @@ final Provider<Iterable<SpecificDay>> activitiesDaysProvider =
     );
   }
 
-  return (ref.watch(activitiesCurrentTimeProvider)).when(
-    data: result,
-    loading: (final currentTime) => result(),
-    error: (final error, final stackTrace, final currentTime) => result(),
-  );
+  return (ref.watch(activitiesCurrentTimeProvider))
+      .maybeWhen(data: result, orElse: result);
 });
 
 /// If the activities are present for the current selected day.
 final Provider<bool> areActivitiesPresentProvider = Provider<bool>((final ref) {
-  final now = (ref.watch(activitiesCurrentTimeProvider)).when(
+  final now = (ref.watch(activitiesCurrentTimeProvider)).maybeWhen(
     data: (final currentTime) => currentTime,
-    loading: (final currentTime) => DateTime.now(),
-    error: (final error, final stackTrace, final currentTime) => DateTime.now(),
+    orElse: DateTime.now,
   );
   final day = ref.watch(activitiesDayProvider.select((final day) => day.state));
   return ref.watch(
@@ -954,20 +948,22 @@ class ActivityCardContainer extends HookConsumerWidget {
           activity: activity,
           useDiscount: ref.read(discountProvider),
           abonements: ref.read(combinedAbonementsProvider),
-          updateAndTryAgain: (final record) async {
-            await Future.wait(<Future<void>>[
-              ref.read(userAbonementsProvider.notifier).refresh(),
-              ref.read(smUserAbonementsProvider.notifier).refresh()
-            ]);
-            return businessLogic.book(
-              prevRecord: record,
-              navigator: rootNavigator,
-              user: ref.read(userProvider)!,
-              activity: activity,
-              useDiscount: ref.read(discountProvider),
-              abonements: ref.read(combinedAbonementsProvider),
-            );
-          },
+          updateAndTryAgain: isMounted()
+              ? (final record) async {
+                  await Future.wait(<Future<void>>[
+                    ref.read(userAbonementsProvider.notifier).refresh(),
+                    ref.read(smUserAbonementsProvider.notifier).refresh()
+                  ]);
+                  return businessLogic.book(
+                    prevRecord: record,
+                    navigator: rootNavigator,
+                    user: ref.read(userProvider)!,
+                    activity: activity,
+                    useDiscount: ref.read(discountProvider),
+                    abonements: ref.read(combinedAbonementsProvider),
+                  );
+                }
+              : null,
         );
         logger.i(result.item1);
         switch (result.item1) {
@@ -1004,7 +1000,8 @@ class ActivityCardContainer extends HookConsumerWidget {
         logger.e(exception.type, exception);
         if (exception.type != BookExceptionType.dismiss) {
           await Future.wait(<Future<void>>[
-            if (exception.type == BookExceptionType.alreadyApplied)
+            if (isMounted() &&
+                exception.type == BookExceptionType.alreadyApplied)
               ref.read(userRecordsProvider.notifier).refresh(),
             rootNavigator.push<void>(
               MaterialPageRoute(
@@ -1687,11 +1684,9 @@ class ActivityScreenCard extends ConsumerWidget {
     final timeLeftBeforeStart = ref.watch(
       activitiesCurrentTimeProvider.select(
         (final currentTime) => activity.item0.date.difference(
-          currentTime.when(
+          currentTime.maybeWhen(
             data: (final currentTime) => currentTime,
-            loading: (final currentTime) => DateTime.now(),
-            error: (final error, final stackTrace, final currentTime) =>
-                DateTime.now(),
+            orElse: DateTime.now,
           ),
         ),
       ),

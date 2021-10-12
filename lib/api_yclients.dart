@@ -722,19 +722,34 @@ final StateNotifierProvider<ContentNotifier<ActivityModel>,
     converter: activityConverter,
     refreshInterval: const Duration(minutes: 10),
     refreshState: (final notifier) async {
-      final getData = ref.read(yClientsProvider).getIterableData;
-      final activities = await StreamGroup.merge(<Stream<ActivityModel>>[
-        for (final studio in ref.read(smStudiosOptionsProvider))
-          getData(
+      final yClients = ref.read(yClientsProvider);
+      Stream<ActivityModel> getSchedule(
+        final SMStudioOptionsModel studio,
+      ) async* {
+        for (var index = 1;; index++) {
+          var isDataPresent = false;
+          await for (final activity in yClients.getIterableData(
             jsonConverter: const IterableConverter(activityConverter),
             url: '$yClientsUrl/activity/${studio.studioId}/search',
-            queryParameters: <String, Object?>{'count': 300},
+            queryParameters: <String, Object?>{'page': index, 'count': 300},
             onError: (final error) async {
               // debugger(message: error.message);
               logger.e(error.message, error, error.stackTrace);
             },
-          )
-      ]).toList();
+          )) {
+            isDataPresent = true;
+            yield activity;
+          }
+
+          if (!isDataPresent) {
+            return;
+          }
+        }
+      }
+
+      final studios = ref.read(smStudiosOptionsProvider);
+      final activities =
+          await StreamGroup.merge(studios.map(getSchedule)).toList();
       return activities.isEmpty ? null : activities;
     },
   ),
@@ -751,31 +766,31 @@ final StateNotifierProvider<ContentNotifier<GoodModel>, Iterable<GoodModel>>
     saveName: 'goods',
     converter: goodConverter,
     refreshState: (final notifier) async {
+      final yClients = ref.read(yClientsProvider);
       Stream<GoodModel> getGoods(final SMStudioOptionsModel studio) async* {
-        for (var index = 1; index < double.infinity; index++) {
-          var areGoodsPresent = false;
-          await for (final good
-              in ref.read(yClientsProvider).getIterableData<GoodModel>(
-                    jsonConverter: const IterableConverter(goodConverter),
-                    url: '$yClientsUrl/goods/${studio.studioId}',
-                    queryParameters: <String, Object?>{
-                      'page': index,
-                      'count': 100,
-                      'category_id': studio.categoryAbId,
-                    },
-                    extra: const YClientsRequestExtra<Iterable<GoodModel>>(
-                      devToken: true,
-                    ),
-                    onError: (final error) async {
-                      // debugger(message: error.message);
-                      logger.e(error.message, error, error.stackTrace);
-                    },
-                  )) {
-            areGoodsPresent = true;
+        for (var index = 1;; index++) {
+          var isDataPresent = false;
+          await for (final good in yClients.getIterableData<GoodModel>(
+            jsonConverter: const IterableConverter(goodConverter),
+            url: '$yClientsUrl/goods/${studio.studioId}',
+            queryParameters: <String, Object?>{
+              'page': index,
+              'count': 100,
+              'category_id': studio.categoryAbId,
+            },
+            extra: const YClientsRequestExtra<Iterable<GoodModel>>(
+              devToken: true,
+            ),
+            onError: (final error) async {
+              // debugger(message: error.message);
+              logger.e(error.message, error, error.stackTrace);
+            },
+          )) {
+            isDataPresent = true;
             yield good;
           }
 
-          if (!areGoodsPresent) {
+          if (!isDataPresent) {
             return;
           }
         }

@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:crypto/crypto.dart';
 import 'package:darq/darq.dart';
@@ -380,8 +379,8 @@ class BusinessLogic {
             orderId: paidBy == ActivityPaidBy.regular ? orderId : null,
           ),
         );
-      } on DioError catch (e) {
-        debugger(message: e.message);
+      } on DioError catch (_) {
+        // debugger(message: e.message);
         return false;
       }
     }

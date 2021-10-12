@@ -431,12 +431,12 @@ final Provider<SMActivityPriceModel> smActivityPriceProvider =
 /// The provider of the current user's deposit.
 ///
 /// See: https://smstretching.ru/mobile/users/{token}/get_user_deposit
-final FutureProvider<int> smUserDepositProvider =
-    FutureProvider<int>((final ref) async {
+final FutureProvider<int?> smUserDepositProvider =
+    FutureProvider<int?>((final ref) {
   final userPhone = ref.watch(userProvider.select((final user) => user?.phone));
-  return userPhone != null
-      ? await smStretching.getUserDeposit(userPhone) ?? 0
-      : 0;
+  if (userPhone != null) {
+    return smStretching.getUserDeposit(userPhone);
+  }
 });
 
 /// The provider of the default studio id in the SMStretching API.
