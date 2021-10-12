@@ -319,11 +319,11 @@ class SMStudioMediaModel {
   final int id;
 
   /// The url to this media.
-  final String url;
+  final String? url;
 
   /// Convert this model to map with string keys.
   Map<String, Object?> toMap() =>
-      <String, Object?>{'id': id.toString(), 'url': url};
+      <String, Object?>{'id': id.toString(), if (url != null) 'url': url};
 
   /// Convert the map with string keys to this model.
   factory SMStudioMediaModel.fromMap(final Map<String, Object?> map) =>
@@ -331,7 +331,7 @@ class SMStudioMediaModel {
         id: map['id'] is String
             ? int.parse(map['id']! as String)
             : map['id']! as int,
-        url: map['url']! as String,
+        url: map['url'] as String?,
       );
 
   /// Convert this model to a json string.

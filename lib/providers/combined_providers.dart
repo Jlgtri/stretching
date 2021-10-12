@@ -97,11 +97,13 @@ typedef CombinedStudioModel
 /// The extra data provided for [CombinedStudioModel].
 extension CombinedStudioModelData on CombinedStudioModel {
   /// Return the avatar from this studios.
-  String get avatarUrl => item1.mediaGallerySite.isNotEmpty
-      ? item1.mediaGallerySite.first.url
-      : item0.photos.isNotEmpty
-          ? item0.photos.first
-          : item0.logo;
+  String get avatarUrl {
+    String? url;
+    if (item1.mediaGallerySite.isNotEmpty) {
+      url = item1.mediaGallerySite.first.url;
+    }
+    return url ?? (item0.photos.isNotEmpty ? item0.photos.first : item0.logo);
+  }
 }
 
 /// The provider of [StudioModel] and [SMStudioModel] pairs.
