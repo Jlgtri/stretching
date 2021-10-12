@@ -199,7 +199,6 @@ class BusinessLogic {
     required final CombinedActivityModel activity,
     required final Iterable<CombinedAbonementModel> abonements,
     required final bool useDiscount,
-    required final bool useDiscountOnCancel,
     final FutureOr<Tuple2<RecordModel, BookResult>> Function(RecordModel)?
         updateAndTryAgain,
     final RecordModel? prevRecord,
@@ -232,7 +231,7 @@ class BusinessLogic {
     if (prevRecord != null) {
       record = prevRecord;
       cancel = () => cancelBook(
-            discount: useDiscountOnCancel,
+            discount: useDiscount,
             recordDate: record.date,
             recordId: record.id,
             userPhone: user.phone,
@@ -275,7 +274,7 @@ class BusinessLogic {
       }
 
       cancel = () => cancelBook(
-            discount: useDiscountOnCancel,
+            discount: useDiscount,
             recordDate: record.date,
             recordId: record.id,
             userPhone: user.phone,

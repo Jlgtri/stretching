@@ -32,6 +32,7 @@ import 'package:stretching/models/smstretching/sm_trainer_model.dart';
 import 'package:stretching/models/smstretching/sm_wishlist_model.dart';
 import 'package:stretching/models/yclients/activity_model.dart';
 import 'package:stretching/models/yclients/company_model.dart';
+import 'package:stretching/models/yclients/record_model.dart';
 import 'package:stretching/models/yclients/user_record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/content_provider.dart';
@@ -881,12 +882,20 @@ class ActivityCardContainer extends HookConsumerWidget {
         await logFirebase(
           fullscreen ? FAKeys.cancelBookScreen : FAKeys.cancelBook,
         );
-        final smRecord = await (ref.read(businessLogicProvider)).cancelBook(
-          recordId: appliedRecord.id,
-          recordDate: appliedRecord.date,
-          userPhone: ref.read(userProvider)!.phone,
-          discount: ref.read(onCancelDiscountProvider),
-        );
+        final SMRecordModel? smRecord;
+        try {
+          smRecord = await (ref.read(businessLogicProvider)).cancelBook(
+            recordId: appliedRecord.id,
+            recordDate: appliedRecord.date,
+            userPhone: ref.read(userProvider)!.phone,
+            discount: ref.read(onCancelDiscountProvider),
+          );
+        } finally {
+          loadingData.state = <Object>[
+            for (final data in loadingData.state)
+              if (data != activity.item0.id) data
+          ];
+        }
         if (smRecord != null) {
           Widget refundedBody(final String body, final String button) =>
               Padding(
@@ -938,7 +947,7 @@ class ActivityCardContainer extends HookConsumerWidget {
               continue all;
             all:
             case ActivityPaidBy.none:
-              if (loadingData.state.length == 1) {
+              if (loadingData.state.isEmpty) {
                 unawaited(ref.read(userRecordsProvider.notifier).refresh());
               }
               navigator.popUntil(Routes.root.withName);
@@ -949,7 +958,7 @@ class ActivityCardContainer extends HookConsumerWidget {
         logger.e(exception.type, exception);
         switch (exception.type) {
           case CancelBookExceptionType.notFound:
-            if (loadingData.state.length == 1) {
+            if (loadingData.state.isEmpty) {
               await ref.read(userRecordsProvider.notifier).refresh();
             }
             break;
@@ -957,10 +966,6 @@ class ActivityCardContainer extends HookConsumerWidget {
         }
       } finally {
         isLoading.state = false;
-        loadingData.state = <Object>[
-          for (final data in loadingData.state)
-            if (data != activity.item0.id) data
-        ];
       }
       return false;
     }
@@ -972,33 +977,40 @@ class ActivityCardContainer extends HookConsumerWidget {
       isLoading.state = true;
       try {
         await logFirebase(fullscreen ? FAKeys.bookScreen : FAKeys.book);
-        final businessLogic = ref.read(businessLogicProvider);
-        final result = await businessLogic.book(
-          timeout: bookTimeout,
-          navigator: rootNavigator,
-          user: ref.read(userProvider)!,
-          activity: activity,
-          useDiscount: ref.read(discountProvider),
-          useDiscountOnCancel: ref.read(onCancelDiscountProvider),
-          abonements: ref.read(combinedAbonementsProvider),
-          updateAndTryAgain: isMounted()
-              ? (final record) async {
-                  await Future.wait(<Future<void>>[
-                    ref.read(userAbonementsProvider.notifier).refresh(),
-                    ref.read(smUserAbonementsProvider.notifier).refresh()
-                  ]);
-                  return businessLogic.book(
-                    prevRecord: record,
-                    navigator: rootNavigator,
-                    user: ref.read(userProvider)!,
-                    activity: activity,
-                    useDiscount: ref.read(discountProvider),
-                    useDiscountOnCancel: ref.read(onCancelDiscountProvider),
-                    abonements: ref.read(combinedAbonementsProvider),
-                  );
-                }
-              : null,
-        );
+        final Tuple2<RecordModel, BookResult> result;
+        try {
+          final businessLogic = ref.read(businessLogicProvider);
+          result = await businessLogic.book(
+            timeout: bookTimeout,
+            navigator: rootNavigator,
+            user: ref.read(userProvider)!,
+            activity: activity,
+            useDiscount: ref.read(discountProvider),
+            abonements: ref.read(combinedAbonementsProvider),
+            updateAndTryAgain: isMounted()
+                ? (final record) async {
+                    await Future.wait(<Future<void>>[
+                      ref.read(userAbonementsProvider.notifier).refresh(),
+                      ref.read(smUserAbonementsProvider.notifier).refresh()
+                    ]);
+                    return businessLogic.book(
+                      prevRecord: record,
+                      navigator: rootNavigator,
+                      user: ref.read(userProvider)!,
+                      activity: activity,
+                      useDiscount: ref.read(discountProvider),
+                      abonements: ref.read(combinedAbonementsProvider),
+                    );
+                  }
+                : null,
+          );
+        } finally {
+          loadingData.state = <Object>[
+            for (final data in loadingData.state)
+              if (data != activity.item0.id) data
+          ];
+        }
+
         logger.i(result.item1);
         switch (result.item1) {
           case BookResult.depositDiscount:
@@ -1016,7 +1028,7 @@ class ActivityCardContainer extends HookConsumerWidget {
           all:
           case BookResult.discount:
           case BookResult.regular:
-            if (loadingData.state.length == 1) {
+            if (loadingData.state.isEmpty) {
               unawaited(ref.read(userRecordsProvider.notifier).refresh());
             }
             await rootNavigator.push<void>(
@@ -1037,7 +1049,7 @@ class ActivityCardContainer extends HookConsumerWidget {
         if (exception.type != BookExceptionType.dismiss) {
           await Future.wait(<Future<void>>[
             if (isMounted() &&
-                loadingData.state.length == 1 &&
+                loadingData.state.isEmpty &&
                 exception.type == BookExceptionType.alreadyApplied)
               ref.read(userRecordsProvider.notifier).refresh(),
             rootNavigator.push<void>(
@@ -1068,10 +1080,6 @@ class ActivityCardContainer extends HookConsumerWidget {
         }
       } finally {
         isLoading.state = false;
-        loadingData.state = <Object>[
-          for (final data in loadingData.state)
-            if (data != activity.item0.id) data
-        ];
       }
       return false;
     }
