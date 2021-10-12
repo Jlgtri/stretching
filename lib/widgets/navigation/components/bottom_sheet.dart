@@ -98,10 +98,12 @@ class BottomSheetHeader extends StatelessWidget {
                   ? MainAxisAlignment.center
                   : MainAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  title,
-                  style: theme.textTheme.headline3?.copyWith(
-                    color: theme.colorScheme.onSurface,
+                Flexible(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.headline3?.copyWith(
+                      color: theme.colorScheme.onSurface,
+                    ),
                   ),
                 ),
               ],
