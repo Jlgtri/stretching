@@ -170,7 +170,7 @@ class ContactScreenState extends ConsumerState<ContactScreen>
                           child: messenger(
                             TR.supportMessengerVkontakte.tr(),
                             AssetsCG.messengersVk,
-                            'Vk://vk.com/smstretching',
+                            'vk://vk.com/smstretching',
                           ),
                         ),
                         Expanded(
