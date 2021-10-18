@@ -170,7 +170,7 @@ class ContactScreenState extends ConsumerState<ContactScreen>
                           child: messenger(
                             TR.supportMessengerVkontakte.tr(),
                             AssetsCG.messengersVk,
-                            'vk://vk.com/smstretching',
+                            'https://vk.me/smstretching',
                           ),
                         ),
                         Expanded(
@@ -184,14 +184,14 @@ class ContactScreenState extends ConsumerState<ContactScreen>
                           child: messenger(
                             TR.supportMessengerTelegram.tr(),
                             AssetsCG.messengersTelegram,
-                            'tg://resolve?domain=SMSTRETCHINGSupportBot',
+                            'https://telegram.me/SMSTRETCHINGSupportBot',
                           ),
                         ),
                         Expanded(
                           child: messenger(
                             TR.supportMessengerWhatsApp.tr(),
                             AssetsCG.messengersWhatsApp,
-                            'whatsapp://send?phone=+79854880070',
+                            'https://api.whatsapp.com/send?phone=79854880070',
                           ),
                         ),
                         // Expanded(child:messenger(
