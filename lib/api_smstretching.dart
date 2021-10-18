@@ -473,6 +473,7 @@ final StateNotifierProvider<ContentNotifier<SMStudioModel>,
   ),
 );
 
+
 /// The studios options provider for SMStretching API.
 ///
 /// See: https://smstretching.ru/mobile/options/{token}/get_all
@@ -496,6 +497,7 @@ final StateNotifierProvider<ContentNotifier<SMStudioOptionsModel>,
   ),
 );
 
+
 /// The trainers provider for SMStretching API.
 ///
 /// See: https://smstretching.ru/wp-json/jet-cct/shtab_v2
@@ -516,6 +518,7 @@ final StateNotifierProvider<ContentNotifier<SMTrainerModel>,
     },
   ),
 );
+
 
 /// The user abonements provider for SMStretching API.
 ///
@@ -602,6 +605,7 @@ final StateNotifierProvider<ContentNotifier<SMClassesGalleryModel>,
     },
   ),
 );
+
 
 /// The provider of the advertisments from the SMStretching API.
 ///

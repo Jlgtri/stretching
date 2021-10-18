@@ -34,7 +34,7 @@ class Loader extends StatelessWidget {
   const Loader({
     required final this.isLoading,
     required final this.child,
-    final this.falsePop = false,
+    final this.willNotPopOnLoad = false,
     final this.color = Colors.black,
     final Key? key,
   }) : super(key: key);
@@ -46,7 +46,7 @@ class Loader extends StatelessWidget {
   final Widget child;
 
   /// If the [Route.willPop] should return false if this loader [isLoading].
-  final bool falsePop;
+  final bool willNotPopOnLoad;
 
   /// The color of this loader's child.
   final Color color;
@@ -73,7 +73,7 @@ class Loader extends StatelessWidget {
         ],
       ),
     );
-    return falsePop
+    return willNotPopOnLoad
         ? WillPopScope(
             onWillPop: () => Future.value(!isLoading),
             child: widget,
@@ -87,7 +87,7 @@ class Loader extends StatelessWidget {
       properties
         ..add(DiagnosticsProperty<bool>('isLoading', isLoading))
         ..add(DiagnosticsProperty<Widget>('child', child))
-        ..add(DiagnosticsProperty<bool>('falsePop', falsePop))
+        ..add(DiagnosticsProperty<bool>('willNotPopOnLoad', willNotPopOnLoad))
         ..add(ColorProperty('color', color)),
     );
   }

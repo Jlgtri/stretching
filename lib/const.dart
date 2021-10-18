@@ -11,7 +11,7 @@ const Locale defaultLocale = Locale('ru', 'RU');
 const List<Locale> supportedLocales = <Locale>[defaultLocale];
 
 /// The country code of the desired phone number.
-const int phoneCountryCode = 38;
+const int phoneCountryCode = 7;
 
 /// The length of the sms pin code for phone number authentication.
 const int pinCodeLength = 4;

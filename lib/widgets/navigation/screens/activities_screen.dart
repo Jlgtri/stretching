@@ -819,7 +819,7 @@ final StateProviderFamily<bool, int> activityCardLoadingProvider =
 );
 
 /// The transition between [ActivityCard] and [ActivityScreenCard].
-class ActivityCardContainer extends HookConsumerWidget {
+class ActivityCardContainer extends StatelessWidget {
   /// The transition between [ActivityCard] and [ActivityScreenCard].
   const ActivityCardContainer(
     final this.activity, {
@@ -834,304 +834,322 @@ class ActivityCardContainer extends HookConsumerWidget {
   final bool onMain;
 
   @override
-  Widget build(final BuildContext context, final WidgetRef ref) {
-    final theme = Theme.of(context);
-    final navigator = Navigator.of(context);
-    final rootNavigator = Navigator.of(context, rootNavigator: true);
-    final isMounted = useIsMounted();
-    final isLoading = ref.watch(activityCardLoadingProvider(activity.item0.id));
-    final isLoadingList = ref.watch(
-      loadingDataProvider(NavigationScreen.schedule).select(
-        (final loadingData) =>
-            loadingData.state.contains(activity.item0.id) ||
-            loadingData.state.length >= ActivitiesScreen.maxLoadingCount,
-      ),
-    );
-    final timeLeftBeforeStart = ref.watch(
-      activitiesCurrentTimeProvider.select(
-        (final currentTime) => activity.item0.date.difference(
-          currentTime.when(
-            data: (final currentTime) => currentTime,
-            loading: (final currentTime) => DateTime.now(),
-            error: (final error, final stackTrace, final currentTime) =>
-                DateTime.now(),
-          ),
-        ),
-      ),
-    );
-
-    Future<void> logFirebase(final String name) => analytics.logEvent(
-          name: name,
-          parameters: <String, String>{
-            'studio': translit(activity.item1.item1.studioName),
-            'class': activity.item0.service.title,
-            'trainer': translit(activity.item2.item1.trainerName),
-            'date_time': faTime(ref.read(smServerTimeProvider)),
-          },
-        );
-
-    Future<bool> cancelBook(
-      final UserRecordModel appliedRecord, {
+  Widget build(final BuildContext context) {
+    void Function()? onPressed(
+      final BuildContext context,
+      final WidgetRef ref, {
       required final bool fullscreen,
-    }) async {
-      final loadingData =
-          ref.read(loadingDataProvider(NavigationScreen.schedule));
-      loadingData.state = <Object>[...loadingData.state, activity.item0.id];
-      isLoading.state = true;
-      try {
-        await logFirebase(
-          fullscreen ? FAKeys.cancelBookScreen : FAKeys.cancelBook,
-        );
-        final SMRecordModel? smRecord;
-        try {
-          smRecord = await (ref.read(businessLogicProvider)).cancelBook(
-            recordId: appliedRecord.id,
-            recordDate: appliedRecord.date,
-            userPhone: ref.read(userProvider)!.phone,
-            discount: ref.read(onCancelDiscountProvider),
-          );
-        } finally {
-          loadingData.state = <Object>[
-            for (final data in loadingData.state)
-              if (data != activity.item0.id) data
-          ];
-        }
-        if (smRecord != null) {
-          Widget refundedBody(final String body, final String button) =>
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    Text(body, style: theme.textTheme.subtitle2),
-                    const SizedBox(height: 24),
-                    BottomButtons<dynamic>(
-                      firstText: button,
-                      onFirstPressed: (final context, final ref) async {
-                        try {
-                          (ref.read(navigationProvider))
-                              .jumpToTab(NavigationScreen.profile.index);
-                        } finally {
-                          await Navigator.of(context).maybePop();
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              );
+      required final bool Function() isMounted,
+      final UserRecordModel? appliedRecord,
+    }) {
+      final theme = Theme.of(context);
+      final navigator = Navigator.of(context);
+      final rootNavigator = Navigator.of(context, rootNavigator: true);
 
-          switch (smRecord.payment) {
-            case ActivityPaidBy.deposit:
-            case ActivityPaidBy.regular:
+      final currentTime = (ref.watch(activitiesCurrentTimeProvider)).maybeWhen(
+        data: (final currentTime) => currentTime,
+        orElse: DateTime.now,
+      );
+      final timeLeftBeforeStart = activity.item0.date.difference(currentTime);
+
+      final isLoading =
+          ref.watch(activityCardLoadingProvider(activity.item0.id));
+      final loadingData =
+          ref.watch(loadingDataProvider(NavigationScreen.schedule));
+      final isLoadingList = loadingData.state.contains(activity.item0.id) ||
+          loadingData.state.length >= ActivitiesScreen.maxLoadingCount;
+
+      Future<void> logFirebase(final String name) => analytics.logEvent(
+            name: name,
+            parameters: <String, String>{
+              'studio': translit(activity.item1.item1.studioName),
+              'class': activity.item0.service.title,
+              'trainer': translit(activity.item2.item1.trainerName),
+              'date_time': faTime(ref.read(smServerTimeProvider)),
+            },
+          );
+
+      Future<bool> cancelBook(final UserRecordModel appliedRecord) async {
+        loadingData.state = <Object>[...loadingData.state, activity.item0.id];
+        isLoading.state = true;
+        try {
+          await logFirebase(
+            fullscreen ? FAKeys.cancelBookScreen : FAKeys.cancelBook,
+          );
+          final SMRecordModel? smRecord;
+          try {
+            smRecord = await (ref.read(businessLogicProvider)).cancelBook(
+              recordId: appliedRecord.id,
+              recordDate: appliedRecord.date,
+              userPhone: ref.read(userProvider)!.phone,
+              discount: ref.read(onCancelDiscountProvider),
+            );
+          } finally {
+            loadingData.state = <Object>[
+              for (final data in loadingData.state)
+                if (data != activity.item0.id) data
+            ];
+          }
+          if (smRecord != null) {
+            Widget refundedBody(final String body, final String button) =>
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Text(body, style: theme.textTheme.subtitle2),
+                      const SizedBox(height: 24),
+                      BottomButtons<dynamic>(
+                        firstText: button,
+                        onFirstPressed: (final context, final ref) async {
+                          try {
+                            (ref.read(navigationProvider))
+                                .jumpToTab(NavigationScreen.profile.index);
+                          } finally {
+                            await Navigator.of(context).maybePop();
+                          }
+                        },
+                      ),
+                    ],
+                  ),
+                );
+
+            switch (smRecord.payment) {
+              case ActivityPaidBy.deposit:
+              case ActivityPaidBy.regular:
+                ref.refresh(smUserDepositProvider);
+                unawaited(ref.read(smUserDepositProvider.future));
+                await showRefundedModalBottomSheet(
+                  context: context,
+                  title: TR.cancelBookDepositTitle.tr(),
+                  child: refundedBody(
+                    TR.cancelBookDepositBody.tr(),
+                    TR.cancelBookDepositButton.tr(),
+                  ),
+                );
+                continue all;
+              case ActivityPaidBy.abonement:
+                unawaited(
+                  ref.read(userAbonementsProvider.notifier).refresh(),
+                );
+                await showRefundedModalBottomSheet(
+                  context: context,
+                  title: TR.cancelBookAbonementTitle.tr(),
+                  child: refundedBody(
+                    TR.cancelBookAbonementBody.tr(),
+                    TR.cancelBookAbonementButton.tr(),
+                  ),
+                );
+                continue all;
+              all:
+              case ActivityPaidBy.none:
+                if (loadingData.state.isEmpty) {
+                  unawaited(
+                    ref.read(userRecordsProvider.notifier).refresh(),
+                  );
+                }
+                navigator.popUntil(Routes.root.withName);
+            }
+            return true;
+          }
+        } on CancelBookException catch (exception) {
+          logger.e(exception.type, exception);
+          switch (exception.type) {
+            case CancelBookExceptionType.notFound:
+              if (loadingData.state.isEmpty) {
+                await ref.read(userRecordsProvider.notifier).refresh();
+              }
+              break;
+            case CancelBookExceptionType.timeHacking:
+          }
+        } finally {
+          isLoading.state = false;
+        }
+        return false;
+      }
+
+      Future<bool> book() async {
+        loadingData.state = <Object>[...loadingData.state, activity.item0.id];
+        isLoading.state = true;
+        try {
+          await logFirebase(fullscreen ? FAKeys.bookScreen : FAKeys.book);
+          final Tuple2<RecordModel, BookResult> result;
+          try {
+            final businessLogic = ref.read(businessLogicProvider);
+            result = await businessLogic.book(
+              timeout: bookTimeout,
+              navigator: rootNavigator,
+              user: ref.read(userProvider)!,
+              activity: activity,
+              useDiscount: ref.read(discountProvider),
+              abonements: ref.read(combinedAbonementsProvider),
+              updateAndTryAgain: isMounted()
+                  ? (final record) async {
+                      await Future.wait(<Future<void>>[
+                        ref.read(userAbonementsProvider.notifier).refresh(),
+                        ref.read(smUserAbonementsProvider.notifier).refresh()
+                      ]);
+                      return businessLogic.book(
+                        prevRecord: record,
+                        navigator: rootNavigator,
+                        user: ref.read(userProvider)!,
+                        activity: activity,
+                        useDiscount: ref.read(discountProvider),
+                        abonements: ref.read(combinedAbonementsProvider),
+                      );
+                    }
+                  : null,
+            );
+          } finally {
+            loadingData.state = <Object>[
+              for (final data in loadingData.state)
+                if (data != activity.item0.id) data
+            ];
+          }
+
+          logger.i(result.item1);
+          switch (result.item1) {
+            case BookResult.depositDiscount:
+            case BookResult.depositRegular:
               ref.refresh(smUserDepositProvider);
-              unawaited(ref.read(smUserDepositProvider.future));
-              await showRefundedModalBottomSheet(
-                context: context,
-                title: TR.cancelBookDepositTitle.tr(),
-                child: refundedBody(
-                  TR.cancelBookDepositBody.tr(),
-                  TR.cancelBookDepositButton.tr(),
-                ),
-              );
+              await ref.read(smUserDepositProvider.future);
               continue all;
-            case ActivityPaidBy.abonement:
-              unawaited(ref.read(userAbonementsProvider.notifier).refresh());
-              await showRefundedModalBottomSheet(
-                context: context,
-                title: TR.cancelBookAbonementTitle.tr(),
-                child: refundedBody(
-                  TR.cancelBookAbonementBody.tr(),
-                  TR.cancelBookAbonementButton.tr(),
-                ),
+            case BookResult.newAbonement:
+              unawaited(
+                ref.read(smUserAbonementsProvider.notifier).refresh(ref),
               );
+              continue abonement;
+            abonement:
+            case BookResult.abonement:
+              unawaited(ref.read(userAbonementsProvider.notifier).refresh(ref));
               continue all;
             all:
-            case ActivityPaidBy.none:
+            case BookResult.discount:
+            case BookResult.regular:
               if (loadingData.state.isEmpty) {
-                unawaited(ref.read(userRecordsProvider.notifier).refresh());
+                unawaited(ref.read(userRecordsProvider.notifier).refresh(ref));
               }
+              await rootNavigator.push<void>(
+                MaterialPageRoute(
+                  builder: (final context) => SuccessfulBookScreen(
+                    activity: activity,
+                    record: result.item0,
+                    abonement: result.item1 == BookResult.newAbonement,
+                  ),
+                ),
+              );
               navigator.popUntil(Routes.root.withName);
+              rootNavigator.popUntil(Routes.root.withName);
           }
           return true;
+        } on BookException catch (exception) {
+          logger.e(exception.type, exception);
+          if (exception.type != BookExceptionType.dismiss) {
+            await Future.wait(<Future<void>>[
+              if (isMounted() &&
+                  loadingData.state.isEmpty &&
+                  exception.type == BookExceptionType.alreadyApplied)
+                ref.read(userRecordsProvider.notifier).refresh(ref),
+              rootNavigator.push<void>(
+                MaterialPageRoute(
+                  builder: (final context) => ResultBookScreen(
+                    showBackButton: exception.type == BookExceptionType.payment,
+                    title: exception.type.title,
+                    body: exception.type.info,
+                    button: exception.type.button,
+                    onPressed: exception.type == BookExceptionType.general
+                        ? () {
+                            (ref.read(navigationProvider))
+                                .jumpToTab(NavigationScreen.home.index);
+                            navigator.popUntil(Routes.root.withName);
+                            rootNavigator.popUntil(Routes.root.withName);
+                          }
+                        : exception.type == BookExceptionType.alreadyApplied ||
+                                exception.type == BookExceptionType.full
+                            ? () {
+                                navigator.popUntil(Routes.root.withName);
+                                rootNavigator.popUntil(Routes.root.withName);
+                              }
+                            : null,
+                  ),
+                ),
+              )
+            ]);
+          }
+        } finally {
+          isLoading.state = false;
         }
-      } on CancelBookException catch (exception) {
-        logger.e(exception.type, exception);
-        switch (exception.type) {
-          case CancelBookExceptionType.notFound:
-            if (loadingData.state.isEmpty) {
-              await ref.read(userRecordsProvider.notifier).refresh();
-            }
-            break;
-          case CancelBookExceptionType.timeHacking:
-        }
-      } finally {
-        isLoading.state = false;
+        return false;
       }
-      return false;
-    }
 
-    Future<bool> book({required final bool fullscreen}) async {
-      final loadingData =
-          ref.read(loadingDataProvider(NavigationScreen.schedule));
-      loadingData.state = <Object>[...loadingData.state, activity.item0.id];
-      isLoading.state = true;
-      try {
-        await logFirebase(fullscreen ? FAKeys.bookScreen : FAKeys.book);
-        final Tuple2<RecordModel, BookResult> result;
+      Future<void> addToWishList() async {
+        loadingData.state = <Object>[...loadingData.state, activity.item0.id];
+        isLoading.state = true;
         try {
-          final businessLogic = ref.read(businessLogicProvider);
-          result = await businessLogic.book(
-            timeout: bookTimeout,
-            navigator: rootNavigator,
-            user: ref.read(userProvider)!,
-            activity: activity,
-            useDiscount: ref.read(discountProvider),
-            abonements: ref.read(combinedAbonementsProvider),
-            updateAndTryAgain: isMounted()
-                ? (final record) async {
-                    await Future.wait(<Future<void>>[
-                      ref.read(userAbonementsProvider.notifier).refresh(),
-                      ref.read(smUserAbonementsProvider.notifier).refresh()
-                    ]);
-                    return businessLogic.book(
-                      prevRecord: record,
-                      navigator: rootNavigator,
-                      user: ref.read(userProvider)!,
-                      activity: activity,
-                      useDiscount: ref.read(discountProvider),
-                      abonements: ref.read(combinedAbonementsProvider),
-                    );
-                  }
-                : null,
+          await logFirebase(
+            fullscreen ? FAKeys.wishlistScreen : FAKeys.wishlist,
+          );
+          final user = ref.read(userProvider)!;
+          final userWishlist = await smStretching.getWishlist(user.phone);
+          final alreadyApplied = userWishlist.any(
+            (final userWishlist) =>
+                userWishlist.activityId == activity.item0.id,
+          );
+          var addedToWishlist = false;
+          if (!alreadyApplied) {
+            addedToWishlist = await smStretching.createWishlist(
+              SMWishlistModel(
+                activityId: activity.item0.id,
+                activityDate: activity.item0.date,
+                addDate: ref.read(smServerTimeProvider),
+                userPhone: user.phone,
+              ),
+            );
+          }
+
+          await rootNavigator.push(
+            MaterialPageRoute<void>(
+              builder: (final context) => ResultBookScreen(
+                emoji: '🧘',
+                title: alreadyApplied
+                    ? TR.wishlistAlreadyAdded.tr()
+                    : !addedToWishlist
+                        ? TR.wishlistErrorTitle.tr()
+                        : TR.wishlistAddedTitle.tr(),
+                body: !addedToWishlist
+                    ? TR.wishlistErrorBody.tr()
+                    : TR.wishlistAddedBody.tr(),
+                button: !addedToWishlist
+                    ? TR.wishlistErrorButton.tr()
+                    : TR.wishlistAddedButton.tr(),
+              ),
+            ),
           );
         } finally {
+          isLoading.state = false;
           loadingData.state = <Object>[
             for (final data in loadingData.state)
               if (data != activity.item0.id) data
           ];
         }
-
-        logger.i(result.item1);
-        switch (result.item1) {
-          case BookResult.depositDiscount:
-          case BookResult.depositRegular:
-            ref.refresh(smUserDepositProvider);
-            await ref.read(smUserDepositProvider.future);
-            continue all;
-          case BookResult.newAbonement:
-            unawaited(ref.read(smUserAbonementsProvider.notifier).refresh());
-            continue abonement;
-          abonement:
-          case BookResult.abonement:
-            unawaited(ref.read(userAbonementsProvider.notifier).refresh());
-            continue all;
-          all:
-          case BookResult.discount:
-          case BookResult.regular:
-            if (loadingData.state.isEmpty) {
-              unawaited(ref.read(userRecordsProvider.notifier).refresh());
-            }
-            await rootNavigator.push<void>(
-              MaterialPageRoute(
-                builder: (final context) => SuccessfulBookScreen(
-                  activity: activity,
-                  record: result.item0,
-                  abonement: result.item1 == BookResult.newAbonement,
-                ),
-              ),
-            );
-            navigator.popUntil(Routes.root.withName);
-            rootNavigator.popUntil(Routes.root.withName);
-        }
-        return true;
-      } on BookException catch (exception) {
-        logger.e(exception.type, exception);
-        if (exception.type != BookExceptionType.dismiss) {
-          await Future.wait(<Future<void>>[
-            if (isMounted() &&
-                loadingData.state.isEmpty &&
-                exception.type == BookExceptionType.alreadyApplied)
-              ref.read(userRecordsProvider.notifier).refresh(),
-            rootNavigator.push<void>(
-              MaterialPageRoute(
-                builder: (final context) => ResultBookScreen(
-                  showBackButton: exception.type == BookExceptionType.payment,
-                  title: exception.type.title,
-                  body: exception.type.info,
-                  button: exception.type.button,
-                  onPressed: exception.type == BookExceptionType.general
-                      ? () {
-                          (ref.read(navigationProvider))
-                              .jumpToTab(NavigationScreen.home.index);
-                          navigator.popUntil(Routes.root.withName);
-                          rootNavigator.popUntil(Routes.root.withName);
-                        }
-                      : exception.type == BookExceptionType.alreadyApplied ||
-                              exception.type == BookExceptionType.full
-                          ? () {
-                              navigator.popUntil(Routes.root.withName);
-                              rootNavigator.popUntil(Routes.root.withName);
-                            }
-                          : null,
-                ),
-              ),
-            )
-          ]);
-        }
-      } finally {
-        isLoading.state = false;
       }
-      return false;
-    }
 
-    Future<void> addToWishList({required final bool fullscreen}) async {
-      final loadingData =
-          ref.read(loadingDataProvider(NavigationScreen.schedule));
-      loadingData.state = <Object>[...loadingData.state, activity.item0.id];
-      isLoading.state = true;
-      try {
-        await logFirebase(fullscreen ? FAKeys.wishlistScreen : FAKeys.wishlist);
-        final user = ref.read(userProvider)!;
-        final userWishlist = await smStretching.getWishlist(user.phone);
-        final alreadyApplied = userWishlist.any(
-          (final userWishlist) => userWishlist.activityId == activity.item0.id,
-        );
-        var addedToWishlist = false;
-        if (!alreadyApplied) {
-          addedToWishlist = await smStretching.createWishlist(
-            SMWishlistModel(
-              activityId: activity.item0.id,
-              activityDate: activity.item0.date,
-              addDate: ref.read(smServerTimeProvider),
-              userPhone: user.phone,
-            ),
-          );
-        }
-
-        await rootNavigator.push(
-          MaterialPageRoute<void>(
-            builder: (final context) => ResultBookScreen(
-              emoji: '🧘',
-              title: alreadyApplied
-                  ? TR.wishlistAlreadyAdded.tr()
-                  : !addedToWishlist
-                      ? TR.wishlistErrorTitle.tr()
-                      : TR.wishlistAddedTitle.tr(),
-              body: !addedToWishlist
-                  ? TR.wishlistErrorBody.tr()
-                  : TR.wishlistAddedBody.tr(),
-              button: !addedToWishlist
-                  ? TR.wishlistErrorButton.tr()
-                  : TR.wishlistAddedButton.tr(),
-            ),
-          ),
-        );
-      } finally {
-        isLoading.state = false;
-        loadingData.state = <Object>[
-          for (final data in loadingData.state)
-            if (data != activity.item0.id) data
-        ];
+      if (!isLoadingList && !isLoading.state && isMounted()) {
+        return ref.read(userProvider) == null
+            ? () => Navigator.of(context, rootNavigator: true)
+                .pushNamed(Routes.auth.name)
+            : appliedRecord != null
+                ? !appliedRecord.yanked && timeLeftBeforeStart.inHours < 12
+                    ? null
+                    : () async {
+                        await cancelBook(appliedRecord);
+                        if (fullscreen && onMain) {
+                          await rootNavigator.maybePop();
+                        }
+                      }
+                : activity.item0.recordsLeft <= 0
+                    ? addToWishList
+                    : book;
       }
     }
 
@@ -1143,60 +1161,52 @@ class ActivityCardContainer extends HookConsumerWidget {
       closedColor: Colors.transparent,
       middleColor: Colors.transparent,
       transitionDuration: const Duration(milliseconds: 650),
-      closedBuilder: (final context, final action) => Loader(
-        isLoading: isLoading.state,
-        child: ActivityCard(
-          activity,
-          onMain: onMain,
-          onOpenButtonPressed: action,
-          onPressed: (final appliedRecord) =>
-              (!isLoadingList && !isLoading.state) && isMounted()
-                  ? ref.read(userProvider) == null
-                      ? () => Navigator.of(context, rootNavigator: true)
-                          .pushNamed(Routes.auth.name)
-                      : appliedRecord != null
-                          ? !appliedRecord.yanked &&
-                                  timeLeftBeforeStart.inHours < 12
-                              ? null
-                              : () =>
-                                  cancelBook(appliedRecord, fullscreen: false)
-                          : activity.item0.recordsLeft <= 0
-                              ? () => addToWishList(fullscreen: false)
-                              : () => book(fullscreen: false)
-                  : null,
+      closedBuilder: (final context, final action) => Consumer(
+        builder: (final context, final ref, final child) => Loader(
+          isLoading:
+              ref.watch(activityCardLoadingProvider(activity.item0.id)).state,
+          child: ActivityCard(
+            activity,
+            onMain: onMain,
+            onOpenButtonPressed: action,
+            onPressed: (
+              final context,
+              final ref, {
+              required final isMounted,
+              final appliedRecord,
+            }) =>
+                onPressed(
+              context,
+              ref,
+              isMounted: isMounted,
+              appliedRecord: appliedRecord,
+              fullscreen: false,
+            ),
+          ),
         ),
       ),
       openBuilder: (final context, final action) => Consumer(
         builder: (final context, final ref, final child) => Loader(
-          falsePop: true,
+          willNotPopOnLoad: true,
           isLoading:
               ref.watch(activityCardLoadingProvider(activity.item0.id)).state,
           child: ActivityScreenCard(
             activity,
             onMain: onMain,
             onBackButtonPressed: action,
-            onPressed: (final appliedRecord) =>
-                !isLoadingList && !isLoading.state && isMounted()
-                    ? ref.read(userProvider) == null
-                        ? () => Navigator.of(context, rootNavigator: true)
-                            .pushNamed(Routes.auth.name)
-                        : appliedRecord != null
-                            ? !appliedRecord.yanked &&
-                                    timeLeftBeforeStart.inHours < 12
-                                ? null
-                                : () async {
-                                    await cancelBook(
-                                      appliedRecord,
-                                      fullscreen: true,
-                                    );
-                                    if (onMain) {
-                                      await rootNavigator.maybePop();
-                                    }
-                                  }
-                            : activity.item0.recordsLeft <= 0
-                                ? () => addToWishList(fullscreen: true)
-                                : () => book(fullscreen: true)
-                    : null,
+            onPressed: (
+              final context,
+              final ref, {
+              required final isMounted,
+              final appliedRecord,
+            }) =>
+                onPressed(
+              context,
+              ref,
+              isMounted: isMounted,
+              appliedRecord: appliedRecord,
+              fullscreen: true,
+            ),
           ),
         ),
       ),
@@ -1214,7 +1224,7 @@ class ActivityCardContainer extends HookConsumerWidget {
 }
 
 /// The activity card to display on [ActivitiesScreen].
-class ActivityCard extends ConsumerWidget {
+class ActivityCard extends HookConsumerWidget {
   /// The activity card to display on [ActivitiesScreen].
   const ActivityCard(
     final this.activity, {
@@ -1228,7 +1238,7 @@ class ActivityCard extends ConsumerWidget {
   final CombinedActivityModel activity;
 
   /// The callback with found record that returns a callback on this card.
-  final void Function()? Function(UserRecordModel? appliedRecord) onPressed;
+  final ActivityAction onPressed;
 
   /// The callback on the back button of this card.
   final void Function() onOpenButtonPressed;
@@ -1242,6 +1252,7 @@ class ActivityCard extends ConsumerWidget {
     final mediaQuery = MediaQuery.of(context);
     final grey = theme.colorScheme.onSurface.withOpacity(2 / 3);
 
+    final isMounted = useIsMounted();
     final appliedRecord = ref.watch(
       userRecordsProvider.select((final userRecords) {
         for (final record in userRecords) {
@@ -1252,7 +1263,12 @@ class ActivityCard extends ConsumerWidget {
       }),
     );
 
-    final _onPressed = onPressed(appliedRecord);
+    final _onPressed = onPressed(
+      context,
+      ref,
+      appliedRecord: appliedRecord,
+      isMounted: isMounted,
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Material(
@@ -1444,12 +1460,7 @@ class ActivityCard extends ConsumerWidget {
     super.debugFillProperties(
       properties
         ..add(DiagnosticsProperty<CombinedActivityModel>('activity', activity))
-        ..add(
-          ObjectFlagProperty<void Function()? Function(UserRecordModel?)>.has(
-            'onPressed',
-            onPressed,
-          ),
-        )
+        ..add(ObjectFlagProperty<ActivityAction>.has('onPressed', onPressed))
         ..add(
           ObjectFlagProperty<void Function()>.has(
             'onOpenButtonPressed',
@@ -1697,8 +1708,16 @@ class ActivityCardRecordsCount extends StatelessWidget {
   }
 }
 
+/// The callback on the [ActivityCard] and [ActivityScreenCard].
+typedef ActivityAction = FutureOr<void> Function()? Function(
+  BuildContext context,
+  WidgetRef ref, {
+  required bool Function() isMounted,
+  UserRecordModel? appliedRecord,
+});
+
 /// The fullscreen version of the [ActivityCard].
-class ActivityScreenCard extends ConsumerWidget {
+class ActivityScreenCard extends HookConsumerWidget {
   /// The fullscreen version of the [ActivityCard].
   const ActivityScreenCard(
     final this.activity, {
@@ -1712,7 +1731,7 @@ class ActivityScreenCard extends ConsumerWidget {
   final CombinedActivityModel activity;
 
   /// The callback with found record that returns a callback on this card.
-  final void Function()? Function(UserRecordModel? appliedRecord) onPressed;
+  final ActivityAction onPressed;
 
   /// The callback on the back button of this card.
   final void Function() onBackButtonPressed;
@@ -1740,6 +1759,7 @@ class ActivityScreenCard extends ConsumerWidget {
       return '$date | $time ($duration)';
     }
 
+    final isMounted = useIsMounted();
     final timeLeftBeforeStart = ref.watch(
       activitiesCurrentTimeProvider.select(
         (final currentTime) => activity.item0.date.difference(
@@ -1808,12 +1828,12 @@ class ActivityScreenCard extends ConsumerWidget {
               : activity.item0.recordsLeft <= 0
                   ? TR.activitiesActivityAddToWishlist.tr()
                   : TR.activitiesActivityBookOnScreen.tr(),
-          onFirstPressed: () {
-            final _onPressed = onPressed(appliedRecord);
-            return _onPressed != null
-                ? (final dynamic _, final dynamic __) => _onPressed.call()
-                : null;
-          }(),
+          onFirstPressed: (final context, final ref) => onPressed(
+            context,
+            ref,
+            appliedRecord: appliedRecord,
+            isMounted: isMounted,
+          ),
           secondText: appliedRecord != null && !appliedRecord.yanked
               ? TR.activitiesActivityAddToCalendar.tr()
               : '',
@@ -1932,12 +1952,7 @@ class ActivityScreenCard extends ConsumerWidget {
     super.debugFillProperties(
       properties
         ..add(DiagnosticsProperty<CombinedActivityModel>('activity', activity))
-        ..add(
-          ObjectFlagProperty<void Function()? Function(UserRecordModel?)>.has(
-            'onPressed',
-            onPressed,
-          ),
-        )
+        ..add(ObjectFlagProperty<ActivityAction>.has('onPressed', onPressed))
         ..add(
           ObjectFlagProperty<void Function()>.has(
             'onBackButtonPressed',

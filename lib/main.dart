@@ -115,9 +115,7 @@ final FutureProvider<void> initProvider =
     ref.read(locationServicesProvider);
     ref.read(widgetsBindingProvider)
       ..addObserver(ReviewRecordsEventHandler(ref))
-      ..addPostFrameCallback(
-        (final _) => ref.read(uniLinksProvider.future),
-      );
+      ..addPostFrameCallback((final _) => ref.read(uniLinksProvider.future));
   }
 });
 
@@ -133,8 +131,8 @@ final FutureProvider<void> apiProvider =
     ref.read(trainersProvider.notifier).refresh(),
     ref.read(scheduleProvider.notifier).refresh(),
     ref.read(goodsProvider.notifier).refresh(),
-    // container.read(userAbonementsProvider.notifier).refresh(),
-    // container.read(userRecordsProvider.notifier).refresh(),
+    // ref.read(userAbonementsProvider.notifier).refresh(ref),
+    // ref.read(userRecordsProvider.notifier).refresh(ref),
 
     /// SMStretching API
     ref.read(smAdvertismentsProvider.notifier).refresh(),
@@ -144,7 +142,7 @@ final FutureProvider<void> apiProvider =
     ref.read(smTrainersProvider.notifier).refresh(),
     ref.read(smClassesGalleryProvider.notifier).refresh(),
     // container.read(smUserDepositProvider.future),
-    // container.read(smUserAbonementsProvider.notifier).refresh(),
+    // container.read(smUserAbonementsProvider.notifier).refresh(ref),
   ]);
 });
 

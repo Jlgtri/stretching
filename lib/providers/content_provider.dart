@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive/hive.dart';
 import 'package:stretching/providers/hive_provider.dart';
 import 'package:stretching/utils/json_converters.dart';
@@ -33,6 +34,7 @@ class ContentNotifier<T extends Object>
       refreshTimer.cancel();
     }
   }
+
   Completer<bool> _isRefreshingCompleter = Completer<bool>()..complete(false);
   Iterable<OnContentNotifierRefresh> _onRefreshListeners =
       const Iterable<OnContentNotifierRefresh>.empty();
@@ -45,7 +47,7 @@ class ContentNotifier<T extends Object>
   /// The callback to refresh a state of this provider.
   final FutureOr<Iterable<T>?> Function(ContentNotifier<T>) refreshState;
 
-  /// The interval for automatic refreshing of state of this notifier.
+  /// The interval for automatic refreshing of the state of this notifier.
   final Duration refreshInterval;
 
   /// If this notifier is currently calling [refresh].
@@ -56,7 +58,7 @@ class ContentNotifier<T extends Object>
       _isRefreshingCompleter.future.then((final success) => success);
 
   /// Refresh this state with a callback.
-  Future<bool> refresh() async {
+  Future<bool> refresh([final WidgetRef? ref]) async {
     if (!_isRefreshingCompleter.isCompleted) {
       return waitUntilRefreshed();
     }

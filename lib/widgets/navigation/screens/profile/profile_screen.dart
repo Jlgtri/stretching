@@ -237,8 +237,8 @@ class ProfileScreen extends HookConsumerWidget {
         );
 
         await Future.wait(<Future<void>>[
-          ref.read(userAbonementsProvider.notifier).refresh(),
-          ref.read(smUserAbonementsProvider.notifier).refresh(),
+          ref.read(userAbonementsProvider.notifier).refresh(ref),
+          ref.read(smUserAbonementsProvider.notifier).refresh(ref),
         ]);
       }
       // else {
