@@ -69,7 +69,8 @@ class ProfileScreen extends HookConsumerWidget {
 
     final scrollController =
         ref.watch(navigationScrollControllerProvider(NavigationScreen.profile));
-    final abonements = ref.watch(combinedAbonementsProvider);
+    final abonements =
+        ref.watch(combinedAbonementsProvider).toList(growable: false);
     List<Widget> createCards() => <Widget>[
           for (var index = 0; index < abonements.length; index++)
             AbonementCard(
@@ -113,8 +114,6 @@ class ProfileScreen extends HookConsumerWidget {
         ref.read(smUserAbonementsProvider.notifier),
       ],
     );
-
-    final currentScreen = useState(ProfileNavigationScreen.root);
     useMemoized<void>(
       () {
         abonementsCards.value = createCards();
@@ -388,7 +387,7 @@ class ProfileScreen extends HookConsumerWidget {
                     Padding(
                       padding: const EdgeInsets.only(bottom: 12),
                       child: TextButton(
-                        onPressed: () => action(currentScreen.value = screen),
+                        onPressed: () => action(screen),
                         style: ButtonStyle(
                           textStyle: MaterialStateProperty.all(
                             theme.textTheme.headline3,

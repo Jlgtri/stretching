@@ -473,7 +473,6 @@ final StateNotifierProvider<ContentNotifier<SMStudioModel>,
   ),
 );
 
-
 /// The studios options provider for SMStretching API.
 ///
 /// See: https://smstretching.ru/mobile/options/{token}/get_all
@@ -497,7 +496,6 @@ final StateNotifierProvider<ContentNotifier<SMStudioOptionsModel>,
   ),
 );
 
-
 /// The trainers provider for SMStretching API.
 ///
 /// See: https://smstretching.ru/wp-json/jet-cct/shtab_v2
@@ -518,7 +516,6 @@ final StateNotifierProvider<ContentNotifier<SMTrainerModel>,
     },
   ),
 );
-
 
 /// The user abonements provider for SMStretching API.
 ///
@@ -541,12 +538,11 @@ final StateNotifierProvider<ContentNotifier<SMUserAbonementModel>,
         data: <String, Object?>{'user_phone': userPhone},
       );
       final dynamic data = json.decode(response.data!);
-      if (data is! Iterable) {
-        return const Iterable<SMUserAbonementModel>.empty();
-      }
-      return ((json.decode(response.data!) as Iterable)
-              .cast<Map<String, Object?>>())
-          .map(SMUserAbonementModel.fromMap);
+      return data is! Iterable
+          ? const Iterable<SMUserAbonementModel>.empty()
+          : ((json.decode(response.data!) as Iterable)
+                  .cast<Map<String, Object?>>())
+              .map(SMUserAbonementModel.fromMap);
     },
   );
   ref.listen<bool>(
@@ -605,7 +601,6 @@ final StateNotifierProvider<ContentNotifier<SMClassesGalleryModel>,
     },
   ),
 );
-
 
 /// The provider of the advertisments from the SMStretching API.
 ///
