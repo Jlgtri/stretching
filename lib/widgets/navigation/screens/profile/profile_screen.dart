@@ -69,8 +69,7 @@ class ProfileScreen extends HookConsumerWidget {
 
     final scrollController =
         ref.watch(navigationScrollControllerProvider(NavigationScreen.profile));
-    final abonements =
-        ref.watch(combinedAbonementsProvider).toList(growable: false);
+    final abonements = ref.watch(combinedAbonementsProvider);
     List<Widget> createCards() => <Widget>[
           for (var index = 0; index < abonements.length; index++)
             AbonementCard(

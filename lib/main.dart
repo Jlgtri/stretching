@@ -131,8 +131,8 @@ final FutureProvider<void> apiProvider =
     ref.read(trainersProvider.notifier).refresh(),
     ref.read(scheduleProvider.notifier).refresh(),
     ref.read(goodsProvider.notifier).refresh(),
-    // ref.read(userAbonementsProvider.notifier).refresh(ref),
-    // ref.read(userRecordsProvider.notifier).refresh(ref),
+    ref.read(userAbonementsProvider.notifier).refresh(),
+    ref.read(userRecordsProvider.notifier).refresh(),
 
     /// SMStretching API
     ref.read(smAdvertismentsProvider.notifier).refresh(),
@@ -141,8 +141,8 @@ final FutureProvider<void> apiProvider =
     ref.read(smStudiosProvider.notifier).refresh(),
     ref.read(smTrainersProvider.notifier).refresh(),
     ref.read(smClassesGalleryProvider.notifier).refresh(),
-    // container.read(smUserDepositProvider.future),
-    // container.read(smUserAbonementsProvider.notifier).refresh(ref),
+    ref.read(smUserDepositProvider.future),
+    ref.read(smUserAbonementsProvider.notifier).refresh(),
   ]);
 });
 

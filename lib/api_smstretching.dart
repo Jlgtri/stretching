@@ -549,7 +549,6 @@ final StateNotifierProvider<ContentNotifier<SMUserAbonementModel>,
     userProvider.select((final user) => user == null),
     (final unauthorized) async =>
         unauthorized ? await notifier.clear() : await notifier.refresh(),
-    fireImmediately: true,
   );
   return notifier;
 });

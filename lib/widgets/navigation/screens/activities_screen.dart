@@ -236,13 +236,10 @@ final Provider<int> activitiesFiltersCountProvider = Provider<int>(
 final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
     Provider<Iterable<CombinedActivityModel>>((final ref) {
   final day = ref.watch(activitiesDayProvider).state;
-  final time = ref.watch(activitiesTimeFilterProvider).toList(growable: false);
-  final categories =
-      ref.watch(activitiesCategoriesFilterProvider).toList(growable: false);
-  final studios =
-      ref.watch(activitiesStudiosFilterProvider).toList(growable: false);
-  final trainers =
-      ref.watch(activitiesTrainersFilterProvider).toList(growable: false);
+  final time = ref.watch(activitiesTimeFilterProvider);
+  final categories = ref.watch(activitiesCategoriesFilterProvider);
+  final studios = ref.watch(activitiesStudiosFilterProvider);
+  final trainers = ref.watch(activitiesTrainersFilterProvider);
   final now = (ref.watch(activitiesCurrentTimeProvider)).maybeWhen(
     data: (final currentTime) => currentTime,
     orElse: DateTime.now,
@@ -835,7 +832,7 @@ class ActivityCardContainer extends StatelessWidget {
 
   @override
   Widget build(final BuildContext context) {
-    void Function()? onPressed(
+    FutureOr<void> Function()? onPressed(
       final BuildContext context,
       final WidgetRef ref, {
       required final bool fullscreen,
@@ -846,12 +843,12 @@ class ActivityCardContainer extends StatelessWidget {
       final navigator = Navigator.of(context);
       final rootNavigator = Navigator.of(context, rootNavigator: true);
 
+      final user = ref.watch(userProvider);
       final currentTime = (ref.watch(activitiesCurrentTimeProvider)).maybeWhen(
         data: (final currentTime) => currentTime,
         orElse: DateTime.now,
       );
       final timeLeftBeforeStart = activity.item0.date.difference(currentTime);
-
       final isLoading =
           ref.watch(activityCardLoadingProvider(activity.item0.id));
       final loadingData =
@@ -870,8 +867,10 @@ class ActivityCardContainer extends StatelessWidget {
           );
 
       Future<bool> cancelBook(final UserRecordModel appliedRecord) async {
-        loadingData.state = <Object>[...loadingData.state, activity.item0.id];
         isLoading.state = true;
+        loadingData.update(
+          (final loadingData) => <Object>[...loadingData, activity.item0.id],
+        );
         try {
           await logFirebase(
             fullscreen ? FAKeys.cancelBookScreen : FAKeys.cancelBook,
@@ -881,14 +880,16 @@ class ActivityCardContainer extends StatelessWidget {
             smRecord = await (ref.read(businessLogicProvider)).cancelBook(
               recordId: appliedRecord.id,
               recordDate: appliedRecord.date,
-              userPhone: ref.read(userProvider)!.phone,
+              userPhone: user!.phone,
               discount: ref.read(onCancelDiscountProvider),
             );
           } finally {
-            loadingData.state = <Object>[
-              for (final data in loadingData.state)
-                if (data != activity.item0.id) data
-            ];
+            loadingData.update(
+              (final loadingData) => <Object>[
+                for (final data in loadingData)
+                  if (data != activity.item0.id) data
+              ],
+            );
           }
           if (smRecord != null) {
             Widget refundedBody(final String body, final String button) =>
@@ -918,35 +919,35 @@ class ActivityCardContainer extends StatelessWidget {
               case ActivityPaidBy.deposit:
               case ActivityPaidBy.regular:
                 ref.refresh(smUserDepositProvider);
-                unawaited(ref.read(smUserDepositProvider.future));
-                await showRefundedModalBottomSheet(
-                  context: context,
-                  title: TR.cancelBookDepositTitle.tr(),
-                  child: refundedBody(
-                    TR.cancelBookDepositBody.tr(),
-                    TR.cancelBookDepositButton.tr(),
+                await Future.wait(<Future<void>>[
+                  ref.read(smUserDepositProvider.future),
+                  showRefundedModalBottomSheet(
+                    context: context,
+                    title: TR.cancelBookDepositTitle.tr(),
+                    child: refundedBody(
+                      TR.cancelBookDepositBody.tr(),
+                      TR.cancelBookDepositButton.tr(),
+                    ),
                   ),
-                );
+                ]);
                 continue all;
               case ActivityPaidBy.abonement:
-                unawaited(
+                await Future.wait(<Future<void>>[
                   ref.read(userAbonementsProvider.notifier).refresh(),
-                );
-                await showRefundedModalBottomSheet(
-                  context: context,
-                  title: TR.cancelBookAbonementTitle.tr(),
-                  child: refundedBody(
-                    TR.cancelBookAbonementBody.tr(),
-                    TR.cancelBookAbonementButton.tr(),
+                  showRefundedModalBottomSheet(
+                    context: context,
+                    title: TR.cancelBookAbonementTitle.tr(),
+                    child: refundedBody(
+                      TR.cancelBookAbonementBody.tr(),
+                      TR.cancelBookAbonementButton.tr(),
+                    ),
                   ),
-                );
+                ]);
                 continue all;
               all:
               case ActivityPaidBy.none:
                 if (loadingData.state.isEmpty) {
-                  unawaited(
-                    ref.read(userRecordsProvider.notifier).refresh(),
-                  );
+                  await ref.read(userRecordsProvider.notifier).refresh();
                 }
                 navigator.popUntil(Routes.root.withName);
             }
@@ -964,13 +965,18 @@ class ActivityCardContainer extends StatelessWidget {
           }
         } finally {
           isLoading.state = false;
+          if (fullscreen && onMain) {
+            await navigator.maybePop();
+          }
         }
         return false;
       }
 
       Future<bool> book() async {
-        loadingData.state = <Object>[...loadingData.state, activity.item0.id];
         isLoading.state = true;
+        loadingData.update(
+          (final loadingData) => <Object>[...loadingData, activity.item0.id],
+        );
         try {
           await logFirebase(fullscreen ? FAKeys.bookScreen : FAKeys.book);
           final Tuple2<RecordModel, BookResult> result;
@@ -979,7 +985,7 @@ class ActivityCardContainer extends StatelessWidget {
             result = await businessLogic.book(
               timeout: bookTimeout,
               navigator: rootNavigator,
-              user: ref.read(userProvider)!,
+              user: user!,
               activity: activity,
               useDiscount: ref.read(discountProvider),
               abonements: ref.read(combinedAbonementsProvider),
@@ -992,7 +998,7 @@ class ActivityCardContainer extends StatelessWidget {
                       return businessLogic.book(
                         prevRecord: record,
                         navigator: rootNavigator,
-                        user: ref.read(userProvider)!,
+                        user: user,
                         activity: activity,
                         useDiscount: ref.read(discountProvider),
                         abonements: ref.read(combinedAbonementsProvider),
@@ -1001,10 +1007,12 @@ class ActivityCardContainer extends StatelessWidget {
                   : null,
             );
           } finally {
-            loadingData.state = <Object>[
-              for (final data in loadingData.state)
-                if (data != activity.item0.id) data
-            ];
+            loadingData.update(
+              (final loadingData) => <Object>[
+                for (final data in loadingData)
+                  if (data != activity.item0.id) data
+              ],
+            );
           }
 
           logger.i(result.item1);
@@ -1083,14 +1091,15 @@ class ActivityCardContainer extends StatelessWidget {
       }
 
       Future<void> addToWishList() async {
-        loadingData.state = <Object>[...loadingData.state, activity.item0.id];
         isLoading.state = true;
+        loadingData.update(
+          (final loadingData) => <Object>[...loadingData, activity.item0.id],
+        );
         try {
           await logFirebase(
             fullscreen ? FAKeys.wishlistScreen : FAKeys.wishlist,
           );
-          final user = ref.read(userProvider)!;
-          final userWishlist = await smStretching.getWishlist(user.phone);
+          final userWishlist = await smStretching.getWishlist(user!.phone);
           final alreadyApplied = userWishlist.any(
             (final userWishlist) =>
                 userWishlist.activityId == activity.item0.id,
@@ -1127,26 +1136,22 @@ class ActivityCardContainer extends StatelessWidget {
           );
         } finally {
           isLoading.state = false;
-          loadingData.state = <Object>[
-            for (final data in loadingData.state)
-              if (data != activity.item0.id) data
-          ];
+          loadingData.update(
+            (final loadingData) => <Object>[
+              for (final data in loadingData)
+                if (data != activity.item0.id) data
+            ],
+          );
         }
       }
 
-      if (!isLoadingList && !isLoading.state && isMounted()) {
-        return ref.read(userProvider) == null
-            ? () => Navigator.of(context, rootNavigator: true)
-                .pushNamed(Routes.auth.name)
+      if (!isLoadingList && !isLoading.state) {
+        return user == null
+            ? () => rootNavigator.pushNamed(Routes.auth.name)
             : appliedRecord != null
                 ? !appliedRecord.yanked && timeLeftBeforeStart.inHours < 12
                     ? null
-                    : () async {
-                        await cancelBook(appliedRecord);
-                        if (fullscreen && onMain) {
-                          await rootNavigator.maybePop();
-                        }
-                      }
+                    : () => cancelBook(appliedRecord)
                 : activity.item0.recordsLeft <= 0
                     ? addToWishList
                     : book;
@@ -1828,12 +1833,17 @@ class ActivityScreenCard extends HookConsumerWidget {
               : activity.item0.recordsLeft <= 0
                   ? TR.activitiesActivityAddToWishlist.tr()
                   : TR.activitiesActivityBookOnScreen.tr(),
-          onFirstPressed: (final context, final ref) => onPressed(
-            context,
-            ref,
-            appliedRecord: appliedRecord,
-            isMounted: isMounted,
-          ),
+          onFirstPressed: () {
+            final _onPressed = onPressed(
+              context,
+              ref,
+              appliedRecord: appliedRecord,
+              isMounted: isMounted,
+            );
+            return _onPressed != null
+                ? (final dynamic context, final dynamic ref) => _onPressed()
+                : null;
+          }(),
           secondText: appliedRecord != null && !appliedRecord.yanked
               ? TR.activitiesActivityAddToCalendar.tr()
               : '',

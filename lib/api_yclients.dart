@@ -833,7 +833,6 @@ final StateNotifierProvider<ContentNotifier<UserAbonementModel>,
       await Future<void>.delayed(const Duration(milliseconds: 10));
       unauthorized ? await notifier.clear() : await notifier.refresh();
     },
-    fireImmediately: true,
   );
   return notifier;
 });
@@ -876,7 +875,6 @@ final StateNotifierProvider<ContentNotifier<UserRecordModel>,
       await Future<void>.delayed(const Duration(milliseconds: 10));
       unauthorized ? await notifier.clear() : await notifier.refresh();
     },
-    fireImmediately: true,
   );
   return notifier;
 });
