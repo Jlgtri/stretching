@@ -164,9 +164,10 @@ class TrainerIdConverter implements JsonConverter<CombinedTrainerModel?, int> {
 final Provider<Iterable<CombinedTrainerModel>> combinedTrainersProvider =
     Provider<Iterable<CombinedTrainerModel>>(
   (final ref) => <CombinedTrainerModel>[
-    for (final trainer in ref.watch(normalizedTrainersProvider))
-      for (final smTrainer in ref.watch(smTrainersProvider))
-        if (trainer.id == smTrainer.trainerId)
+    for (final smTrainer in ref.watch(smTrainersProvider))
+      for (final trainer in ref.watch(normalizedTrainersProvider))
+        if (trainer.name.trim().toLowerCase() ==
+            smTrainer.trainerName.trim().toLowerCase())
           CombinedTrainerModel(trainer, smTrainer)
   ]..sort(
       (final trainerA, final trainerB) =>
