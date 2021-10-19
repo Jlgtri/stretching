@@ -1812,8 +1812,7 @@ class ActivityScreenCard extends HookConsumerWidget {
     return ContentScreen(
       type: onMain ? NavigationScreen.home : NavigationScreen.schedule,
       onBackButtonPressed: onBackButtonPressed,
-      title:
-          activity.item3.item0?.translation ?? activity.item3.item1.classesName,
+      title: activity.item0.service.title,
       subtitle: formatSubTitle(),
       secondSubtitle: activity.item1.item1.studioAddress,
       trailing: Padding(
@@ -1839,9 +1838,9 @@ class ActivityScreenCard extends HookConsumerWidget {
         ),
       ),
       paragraphs: <ContentParagraph>[
-        if (activity.item3.item1.classInfo != null)
+        if (activity.item3.item1.classInfo?.isNotEmpty ?? false)
           ContentParagraph(body: activity.item3.item1.classInfo!),
-        if (activity.item3.item1.takeThis != null)
+        if (activity.item3.item1.takeThis?.isNotEmpty ?? false)
           ContentParagraph(
             title: TR.activitiesActivityImportantInfo.tr(),
             body: activity.item3.item1.takeThis!,
