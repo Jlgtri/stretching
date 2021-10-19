@@ -669,9 +669,10 @@ class ActivitiesStudiosPickerDropdown extends HookConsumerWidget {
                     if (studio != null) {
                       await filteredStudiosNotifier.setStateAsync([studio]);
                       final classes = ref.read(combinedClassesProvider).where(
-                            (final _class) => studio.item1.studioTags
-                                .toCategories()
-                                .contains(_class.item0),
+                            (final _class) =>
+                                ((studio.item1.studioTags.toCategories())
+                                        .map((final category) => category.id))
+                                    .contains(_class.item1.classesYId),
                           );
                       final categoriesNotifiter =
                           ref.read(activitiesCategoriesFilterProvider.notifier);
@@ -755,8 +756,9 @@ class ActivitiesCategoriesPicker extends ConsumerWidget {
           (final _class) =>
               studios.isEmpty ||
               studios.any(
-                (final studio) => (studio.item1.studioTags.toCategories())
-                    .contains(_class.item0),
+                (final studio) => ((studio.item1.studioTags.toCategories())
+                        .map((final category) => category.id))
+                    .contains(_class.item1.classesYId),
               ),
         ),
       ),
