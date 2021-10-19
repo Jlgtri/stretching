@@ -643,16 +643,18 @@ final StateNotifierProvider<ContentNotifier<SMStoryModel>,
 
 /// The id converter of the [UserRecordModel].
 final Provider<UserRecordIdConverter> userRecordIdConverterProvider =
-    Provider<UserRecordIdConverter>(UserRecordIdConverter._);
+    Provider<UserRecordIdConverter>(
+  (final ref) => UserRecordIdConverter._(ref.watch(userRecordsProvider)),
+);
 
 /// The id converter of the [UserRecordModel].
 class UserRecordIdConverter implements JsonConverter<UserRecordModel?, int> {
-  const UserRecordIdConverter._(final this._ref);
-  final ProviderRefBase _ref;
+  const UserRecordIdConverter._(final this._userRecords);
+  final Iterable<UserRecordModel> _userRecords;
 
   @override
   UserRecordModel? fromJson(final int id) {
-    for (final userRecord in _ref.read(userRecordsProvider)) {
+    for (final userRecord in _userRecords) {
       if (userRecord.id == id) {
         return userRecord;
       }

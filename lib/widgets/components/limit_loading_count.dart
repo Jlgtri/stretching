@@ -48,25 +48,33 @@ class LimitLoadingCount<T extends Object> extends HookConsumerWidget {
     final _loadedData = useMemoized(() => ref.read(loadedDataProvider(screen)));
     final _loadingData = useMemoized(() {
       final _loadingData = ref.read(loadingDataProvider(screen));
-      widgetsBinding.addPostFrameCallback((final _) {
-        if (!_loadedData.state.contains(data) &&
-            !_loadingData.state.contains(data)) {
-          _loadingData.state = <Object>[..._loadingData.state, data];
-        }
-      });
+      if (!_loadedData.state.contains(data)) {
+        widgetsBinding.addPostFrameCallback((final _) {
+          _loadingData.update(
+            (final loadingData) => !loadingData.contains(data)
+                ? <Object>[...loadingData, data]
+                : loadingData,
+          );
+        });
+      }
       return _loadingData;
     });
     useOnDisposed(() {
-      if (_loadingData.state.contains(data) &&
-          !_loadedData.state.contains(data)) {
-        widgetsBinding.addPostFrameCallback((final _) {
-          _loadedData.state = <Object>[..._loadedData.state, data];
-          _loadingData.state = <Object>[
-            for (final _data in _loadingData.state)
-              if (_data != data) data
-          ];
-        });
-      }
+      widgetsBinding.addPostFrameCallback((final _) {
+        _loadingData.update(
+          (final loadingData) => loadingData.contains(data)
+              ? <Object>[
+                  for (final _data in loadingData)
+                    if (_data != data) data
+                ]
+              : loadingData,
+        );
+        _loadedData.update(
+          (final loadedData) => !_loadedData.state.contains(data)
+              ? <Object>[...loadedData, data]
+              : loadedData,
+        );
+      });
     });
     return child ?? Container();
   }

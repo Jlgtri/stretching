@@ -372,13 +372,8 @@ class TrainerCard extends HookConsumerWidget {
     });
     final loaded = ref.watch(
       loadedDataProvider(NavigationScreen.trainers).select(
-        (final loadedDataProvider) =>
-            loadedDataProvider.state.contains(trainer.item1.trainerPhoto),
-      ),
-    );
-    final loadingTrainersCount = ref.watch(
-      loadingDataProvider(NavigationScreen.trainers).select(
-        (final loadingDataProvider) => loadingDataProvider.state.length,
+        (final loadedData) =>
+            loadedData.state.contains(trainer.item1.trainerPhoto),
       ),
     );
     return InkWell(
@@ -391,17 +386,19 @@ class TrainerCard extends HookConsumerWidget {
             Padding(
               padding: avatarPadding,
               child: loaded ||
-                      (loadingTrainersCount <= TrainersScreen.limitLoading)
+                      ref.watch(
+                        loadingDataProvider(NavigationScreen.trainers).select(
+                          (final loadingData) =>
+                              loadingData.state.length <=
+                              TrainersScreen.limitLoading,
+                        ),
+                      )
                   ? CachedNetworkImage(
                       imageUrl: trainer.item1.trainerPhoto,
                       height: avatarSize,
                       width: avatarSize,
                       fit: BoxFit.cover,
-                      progressIndicatorBuilder: (
-                        final context,
-                        final url,
-                        final progress,
-                      ) =>
+                      placeholder: (final context, final url) =>
                           LimitLoadingCount(url, NavigationScreen.trainers),
                       imageBuilder: (final context, final imageProvider) =>
                           CircleAvatar(

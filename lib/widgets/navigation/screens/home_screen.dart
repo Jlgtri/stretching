@@ -33,17 +33,13 @@ import 'package:stretching/widgets/navigation/screens/activities_screen.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 /// The id converter of the [SMStoryModel].
-final Provider<SMStoryIdConverter> smStoryIdConverterProvider =
-    Provider<SMStoryIdConverter>(SMStoryIdConverter._);
-
-/// The id converter of the [SMStoryModel].
 class SMStoryIdConverter implements JsonConverter<SMStoryModel?, int> {
-  const SMStoryIdConverter._(final this._ref);
-  final ProviderRefBase _ref;
+  const SMStoryIdConverter._(final this._stories);
+  final Iterable<SMStoryModel> _stories;
 
   @override
   SMStoryModel? fromJson(final int media) {
-    for (final story in _ref.read(smStoriesProvider)) {
+    for (final story in _stories) {
       if (story.media == media) {
         return story;
       }
@@ -63,7 +59,9 @@ final StateNotifierProvider<SaveToHiveIterableNotifier<SMStoryModel, String>,
     hive: ref.watch(hiveProvider),
     saveName: 'home_stories',
     converter: StringToIterableConverter(
-      OptionalIterableConverter(ref.watch(smStoryIdConverterProvider)),
+      OptionalIterableConverter(
+        SMStoryIdConverter._(ref.watch(smStoriesProvider)),
+      ),
     ),
     defaultValue: const Iterable<SMStoryModel>.empty(),
   ),

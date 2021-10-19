@@ -671,8 +671,7 @@ final Provider<Iterable<TrainerModel>> normalizedTrainersProvider =
           ].contains(trainer.avatarBig),
         )
         ..sort(
-          (final trainerA, final trainerB) => trainerA.name
-              .toLowerCase()
+          (final trainerA, final trainerB) => (trainerA.name.toLowerCase())
               .compareTo(trainerB.name.toLowerCase()),
         ),
     ),

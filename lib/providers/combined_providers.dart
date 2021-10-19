@@ -26,23 +26,17 @@ import 'package:stretching/utils/json_converters.dart';
 import 'package:timezone/timezone.dart';
 
 /// The pair of [ClassCategory] and [SMClassesGalleryModel].
-typedef CombinedClassesModel = Tuple2<ClassCategory, SMClassesGalleryModel>;
+typedef CombinedClassesModel = Tuple2<ClassCategory?, SMClassesGalleryModel>;
 
 /// The provider of [ClassCategory] and [SMClassesGalleryModel] pairs.
 final Provider<Iterable<CombinedClassesModel>> combinedClassesProvider =
     Provider<Iterable<CombinedClassesModel>>((final ref) {
-  final smClassesGallery = ref.watch(
-    smClassesGalleryProvider.select(
-      (final smClassesGallery) => <int, SMClassesGalleryModel>{
-        for (final smClassGallery in smClassesGallery)
-          smClassGallery.classesYId: smClassGallery
-      },
-    ),
-  );
+  final classes = <int, ClassCategory>{
+    for (final _class in ClassCategory.values) _class.id: _class
+  };
   return <CombinedClassesModel>[
-    for (final classes in ClassCategory.values)
-      if (smClassesGallery.keys.contains(classes.id))
-        Tuple2(classes, smClassesGallery[classes.id]!)
+    for (final smClassGallery in ref.watch(smClassesGalleryProvider))
+      Tuple2(classes[smClassGallery.classesYId], smClassGallery)
   ];
 });
 
@@ -143,65 +137,42 @@ final Provider<Iterable<CombinedStudioModel>> combinedStudiosProvider =
 typedef CombinedTrainerModel = Tuple2<TrainerModel, SMTrainerModel>;
 
 /// The id converter of the [TrainerModel] and [SMTrainerModel].
-final Provider<SMTrainerIdConverter> smTrainerIdConverterProvider =
-    Provider<SMTrainerIdConverter>(SMTrainerIdConverter._);
+final Provider<TrainerIdConverter> trainerIdConverterProvider =
+    Provider<TrainerIdConverter>(
+  (final ref) => TrainerIdConverter._(ref.watch(combinedTrainersProvider)),
+);
 
 /// The id converter of the [TrainerModel] and [SMTrainerModel].
-class SMTrainerIdConverter implements JsonConverter<SMTrainerModel?, int> {
-  const SMTrainerIdConverter._(final this._ref);
-  final ProviderRefBase _ref;
+class TrainerIdConverter implements JsonConverter<CombinedTrainerModel?, int> {
+  const TrainerIdConverter._(final this._trainers);
+  final Iterable<CombinedTrainerModel> _trainers;
 
   @override
-  SMTrainerModel? fromJson(final int id) {
-    for (final trainer in _ref.read(smTrainersProvider)) {
-      if (trainer.id == id) {
+  CombinedTrainerModel? fromJson(final int id) {
+    for (final trainer in _trainers) {
+      if (trainer.item1.id == id) {
         return trainer;
       }
     }
   }
 
   @override
-  int toJson(final SMTrainerModel? data) => data!.id;
-}
-
-/// The id converter of the [TrainerModel] and [SMTrainerModel].
-final Provider<CombinedClassesIdConverter> combinedClassesIdConverterProvider =
-    Provider<CombinedClassesIdConverter>(CombinedClassesIdConverter._);
-
-/// The id converter of the [TrainerModel] and [SMTrainerModel].
-class CombinedClassesIdConverter
-    implements JsonConverter<CombinedClassesModel?, int> {
-  const CombinedClassesIdConverter._(final this._ref);
-  final ProviderRefBase _ref;
-
-  @override
-  CombinedClassesModel? fromJson(final int id) {
-    for (final smGallery in _ref.read(combinedClassesProvider)) {
-      if (smGallery.item0.id == id) {
-        return smGallery;
-      }
-    }
-  }
-
-  @override
-  int toJson(final CombinedClassesModel? data) => data!.item0.id;
+  int toJson(final CombinedTrainerModel? data) => data!.item1.id;
 }
 
 /// The provider of [TrainerModel] and [SMTrainerModel] pairs.
 final Provider<Iterable<CombinedTrainerModel>> combinedTrainersProvider =
-    Provider<Iterable<CombinedTrainerModel>>((final ref) {
-  final trainers = ref.watch(normalizedTrainersProvider);
-  final t = ref.watch(smTrainersProvider).toList();
-  return <CombinedTrainerModel>[
-    for (final smTrainer in t)
-      for (final trainer in trainers)
-        if (trainer.name == smTrainer.trainerName)
+    Provider<Iterable<CombinedTrainerModel>>(
+  (final ref) => <CombinedTrainerModel>[
+    for (final trainer in ref.watch(normalizedTrainersProvider))
+      for (final smTrainer in ref.watch(smTrainersProvider))
+        if (trainer.id == smTrainer.trainerId)
           CombinedTrainerModel(trainer, smTrainer)
   ]..sort(
       (final trainerA, final trainerB) =>
           trainerA.item1.compareTo(trainerB.item1),
-    );
-});
+    ),
+);
 
 /// The [ActivityModel] with [CombinedTrainerModel] and [CombinedStudioModel].
 typedef CombinedActivityModel = Tuple4<ActivityModel, CombinedStudioModel,

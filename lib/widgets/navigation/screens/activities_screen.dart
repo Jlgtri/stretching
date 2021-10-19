@@ -33,6 +33,7 @@ import 'package:stretching/models/smstretching/sm_wishlist_model.dart';
 import 'package:stretching/models/yclients/activity_model.dart';
 import 'package:stretching/models/yclients/company_model.dart';
 import 'package:stretching/models/yclients/record_model.dart';
+import 'package:stretching/models/yclients/trainer_model.dart';
 import 'package:stretching/models/yclients/user_record_model.dart';
 import 'package:stretching/providers/combined_providers.dart';
 import 'package:stretching/providers/content_provider.dart';
@@ -55,17 +56,13 @@ import 'package:stretching/widgets/navigation/navigation_root.dart';
 import 'package:stretching/widgets/navigation/screens/trainers_screen.dart';
 
 /// The id converter of the [StudioModel] and [SMStudioModel].
-final Provider<StudioIdConverter> studioIdConverterProvider =
-    Provider<StudioIdConverter>(StudioIdConverter._);
-
-/// The id converter of the [StudioModel] and [SMStudioModel].
 class StudioIdConverter implements JsonConverter<CombinedStudioModel?, int> {
-  const StudioIdConverter._(final this._ref);
-  final ProviderRefBase _ref;
+  const StudioIdConverter._(final this._studios);
+  final Iterable<CombinedStudioModel> _studios;
 
   @override
   CombinedStudioModel? fromJson(final int id) {
-    for (final studio in _ref.read(combinedStudiosProvider)) {
+    for (final studio in _studios) {
       if (studio.item0.id == id) {
         return studio;
       }
@@ -87,11 +84,31 @@ final StateNotifierProvider<
     hive: ref.watch(hiveProvider),
     saveName: 'activities_studios',
     converter: StringToIterableConverter(
-      OptionalIterableConverter(ref.watch(studioIdConverterProvider)),
+      OptionalIterableConverter(
+        StudioIdConverter._(ref.watch(combinedStudiosProvider)),
+      ),
     ),
     defaultValue: const Iterable<CombinedStudioModel>.empty(),
   ),
 );
+
+/// The id converter of the [TrainerModel] and [SMTrainerModel].
+class ClassesIdConverter implements JsonConverter<CombinedClassesModel?, int> {
+  const ClassesIdConverter._(final this._classes);
+  final Iterable<CombinedClassesModel> _classes;
+
+  @override
+  CombinedClassesModel? fromJson(final int id) {
+    for (final _class in _classes) {
+      if (_class.item1.classesYId == id) {
+        return _class;
+      }
+    }
+  }
+
+  @override
+  int toJson(final CombinedClassesModel? data) => data!.item1.classesYId;
+}
 
 /// The provider of filters for [SMTrainerModel].
 final StateNotifierProvider<
@@ -104,26 +121,30 @@ final StateNotifierProvider<
     hive: ref.watch(hiveProvider),
     saveName: 'activities_categories',
     converter: StringToIterableConverter(
-      OptionalIterableConverter(ref.watch(combinedClassesIdConverterProvider)),
+      OptionalIterableConverter(
+        ClassesIdConverter._(ref.watch(combinedClassesProvider)),
+      ),
     ),
     defaultValue: const Iterable<CombinedClassesModel>.empty(),
   ),
 );
 
 /// The provider of filters for [SMTrainerModel].
-final StateNotifierProvider<SaveToHiveIterableNotifier<SMTrainerModel, String>,
-        Iterable<SMTrainerModel>> activitiesTrainersFilterProvider =
-    StateNotifierProvider<SaveToHiveIterableNotifier<SMTrainerModel, String>,
-        Iterable<SMTrainerModel>>(
-  (final ref) => SaveToHiveIterableNotifier<SMTrainerModel, String>(
+final StateNotifierProvider<
+        SaveToHiveIterableNotifier<CombinedTrainerModel, String>,
+        Iterable<CombinedTrainerModel>> activitiesTrainersFilterProvider =
+    StateNotifierProvider<
+        SaveToHiveIterableNotifier<CombinedTrainerModel, String>,
+        Iterable<CombinedTrainerModel>>(
+  (final ref) => SaveToHiveIterableNotifier<CombinedTrainerModel, String>(
     hive: ref.watch(hiveProvider),
     saveName: 'activities_trainers',
     converter: StringToIterableConverter(
-      OptionalIterableConverter(ref.watch(smTrainerIdConverterProvider)),
+      OptionalIterableConverter(ref.watch(trainerIdConverterProvider)),
     ),
     onValueCreated: (final trainers) =>
         trainers.toList(growable: false)..sort(),
-    defaultValue: const Iterable<SMTrainerModel>.empty(),
+    defaultValue: const Iterable<CombinedTrainerModel>.empty(),
   ),
 );
 
@@ -256,11 +277,12 @@ final Provider<Iterable<CombinedActivityModel>> filteredActivitiesProvider =
                 activity.item0.date.month == day.item1 &&
                 activity.item0.date.day == day.item2 &&
                 (studios.isEmpty || studios.contains(activity.item1)) &&
-                (trainers.isEmpty || trainers.contains(activity.item2.item1)) &&
+                (trainers.isEmpty || trainers.contains(activity.item2)) &&
                 (categories.isEmpty ||
                     categories.any(
                       (final category) =>
-                          category.item0.id == activity.item0.service.id,
+                          category.item1.classesYId ==
+                          activity.item0.service.id,
                     )) &&
                 (time.isEmpty ||
                     time.any(
@@ -741,7 +763,8 @@ class ActivitiesCategoriesPicker extends ConsumerWidget {
     );
     final categories = ref.watch(activitiesCategoriesFilterProvider);
     return getSelectorWidget<CombinedClassesModel>(
-      text: (final smClassGallery) => smClassGallery.item0.translation,
+      text: (final _class) =>
+          _class.item0?.translation ?? _class.item1.classesName,
       selected: categories.contains,
       values: classes,
       onSelected: (final category, final value) {
@@ -1789,7 +1812,8 @@ class ActivityScreenCard extends HookConsumerWidget {
     return ContentScreen(
       type: onMain ? NavigationScreen.home : NavigationScreen.schedule,
       onBackButtonPressed: onBackButtonPressed,
-      title: activity.item3.item0.translation,
+      title:
+          activity.item3.item0?.translation ?? activity.item3.item1.classesName,
       subtitle: formatSubTitle(),
       secondSubtitle: activity.item1.item1.studioAddress,
       trailing: Padding(
@@ -2305,17 +2329,23 @@ class FiltersScreen extends ConsumerWidget {
             Flexible(
               child: Consumer(
                 builder: (final context, final ref, final child) {
-                  final trainers = ref
-                      .watch(smTrainersProvider)
+                  final trainers = (ref.watch(combinedTrainersProvider))
+                      .distinct(
+                        (final trainer) =>
+                            trainer.item1.trainerName.toLowerCase(),
+                      )
                       .toList(growable: false)
-                    ..sort();
+                    ..sort(
+                      (final trainerA, final trainerB) =>
+                          trainerA.item1.compareTo(trainerB.item1),
+                    );
                   final children = <Widget>[
                     for (final trainer in trainers)
                       Consumer(
                         builder: (final context, final ref, final child) =>
                             FilterButton(
-                          text: trainer.trainerName,
-                          avatarUrl: trainer.trainerPhoto,
+                          text: trainer.item1.trainerName,
+                          avatarUrl: trainer.item1.trainerPhoto,
                           borderColor: Colors.grey.shade300,
                           backgroundColor: theme.colorScheme.surface,
                           margin: const EdgeInsets.symmetric(vertical: 4),
@@ -2462,20 +2492,24 @@ class ActivitiesSearchResults extends ConsumerWidget {
         (final classes) => classes.where(
           (final _class) =>
               search.isEmpty ||
-              (_class.item0.translation.toLowerCase())
-                  .contains(search.toLowerCase()) ||
+              (_class.item0 != null &&
+                  (_class.item0!.translation.toLowerCase())
+                      .contains(search.toLowerCase())) ||
               (_class.item1.classesName.toLowerCase())
                   .contains(search.toLowerCase()),
         ),
       ),
     );
     final trainers = ref.watch(
-      smTrainersProvider.select(
-        (final smTrainers) => search.isEmpty
-            ? const Iterable<SMTrainerModel>.empty()
-            : smTrainers.where(
-                (final smTrainer) => (smTrainer.trainerName.toLowerCase())
-                    .contains(search.toLowerCase()),
+      combinedTrainersProvider.select(
+        (final trainers) => search.isEmpty
+            ? const Iterable<CombinedTrainerModel>.empty()
+            : trainers.where(
+                (final trainer) =>
+                    (trainer.item1.trainerName.toLowerCase())
+                        .contains(search.toLowerCase()) ||
+                    (trainer.item0.name.toLowerCase())
+                        .contains(search.toLowerCase()),
               ),
       ),
     );
@@ -2573,8 +2607,8 @@ class ActivitiesSearchResults extends ConsumerWidget {
         } else if (index - studios.length < trainers.length) {
           final trainer = trainers.elementAt(index - studios.length);
           return searchResult(
-            imageUrl: trainer.trainerPhoto,
-            title: trainer.trainerName,
+            imageUrl: trainer.item1.trainerPhoto,
+            title: trainer.item1.trainerName,
             onTap: () async {
               final notifier =
                   ref.read(activitiesTrainersFilterProvider.notifier);
@@ -2591,7 +2625,7 @@ class ActivitiesSearchResults extends ConsumerWidget {
           );
           return searchResult(
             imageUrl: category.item1.gallery.split(',').first,
-            title: category.item0.translation,
+            title: category.item0?.translation ?? category.item1.classesName,
             onTap: () async {
               final notifier =
                   ref.read(activitiesCategoriesFilterProvider.notifier);
